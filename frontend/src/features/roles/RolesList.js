@@ -283,6 +283,8 @@ const useStyles = makeStyles((theme) => ({
     borderRadius: theme.spacing(1.5),
     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
     overflow: "hidden",
+    width: "90%",
+    maxWidth: "800px", // Aumentado de su valor original
   },
   dialogTitle: {
     background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
@@ -691,7 +693,7 @@ const RolesList = () => {
   })
   const [searchTerm, setSearchTerm] = useState("")
   const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [rowsPerPage, setRowsPerPage] = useState(5)
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [tabValue, setTabValue] = useState(0)
   // Estados para validación de formulario
@@ -1047,6 +1049,18 @@ const RolesList = () => {
 
   // Eliminar rol
   const handleDelete = async (id) => {
+    // Verificar primero si es el rol de administrador
+    const rolToDelete = roles.find((role) => role._id === id)
+    if (rolToDelete && rolToDelete.nombre.toLowerCase() === "administrador") {
+      Swal.fire({
+        icon: "error",
+        title: "Acción no permitida",
+        text: "El rol de administrador no puede ser eliminado",
+        confirmButtonColor: "#2563eb",
+      })
+      return
+    }
+
     const confirmDelete = await Swal.fire({
       title: "¿Eliminar rol?",
       text: "Esta acción no se puede deshacer",
@@ -1075,7 +1089,7 @@ const RolesList = () => {
         Swal.fire({
           icon: "error",
           title: "Error",
-          text: "Ocurrió un error al eliminar el rol.",
+          text: error.response?.data?.msg || "Ocurrió un error al eliminar el rol.",
         })
       }
     }
@@ -1256,14 +1270,19 @@ const RolesList = () => {
                         <Info size={18} />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Eliminar rol">
-                      <IconButton
-                        className={`${classes.actionButton} ${classes.btnDelete}`}
-                        onClick={() => handleDelete(role._id)}
-                      >
-                        <Delete size={18} />
-                      </IconButton>
-                    </Tooltip>
+                    {role.nombre.toLowerCase() !== "administrador" && (
+                      <Tooltip title="Eliminar rol">
+                        <IconButton
+                          className={`${classes.actionButton} ${classes.btnDelete}`}
+                          onClick={() => handleDelete(role._id)}
+                        >
+                          <Delete size={18} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    {role.nombre.toLowerCase() === "administrador" && (
+                      <div style={{ width: "40px", height: "40px" }}></div> // Espacio para mantener alineación
+                    )}
                   </Box>
                 </TableCell>
               </TableRow>
@@ -1295,7 +1314,20 @@ const RolesList = () => {
       />
 
       {/* Modal para crear/editar rol - Diseño mejorado */}
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" classes={{ paper: classes.dialogPaper }}>
+      <Dialog
+        open={open}
+        onClose={(event, reason) => {
+          // Solo permitir cerrar con el botón X o el botón Cerrar
+          if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
+            handleClose()
+          }
+        }}
+        disableBackdropClick={true}
+        disableEscapeKeyDown={true}
+        fullWidth
+        maxWidth="sm"
+        classes={{ paper: classes.dialogPaper }}
+      >
         <DialogTitle className={classes.dialogTitle}>
           {editingId ? "Editar Rol" : "Agregar Rol"}
           <IconButton onClick={handleClose} className={classes.closeButton}>
@@ -1781,7 +1813,14 @@ const RolesList = () => {
       {/* Modal de detalles (solo lectura) - Diseño mejorado */}
       <Dialog
         open={detailsOpen}
-        onClose={handleCloseDetails}
+        onClose={(event, reason) => {
+          // Solo permitir cerrar con el botón X o el botón Cerrar
+          if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
+            handleCloseDetails()
+          }
+        }}
+        disableBackdropClick={true}
+        disableEscapeKeyDown={true}
         fullWidth
         maxWidth="sm"
         classes={{ paper: classes.dialogPaper }}

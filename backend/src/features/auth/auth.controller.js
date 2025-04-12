@@ -31,6 +31,12 @@ exports.login = async (req, res) => {
   try {
     const usuario = await Usuario.findOne({ email });
     if (!usuario) return res.status(400).json({ msg: 'Credenciales inválidas' });
+    
+    // Verificar si el usuario está activo
+    if (!usuario.estado) {
+      return res.status(403).json({ msg: 'Usuario inactivo. Contacte al administrador.' });
+    }
+    
     const isMatch = await bcrypt.compare(password, usuario.password);
     if (!isMatch) return res.status(400).json({ msg: 'Credenciales inválidas' });
     
@@ -61,6 +67,12 @@ exports.forgotPassword = async (req, res) => {
     const usuario = await Usuario.findOne({ email });
     if (!usuario)
       return res.status(400).json({ msg: 'No existe un usuario con ese email' });
+    
+    // Verificar si el usuario está activo
+    if (!usuario.estado) {
+      return res.status(403).json({ msg: 'Usuario inactivo. Contacte al administrador.' });
+    }
+    
     // Genera token aleatorio y establece expiración (30 minutos)
     const token = crypto.randomBytes(20).toString('hex');
     usuario.resetPasswordToken = token;
@@ -98,6 +110,12 @@ exports.resetPassword = async (req, res) => {
     });
     if (!usuario)
       return res.status(400).json({ msg: 'Token inválido o expirado' });
+    
+    // Verificar si el usuario está activo
+    if (!usuario.estado) {
+      return res.status(403).json({ msg: 'Usuario inactivo. Contacte al administrador.' });
+    }
+    
     const salt = await bcrypt.genSalt(10);
     usuario.password = await bcrypt.hash(newPassword, salt);
     usuario.resetPasswordToken = undefined;
@@ -107,5 +125,22 @@ exports.resetPassword = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).send('Error en el servidor');
+  }
+};
+
+// Obtener usuario autenticado
+exports.getUsuario = async (req, res) => {
+  try {
+    const usuario = await Usuario.findById(req.usuario.id).select("-password");
+    
+    // Verificar si el usuario está activo
+    if (!usuario.estado) {
+      return res.status(403).json({ msg: 'Usuario inactivo. Contacte al administrador.' });
+    }
+    
+    res.json(usuario);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Error en el servidor");
   }
 };

@@ -220,6 +220,13 @@ const useStyles = makeStyles((theme) => ({
       backgroundColor: "#2563eb",
     },
   },
+  btnRemoveRole: {
+    backgroundColor: "#f59e0b",
+    color: "#fff",
+    "&:hover": {
+      backgroundColor: "#d97706",
+    },
+  },
   userAvatar: {
     width: theme.spacing(4),
     height: theme.spacing(4),
@@ -259,6 +266,8 @@ const useStyles = makeStyles((theme) => ({
     borderRadius: theme.spacing(1.5),
     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
     overflow: "hidden",
+    width: "600px", // Haciendo el modal más grande
+    maxWidth: "90vw",
   },
   dialogTitle: {
     background: "linear-gradient(135deg, #2563eb, #1d4ed8)", // Mantener el azul como solicitado
@@ -436,6 +445,27 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: "#fee2e2",
     color: "#991b1b",
   },
+  // Estilo para botones deshabilitados
+  disabledButton: {
+    opacity: 0.6,
+    backgroundColor: "#94a3b8",
+    "&:hover": {
+      backgroundColor: "#94a3b8",
+      transform: "none",
+      boxShadow: "none",
+    },
+  },
+  // Nuevo estilo para alinear las acciones
+  actionsContainer: {
+    display: "flex",
+    justifyContent: "center",
+    gap: theme.spacing(1),
+  },
+  actionButtonPlaceholder: {
+    width: "40px", // Ancho aproximado de un botón
+    height: "40px", // Alto aproximado de un botón
+    visibility: "hidden",
+  },
 }))
 
 const UsuarioList = () => {
@@ -456,7 +486,7 @@ const UsuarioList = () => {
   })
   const [searchTerm, setSearchTerm] = useState("")
   const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [rowsPerPage, setRowsPerPage] = useState(5)
   const [availableRoles, setAvailableRoles] = useState([])
   // Estados para validación de formulario
   const [formErrors, setFormErrors] = useState({
@@ -497,6 +527,11 @@ const UsuarioList = () => {
     fetchUsuarios()
     fetchAvailableRoles()
   }, [])
+
+  // Verificar si el usuario es el administrador (David Andres Goez Cano)
+  const isAdminUser = (usuario) => {
+    return usuario.documento === "1152458310" && usuario.nombre === "David Andres Goez Cano"
+  }
 
   // Abrir modal para crear o editar usuario
   const handleOpen = (usuario) => {
@@ -565,6 +600,18 @@ const UsuarioList = () => {
   const handleChange = (e) => {
     const { name, value } = e.target
     const prevValue = formData[name]
+
+    // Si estamos editando al administrador, no permitir cambiar el estado a inactivo
+    if (editingId && isAdminUser(formData) && name === "estado" && value === false) {
+      Swal.fire({
+        icon: "error",
+        title: "Acción no permitida",
+        text: "No se puede desactivar al usuario administrador",
+        confirmButtonColor: "#2563eb",
+      })
+      return
+    }
+
     setFormData({ ...formData, [name]: value })
 
     // Determinar si estamos borrando texto (la longitud del valor está disminuyendo)
@@ -676,10 +723,10 @@ const UsuarioList = () => {
       value.trim() !== "" ||
       ["nombre", "documento", "email", "telefono"].includes(name) ||
       (name === "password" && !editingId)
-    const isValid = validateField(name, value, showAlert)
+    const isValidField = validateField(name, value, showAlert)
 
     // Si no es válido y debemos mostrar alerta, mostrarla
-    if (!isValid && showAlert) {
+    if (!isValidField && showAlert) {
       Swal.fire({
         icon: "warning",
         title: "Validación",
@@ -698,11 +745,11 @@ const UsuarioList = () => {
   const handleKeyDown = (e, nextFieldName) => {
     if (e.key === "Tab") {
       const { name, value } = e.target
-      const isValid = validateField(name, value, true)
+      const isValidField = validateField(name, value, true)
 
       // No prevenimos el comportamiento por defecto, permitiendo que el Tab funcione normalmente
       // Solo mostramos la alerta si hay un error
-      if (!isValid) {
+      if (!isValidField) {
         Swal.fire({
           icon: "warning",
           title: "Campo con errores",
@@ -800,10 +847,27 @@ const UsuarioList = () => {
       return
     }
 
+    // Si estamos editando al administrador, verificar que no se esté desactivando
+    if (editingId && isAdminUser(formData) && formData.estado === false) {
+      Swal.fire({
+        icon: "error",
+        title: "Acción no permitida",
+        text: "No se puede desactivar al usuario administrador",
+        confirmButtonColor: "#2563eb",
+      })
+      return
+    }
+
     // Si no hay errores, continuar con el envío
     try {
       if (editingId) {
-        await usuarioService.updateUsuario(editingId, formData)
+        // Si la contraseña está vacía, eliminarla del objeto para no actualizarla
+        const dataToSend = { ...formData }
+        if (!dataToSend.password) {
+          delete dataToSend.password
+        }
+
+        await usuarioService.updateUsuario(editingId, dataToSend)
         Swal.fire({
           icon: "success",
           title: "Actualizado",
@@ -826,13 +890,36 @@ const UsuarioList = () => {
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "Ocurrió un error al guardar el usuario.",
+        text: error.response?.data?.msg || "Ocurrió un error al guardar el usuario.",
       })
     }
   }
 
   // Eliminar usuario
   const handleDelete = async (id) => {
+    // Verificar si es el usuario administrador
+    const usuarioToDelete = usuarios.find((u) => u._id === id)
+    if (usuarioToDelete && isAdminUser(usuarioToDelete)) {
+      Swal.fire({
+        icon: "error",
+        title: "Acción no permitida",
+        text: "No se puede eliminar al usuario administrador",
+        confirmButtonColor: "#2563eb",
+      })
+      return
+    }
+
+    // Verificar si el usuario tiene un rol asignado
+    if (usuarioToDelete && usuarioToDelete.rol && usuarioToDelete.rol !== "") {
+      Swal.fire({
+        icon: "error",
+        title: "Acción no permitida",
+        text: "Debe quitar el rol del usuario antes de eliminarlo",
+        confirmButtonColor: "#2563eb",
+      })
+      return
+    }
+
     const confirmDelete = await Swal.fire({
       title: "¿Eliminar usuario?",
       text: "Esta acción no se puede deshacer",
@@ -859,7 +946,54 @@ const UsuarioList = () => {
         Swal.fire({
           icon: "error",
           title: "Error",
-          text: "Ocurrió un error al eliminar el usuario.",
+          text: error.response?.data?.msg || "Ocurrió un error al eliminar el usuario.",
+        })
+      }
+    }
+  }
+
+  // Añadir una nueva función para quitar el rol de un usuario
+  const handleRemoveRole = async (id) => {
+    // Verificar si es el usuario administrador
+    const usuarioToUpdate = usuarios.find((u) => u._id === id)
+    if (usuarioToUpdate && isAdminUser(usuarioToUpdate)) {
+      Swal.fire({
+        icon: "error",
+        title: "Acción no permitida",
+        text: "No se puede quitar el rol al usuario administrador",
+        confirmButtonColor: "#2563eb",
+      })
+      return
+    }
+
+    const confirmRemove = await Swal.fire({
+      title: "¿Quitar rol?",
+      text: "¿Está seguro que desea quitar el rol asignado a este usuario?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Sí, quitar rol",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#64748b",
+    })
+
+    if (confirmRemove.isConfirmed) {
+      try {
+        // Actualizar el usuario quitando el rol
+        await usuarioService.updateUsuario(id, { rol: "" })
+        Swal.fire({
+          icon: "success",
+          title: "Rol eliminado",
+          text: "El rol del usuario ha sido eliminado correctamente.",
+          confirmButtonColor: "#2563eb",
+        })
+        fetchUsuarios()
+      } catch (error) {
+        console.error("Error removing role", error)
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.response?.data?.msg || "Ocurrió un error al quitar el rol del usuario.",
         })
       }
     }
@@ -955,9 +1089,18 @@ const UsuarioList = () => {
                 <TableCell className={classes.tableCell}>{usuario.email}</TableCell>
                 <TableCell className={classes.tableCell}>{usuario.telefono}</TableCell>
                 <TableCell className={classes.tableCell}>{usuario.rol || "Sin rol"}</TableCell>
-                <TableCell className={classes.tableCell}>{usuario.estado ? "Activo" : "Inactivo"}</TableCell>
+                <TableCell className={classes.tableCell}>
+                  <Chip
+                    label={usuario.estado ? "Activo" : "Inactivo"}
+                    className={`${classes.estadoChip} ${
+                      usuario.estado ? classes.estadoActivo : classes.estadoInactivo
+                    }`}
+                  />
+                </TableCell>
+
                 <TableCell className={`${classes.tableCell} ${classes.actionsCell}`}>
-                  <Box display="flex" justifyContent="center" gap={1}>
+                  <Box className={classes.actionsContainer}>
+                    {/* Botón de editar - siempre visible */}
                     <Tooltip title="Editar usuario">
                       <IconButton
                         className={`${classes.actionButton} ${classes.btnEdit}`}
@@ -966,6 +1109,8 @@ const UsuarioList = () => {
                         <Edit size={18} />
                       </IconButton>
                     </Tooltip>
+
+                    {/* Botón de detalles - siempre visible */}
                     <Tooltip title="Ver detalles">
                       <IconButton
                         className={`${classes.actionButton} ${classes.btnDetails}`}
@@ -974,14 +1119,34 @@ const UsuarioList = () => {
                         <Info size={18} />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Eliminar usuario">
-                      <IconButton
-                        className={`${classes.actionButton} ${classes.btnDelete}`}
-                        onClick={() => handleDelete(usuario._id)}
-                      >
-                        <Delete size={18} />
-                      </IconButton>
-                    </Tooltip>
+
+                    {/* Botón de quitar rol - visible solo para usuarios con rol que NO sean administrador */}
+                    {usuario.rol && !isAdminUser(usuario) ? (
+                      <Tooltip title="Quitar rol">
+                        <IconButton
+                          className={`${classes.actionButton} ${classes.btnRemoveRole}`}
+                          onClick={() => handleRemoveRole(usuario._id)}
+                        >
+                          <AssignmentInd style={{ fontSize: 18 }} />
+                        </IconButton>
+                      </Tooltip>
+                    ) : (
+                      <div className={classes.actionButtonPlaceholder}></div>
+                    )}
+
+                    {/* Botón de eliminar - visible solo si no tiene rol y no es administrador */}
+                    {!isAdminUser(usuario) && (!usuario.rol || usuario.rol === "") ? (
+                      <Tooltip title="Eliminar usuario">
+                        <IconButton
+                          className={`${classes.actionButton} ${classes.btnDelete}`}
+                          onClick={() => handleDelete(usuario._id)}
+                        >
+                          <Delete size={18} />
+                        </IconButton>
+                      </Tooltip>
+                    ) : (
+                      <div className={classes.actionButtonPlaceholder}></div>
+                    )}
                   </Box>
                 </TableCell>
               </TableRow>
@@ -1013,7 +1178,20 @@ const UsuarioList = () => {
       />
 
       {/* Modal para crear/editar usuario - Diseño actualizado */}
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" classes={{ paper: classes.dialogPaper }}>
+      <Dialog
+        open={open}
+        onClose={(event, reason) => {
+          // Solo permitir cerrar con el botón X o el botón Cerrar
+          if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
+            handleClose()
+          }
+        }}
+        disableBackdropClick={true}
+        disableEscapeKeyDown={true}
+        fullWidth
+        maxWidth="sm"
+        classes={{ paper: classes.dialogPaper }}
+      >
         <DialogTitle className={classes.dialogTitle}>
           {editingId ? "Editar Usuario" : "Agregar Usuario"}
           <IconButton onClick={handleClose} className={classes.closeButton}>
@@ -1027,28 +1205,8 @@ const UsuarioList = () => {
               <AccountCircle />
               Información Personal
             </Typography>
-            <TextField
-              className={classes.formField}
-              margin="dense"
-              label="Nombre"
-              name="nombre"
-              value={formData.nombre}
-              onChange={handleChange}
-              onBlur={handleFieldBlur}
-              onKeyDown={(e) => handleKeyDown(e, "documento")}
-              fullWidth
-              variant="outlined"
-              error={!!formErrors.nombre}
-              helperText={formErrors.nombre}
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Person className={classes.fieldIcon} />
-                  </InputAdornment>
-                ),
-              }}
-            />
+
+            {/* Documento como primer campo */}
             <TextField
               className={classes.formField}
               margin="dense"
@@ -1057,7 +1215,7 @@ const UsuarioList = () => {
               value={formData.documento}
               onChange={handleChange}
               onBlur={handleFieldBlur}
-              onKeyDown={(e) => handleKeyDown(e, "email")}
+              onKeyDown={(e) => handleKeyDown(e, "nombre")}
               fullWidth
               variant="outlined"
               error={!!formErrors.documento}
@@ -1067,6 +1225,29 @@ const UsuarioList = () => {
                 startAdornment: (
                   <InputAdornment position="start">
                     <PermIdentity className={classes.fieldIcon} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            <TextField
+              className={classes.formField}
+              margin="dense"
+              label="Nombre"
+              name="nombre"
+              value={formData.nombre}
+              onChange={handleChange}
+              onBlur={handleFieldBlur}
+              onKeyDown={(e) => handleKeyDown(e, "email")}
+              fullWidth
+              variant="outlined"
+              error={!!formErrors.nombre}
+              helperText={formErrors.nombre}
+              required
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Person className={classes.fieldIcon} />
                   </InputAdornment>
                 ),
               }}
@@ -1148,7 +1329,7 @@ const UsuarioList = () => {
               error={!!formErrors.password}
               helperText={
                 !editingId
-                  ? "Debe contener al menos una mayúscula, un número y un carácter especial"
+                  ? "Debe contener al menos una mayúscula, una minúscula, un número y un carácter especial"
                   : "Dejar en blanco para mantener la contraseña actual"
               }
               required={!editingId}
@@ -1160,59 +1341,65 @@ const UsuarioList = () => {
                 ),
               }}
             />
-            <TextField
-              className={classes.formField}
-              select
-              margin="dense"
-              label="Rol"
-              name="rol"
-              value={formData.rol}
-              onChange={handleChange}
-              fullWidth
-              variant="outlined"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <VerifiedUser className={classes.fieldIcon} />
-                  </InputAdornment>
-                ),
-              }}
-            >
-              {availableRoles.length > 0 ? (
-                availableRoles.map((rol) => (
-                  <MenuItem key={rol._id} value={rol.nombre}>
-                    {rol.nombre}
-                  </MenuItem>
-                ))
-              ) : (
-                <>
-                  <MenuItem value="administrador">administrador</MenuItem>
-                  <MenuItem value="recepcion">recepcion</MenuItem>
-                  <MenuItem value="cliente">cliente</MenuItem>
-                </>
-              )}
-            </TextField>
-            <TextField
-              className={classes.formField}
-              select
-              margin="dense"
-              label="Estado"
-              name="estado"
-              value={formData.estado}
-              onChange={handleChange}
-              fullWidth
-              variant="outlined"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <AssignmentInd className={classes.fieldIcon} />
-                  </InputAdornment>
-                ),
-              }}
-            >
-              <MenuItem value={true}>Activo</MenuItem>
-              <MenuItem value={false}>Inactivo</MenuItem>
-            </TextField>
+
+            {/* Mostrar campos de rol y estado solo si NO es el administrador */}
+            {!(editingId && isAdminUser(formData)) && (
+              <>
+                <TextField
+                  className={classes.formField}
+                  select
+                  margin="dense"
+                  label="Rol"
+                  name="rol"
+                  value={formData.rol}
+                  onChange={handleChange}
+                  fullWidth
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <VerifiedUser className={classes.fieldIcon} />
+                      </InputAdornment>
+                    ),
+                  }}
+                >
+                  {availableRoles.length > 0 ? (
+                    availableRoles.map((rol) => (
+                      <MenuItem key={rol._id} value={rol.nombre}>
+                        {rol.nombre}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <>
+                      <MenuItem value="administrador">administrador</MenuItem>
+                      <MenuItem value="recepcion">recepcion</MenuItem>
+                      <MenuItem value="cliente">cliente</MenuItem>
+                    </>
+                  )}
+                </TextField>
+                <TextField
+                  className={classes.formField}
+                  select
+                  margin="dense"
+                  label="Estado"
+                  name="estado"
+                  value={formData.estado}
+                  onChange={handleChange}
+                  fullWidth
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <AssignmentInd className={classes.fieldIcon} />
+                      </InputAdornment>
+                    ),
+                  }}
+                >
+                  <MenuItem value={true}>Activo</MenuItem>
+                  <MenuItem value={false}>Inactivo</MenuItem>
+                </TextField>
+              </>
+            )}
           </Box>
         </DialogContent>
         <DialogActions className={classes.dialogActions}>
@@ -1232,7 +1419,14 @@ const UsuarioList = () => {
       {/* Modal de detalles (solo lectura) - Diseño actualizado */}
       <Dialog
         open={detailsOpen}
-        onClose={handleCloseDetails}
+        onClose={(event, reason) => {
+          // Solo permitir cerrar con el botón X o el botón Cerrar
+          if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
+            handleCloseDetails()
+          }
+        }}
+        disableBackdropClick={true}
+        disableEscapeKeyDown={true}
         fullWidth
         maxWidth="sm"
         classes={{ paper: classes.dialogPaper }}
