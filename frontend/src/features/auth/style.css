@@ -1,0 +1,1084 @@
+/* Fuentes */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+
+/* Estilos base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Poppins", sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  overflow-x: hidden;
+  color: #333;
+}
+
+/* Contenedor principal */
+.auth-container {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+}
+
+/* Tarjeta principal */
+.auth-card {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  margin: auto;
+  background: white;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Columna izquierda (imagen) */
+.auth-image-column {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1a365d, #2563eb);
+}
+
+.auth-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.8;
+}
+
+/* Columna derecha (formulario) */
+.auth-form-column {
+  flex: 1;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Contenedor del logo */
+.auth-logo-container {
+  width: 60px;
+  height: 60px;
+  background: #2563eb;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  color: white;
+}
+
+.auth-logo-icon {
+  font-size: 1.5rem !important;
+  color: white !important;
+}
+
+/* Encabezado del formulario */
+.auth-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.auth-header h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.auth-header p {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+/* Formulario */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Separador */
+.auth-divider {
+  position: relative;
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.auth-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: #e2e8f0;
+  z-index: 1;
+}
+
+.auth-divider span {
+  position: relative;
+  z-index: 2;
+  background-color: white;
+  padding: 0 0.75rem;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Grupo de inputs */
+.auth-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.auth-input-group label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #475569;
+  margin-left: 0.25rem;
+}
+
+.auth-input-container {
+  display: flex;
+  align-items: center;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.auth-input-container:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  transform: translateY(-2px);
+}
+
+.auth-input-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.75rem;
+  color: #2563eb !important;
+}
+
+.auth-input-container input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 0.875rem 0.75rem;
+  background-color: transparent;
+  font-size: 0.95rem;
+  color: #1e293b;
+  width: 100%;
+  min-width: 0;
+  font-family: "Poppins", sans-serif;
+}
+
+.auth-input-container input::placeholder {
+  color: #94a3b8;
+}
+
+.auth-password-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 0.75rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+}
+
+/* Botón principal */
+.auth-button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 0.875rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  font-family: "Poppins", sans-serif;
+}
+
+.auth-button:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.auth-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Botón de volver */
+.auth-back-button {
+  background-color: transparent;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  border-radius: 12px;
+  padding: 0.75rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: "Poppins", sans-serif;
+  margin-top: 0.5rem;
+}
+
+.auth-back-button:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+}
+
+.auth-back-icon {
+  font-size: 1.1rem;
+}
+
+/* Enlaces de registro/login */
+.auth-links {
+  text-align: center;
+  margin-top: 1.5rem;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.auth-links a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.auth-links a:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+/* Iconos sociales */
+.auth-social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.auth-social-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+}
+
+.auth-social-icon:hover {
+  transform: translateY(-2px);
+  background-color: #f1f5f9;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Enlace de recuperación de contraseña */
+.auth-forgot-password {
+  text-align: right;
+  margin-top: -0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.auth-forgot-password a {
+  color: #2563eb;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.auth-forgot-password a:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+/* Mensajes de error y éxito */
+.auth-error,
+.auth-success {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.auth-error {
+  background-color: rgba(254, 226, 226, 0.8);
+  color: #e11d48;
+  border-left: 4px solid #e11d48;
+}
+
+.auth-success {
+  background-color: rgba(220, 252, 231, 0.8);
+  color: #166534;
+  border-left: 4px solid #166534;
+}
+
+.auth-error-icon,
+.auth-success-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.auth-error-icon {
+  background-color: #e11d48;
+  color: white;
+}
+
+.auth-success-icon {
+  background-color: #166534;
+  color: white;
+}
+
+/* Spinner de carga */
+.auth-loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Fila de formulario */
+.auth-form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.auth-form-row .auth-input-group {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .auth-card {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .auth-image-column {
+    height: 200px;
+  }
+
+  .auth-form-column {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .auth-form-row {
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .auth-form-column {
+    padding: 1.5rem;
+  }
+}
+
+/* Mantener los estilos originales para compatibilidad */
+.luxury-hotel-container {
+  display: none;
+}
+/* Contenedor principal */
+.luxury-hotel-container {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Fondo y formas decorativas */
+.luxury-hotel-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+
+.luxury-hotel-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(23, 37, 84, 0.75) 100%);
+  backdrop-filter: blur(5px);
+}
+
+.luxury-hotel-shape {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a365d, #2563eb);
+  opacity: 0.1;
+  filter: blur(60px);
+}
+
+.shape-1 {
+  width: 500px;
+  height: 500px;
+  top: -200px;
+  right: -100px;
+  animation: float 15s ease-in-out infinite;
+}
+
+.shape-2 {
+  width: 400px;
+  height: 400px;
+  bottom: -150px;
+  left: -100px;
+  animation: float 18s ease-in-out infinite reverse;
+}
+
+.shape-3 {
+  width: 300px;
+  height: 300px;
+  top: 50%;
+  right: 15%;
+  animation: float 12s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(-20px, -30px) rotate(8deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+
+/* Contenido principal */
+.luxury-hotel-content {
+  display: flex;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Sección izquierda */
+.luxury-hotel-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem;
+  color: white;
+}
+
+.luxury-hotel-branding {
+  margin-bottom: 3rem;
+  text-align: center;
+}
+
+.luxury-hotel-logo-container {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 1.5rem;
+}
+
+.luxury-hotel-logo {
+  width: 70px;
+  height: 70px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+}
+
+.luxury-hotel-logo-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  animation: spin 20s linear infinite;
+}
+
+.luxury-hotel-logo-ring::before,
+.luxury-hotel-logo-ring::after {
+  content: "";
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  background: #2563eb;
+  border-radius: 50%;
+}
+
+.luxury-hotel-logo-ring::before {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.luxury-hotel-logo-ring::after {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.luxury-hotel-logo-icon {
+  color: #2563eb !important;
+  font-size: 2.2rem !important;
+}
+
+.luxury-hotel-title {
+  font-family: "Playfair Display", serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  letter-spacing: 1px;
+}
+
+.luxury-hotel-tagline {
+  font-size: 1.1rem;
+  font-weight: 300;
+  opacity: 0.9;
+  letter-spacing: 1px;
+}
+
+/* Características */
+.luxury-hotel-features {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.luxury-hotel-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.luxury-hotel-feature:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.luxury-hotel-feature-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #1a365d, #2563eb);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.luxury-hotel-feature-content h3 {
+  font-family: "Playfair Display", serif;
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.luxury-hotel-feature-content p {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  line-height: 1.5;
+}
+
+/* Sección derecha */
+.luxury-hotel-right {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+/* Tarjeta de formulario */
+.luxury-hotel-card {
+  width: 100%;
+  max-width: 450px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  position: relative;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.luxury-hotel-register-card {
+  max-width: 480px;
+}
+
+.luxury-hotel-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, #1a365d, #2563eb);
+}
+
+.luxury-hotel-card-header {
+  padding: 2rem 2rem 1rem;
+  text-align: center;
+}
+
+.luxury-hotel-card-header h2 {
+  font-family: "Playfair Display", serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.luxury-hotel-card-header p {
+  color: #64748b;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+/* Formulario */
+.luxury-hotel-form {
+  padding: 0 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.luxury-hotel-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.luxury-hotel-form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.luxury-hotel-form-row .luxury-hotel-input-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.luxury-hotel-input-group label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #475569;
+  margin-left: 0.25rem;
+}
+
+.luxury-hotel-input-container {
+  display: flex;
+  align-items: center;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.luxury-hotel-input-container:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  transform: translateY(-2px);
+}
+
+.luxury-hotel-input-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.75rem;
+  color: #2563eb;
+}
+
+.luxury-hotel-input-container input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 0.875rem 0.75rem;
+  background-color: transparent;
+  font-size: 0.95rem;
+  color: #1e293b;
+  width: 100%;
+  min-width: 0;
+  font-family: "Poppins", sans-serif;
+}
+
+.luxury-hotel-input-container input::placeholder {
+  color: #94a3b8;
+}
+
+.luxury-hotel-password-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 0.75rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+}
+
+/* Botones */
+.luxury-hotel-button {
+  background: linear-gradient(135deg, #1a365d, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 0.875rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  font-family: "Poppins", sans-serif;
+}
+
+.luxury-hotel-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: all 0.6s ease;
+}
+
+.luxury-hotel-button:hover::before {
+  left: 100%;
+}
+
+.luxury-hotel-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.luxury-hotel-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.luxury-hotel-back-button {
+  background-color: transparent;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  border-radius: 12px;
+  padding: 0.75rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: "Poppins", sans-serif;
+}
+
+.luxury-hotel-back-button:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+}
+
+.luxury-hotel-back-icon {
+  font-size: 1.1rem;
+}
+
+/* Separador */
+.luxury-hotel-divider {
+  position: relative;
+  text-align: center;
+  margin: 1.5rem 2rem;
+}
+
+.luxury-hotel-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: #e2e8f0;
+  z-index: 1;
+}
+
+.luxury-hotel-divider span {
+  position: relative;
+  z-index: 2;
+  background-color: white;
+  padding: 0 0.75rem;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Enlaces de registro */
+.luxury-hotel-register {
+  text-align: center;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #f1f5f9;
+  background-color: #f8fafc;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.luxury-hotel-register a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.luxury-hotel-register a:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+/* Mensajes de error y éxito */
+.luxury-hotel-error,
+.luxury-hotel-success {
+  margin: 0 2rem 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.luxury-hotel-error {
+  background-color: rgba(254, 226, 226, 0.8);
+  color: #e11d48;
+  border-left: 4px solid #e11d48;
+}
+
+.luxury-hotel-success {
+  background-color: rgba(220, 252, 231, 0.8);
+  color: #166534;
+  border-left: 4px solid #166534;
+}
+
+.luxury-hotel-error-icon,
+.luxury-hotel-success-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.luxury-hotel-error-icon {
+  background-color: #e11d48;
+  color: white;
+}
+
+.luxury-hotel-success-icon {
+  background-color: #166534;
+  color: white;
+}
+
+/* Spinner de carga */
+.luxury-hotel-loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .luxury-hotel-content {
+    padding: 1.5rem;
+  }
+
+  .luxury-hotel-left,
+  .luxury-hotel-right {
+    padding: 1.5rem;
+  }
+
+  .luxury-hotel-title {
+    font-size: 2.2rem;
+  }
+}
+
+@media (max-width: 992px) {
+  .luxury-hotel-content {
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .luxury-hotel-left {
+    padding-bottom: 0;
+  }
+
+  .luxury-hotel-right {
+    padding-top: 0;
+  }
+
+  .luxury-hotel-features {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .luxury-hotel-feature {
+    width: calc(50% - 0.5rem);
+  }
+}
+
+@media (max-width: 768px) {
+  .luxury-hotel-form-row {
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .luxury-hotel-features {
+    flex-direction: column;
+  }
+
+  .luxury-hotel-feature {
+    width: 100%;
+  }
+
+  .luxury-hotel-title {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .luxury-hotel-card-header,
+  .luxury-hotel-form,
+  .luxury-hotel-register,
+  .luxury-hotel-error,
+  .luxury-hotel-success,
+  .luxury-hotel-divider {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    margin-left: 1.5rem;
+    margin-right: 1.5rem;
+  }
+
+  .luxury-hotel-title {
+    font-size: 1.8rem;
+  }
+
+  .luxury-hotel-card-header h2 {
+    font-size: 1.5rem;
+  }
+}
+

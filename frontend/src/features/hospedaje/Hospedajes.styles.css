@@ -1,0 +1,132 @@
+/* Estilos para el contenedor principal de hospedajes */
+.hospedaje-container {
+  font-family: "Montserrat", sans-serif;
+  padding: 20px;
+  background-color: #f8fafc;
+}
+
+/* Título principal */
+.hospedaje-titulo {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 2rem;
+}
+
+/* Contenedor de la tabla principal */
+.hospedajes-tabla-container {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+/* Tabla principal */
+.hospedajes-tabla-container table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.hospedajes-tabla-container th,
+.hospedajes-tabla-container td {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Encabezado de la tabla */
+.hospedajes-tabla-container th {
+  background: linear-gradient(to right, #4a6cf7, #2563eb);
+  color: #fff;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* Efecto hover en filas */
+.hospedajes-tabla-container tbody tr:hover {
+  background: rgba(29, 78, 216, 0.1);
+  transition: background 0.3s;
+}
+
+/* Estilos para SweetAlert2 */
+.swal2-container {
+  z-index: 9999 !important;
+}
+
+.swal2-popup {
+  z-index: 10000 !important;
+  font-size: 1rem !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2) !important;
+}
+
+.swal2-title {
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+}
+
+.swal2-html-container {
+  font-size: 1rem !important;
+  text-align: left !important;
+  margin: 1em 1.6em 0.3em !important;
+  color: #334155 !important;
+}
+
+.swal2-icon {
+  margin: 1.5em auto 0.6em !important;
+}
+
+.swal2-styled.swal2-confirm {
+  background-color: #2563eb !important;
+  font-weight: 600 !important;
+  padding: 0.5em 1.5em !important;
+}
+
+.swal2-styled.swal2-cancel {
+  background-color: #64748b !important;
+  font-weight: 600 !important;
+  padding: 0.5em 1.5em !important;
+}
+
+/* Estilos para SweetAlert2 toast */
+.swal2-toast {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15) !important;
+}
+
+.swal2-toast .swal2-title {
+  font-size: 1.1rem !important;
+}
+
+.swal2-toast .swal2-html-container {
+  font-size: 0.9rem !important;
+}
+
+/* Estilos para campos con error */
+.error-input {
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes shake {
+  10%,
+  90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+
+  20%,
+  80% {
+    transform: translate3d(2px, 0, 0);
+  }
+
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+
+  40%,
+  60% {
+    transform: translate3d(4px, 0, 0);
+  }
+}

@@ -1,0 +1,408 @@
+.clientes-container {
+  font-family: "Inter", "Montserrat", sans-serif;
+  margin-top: 16px;
+  padding: 24px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 1200px;
+}
+
+/* Encabezado de la página */
+.clientes-pageHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32px;
+  position: relative;
+}
+.clientes-pageHeader::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(to right, #2563eb, #1d4ed8);
+  border-radius: 2px;
+}
+.clientes-pageTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 8px;
+  text-align: center;
+  background: linear-gradient(to right, #2563eb, #1d4ed8);
+  --webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.clientes-pageSubtitle {
+  font-size: 1rem;
+  color: #64748b;
+  text-align: center;
+}
+
+/* Barra de búsqueda y botón agregar */
+.clientes-searchContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.clientes-searchField {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.clientes-addButton {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #fff;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.clientes-addButton:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  box-shadow: 0 6px 15px rgba(37, 99, 235, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Tabla */
+.clientes-tableContainer {
+  margin-bottom: 24px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  background: #fff;
+  width: 100%;
+}
+.clientes-tableRow {
+  transition: all 0.3s ease;
+}
+.clientes-tableRow:nth-of-type(odd) {
+  background-color: rgba(243, 244, 246, 0.5);
+}
+.clientes-tableRow:hover {
+  background: rgba(37, 99, 235, 0.08);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+.clientes-tableCell {
+  text-align: center;
+  padding: 14px 16px;
+  font-size: 0.95rem;
+  color: #334155;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Styled table cell para el encabezado */
+.clientes-styledTableCell {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #fff;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  padding: 16px;
+  text-align: center;
+  letter-spacing: 0.8px;
+  border-bottom: none;
+  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.1);
+}
+
+/* Acciones */
+.clientes-actionsCell {
+  min-width: 150px;
+}
+.clientes-actionButton {
+  margin: 0 4px;
+  transition: transform 0.3s, box-shadow 0.3s;
+  border-radius: 50%;
+  padding: 8px;
+  cursor: pointer;
+}
+.clientes-actionButton:hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+.clientes-btnEdit {
+  background-color: #10b981;
+  color: #fff;
+}
+.clientes-btnEdit:hover {
+  background-color: #059669;
+}
+.clientes-btnDelete {
+  background-color: #ef4444;
+  color: #fff;
+}
+.clientes-btnDelete:hover {
+  background-color: #dc2626;
+}
+.clientes-btnDetails {
+  background-color: #3b82f6;
+  color: #fff;
+}
+.clientes-btnDetails:hover {
+  background-color: #2563eb;
+}
+
+/* Avatar */
+.clientes-userAvatar {
+  width: 32px;
+  height: 32px;
+  background-color: #2563eb;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+/* Paginación */
+.clientes-pagination {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background-color: #fff;
+  padding: 12px;
+}
+
+/* No hay datos */
+.clientes-noDataRow {
+  height: 200px;
+}
+.clientes-noDataCell {
+  text-align: center;
+  padding: 32px;
+  color: #64748b;
+  font-size: 1.1rem;
+}
+
+/* Modal */
+.clientes-dialogPaper {
+  border-radius: 16px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+.clientes-dialogTitle {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #fff;
+  padding: 20px 24px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  position: relative;
+}
+.clientes-closeButton {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.15);
+  border: none;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 50%;
+}
+.clientes-closeButton:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+}
+.clientes-dialogContent {
+  padding: 24px 18px 18px 18px;
+  background-color: #fff;
+}
+.clientes-dialogActions {
+  padding: 16px 24px 18px;
+  background-color: #fff;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.clientes-cancelButton {
+  color: #64748b;
+  font-weight: 600;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+}
+.clientes-cancelButton:hover {
+  background-color: rgba(100, 116, 139, 0.1);
+}
+.clientes-submitButton {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #fff;
+  font-weight: 600;
+  padding: 8px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.clientes-submitButton:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+}
+
+/* Detalles del modal */
+.clientes-detailsRow {
+  margin-bottom: 16px;
+  padding: 14px;
+  border-radius: 8px;
+  background-color: rgba(243, 244, 246, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+.clientes-detailsLabel {
+  font-weight: 600;
+  color: #1e293b;
+  margin-right: 8px;
+}
+.clientes-detailsValue {
+  color: #334155;
+}
+
+/* Estilos para la gestión de usuarios */
+.MuiContainer-root {
+  position: relative;
+}
+
+/* Efecto de gradiente para el fondo */
+.MuiContainer-root::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  background: linear-gradient(to right, #2563eb, #1d4ed8);
+  border-radius: 6px 6px 0 0;
+}
+
+/* Animaciones para elementos */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Aplicar animaciones a elementos */
+.MuiTableContainer-root {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.MuiTableRow-root {
+  animation: slideIn 0.3s ease-out;
+  animation-fill-mode: both;
+}
+
+/* Aplicar retraso a las filas para efecto escalonado */
+.MuiTableRow-root:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.MuiTableRow-root:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.MuiTableRow-root:nth-child(3) {
+  animation-delay: 0.15s;
+}
+.MuiTableRow-root:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.MuiTableRow-root:nth-child(5) {
+  animation-delay: 0.25s;
+}
+.MuiTableRow-root:nth-child(6) {
+  animation-delay: 0.3s;
+}
+.MuiTableRow-root:nth-child(7) {
+  animation-delay: 0.35s;
+}
+.MuiTableRow-root:nth-child(8) {
+  animation-delay: 0.4s;
+}
+.MuiTableRow-root:nth-child(9) {
+  animation-delay: 0.45s;
+}
+.MuiTableRow-root:nth-child(10) {
+  animation-delay: 0.5s;
+}
+
+/* Mejoras para inputs y botones */
+.MuiOutlinedInput-root {
+  transition: all 0.3s ease;
+}
+
+.MuiOutlinedInput-root:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.MuiButton-root {
+  transition: all 0.3s ease;
+}
+
+/* Estilos para SweetAlert2 personalizado */
+.swal2-popup {
+  border-radius: 16px !important;
+  padding: 24px !important;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15) !important;
+}
+
+.swal2-title {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+}
+
+.swal2-html-container {
+  font-size: 16px !important;
+  color: #334155 !important;
+}
+
+.swal2-confirm {
+  background: linear-gradient(to right, #2563eb, #1d4ed8) !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  padding: 10px 24px !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+}
+
+.swal2-cancel {
+  background: linear-gradient(to right, #64748b, #475569) !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  padding: 10px 24px !important;
+}
+
+.swal2-icon {
+  border-width: 3px !important;
+}
+
+/* Mejoras para dispositivos móviles */
+@media (max-width: 600px) {
+  .MuiTableCell-root {
+    padding: 12px 8px !important;
+  }
+
+  .MuiTypography-h4 {
+    font-size: 1.5rem !important;
+  }
+}
+

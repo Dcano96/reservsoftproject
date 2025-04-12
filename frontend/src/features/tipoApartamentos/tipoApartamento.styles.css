@@ -1,0 +1,40 @@
+.tipoApartamento-container {
+    padding: 16px;
+    font-family: 'Montserrat', sans-serif;
+  }
+  
+  .tipoApartamento-titulo {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 2rem;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .tipoApartamento-tabla-container {
+    margin-top: 20px;
+  }
+  
+  /* Ajustes para la tabla, celdas y filas */
+  .tipoApartamento-tabla-container .MuiTableCell-root {
+    text-align: center;
+    padding: 12px 8px;
+  }
+  
+  .tipoApartamento-tabla-container .MuiTableRow-root:hover {
+    background-color: rgba(29, 78, 216, 0.15);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+  }
+  
+  /* Estilos para botones dentro de la tabla */
+  .tipoApartamento-tabla-container button {
+    margin: 0 4px;
+    transition: transform 0.3s ease;
+  }
+  
+  .tipoApartamento-tabla-container button:hover {
+    transform: scale(1.05);
+  }
+  
+  /* Puedes agregar estilos adicionales para modales, paginación y otros elementos según necesites */
+  

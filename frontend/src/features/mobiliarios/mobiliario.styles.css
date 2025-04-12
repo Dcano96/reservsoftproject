@@ -1,0 +1,66 @@
+/* mobiliario.styles.css */
+
+.mobiliario-container {
+  padding: 16px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.mobiliario-titulo {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.mobiliario-tabla-container {
+  margin-top: 20px;
+}
+
+/* Estilos para la tabla, celdas y filas */
+.mobiliario-tabla-container .MuiTableCell-root {
+  text-align: center;
+  padding: 12px 8px;
+}
+
+.mobiliario-tabla-container .MuiTableRow-root:hover {
+  background-color: rgba(29, 78, 216, 0.15);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+}
+
+/* Estilos para los estados */
+.estado-activo {
+  background-color: #4caf50; /* Verde */
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.estado-inactivo {
+  background-color: #f44336; /* Rojo */
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.estado-mantenimiento {
+  background-color: #ff9800; /* Naranja */
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Botones dentro de la tabla */
+.mobiliario-tabla-container button {
+  margin: 0 4px;
+  transition: transform 0.3s ease;
+}
+
+.mobiliario-tabla-container button:hover {
+  transform: scale(1.05);
+}
+
+/* Puedes agregar estilos adicionales para modales, paginación u otros elementos según necesites */
