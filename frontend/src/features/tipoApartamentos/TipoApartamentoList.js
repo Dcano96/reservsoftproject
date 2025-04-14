@@ -23,10 +23,10 @@ import {
   Avatar,
   InputAdornment,
   Divider,
-  Select,
-  MenuItem,
   FormControl,
   InputLabel,
+  Select,
+  MenuItem,
 } from "@material-ui/core"
 import { Edit, Delete, Eye, X, Search, Plus, Home, FileText } from "lucide-react"
 import { useHistory } from "react-router-dom"
@@ -245,8 +245,8 @@ const useStyles = makeStyles((theme) => ({
     borderRadius: theme.spacing(1.5),
     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
     overflow: "hidden",
-    width: "700px", // Aumentado de 500px a 700px
-    maxWidth: "95vw", // Aumentado de 90vw a 95vw para mayor espacio en pantallas pequeñas
+    width: "700px",
+    maxWidth: "95vw",
   },
   dialogTitle: {
     background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
@@ -398,16 +398,6 @@ const TipoApartamentoList = ({ onModuleChange }) => {
   const [viewOpen, setViewOpen] = useState(false)
   const [viewData, setViewData] = useState(null)
 
-  // Estados para el tipo personalizado
-  const [tiposPredefinidos] = useState([
-    { id: "tipo1", nombre: "Type 1" },
-    { id: "tipo2", nombre: "Type 2" },
-    { id: "tipo3", nombre: "Penthouse" },
-  ])
-  const [mostrarCampoOtroTipo, setMostrarCampoOtroTipo] = useState(false)
-  const [otroTipo, setOtroTipo] = useState("")
-  const [tipoSeleccionado, setTipoSeleccionado] = useState("")
-
   // Función para cargar tipos de apartamentos
   const fetchTipoApartamentos = async () => {
     try {
@@ -444,18 +434,6 @@ const TipoApartamentoList = ({ onModuleChange }) => {
         estado: tipoApartamento.estado ?? true,
       })
       setEditingId(tipoApartamento._id)
-
-      // Verificar si el tipo está en los predefinidos
-      const tipoExistente = tiposPredefinidos.find((tipo) => tipo.nombre === tipoApartamento.nombre)
-      if (tipoExistente) {
-        setTipoSeleccionado(tipoExistente.nombre)
-        setMostrarCampoOtroTipo(false)
-        setOtroTipo("")
-      } else {
-        setTipoSeleccionado("otro")
-        setMostrarCampoOtroTipo(true)
-        setOtroTipo(tipoApartamento.nombre)
-      }
     } else {
       setFormData({
         nombre: "",
@@ -464,18 +442,12 @@ const TipoApartamentoList = ({ onModuleChange }) => {
         estado: true,
       })
       setEditingId(null)
-      setTipoSeleccionado("")
-      setMostrarCampoOtroTipo(false)
-      setOtroTipo("")
     }
     setOpen(true)
   }
 
   const handleClose = () => {
     setOpen(false)
-    setMostrarCampoOtroTipo(false)
-    setOtroTipo("")
-    setTipoSeleccionado("")
   }
 
   // Función para mostrar detalles en un modal
@@ -484,76 +456,13 @@ const TipoApartamentoList = ({ onModuleChange }) => {
     setViewOpen(true)
   }
 
-  // Manejar cambios en el formulario
+  // Manejar cambios en el formulario (sin validaciones custom)
   const handleChange = (e) => {
     const { name, value } = e.target
-
-    // Validación para el campo descripción (solo letras)
-    if (name === "descripcion") {
-      if (/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s.,]*$/.test(value) || value === "") {
-        setFormData((prev) => ({
-          ...prev,
-          [name]: value,
-        }))
-      } else {
-        Swal.fire({
-          icon: "warning",
-          title: "Validación",
-          text: "El campo descripción solo acepta letras, espacios y puntuación básica",
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 3000,
-        })
-      }
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: name === "tamaño" ? Number(value) : value,
-      }))
-    }
-  }
-
-  // Manejar cambio en el select de tipo
-  const handleTipoChange = (e) => {
-    const value = e.target.value
-    setTipoSeleccionado(value)
-
-    if (value === "otro") {
-      setMostrarCampoOtroTipo(true)
-      // No actualizar el nombre hasta que se ingrese el valor personalizado
-    } else {
-      setMostrarCampoOtroTipo(false)
-      setOtroTipo("")
-      setFormData((prev) => ({
-        ...prev,
-        nombre: value,
-      }))
-    }
-  }
-
-  // Manejar cambio en el campo de otro tipo
-  const handleOtroTipoChange = (e) => {
-    const value = e.target.value
-
-    // Validación para el campo de otro tipo (solo letras)
-    if (/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]*$/.test(value) || value === "") {
-      setOtroTipo(value)
-      setFormData((prev) => ({
-        ...prev,
-        nombre: value,
-      }))
-    } else {
-      Swal.fire({
-        icon: "warning",
-        title: "Validación",
-        text: "El nombre del tipo solo acepta letras y espacios",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 3000,
-      })
-    }
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "tamaño" ? Number(value) : value,
+    }))
   }
 
   // Enviar formulario para crear o actualizar
@@ -634,11 +543,14 @@ const TipoApartamentoList = ({ onModuleChange }) => {
   const filteredTipoApartamentos = tipoApartamentos.filter(
     (t) =>
       t.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.descripcion.toLowerCase().includes(searchTerm.toLowerCase()),
+      t.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   // Paginación
-  const paginatedTipoApartamentos = filteredTipoApartamentos.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+  const paginatedTipoApartamentos = filteredTipoApartamentos.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  )
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage)
@@ -652,7 +564,11 @@ const TipoApartamentoList = ({ onModuleChange }) => {
   return (
     <Box
       className={classes.container}
-      style={{ paddingTop: "10px", borderTop: "6px solid #2563eb", borderRadius: "8px" }}
+      style={{
+        paddingTop: "10px",
+        borderTop: "6px solid #2563eb",
+        borderRadius: "8px",
+      }}
     >
       <Box className={classes.pageHeader}>
         <Typography variant="h4" className={classes.pageTitle}>
@@ -696,7 +612,9 @@ const TipoApartamentoList = ({ onModuleChange }) => {
         <Table style={{ borderCollapse: "collapse" }}>
           <TableHead>
             <TableRow style={{ backgroundColor: "#2563eb" }}>
-              <StyledTableCell style={{ textAlign: "left", paddingLeft: "24px" }}>Nombre</StyledTableCell>
+              <StyledTableCell style={{ textAlign: "left", paddingLeft: "24px" }}>
+                Nombre
+              </StyledTableCell>
               <StyledTableCell>Descripción</StyledTableCell>
               <StyledTableCell>Tamaño</StyledTableCell>
               <StyledTableCell>Acciones</StyledTableCell>
@@ -713,8 +631,12 @@ const TipoApartamentoList = ({ onModuleChange }) => {
                     <Typography variant="body2">{tipoApartamento.nombre}</Typography>
                   </Box>
                 </TipoTableCell>
-                <TableCell className={classes.tableCell}>{tipoApartamento.descripcion}</TableCell>
-                <TableCell className={classes.tableCell}>{tipoApartamento.tamaño} m²</TableCell>
+                <TableCell className={classes.tableCell}>
+                  {tipoApartamento.descripcion}
+                </TableCell>
+                <TableCell className={classes.tableCell}>
+                  {tipoApartamento.tamaño} m²
+                </TableCell>
                 <TableCell className={`${classes.tableCell} ${classes.actionsCell}`}>
                   <Box display="flex" justifyContent="center" gap={1}>
                     <Tooltip title="Editar tipo">
@@ -736,7 +658,9 @@ const TipoApartamentoList = ({ onModuleChange }) => {
                     <Tooltip title="Eliminar tipo">
                       <IconButton
                         className={`${classes.actionButton} ${classes.btnDelete}`}
-                        onClick={() => handleDelete(tipoApartamento._id, tipoApartamento.estado)}
+                        onClick={() =>
+                          handleDelete(tipoApartamento._id, tipoApartamento.estado)
+                        }
                       >
                         <Delete size={18} />
                       </IconButton>
@@ -769,7 +693,13 @@ const TipoApartamentoList = ({ onModuleChange }) => {
       />
 
       {/* Modal para crear/editar tipo de apartamento */}
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md" classes={{ paper: classes.dialogPaper }}>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        fullWidth
+        maxWidth="md"
+        classes={{ paper: classes.dialogPaper }}
+      >
         <DialogTitle className={classes.dialogTitle}>
           {editingId ? "Editar Tipo de Apartamento" : "Nuevo Tipo de Apartamento"}
           <IconButton onClick={handleClose} className={classes.closeButton}>
@@ -777,57 +707,32 @@ const TipoApartamentoList = ({ onModuleChange }) => {
           </IconButton>
         </DialogTitle>
         <DialogContent className={classes.dialogContent}>
+          {/* Sección para ingresar el nombre del tipo */}
           <Box className={classes.formSection}>
             <Typography className={classes.sectionTitle}>
               <Home size={20} />
               Información del Tipo
             </Typography>
-
-            {/* Select para tipo de apartamento */}
-            <FormControl fullWidth variant="outlined" className={classes.formField}>
-              <InputLabel id="tipo-apartamento-label">Tipo de Apartamento</InputLabel>
-              <Select
-                labelId="tipo-apartamento-label"
-                value={tipoSeleccionado}
-                onChange={handleTipoChange}
-                label="Tipo de Apartamento"
-                fullWidth
-                startAdornment={
+            <TextField
+              className={classes.formField}
+              margin="dense"
+              label="Nombre del Tipo"
+              name="nombre"
+              value={formData.nombre}
+              onChange={handleChange}
+              fullWidth
+              variant="outlined"
+              InputProps={{
+                startAdornment: (
                   <InputAdornment position="start">
                     <Home size={18} className={classes.fieldIcon} />
                   </InputAdornment>
-                }
-              >
-                {tiposPredefinidos.map((tipo) => (
-                  <MenuItem key={tipo.id} value={tipo.nombre}>
-                    {tipo.nombre}
-                  </MenuItem>
-                ))}
-                <MenuItem value="otro">Otro (Personalizado)</MenuItem>
-              </Select>
-            </FormControl>
-
-            {/* Campo para ingresar tipo personalizado */}
-            {mostrarCampoOtroTipo && (
-              <TextField
-                className={classes.formField}
-                margin="dense"
-                label="Especificar tipo de apartamento"
-                value={otroTipo}
-                onChange={handleOtroTipoChange}
-                fullWidth
-                variant="outlined"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Home size={18} className={classes.fieldIcon} />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            )}
+                ),
+              }}
+            />
           </Box>
 
+          {/* Sección de detalles */}
           <Box className={classes.formSection}>
             <Typography className={classes.sectionTitle}>
               <FileText size={20} />
@@ -871,6 +776,27 @@ const TipoApartamentoList = ({ onModuleChange }) => {
                 ),
               }}
             />
+            {/* Selector para cambiar el estado en modo edición */}
+            {editingId && (
+              <FormControl fullWidth variant="outlined" className={classes.formField}>
+                <InputLabel id="estado-label">Estado</InputLabel>
+                <Select
+                  labelId="estado-label"
+                  value={formData.estado ? "Activo" : "Inactivo"}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData((prev) => ({
+                      ...prev,
+                      estado: value === "Activo",
+                    }))
+                  }}
+                  label="Estado"
+                >
+                  <MenuItem value="Activo">Activo</MenuItem>
+                  <MenuItem value="Inactivo">Inactivo</MenuItem>
+                </Select>
+              </FormControl>
+            )}
           </Box>
         </DialogContent>
         <DialogActions className={classes.dialogActions}>
