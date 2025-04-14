@@ -50,7 +50,7 @@ const formatTarifa = (tarifa) => {
 // Personalización de las celdas del encabezado
 const StyledTableCell = withStyles((theme) => ({
   head: {
-    background: "#2563eb", // Cambio a un azul sólido
+    background: "#2563eb",
     color: "#fff",
     fontWeight: 600,
     textTransform: "uppercase",
@@ -258,7 +258,7 @@ const useStyles = makeStyles((theme) => ({
   apartamentoContainer: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "flex-start", // Alineación a la izquierda
+    justifyContent: "flex-start",
     width: "100%",
   },
   pagination: {
@@ -281,21 +281,22 @@ const useStyles = makeStyles((theme) => ({
     color: "#64748b",
     fontSize: "1.1rem",
   },
-  // Estilos actualizados para el modal según usuario-list.tsx
+  // Estilo para el modal de crear/editar (sin modificación)
   dialogPaper: {
     borderRadius: theme.spacing(1.5),
     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
     overflow: "hidden",
-    width: "600px", // Ajustar al tamaño del modal de usuario-list.tsx
-    maxWidth: "90vw", // Para asegurar responsividad
+    width: "600px",
+    maxWidth: "90vw",
   },
-  // Modal de detalles más ancho
+  // Modificación para el modal de detalles (únicamente este modal)
   dialogPaperLarge: {
     borderRadius: theme.spacing(1.5),
     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
     overflow: "hidden",
-    width: "710px", // Reducir el ancho para que no sea tan grande
-    maxWidth: "95vw", // Para asegurar responsividad
+    width: "900px", // Más ancho
+    maxWidth: "95vw",
+    maxHeight: "70vh", // Menos alto (más angosto verticalmente)
   },
   dialogTitle: {
     background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
@@ -384,7 +385,6 @@ const useStyles = makeStyles((theme) => ({
   fieldIcon: {
     color: "#64748b",
   },
-  // Estilos para el modal de detalles
   detailsHeader: {
     display: "flex",
     flexDirection: "column",
@@ -458,88 +458,14 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: "500",
     marginTop: "4px",
   },
-  tabsContainer: {
-    display: "flex",
-    justifyContent: "center",
-    marginBottom: theme.spacing(3),
-    gap: theme.spacing(2),
-  },
-  tabButton: {
-    padding: theme.spacing(1, 3),
-    borderRadius: theme.spacing(1),
-    fontWeight: 600,
-    transition: "all 0.3s ease",
-    border: "1px solid #e2e8f0",
-    backgroundColor: "#f8fafc",
-    color: "#64748b",
-    "&:hover": {
-      backgroundColor: "#f1f5f9",
-      transform: "translateY(-2px)",
-    },
-  },
-  activeTabButton: {
-    backgroundColor: "#2563eb",
-    color: "#fff",
-    border: "1px solid #2563eb",
-    boxShadow: "0 4px 10px rgba(37, 99, 235, 0.3)",
-    "&:hover": {
-      backgroundColor: "#1d4ed8",
-    },
-  },
-  tabIcon: {
-    marginRight: theme.spacing(1),
-  },
-  alertRow: {
-    backgroundColor: "#fee2e2",
-    "& > *": {
-      color: "#991b1b",
-    },
-  },
-  // Estilos para los estados
-  estadoChip: {
-    fontWeight: 600,
-    padding: theme.spacing(0.5, 1.5),
-    borderRadius: theme.spacing(1),
-  },
-  estadoActivo: {
-    backgroundColor: "#dcfce7",
-    color: "#166534",
-  },
-  estadoInactivo: {
-    backgroundColor: "#fee2e2",
-    color: "#991b1b",
-  },
-  // Estilos específicos para la tabla de mobiliarios
-  mobiliarioTable: {
-    width: "100%",
-    borderCollapse: "separate",
-    borderSpacing: 0,
-  },
-  mobiliarioTableHead: {
-    backgroundColor: "#2563eb",
-  },
-  mobiliarioHeaderCell: {
-    color: "#fff",
-    fontWeight: 600,
-    fontSize: "0.9rem",
-    padding: "12px 16px",
-    textAlign: "center",
-  },
-  mobiliarioCell: {
-    padding: "12px 16px",
-    fontSize: "0.9rem",
-    textAlign: "center",
-    borderBottom: "1px solid #e2e8f0",
-  },
 }))
 
 const ApartamentoList = () => {
   const classes = useStyles()
   const history = useHistory()
   const [apartamentos, setApartamentos] = useState([])
-  const [open, setOpen] = useState(false) // Modal para crear/editar
+  const [open, setOpen] = useState(false) // Modal crear/editar
   const [editingId, setEditingId] = useState(null)
-  const [activeTab, setActiveTab] = useState("Type 1") // Pestaña activa por defecto
   const [formData, setFormData] = useState({
     Tipo: "Type 1",
     NumeroApto: "",
@@ -553,7 +479,10 @@ const ApartamentoList = () => {
   const [formErrors, setFormErrors] = useState({})
   const [isFormValid, setIsFormValid] = useState(false)
 
-  // Estados para el modal de detalles (apartamento y mobiliarios asociados)
+  // Estado para el filtro por tipo (por defecto "Todos")
+  const [selectedTipo, setSelectedTipo] = useState("Todos")
+
+  // Estados para el modal de detalles y mobiliarios asociados
   const [openDetails, setOpenDetails] = useState(false)
   const [selectedApartamento, setSelectedApartamento] = useState(null)
   const [mobiliarios, setMobiliarios] = useState([])
@@ -572,11 +501,12 @@ const ApartamentoList = () => {
     fetchTipos()
   }, [])
 
-  // Función para cargar apartamentos
+  // Función para cargar apartamentos (ordenados por Número de Apartamento)
   const fetchApartamentos = async () => {
     try {
       const data = await apartamentoService.getApartamentos()
-      setApartamentos(data)
+      const sortedData = data.sort((a, b) => Number(a.NumeroApto) - Number(b.NumeroApto))
+      setApartamentos(sortedData)
     } catch (error) {
       console.error("Error fetching apartamentos", error)
       Swal.fire({
@@ -591,19 +521,12 @@ const ApartamentoList = () => {
     fetchApartamentos()
   }, [])
 
-  // Función para cambiar de pestaña
-  const handleTabChange = (tab) => {
-    setActiveTab(tab)
-    setPage(0)
-  }
-
-  // Abrir modal para crear o editar
+  // Abrir modal de crear/editar (sin modificaciones)
   const handleOpen = (apartamento) => {
-    setFormErrors({}) // Limpiar errores previos
-
+    setFormErrors({})
     if (apartamento) {
       setFormData({
-        Tipo: apartamento.Tipo || activeTab,
+        Tipo: apartamento.Tipo || "",
         NumeroApto: apartamento.NumeroApto || "",
         Piso: apartamento.Piso || "",
         Tarifa: apartamento.Tarifa || "",
@@ -613,7 +536,12 @@ const ApartamentoList = () => {
       setIsFormValid(true)
     } else {
       setFormData({
-        Tipo: activeTab,
+        Tipo:
+          selectedTipo === "Todos"
+            ? tipoApartamentos.length > 0
+              ? tipoApartamentos[0].nombre
+              : "Type 1"
+            : selectedTipo,
         NumeroApto: "",
         Piso: "",
         Tarifa: "",
@@ -627,7 +555,7 @@ const ApartamentoList = () => {
 
   const handleClose = () => setOpen(false)
 
-  // Función para abrir modal de detalles y cargar mobiliarios asociados
+  // Abrir modal de detalles y cargar mobiliarios asociados
   const handleView = async (apartamento) => {
     setSelectedApartamento(apartamento)
     try {
@@ -650,47 +578,33 @@ const ApartamentoList = () => {
     setMobiliarios([])
   }
 
-  // Manejar cambios en el formulario
+  // Manejar cambios en el formulario (para crear/editar)
   const handleChange = (e) => {
     const { name, value } = e.target
     let newValue = value
-
-    // Validación específica para campos numéricos
     if (["NumeroApto", "Piso", "Tarifa"].includes(name)) {
-      // Verificar que sea un número válido
       if (value === "" || /^\d+$/.test(value)) {
         newValue = value === "" ? "" : Number(value)
       } else {
-        // Si no es un número válido, mantener el valor anterior
         return
       }
     }
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: newValue,
-    }))
-
-    // Validar el campo que cambió
+    setFormData((prev) => ({ ...prev, [name]: newValue }))
     validateField(name, newValue)
   }
 
-  // Función para validar campos individuales
+  // Validar campo individual
   const validateField = async (name, value) => {
     let errorMessage = ""
-
     if (name === "NumeroApto") {
       if (!value) {
         errorMessage = "El número de apartamento es obligatorio"
       } else {
-        // Verificar si el número de apartamento ya existe
         try {
-          // Solo verificar duplicados si estamos creando un nuevo apartamento o cambiando el número
           if (!editingId || (editingId && formData.NumeroApto !== value)) {
             const existingApartamentos = apartamentos.filter(
               (apt) => apt.NumeroApto === value && apt.Tipo === formData.Tipo,
             )
-
             if (existingApartamentos.length > 0) {
               errorMessage = `El apartamento número ${value} ya existe para el tipo ${formData.Tipo}`
             }
@@ -714,14 +628,8 @@ const ApartamentoList = () => {
         errorMessage = "La tarifa solo debe contener números"
       }
     }
-
-    setFormErrors((prev) => ({
-      ...prev,
-      [name]: errorMessage,
-    }))
-
+    setFormErrors((prev) => ({ ...prev, [name]: errorMessage }))
     if (errorMessage) {
-      // Mostrar SweetAlert2 en tiempo real
       Swal.fire({
         icon: "warning",
         title: "Validación",
@@ -734,52 +642,41 @@ const ApartamentoList = () => {
         timerProgressBar: true,
       })
     }
-
     setTimeout(() => {
-      validateForm({
-        ...formData,
-        [name]: value,
-      })
+      validateForm({ ...formData, [name]: value })
     }, 0)
-
     return !errorMessage
   }
 
-  // Validar todo el formulario
+  // Validar formulario completo
   const validateForm = (data) => {
     const isValid = data.NumeroApto && data.Piso && data.Tarifa
     setIsFormValid(isValid)
   }
 
-  // Enviar formulario para crear o actualizar apartamento
+  // Enviar formulario (crear/actualizar)
   const handleSubmit = async () => {
     const tempErrors = {}
-
     if (!formData.NumeroApto) {
       tempErrors.NumeroApto = "El número de apartamento es obligatorio"
     } else {
-      // Verificar duplicados antes de enviar
       const existingApartamentos = apartamentos.filter(
-        (apt) => apt.NumeroApto === formData.NumeroApto && apt.Tipo === formData.Tipo && apt._id !== editingId, // Excluir el apartamento actual si estamos editando
+        (apt) => apt.NumeroApto === formData.NumeroApto && apt.Tipo === formData.Tipo && apt._id !== editingId,
       )
-
       if (existingApartamentos.length > 0) {
         tempErrors.NumeroApto = `El apartamento número ${formData.NumeroApto} ya existe para el tipo ${formData.Tipo}`
       }
     }
-
     if (!formData.Piso) {
       tempErrors.Piso = "El piso es obligatorio"
     } else if (formData.Piso <= 0) {
       tempErrors.Piso = "El piso debe ser un número positivo"
     }
-
     if (!formData.Tarifa) {
       tempErrors.Tarifa = "La tarifa es obligatoria"
     } else if (formData.Tarifa <= 0) {
       tempErrors.Tarifa = "La tarifa debe ser un valor positivo"
     }
-
     if (Object.keys(tempErrors).length > 0) {
       setFormErrors(tempErrors)
       const firstError = Object.values(tempErrors)[0]
@@ -791,7 +688,6 @@ const ApartamentoList = () => {
       })
       return
     }
-
     try {
       if (editingId) {
         await apartamentoService.updateApartamento(editingId, formData)
@@ -822,7 +718,7 @@ const ApartamentoList = () => {
     }
   }
 
-  // Eliminar (dar de baja) apartamento (si está activo no se permite la eliminación)
+  // Eliminar apartamento (no se permite si está activo)
   const handleDelete = async (id, Estado) => {
     if (Estado === true) {
       Swal.fire({
@@ -842,10 +738,9 @@ const ApartamentoList = () => {
       confirmButtonColor: "#ef4444",
       cancelButtonColor: "#64748b",
     })
-
     if (confirmDelete.isConfirmed) {
       try {
-        await apartamentoService.darDeBajaApartamento(id)
+        await apartamentoService.deleteApartamento(id)
         Swal.fire({
           icon: "success",
           title: "Eliminado",
@@ -864,28 +759,25 @@ const ApartamentoList = () => {
     }
   }
 
-  // Filtrar por la pestaña activa y por búsqueda
+  // Filtrar apartamentos según tipo y búsqueda
   const filteredApartamentos = apartamentos.filter(
     (a) =>
-      a.Tipo === activeTab &&
+      (selectedTipo === "Todos" || a.Tipo === selectedTipo) &&
       (searchTerm === "" ||
         a.NumeroApto.toString().includes(searchTerm) ||
         a.Piso.toString().includes(searchTerm) ||
         a.Tarifa.toString().includes(searchTerm)),
   )
-
   const paginatedApartamentos = filteredApartamentos.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-
   const handleChangePage = (event, newPage) => {
     setPage(newPage)
   }
-
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(Number.parseInt(event.target.value, 10))
     setPage(0)
   }
 
-  // Obtener el icono correspondiente para cada tipo de apartamento
+  // Función para obtener el icono según el tipo
   const getTabIcon = (tipo) => {
     switch (tipo) {
       case "Type 1":
@@ -942,18 +834,24 @@ const ApartamentoList = () => {
         </Box>
       </div>
 
-      {/* Pestañas para los tipos de apartamento */}
-      <Box className={classes.tabsContainer}>
-        {["Type 1", "Type 2", "Penthouse"].map((tab) => (
-          <Button
-            key={tab}
-            className={`${classes.tabButton} ${activeTab === tab ? classes.activeTabButton : ""}`}
-            onClick={() => handleTabChange(tab)}
-            startIcon={getTabIcon(tab)}
+      {/* Selector de tipo */}
+      <Box mb={2}>
+        <FormControl fullWidth variant="outlined">
+          <InputLabel id="select-tipo-label">Tipos</InputLabel>
+          <Select
+            labelId="select-tipo-label"
+            value={selectedTipo}
+            onChange={(e) => setSelectedTipo(e.target.value)}
+            label="Tipos"
           >
-            {tab}
-          </Button>
-        ))}
+            <MenuItem value="Todos">Todos</MenuItem>
+            {tipoApartamentos.map((tipo) => (
+              <MenuItem key={tipo._id} value={tipo.nombre}>
+                {tipo.nombre}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </Box>
 
       {/* Tabla de apartamentos */}
@@ -1033,7 +931,7 @@ const ApartamentoList = () => {
         className={classes.pagination}
       />
 
-      {/* Modal para crear/editar apartamento - Diseño actualizado según usuario-list.tsx */}
+      {/* Modal para crear/editar (sin modificaciones) */}
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" classes={{ paper: classes.dialogPaper }}>
         <DialogTitle className={classes.dialogTitle}>
           {editingId ? "Editar Apartamento" : "Nuevo Apartamento"}
@@ -1048,7 +946,6 @@ const ApartamentoList = () => {
               <Home size={20} />
               Información Básica
             </Typography>
-
             <FormControl fullWidth variant="outlined" className={classes.formField}>
               <InputLabel id="tipo-label">Tipo de Apartamento</InputLabel>
               <Select
@@ -1074,7 +971,6 @@ const ApartamentoList = () => {
                 )}
               </Select>
             </FormControl>
-
             <TextField
               className={classes.formField}
               margin="dense"
@@ -1089,9 +985,7 @@ const ApartamentoList = () => {
               error={!!formErrors.NumeroApto}
               helperText={formErrors.NumeroApto}
               required
-              InputProps={{
-                inputProps: { min: 1 },
-              }}
+              InputProps={{ inputProps: { min: 1 } }}
             />
           </Box>
 
@@ -1101,7 +995,6 @@ const ApartamentoList = () => {
               <Building size={20} />
               Ubicación y Tarifa
             </Typography>
-
             <TextField
               className={classes.formField}
               margin="dense"
@@ -1116,11 +1009,8 @@ const ApartamentoList = () => {
               error={!!formErrors.Piso}
               helperText={formErrors.Piso}
               required
-              InputProps={{
-                inputProps: { min: 1 },
-              }}
+              InputProps={{ inputProps: { min: 1 } }}
             />
-
             <TextField
               className={classes.formField}
               margin="dense"
@@ -1135,11 +1025,8 @@ const ApartamentoList = () => {
               error={!!formErrors.Tarifa}
               helperText={formErrors.Tarifa}
               required
-              InputProps={{
-                inputProps: { min: 1 },
-              }}
+              InputProps={{ inputProps: { min: 1 } }}
             />
-
             <FormControl fullWidth variant="outlined" className={classes.formField}>
               <InputLabel id="estado-label">Estado</InputLabel>
               <Select
@@ -1166,7 +1053,7 @@ const ApartamentoList = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Modal de detalles (solo lectura) - Diseño actualizado según usuario-list.tsx */}
+      {/* Modal de detalles (modificado únicamente este modal) */}
       <Dialog
         open={openDetails}
         onClose={handleCloseDetails}
@@ -1186,60 +1073,62 @@ const ApartamentoList = () => {
               <Box className={classes.detailsHeader}>
                 <Avatar className={classes.detailsAvatar}>{getTabIcon(selectedApartamento.Tipo)}</Avatar>
                 <Typography className={classes.detailsName}>Apartamento {selectedApartamento.NumeroApto}</Typography>
-                <Typography className={classes.detailsDescription}>
-                  {selectedApartamento.Tipo} - Piso {selectedApartamento.Piso}
-                </Typography>
-                <Chip
-                  label={selectedApartamento.Estado ? "Activo" : "Inactivo"}
-                  className={`${classes.estadoChip} ${
-                    selectedApartamento.Estado ? classes.estadoActivo : classes.estadoInactivo
-                  }`}
-                  style={{ marginTop: "8px" }}
-                />
+                <Chip label={selectedApartamento.Estado ? "Activo" : "Inactivo"} style={{ marginTop: "8px" }} />
               </Box>
-
               <Divider style={{ margin: "16px 0" }} />
 
-              <Grid container spacing={3} className={classes.detailsGrid}>
-                <Grid item xs={12} md={6}>
-                  <Box className={classes.detailsCard}>
-                    <Typography className={classes.detailsCardTitle}>
-                      <Home size={20} />
-                      Tipo
+              {/* Agrupación unificada para Tipo, Piso y Tarifa */}
+              {/* Información del apartamento en un solo contenedor */}
+              <Box border="1px solid #e2e8f0" borderRadius={4} padding={3} marginBottom={2} bgcolor="#f8fafc">
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={600}
+                  marginBottom={1}
+                  style={{ display: "flex", alignItems: "center" }}
+                >
+                  <FileText size={20} style={{ marginRight: "8px" }} /> Información
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={4}>
+                    <Box display="flex" alignItems="center" marginBottom={1}>
+                      <Home size={18} style={{ marginRight: "8px", color: "#64748b" }} />
+                      <Typography variant="body2" color="textSecondary">
+                        Tipo:
+                      </Typography>
+                    </Box>
+                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>
+                      {selectedApartamento.Tipo}
                     </Typography>
-                    <Typography className={classes.detailsCardContent}>{selectedApartamento.Tipo}</Typography>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Box className={classes.detailsCard}>
-                    <Typography className={classes.detailsCardTitle}>
-                      <Layers size={20} />
-                      Piso
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Box display="flex" alignItems="center" marginBottom={1}>
+                      <Layers size={18} style={{ marginRight: "8px", color: "#64748b" }} />
+                      <Typography variant="body2" color="textSecondary">
+                        Piso:
+                      </Typography>
+                    </Box>
+                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>
+                      {selectedApartamento.Piso}
                     </Typography>
-                    <Typography className={classes.detailsCardContent}>{selectedApartamento.Piso}</Typography>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Box className={classes.detailsCard}>
-                    <Typography className={classes.detailsCardTitle}>
-                      <DollarSign size={20} />
-                      Tarifa
-                    </Typography>
-                    <Typography className={classes.detailsCardContent}>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Box display="flex" alignItems="center" marginBottom={1}>
+                      <DollarSign size={18} style={{ marginRight: "8px", color: "#64748b" }} />
+                      <Typography variant="body2" color="textSecondary">
+                        Tarifa:
+                      </Typography>
+                    </Box>
+                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>
                       {formatTarifa(selectedApartamento.Tarifa)}
                     </Typography>
-                  </Box>
+                  </Grid>
                 </Grid>
-              </Grid>
+              </Box>
 
               <Typography className={classes.sectionTitle} style={{ marginTop: "24px" }}>
                 <FileText size={20} />
                 Mobiliarios Asociados
               </Typography>
-
-              {/* Tabla de mobiliarios asociados - Con encabezado azul sólido */}
               <TableContainer component={Paper} className={classes.tableContainerDetails}>
                 <Table style={{ tableLayout: "fixed", width: "100%" }}>
                   <TableHead>
@@ -1319,14 +1208,12 @@ const ApartamentoList = () => {
                         const currentDate = new Date()
                         const diffTime = currentDate - updatedDate
                         const diffDays = diffTime / (1000 * 60 * 60 * 24)
-
                         const cellStyle =
                           mob.estado === "Mantenimiento" && diffDays > 1
                             ? { backgroundColor: "#fee2e2", color: "#991b1b" }
                             : {}
-
                         return (
-                          <tr key={mob._id}>
+                          <TableRow key={mob._id}>
                             <TableCell style={{ width: "20%", padding: "16px" }}>{mob.nombre}</TableCell>
                             <TableCell style={{ width: "20%", padding: "16px" }}>{mob.identMobiliario}</TableCell>
                             <TableCell style={{ width: "15%", padding: "16px" }}>{mob.estado}</TableCell>
@@ -1334,7 +1221,7 @@ const ApartamentoList = () => {
                             <TableCell style={{ width: "20%", padding: "16px", ...cellStyle }}>
                               {mob.updatedAt ? new Date(mob.updatedAt).toLocaleDateString() : "N/A"}
                             </TableCell>
-                          </tr>
+                          </TableRow>
                         )
                       })}
                     {mobiliarios.filter((mob) => mob.estado !== "Inactivo").length === 0 && (
