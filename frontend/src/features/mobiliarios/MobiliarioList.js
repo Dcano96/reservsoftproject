@@ -1099,37 +1099,47 @@ const MobiliarioList = () => {
               <Divider style={{ margin: "16px 0" }} />
 
               <Grid container spacing={3} className={classes.detailsGrid}>
-                <Grid item xs={12} md={6}>
-                  <Box className={classes.detailsCard}>
-                    <Typography className={classes.detailsCardTitle}>
-                      <Tag size={18} />
-                      Identificación
-                    </Typography>
-                    <Typography className={classes.detailsCardContent}>{selectedMobiliario.identMobiliario}</Typography>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Box className={classes.detailsCard}>
-                    <Typography className={classes.detailsCardTitle}>
-                      <Home size={18} />
-                      Apartamento
-                    </Typography>
-                    <Typography className={classes.detailsCardContent}>
-                      {associatedApt
-                        ? `Apartamento ${associatedApt.NumeroApto} (Piso ${associatedApt.Piso})`
-                        : "No asignado"}
-                    </Typography>
-                  </Box>
-                </Grid>
-
                 <Grid item xs={12}>
                   <Box className={classes.detailsCard}>
                     <Typography className={classes.detailsCardTitle}>
                       <FileText size={18} />
-                      Observación
+                      Información
                     </Typography>
-                    <Typography className={classes.detailsCardContent}>{selectedMobiliario.observacion}</Typography>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", minWidth: "150px" }}>
+                          <Tag size={16} style={{ marginRight: "8px" }} />
+                          <Typography variant="body2" fontWeight={600}>
+                            Identificación:
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2">{selectedMobiliario.identMobiliario}</Typography>
+                      </Box>
+
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", minWidth: "150px" }}>
+                          <Home size={16} style={{ marginRight: "8px" }} />
+                          <Typography variant="body2" fontWeight={600}>
+                            Apartamento:
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2">
+                          {associatedApt
+                            ? `Apartamento ${associatedApt.NumeroApto} (Piso ${associatedApt.Piso})`
+                            : "No asignado"}
+                        </Typography>
+                      </Box>
+
+                      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", minWidth: "150px" }}>
+                          <FileText size={16} style={{ marginRight: "8px" }} />
+                          <Typography variant="body2" fontWeight={600}>
+                            Observación:
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2">{selectedMobiliario.observacion}</Typography>
+                      </Box>
+                    </Box>
                   </Box>
                 </Grid>
 
