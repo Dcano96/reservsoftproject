@@ -45,14 +45,22 @@ const ForgotPassword = () => {
 
       // Opcional: redirigir después de un tiempo
       setTimeout(() => {
-        history.push("/login") // Cambiado de "/" a "/login"
+        history.push("/login")
       }, 5000)
     } catch (error) {
       console.error("Error al enviar correo de recuperación", error)
-      const errorMsg =
-        error.response && error.response.data && error.response.data.msg
-          ? error.response.data.msg
-          : "Error al enviar el correo. Inténtalo de nuevo."
+
+      // Mejorado el manejo de errores para capturar correctamente el mensaje del backend
+      let errorMsg = "Error al enviar el correo. Inténtalo de nuevo."
+
+      if (error.msg) {
+        // Si el error viene directamente del backend con formato {msg: "..."}
+        errorMsg = error.msg
+      } else if (error.message) {
+        // Si es un error genérico con propiedad message
+        errorMsg = error.message
+      }
+
       setError(errorMsg)
       setSnackbarMessage(errorMsg)
       setSnackbarSeverity("error")
@@ -128,7 +136,6 @@ const ForgotPassword = () => {
             </button>
 
             <button type="button" className="auth-back-button" onClick={() => history.push("/login")}>
-              {/* Cambiado de "/" a "/login" */}
               <ArrowBack className="auth-back-icon" />
               <span>Volver al inicio de sesión</span>
             </button>
@@ -140,7 +147,7 @@ const ForgotPassword = () => {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault()
-                    history.push("/login") // Cambiado de "/" a "/login"
+                    history.push("/login")
                   }}
                 >
                   Iniciar sesión

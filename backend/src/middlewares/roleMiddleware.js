@@ -1,5 +1,18 @@
+// Lista de rutas públicas que no requieren verificación de roles
+const PUBLIC_ROUTES = [
+  '/api/clientes/public-register'  // Ruta para registro público de clientes
+];
+
 const roleMiddleware = (requiredPermission) => {
   return (req, res, next) => {
+    // Verificar si la ruta actual está en la lista de rutas públicas
+    const currentPath = req.path;
+    
+    // Si la ruta actual está en la lista de rutas públicas, permitir acceso sin verificar roles
+    if (PUBLIC_ROUTES.some(route => currentPath.includes(route))) {
+      return next();
+    }
+    
     // Verificar que exista el usuario autenticado y su rol
     if (!req.usuario || !req.usuario.rol) {
       return res.status(401).json({ msg: "Acceso denegado, usuario no autenticado" });

@@ -9,8 +9,12 @@ const {
   getClienteById,
   updateCliente,
   deleteCliente,
-  getProfile
+  getProfile,
+  publicRegister
 } = require("./cliente.controller");
+
+// Ruta pública para registro de clientes desde la landing page
+router.post("/public-register", publicRegister);
 
 // Rutas protegidas: se requiere el permiso "clientes" para gestionarlas
 router.post("/", authMiddleware, roleMiddleware("clientes"), createCliente);
