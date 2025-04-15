@@ -131,3 +131,47 @@ exports.removeRol = async (req, res) => {
     res.status(500).send("Error en el servidor")
   }
 }
+
+// Cambiar contraseña de usuario
+exports.cambiarPassword = async (req, res) => {
+  try {
+    console.log("[CAMBIAR PASSWORD] Iniciando cambio de contraseña para usuario")
+    
+    // Obtener el ID del usuario desde los parámetros o desde el token
+    const usuarioId = req.params.id || req.usuario._id || req.usuario.id
+    console.log("[CAMBIAR PASSWORD] ID del usuario:", usuarioId)
+    
+    const { passwordActual, nuevoPassword } = req.body
+
+    // Buscar el usuario en la base de datos
+    const usuario = await Usuario.findById(usuarioId)
+    if (!usuario) {
+      console.log("[CAMBIAR PASSWORD] Usuario no encontrado")
+      return res.status(404).json({ msg: "Usuario no encontrado" })
+    }
+
+    // Verificar la contraseña actual
+    const validPassword = await bcrypt.compare(passwordActual, usuario.password)
+    if (!validPassword) {
+      console.log("[CAMBIAR PASSWORD] Contraseña actual incorrecta")
+      return res.status(400).json({ msg: "La contraseña actual es incorrecta" })
+    }
+
+    // Encriptar la nueva contraseña
+    const salt = await bcrypt.genSalt(10)
+    const nuevoPasswordEncriptado = await bcrypt.hash(nuevoPassword, salt)
+
+    // Actualizar la contraseña del usuario
+    usuario.password = nuevoPasswordEncriptado
+    await usuario.save()
+    console.log("[CAMBIAR PASSWORD] Contraseña de usuario actualizada correctamente")
+
+    res.json({
+      ok: true,
+      msg: "Contraseña actualizada correctamente",
+    })
+  } catch (error) {
+    console.error("[CAMBIAR PASSWORD] Error:", error)
+    res.status(500).json({ msg: "Error en el servidor al cambiar la contraseña" })
+  }
+}

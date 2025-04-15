@@ -1,4 +1,4 @@
-import api from "../../services/api.js"
+import api from "../../services/api"
 
 const API_URL = "/clientes" // Debe coincidir con la ruta montada en el back
 
@@ -28,8 +28,33 @@ const deleteCliente = async (id) => {
 }
 
 const getProfile = async () => {
-  const res = await api.get(`${API_URL}/profile`)
+  const res = await api.get(`${API_URL}/profile/me`) // Ajustado según tu ruta en cliente.routes.js
   return res.data
+}
+
+// Nueva función para cambiar la contraseña
+const cambiarPassword = async (passwordActual, nuevoPassword) => {
+  try {
+    const res = await api.post(`${API_URL}/cambiar-password`, {
+      passwordActual,
+      nuevoPassword,
+    })
+    return res.data
+  } catch (error) {
+    console.error("Error al cambiar la contraseña:", error.response?.data || error.message)
+    throw error
+  }
+}
+
+// Nueva función para obtener las reservas del cliente autenticado
+const getMisReservas = async () => {
+  try {
+    const response = await api.get(`${API_URL}/mis-reservas`)
+    return response.data.reservas
+  } catch (error) {
+    console.error("Error al obtener mis reservas:", error)
+    throw error
+  }
 }
 
 export default {
@@ -39,5 +64,6 @@ export default {
   updateCliente,
   deleteCliente,
   getProfile,
+  cambiarPassword,
+  getMisReservas, // Exportar la nueva función
 }
-

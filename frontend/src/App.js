@@ -4,6 +4,7 @@ import Register from "./features/auth/Register"
 import ForgotPassword from "./features/auth/ForgotPassword"
 import ResetPassword from "./features/auth/ResetPassword"
 import Dashboard from "./features/dashboard/Dashboard"
+import UserProfile from "./features/usuarios/UserProfile" // Importación corregida
 import ProtectedRoute from "./features/auth/ProtectedRoute"
 import Landing from "./features/landing/Landing"
 
@@ -24,6 +25,10 @@ function App() {
 
         {/* La ruta del dashboard se protege con ProtectedRoute */}
         <ProtectedRoute path="/dashboard" component={Dashboard} />
+
+        {/* Nueva ruta protegida para el perfil de usuario */}
+        <ProtectedRoute path="/perfil" component={UserProfile} />
+
         {/* Otras rutas para clientes, usuarios, etc. */}
 
         {/* Ruta de fallback */}

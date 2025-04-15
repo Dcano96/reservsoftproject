@@ -12,6 +12,7 @@ import {
   Card,
   CardContent,
   Chip,
+  Divider,
 } from "@material-ui/core"
 import { Alert } from "@material-ui/lab"
 import {
@@ -30,11 +31,14 @@ import {
   CheckCircle,
   AccessTime,
   Work,
+  VpnKey,
 } from "@material-ui/icons"
 import axios from "axios"
 import jwtDecode from "jwt-decode"
 import Swal from "sweetalert2"
 import "./usuarios.styles.css"
+// Añadir esta importación al inicio del archivo
+import MisReservas from "../clientes/mis-reservas"
 
 const UserProfile = () => {
   const [profile, setProfile] = useState(null)
@@ -47,6 +51,12 @@ const UserProfile = () => {
     telefono: "",
     documento: "",
   })
+  const [passwordData, setPasswordData] = useState({
+    passwordActual: "",
+    nuevoPassword: "",
+    confirmarPassword: "",
+  })
+  const [passwordLoading, setPasswordLoading] = useState(false)
   const [roleDetails, setRoleDetails] = useState(null)
   const [notification, setNotification] = useState({
     open: false,
@@ -73,7 +83,7 @@ const UserProfile = () => {
 
         // Decodificar el token para obtener información básica
         const decoded = jwtDecode(token)
-        const userId = decoded?.usuario?._id || decoded?.usuario?.id
+        const userId = decoded?.usuario?._id || decoded?.usuario?.id || decoded?.uid
         const userData = decoded?.usuario || {}
 
         if (!userId) {
@@ -178,6 +188,14 @@ const UserProfile = () => {
     }))
   }
 
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target
+    setPasswordData((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+  }
+
   // Modificar la función handleSubmit para manejar el caso en que la API falla
   const handleSubmit = async () => {
     try {
@@ -251,6 +269,144 @@ const UserProfile = () => {
         severity: "error",
       })
     }
+  }
+
+  // Función para manejar el cambio de contraseña - Intenta múltiples rutas
+  const handlePasswordSubmit = async () => {
+    // Validar que las contraseñas coincidan
+    if (passwordData.nuevoPassword !== passwordData.confirmarPassword) {
+      setNotification({
+        open: true,
+        message: "Las contraseñas no coinciden",
+        severity: "error",
+      })
+      return
+    }
+
+    // Validar que la contraseña tenga al menos 6 caracteres
+    if (passwordData.nuevoPassword.length < 6) {
+      setNotification({
+        open: true,
+        message: "La nueva contraseña debe tener al menos 6 caracteres",
+        severity: "error",
+      })
+      return
+    }
+
+    try {
+      setPasswordLoading(true)
+      const token = localStorage.getItem("token")
+      const decoded = jwtDecode(token)
+      const userId = profile?._id || decoded?.uid || decoded?.usuario?._id || decoded?.usuario?.id
+
+      // Datos para enviar en la solicitud
+      const passwordPayload = {
+        passwordActual: passwordData.passwordActual,
+        nuevoPassword: passwordData.nuevoPassword,
+      }
+
+      // Opciones de configuración para axios
+      const axiosConfig = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+
+      // Intentar con la primera ruta: /api/usuarios/cambiar-password
+      console.log("Intentando cambiar contraseña con ruta 1: /api/usuarios/cambiar-password")
+      try {
+        const response = await axios.post(
+          "http://localhost:5000/api/usuarios/cambiar-password",
+          passwordPayload,
+          axiosConfig,
+        )
+
+        handlePasswordSuccess()
+        return
+      } catch (error1) {
+        console.log("Error en ruta 1:", error1.response?.status)
+
+        // Si la primera ruta falla, intentar con la segunda: /api/usuarios/:id/cambiar-password
+        if (userId) {
+          console.log(`Intentando cambiar contraseña con ruta 2: /api/usuarios/${userId}/cambiar-password`)
+          try {
+            const response2 = await axios.post(
+              `http://localhost:5000/api/usuarios/${userId}/cambiar-password`,
+              passwordPayload,
+              axiosConfig,
+            )
+
+            handlePasswordSuccess()
+            return
+          } catch (error2) {
+            console.log("Error en ruta 2:", error2.response?.status)
+
+            // Si la segunda ruta falla, intentar con la tercera: /api/clientes/cambiar-password
+            console.log("Intentando cambiar contraseña con ruta 3: /api/clientes/cambiar-password")
+            try {
+              const response3 = await axios.post(
+                "http://localhost:5000/api/clientes/cambiar-password",
+                passwordPayload,
+                axiosConfig,
+              )
+
+              handlePasswordSuccess()
+              return
+            } catch (error3) {
+              console.log("Error en ruta 3:", error3.response?.status)
+              throw error3
+            }
+          }
+        } else {
+          throw error1
+        }
+      }
+    } catch (error) {
+      console.error("Error al cambiar la contraseña:", error)
+      setPasswordLoading(false)
+
+      const errorMessage = error.response?.data?.msg || "Error al cambiar la contraseña"
+
+      setNotification({
+        open: true,
+        message: errorMessage,
+        severity: "error",
+      })
+
+      // Mostrar alerta de error
+      Swal.fire({
+        title: "Error",
+        text: errorMessage,
+        icon: "error",
+        confirmButtonColor: "#2563eb",
+      })
+    }
+  }
+
+  // Función auxiliar para manejar el éxito al cambiar la contraseña
+  const handlePasswordSuccess = () => {
+    setPasswordLoading(false)
+
+    // Limpiar el formulario
+    setPasswordData({
+      passwordActual: "",
+      nuevoPassword: "",
+      confirmarPassword: "",
+    })
+
+    setNotification({
+      open: true,
+      message: "Contraseña actualizada correctamente",
+      severity: "success",
+    })
+
+    // Mostrar alerta de éxito
+    Swal.fire({
+      title: "¡Éxito!",
+      text: "Tu contraseña ha sido actualizada correctamente",
+      icon: "success",
+      confirmButtonColor: "#2563eb",
+    })
   }
 
   const handleCloseNotification = () => {
@@ -404,6 +560,13 @@ const UserProfile = () => {
           onClick={() => setActiveTab("security")}
         >
           <Security /> Seguridad y Permisos
+        </Button>
+        {/* Añadir esta nueva pestaña */}
+        <Button
+          className={`profile-tab ${activeTab === "reservas" ? "active" : ""}`}
+          onClick={() => setActiveTab("reservas")}
+        >
+          <CalendarToday /> Mis Reservas
         </Button>
       </div>
 
@@ -561,6 +724,90 @@ const UserProfile = () => {
                 />
               </div>
 
+              {/* Sección de cambio de contraseña */}
+              <div className="profile-password-section" style={{ marginBottom: "30px" }}>
+                <Typography
+                  variant="h6"
+                  className="profile-section-title"
+                  style={{ display: "flex", alignItems: "center", marginBottom: "20px" }}
+                >
+                  <VpnKey style={{ marginRight: "10px", color: roleColor }} /> Cambiar Contraseña
+                </Typography>
+
+                <div
+                  className="profile-password-form"
+                  style={{
+                    backgroundColor: "#f8f9fa",
+                    padding: "20px",
+                    borderRadius: "8px",
+                    borderLeft: `4px solid ${roleColor}`,
+                  }}
+                >
+                  <div style={{ marginBottom: "15px" }}>
+                    <TextField
+                      fullWidth
+                      name="passwordActual"
+                      label="Contraseña Actual"
+                      type="password"
+                      value={passwordData.passwordActual}
+                      onChange={handlePasswordChange}
+                      variant="outlined"
+                      required
+                      className="profile-text-field"
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: "15px" }}>
+                    <TextField
+                      fullWidth
+                      name="nuevoPassword"
+                      label="Nueva Contraseña"
+                      type="password"
+                      value={passwordData.nuevoPassword}
+                      onChange={handlePasswordChange}
+                      variant="outlined"
+                      required
+                      helperText="Mínimo 6 caracteres"
+                      className="profile-text-field"
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: "20px" }}>
+                    <TextField
+                      fullWidth
+                      name="confirmarPassword"
+                      label="Confirmar Nueva Contraseña"
+                      type="password"
+                      value={passwordData.confirmarPassword}
+                      onChange={handlePasswordChange}
+                      variant="outlined"
+                      required
+                      className="profile-text-field"
+                    />
+                  </div>
+
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handlePasswordSubmit}
+                    disabled={passwordLoading}
+                    style={{
+                      backgroundColor: roleColor,
+                      padding: "10px 20px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {passwordLoading ? (
+                      <CircularProgress size={24} style={{ color: "white" }} />
+                    ) : (
+                      "Actualizar Contraseña"
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <Divider style={{ margin: "30px 0" }} />
+
               {roleDetails && (
                 <div className="profile-role-description">
                   <Typography variant="body1">
@@ -636,6 +883,9 @@ const UserProfile = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Añadir esta nueva sección */}
+        {activeTab === "reservas" && <MisReservas />}
       </div>
 
       <Snackbar
