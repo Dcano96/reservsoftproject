@@ -4,7 +4,7 @@ import Register from "./features/auth/Register"
 import ForgotPassword from "./features/auth/ForgotPassword"
 import ResetPassword from "./features/auth/ResetPassword"
 import Dashboard from "./features/dashboard/Dashboard"
-import UserProfile from "./features/usuarios/UserProfile" // Importación corregida
+import UserProfile from "./features/usuarios/UserProfile"
 import ProtectedRoute from "./features/auth/ProtectedRoute"
 import Landing from "./features/landing/Landing"
 

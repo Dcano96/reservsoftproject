@@ -216,31 +216,31 @@ const Dashboard = () => {
             {
               label: "Reservas",
               data: [12, 19, 15, 25, 22, 30, 35, 38, 28, 25, 30, 35],
-              backgroundColor: "rgba(37, 99, 235, 0.2)",
-              borderColor: "rgba(37, 99, 235, 1)",
-              borderWidth: 2,
+              backgroundColor: "rgba(56, 189, 248, 0.3)",
+              borderColor: "rgba(56, 189, 248, 1)",
+              borderWidth: 3,
               tension: 0.4,
               fill: true,
               pointBackgroundColor: "#ffffff",
-              pointBorderColor: "rgba(37, 99, 235, 1)",
+              pointBorderColor: "rgba(56, 189, 248, 1)",
               pointBorderWidth: 2,
-              pointRadius: 4,
-              pointHoverRadius: 6,
+              pointRadius: 5,
+              pointHoverRadius: 7,
               yAxisID: "y",
             },
             {
               label: "Descuentos (%)",
               data: [5, 10, 15, 5, 10, 20, 15, 10, 5, 15, 10, 5],
-              backgroundColor: "rgba(245, 158, 11, 0.2)",
-              borderColor: "rgba(245, 158, 11, 1)",
-              borderWidth: 2,
+              backgroundColor: "rgba(251, 146, 60, 0.3)",
+              borderColor: "rgba(251, 146, 60, 1)",
+              borderWidth: 3,
               tension: 0.4,
               fill: true,
               pointBackgroundColor: "#ffffff",
-              pointBorderColor: "rgba(245, 158, 11, 1)",
+              pointBorderColor: "rgba(251, 146, 60, 1)",
               pointBorderWidth: 2,
-              pointRadius: 4,
-              pointHoverRadius: 6,
+              pointRadius: 5,
+              pointHoverRadius: 7,
               yAxisID: "y1",
             },
           ],
@@ -256,16 +256,21 @@ const Dashboard = () => {
               legend: {
                 display: true,
                 position: "top",
-                labels: { font: { size: 14, weight: "bold" } },
+                labels: { 
+                  font: { size: 14, weight: "bold", family: "'Poppins', sans-serif" },
+                  padding: 20,
+                  usePointStyle: true,
+                  pointStyle: 'circle'
+                },
               },
               tooltip: {
-                backgroundColor: "rgba(255, 255, 255, 0.9)",
-                titleColor: "#1e40af",
-                bodyColor: "#1e3a8a",
-                borderColor: "rgba(37, 99, 235, 0.3)",
+                backgroundColor: "rgba(255, 255, 255, 0.95)",
+                titleColor: "#0284c7",
+                bodyColor: "#0c4a6e",
+                borderColor: "rgba(56, 189, 248, 0.3)",
                 borderWidth: 1,
                 cornerRadius: 8,
-                boxPadding: 6,
+                boxPadding: 8,
                 usePointStyle: true,
                 callbacks: {
                   label: (context) => {
@@ -287,11 +292,12 @@ const Dashboard = () => {
                 title: {
                   display: true,
                   text: "Número de Reservas",
-                  color: "rgba(37, 99, 235, 1)",
-                  font: { weight: "bold" },
+                  color: "rgba(56, 189, 248, 1)",
+                  font: { weight: "bold", size: 13, family: "'Poppins', sans-serif" },
+                  padding: {top: 10, bottom: 10}
                 },
-                grid: { color: "rgba(0, 0, 0, 0.05)", drawBorder: false },
-                ticks: { font: { size: 12 } },
+                grid: { color: "rgba(0, 0, 0, 0.04)", drawBorder: false },
+                ticks: { font: { size: 12, family: "'Poppins', sans-serif" }, padding: 8 },
               },
               y1: {
                 type: "linear",
@@ -302,18 +308,20 @@ const Dashboard = () => {
                 title: {
                   display: true,
                   text: "Porcentaje de Descuento",
-                  color: "rgba(245, 158, 11, 1)",
-                  font: { weight: "bold" },
+                  color: "rgba(251, 146, 60, 1)",
+                  font: { weight: "bold", size: 13, family: "'Poppins', sans-serif" },
+                  padding: {top: 10, bottom: 10}
                 },
                 grid: { drawOnChartArea: false },
                 ticks: {
                   callback: (value) => value + "%",
-                  font: { size: 12 },
+                  font: { size: 12, family: "'Poppins', sans-serif" },
+                  padding: 8
                 },
               },
               x: {
                 grid: { display: false },
-                ticks: { font: { size: 12 } },
+                ticks: { font: { size: 12, family: "'Poppins', sans-serif" }, padding: 8 },
               },
             },
             animation: { duration: 2000, easing: "easeOutQuart" },
@@ -328,8 +336,16 @@ const Dashboard = () => {
           datasets: [
             {
               data: [15, 8, 3],
-              backgroundColor: ["rgba(16, 185, 129, 0.8)", "rgba(37, 99, 235, 0.8)", "rgba(245, 158, 11, 0.8)"],
-              borderColor: ["rgba(16, 185, 129, 1)", "rgba(37, 99, 235, 1)", "rgba(245, 158, 11, 1)"],
+              backgroundColor: [
+                "rgba(34, 197, 94, 0.85)", 
+                "rgba(56, 189, 248, 0.85)", 
+                "rgba(251, 146, 60, 0.85)"
+              ],
+              borderColor: [
+                "rgba(34, 197, 94, 1)", 
+                "rgba(56, 189, 248, 1)", 
+                "rgba(251, 146, 60, 1)"
+              ],
               borderWidth: 2,
               hoverOffset: 15,
             },
@@ -347,19 +363,19 @@ const Dashboard = () => {
                 position: "bottom",
                 labels: {
                   padding: 20,
-                  font: { size: 14 },
+                  font: { size: 14, family: "'Poppins', sans-serif" },
                   usePointStyle: true,
-                  pointStyle: "circle",
+                  pointStyle: 'circle',
                 },
               },
               tooltip: {
-                backgroundColor: "rgba(255, 255, 255, 0.9)",
-                titleColor: "#1e40af",
-                bodyColor: "#1e3a8a",
-                borderColor: "rgba(37, 99, 235, 0.3)",
+                backgroundColor: "rgba(255, 255, 255, 0.95)",
+                titleColor: "#0284c7",
+                bodyColor: "#0c4a6e",
+                borderColor: "rgba(56, 189, 248, 0.3)",
                 borderWidth: 1,
                 cornerRadius: 8,
-                boxPadding: 6,
+                boxPadding: 8,
                 usePointStyle: true,
                 callbacks: {
                   label: (context) => {
@@ -390,11 +406,18 @@ const Dashboard = () => {
             {
               label: "Ingresos",
               data: [12500, 15000, 18000, 16500, 21000, 22500],
-              backgroundColor: "rgba(37, 99, 235, 0.7)",
-              borderRadius: 8,
+              backgroundColor: [
+                "rgba(56, 189, 248, 0.8)",
+                "rgba(34, 211, 238, 0.8)",
+                "rgba(125, 211, 252, 0.8)",
+                "rgba(186, 230, 253, 0.8)",
+                "rgba(14, 165, 233, 0.8)",
+                "rgba(2, 132, 199, 0.8)"
+              ],
+              borderRadius: 10,
               borderSkipped: false,
-              barThickness: 20,
-              maxBarThickness: 30,
+              barThickness: 25,
+              maxBarThickness: 35,
             },
           ],
         }
@@ -408,16 +431,21 @@ const Dashboard = () => {
               legend: {
                 display: true,
                 position: "top",
-                labels: { font: { size: 14, weight: "bold" } },
+                labels: { 
+                  font: { size: 14, weight: "bold", family: "'Poppins', sans-serif" },
+                  padding: 20,
+                  usePointStyle: true,
+                  pointStyle: 'circle'
+                },
               },
               tooltip: {
-                backgroundColor: "rgba(255, 255, 255, 0.9)",
-                titleColor: "#1e40af",
-                bodyColor: "#1e3a8a",
-                borderColor: "rgba(37, 99, 235, 0.3)",
+                backgroundColor: "rgba(255, 255, 255, 0.95)",
+                titleColor: "#0284c7",
+                bodyColor: "#0c4a6e",
+                borderColor: "rgba(56, 189, 248, 0.3)",
                 borderWidth: 1,
                 cornerRadius: 8,
-                boxPadding: 6,
+                boxPadding: 8,
                 usePointStyle: true,
                 callbacks: {
                   label: (context) => `$${context.parsed.y.toLocaleString()}`,
@@ -427,15 +455,23 @@ const Dashboard = () => {
             scales: {
               y: {
                 beginAtZero: true,
-                grid: { color: "rgba(0, 0, 0, 0.05)", drawBorder: false },
+                grid: { color: "rgba(0, 0, 0, 0.04)", drawBorder: false },
                 ticks: {
                   callback: (value) => "$" + value.toLocaleString(),
-                  font: { size: 12 },
+                  font: { size: 12, family: "'Poppins', sans-serif" },
+                  padding: 8
+                },
+                title: {
+                  display: true,
+                  text: "Monto en Pesos",
+                  color: "rgba(56, 189, 248, 1)",
+                  font: { weight: "bold", size: 13, family: "'Poppins', sans-serif" },
+                  padding: {top: 10, bottom: 10}
                 },
               },
               x: {
                 grid: { display: false },
-                ticks: { font: { size: 12 } },
+                ticks: { font: { size: 12, family: "'Poppins', sans-serif" }, padding: 8 },
               },
             },
             animation: { duration: 2000, easing: "easeOutQuart" },
@@ -588,7 +624,8 @@ const Dashboard = () => {
       if (result.isConfirmed) {
         localStorage.removeItem("token")
         localStorage.removeItem("role")
-        history.push("/login") // Cambiado de "/" a "/login"
+        // Redirección a la landing page en lugar de login
+        history.push("/")
         Swal.fire({
           title: "¡Hasta pronto!",
           text: "Has cerrado sesión correctamente",

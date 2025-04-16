@@ -10,10 +10,14 @@ import {
   Twitter,
   Instagram,
   LinkedIn,
+  Home
 } from "@material-ui/icons"
 import authService from "./auth.service"
 import { useHistory, useLocation } from "react-router-dom"
 import "./style.css"
+
+// Importar la imagen directamente
+import piscinaImage from "../img/piscina.png"
 
 const Login = () => {
   const [email, setEmail] = useState("")
@@ -84,13 +88,17 @@ const Login = () => {
     setShowPassword(!showPassword)
   }
 
+  const goToLandingPage = () => {
+    history.push("/")
+  }
+
   return (
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-image-column">
           <img
-            src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
-            alt="Hotel Nido Sky"
+            src={piscinaImage || "/placeholder.svg"}
+            alt="Piscina Hotel Nido Sky"
             className="auth-image"
           />
         </div>
@@ -177,6 +185,15 @@ const Login = () => {
               ) : (
                 "Iniciar Sesión"
               )}
+            </button>
+
+            <button 
+              type="button" 
+              className="auth-button auth-button-secondary" 
+              onClick={goToLandingPage}
+            >
+              <Home className="auth-button-icon" />
+              Ir a Página Principal
             </button>
 
             <div className="auth-links">

@@ -6,6 +6,9 @@ import { useParams, useHistory } from "react-router-dom"
 import { LockOutlined, ArrowBack, Facebook, Twitter, Instagram, LinkedIn } from "@material-ui/icons"
 import "./style.css"
 
+// Importar la imagen de piscina
+import piscinaImage from "../img/piscina.png"
+
 const ResetPassword = () => {
   const { token } = useParams()
   const history = useHistory()
@@ -46,8 +49,8 @@ const ResetPassword = () => {
       <div className="auth-card">
         <div className="auth-image-column">
           <img
-            src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
-            alt="Hotel Nido Sky"
+            src={piscinaImage || "/placeholder.svg"}
+            alt="Piscina Hotel Nido Sky"
             className="auth-image"
           />
         </div>
