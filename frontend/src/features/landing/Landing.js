@@ -11,7 +11,6 @@ import {
   Box,
   Paper,
   TextField,
-  CircularProgress,
   AppBar,
   Toolbar,
   IconButton,
@@ -26,13 +25,10 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
   useMediaQuery,
   useTheme,
-  Snackbar,
   Chip,
 } from "@material-ui/core"
-import { Alert } from "@material-ui/lab"
 import { makeStyles } from "@material-ui/core/styles"
 import {
   LocationOn,
@@ -66,9 +62,11 @@ import {
   FitnessCenter,
   LocalBar,
   Security,
+  Assignment,
 } from "@material-ui/icons"
 import axios from "axios"
 import { useHistory } from "react-router-dom"
+import Swal from "sweetalert2"
 import "./landing.styles.css" // Importar estilos CSS
 
 // Paleta de colores moderna y elegante
@@ -1270,6 +1268,12 @@ const useStyles = makeStyles((theme) => ({
       fontWeight: 500,
     },
   },
+  errorText: {
+    color: "#f44336",
+    fontSize: "0.75rem",
+    marginTop: theme.spacing(0.5),
+    marginLeft: theme.spacing(1.5),
+  },
 }))
 
 // Datos actualizados para los apartamentos específicos
@@ -1318,6 +1322,51 @@ const apartamentosEjemplo = [
     imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-3.png-txItO3avORrYlGt8r75JHZPPdAEP76.jpeg",
     disponible: true,
     tag: "Lujo",
+  },
+  {
+    id: 4,
+    nombre: "Suite Ejecutiva",
+    tipo: "Suite",
+    ubicacion: "El Poblado, Medellín",
+    precio: 400,
+    capacidad: 2,
+    camas: 1,
+    banos: 1,
+    tamano: 60,
+    caracteristicas: ["Escritorio de trabajo", "Cafetera", "Minibar", "Caja fuerte"],
+    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-1.png-7iFT37KEISyEFDtZqRfYvbz1dXw12D.jpeg",
+    disponible: true,
+    tag: "Ejecutivo",
+  },
+  {
+    id: 5,
+    nombre: "Apartamento Familiar",
+    tipo: "Tipo 2",
+    ubicacion: "El Poblado, Medellín",
+    precio: 380,
+    capacidad: 5,
+    camas: 2,
+    banos: 2,
+    tamano: 85,
+    caracteristicas: ["Cocina completa", "Área de juegos", "Lavadora", "Secadora"],
+    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-2.png-Qb6dNq1YCCbp1obXcopeyIldnr9niD.jpeg",
+    disponible: true,
+    tag: "Familiar",
+  },
+  {
+    id: 6,
+    nombre: "Loft Moderno",
+    tipo: "Loft",
+    ubicacion: "El Poblado, Medellín",
+    precio: 320,
+    capacidad: 2,
+    camas: 1,
+    banos: 1,
+    tamano: 55,
+    caracteristicas: ["Diseño abierto", "Iluminación LED", "Smart TV", "Sonido envolvente"],
+    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-3.png-txItO3avORrYlGt8r75JHZPPdAEP76.jpeg",
+    disponible: true,
+    tag: "Moderno",
   },
 ]
 
@@ -1375,6 +1424,7 @@ function Landing() {
   const [reservationDialogOpen, setReservationDialogOpen] = useState(false)
   const [selectedApartamento, setSelectedApartamento] = useState(null)
   const [reservationForm, setReservationForm] = useState({
+    documento: "",
     fechaEntrada: "",
     fechaSalida: "",
     huespedes: 1,
@@ -1382,9 +1432,17 @@ function Landing() {
     email: "",
     telefono: "",
   })
+  const [formErrors, setFormErrors] = useState({
+    documento: "",
+    nombre: "",
+    email: "",
+    telefono: "",
+    fechaEntrada: "",
+    fechaSalida: "",
+  })
   const [snackbarOpen, setSnackbarOpen] = useState(false)
   const [snackbarMessage, setSnackbarMessage] = useState(
-    "¡Reserva realizada con éxito! Te hemos enviado un correo con los detalles.",
+    "¡Cliente registrado con éxito! Te hemos enviado un correo con los detalles.",
   )
   const [snackbarSeverity, setSnackbarSeverity] = useState("success")
   const [favorites, setFavorites] = useState([])
@@ -1410,8 +1468,10 @@ function Landing() {
           console.log("Respuesta de la API de landing:", response.data)
 
           if (response.data && response.data.length > 0) {
-            setApartamentos(response.data)
-            setFilteredApartamentos(response.data)
+            // Limitar a 6 apartamentos
+            const limitedApartamentos = response.data.slice(0, 6)
+            setApartamentos(limitedApartamentos)
+            setFilteredApartamentos(limitedApartamentos)
             return
           }
         } catch (error) {
@@ -1451,8 +1511,10 @@ function Landing() {
               tag: apt.Tipo === "Penthouse" ? "Lujo" : apt.Tipo === "Tipo 2" ? "Familiar" : "Popular",
             }))
 
-            setApartamentos(apartamentosFormateados)
-            setFilteredApartamentos(apartamentosFormateados)
+            // Limitar a 6 apartamentos
+            const limitedApartamentos = apartamentosFormateados.slice(0, 6)
+            setApartamentos(limitedApartamentos)
+            setFilteredApartamentos(limitedApartamentos)
             return
           }
         } catch (error) {
@@ -1558,18 +1620,133 @@ function Landing() {
   const handleReservationOpen = (apartamento) => {
     setSelectedApartamento(apartamento)
     setReservationDialogOpen(true)
+
+    // Establecer fecha de entrada como hoy por defecto
+    const today = new Date().toISOString().split("T")[0]
+    setReservationForm({
+      ...reservationForm,
+      fechaEntrada: today,
+      fechaSalida: "",
+    })
+
+    // Resetear errores del formulario
+    setFormErrors({
+      documento: "",
+      nombre: "",
+      email: "",
+      telefono: "",
+      fechaEntrada: "",
+      fechaSalida: "",
+    })
   }
 
   const handleReservationClose = () => {
     setReservationDialogOpen(false)
   }
 
+  // Validación de campos en tiempo real
+  const validateField = (name, value) => {
+    let error = ""
+
+    switch (name) {
+      case "nombre":
+        if (!value) {
+          error = "El nombre es obligatorio"
+        } else if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(value)) {
+          error = "El nombre solo debe contener letras"
+        } else if (value.length > 60) {
+          // Cambiado de 17 a 60 caracteres
+          error = "El nombre no puede exceder los 60 caracteres"
+        }
+        break
+
+      case "documento":
+        if (!value) {
+          error = "El documento es obligatorio"
+        } else if (value.length > 17) {
+          error = "El documento no puede exceder los 17 caracteres"
+        }
+        break
+
+      case "email":
+        if (!value) {
+          error = "El correo electrónico es obligatorio"
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+          error = "Ingrese un correo electrónico válido"
+        }
+        break
+
+      case "telefono":
+        if (!value) {
+          error = "El teléfono es obligatorio"
+        } else if (!/^\d+$/.test(value)) {
+          error = "El teléfono solo debe contener números"
+        } else if (value.length > 17) {
+          error = "El teléfono no puede exceder los 17 caracteres"
+        }
+        break
+
+      case "fechaEntrada":
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const entryDate = new Date(value)
+
+        if (!value) {
+          error = "La fecha de entrada es obligatoria"
+        } else if (entryDate < today) {
+          error = "La fecha de entrada debe ser hoy o posterior"
+        }
+        break
+
+      case "fechaSalida":
+        if (!value) {
+          error = "La fecha de salida es obligatoria"
+        } else if (reservationForm.fechaEntrada && new Date(value) <= new Date(reservationForm.fechaEntrada)) {
+          error = "La fecha de salida debe ser posterior a la fecha de entrada"
+        }
+        break
+
+      default:
+        break
+    }
+
+    return error
+  }
+
   const handleReservationFormChange = (event) => {
     const { name, value } = event.target
+
+    // Actualizar el valor del campo
     setReservationForm({
       ...reservationForm,
       [name]: value,
     })
+
+    // Solo validar el email al enviar el formulario, no mientras se escribe
+    if (name !== "email") {
+      // Validar el campo en tiempo real
+      const error = validateField(name, value)
+
+      // Actualizar errores
+      setFormErrors({
+        ...formErrors,
+        [name]: error,
+      })
+
+      // Mostrar alerta SweetAlert2 si hay error
+      if (error) {
+        Swal.fire({
+          title: "Error de validación",
+          text: error,
+          icon: "error",
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+        })
+      }
+    }
   }
 
   const handleLogin = () => {
@@ -1578,68 +1755,85 @@ function Landing() {
   }
 
   const handleReservationSubmit = async () => {
+    // Validar el email ahora
+    const emailError = validateField("email", reservationForm.email)
+    if (emailError) {
+      setFormErrors({
+        ...formErrors,
+        email: emailError,
+      })
+
+      Swal.fire({
+        title: "Error de validación",
+        text: emailError,
+        icon: "error",
+        confirmButtonText: "Entendido",
+      })
+      return
+    }
+
+    // Validar todos los campos antes de enviar
+    const newErrors = {
+      documento: validateField("documento", reservationForm.documento),
+      nombre: validateField("nombre", reservationForm.nombre),
+      email: emailError, // Ya validado
+      telefono: validateField("telefono", reservationForm.telefono),
+      fechaEntrada: validateField("fechaEntrada", reservationForm.fechaEntrada),
+      fechaSalida: validateField("fechaSalida", reservationForm.fechaSalida),
+    }
+
+    setFormErrors(newErrors)
+
+    // Verificar si hay errores
+    const hasErrors = Object.values(newErrors).some((error) => error !== "")
+
+    if (hasErrors) {
+      Swal.fire({
+        title: "Formulario incompleto",
+        text: "Por favor corrija los errores antes de continuar",
+        icon: "warning",
+        confirmButtonText: "Entendido",
+      })
+      return
+    }
+
     setLoading(true)
 
     try {
-      // Validar que todos los campos estén completos
-      if (
-        !reservationForm.fechaEntrada ||
-        !reservationForm.fechaSalida ||
-        !reservationForm.nombre ||
-        !reservationForm.email ||
-        !reservationForm.telefono
-      ) {
-        setSnackbarOpen(true)
-        setSnackbarMessage("Por favor completa todos los campos")
-        setSnackbarSeverity("error")
-        setLoading(false)
-        return
-      }
-
-      // Asegurarse de que las fechas estén en formato ISO
-      const fechaInicio = new Date(reservationForm.fechaEntrada).toISOString()
-      const fechaFin = new Date(reservationForm.fechaSalida).toISOString()
-
-      // Verificar si el ID del apartamento es válido (debe ser un string, no un número)
-      const apartamentoId = selectedApartamento._id || selectedApartamento.id
-      const isValidObjectId = typeof apartamentoId === "string" && /^[0-9a-fA-F]{24}$/.test(apartamentoId)
-
-      if (!isValidObjectId) {
-        setSnackbarOpen(true)
-        setSnackbarMessage(
-          "No se puede crear una reserva con este apartamento. Por favor, seleccione un apartamento válido.",
-        )
-        setSnackbarSeverity("error")
-        setLoading(false)
-        return
-      }
-
       // Preparar datos para enviar al backend
-      const reservaData = {
-        titular_reserva: reservationForm.nombre,
+      const clienteData = {
+        nombre: reservationForm.nombre,
+        documento: reservationForm.documento,
         email: reservationForm.email,
         telefono: reservationForm.telefono,
-        fecha_inicio: fechaInicio,
-        fecha_fin: fechaFin,
-        apartamento_id: apartamentoId,
-        huespedes: Number.parseInt(reservationForm.huespedes, 10) || 1,
+        // Incluir datos de la reserva para el correo
+        fechaEntrada: reservationForm.fechaEntrada,
+        fechaSalida: reservationForm.fechaSalida,
+        huespedes: reservationForm.huespedes,
+        apartamento: selectedApartamento?.nombre || "No especificado",
+        precioPorNoche: selectedApartamento?.precio || 0,
       }
 
-      console.log("Enviando datos de reserva:", reservaData)
+      console.log("Enviando datos de cliente y reserva:", clienteData)
 
-      // Usar la ruta pública específica para reservas desde la landing page
-      const response = await axios.post("/api/reservas/landing", reservaData)
+      // Usar la nueva ruta pública para registrar clientes
+      const response = await axios.post("/api/clientes/public-register", clienteData)
 
       console.log("Respuesta del servidor:", response.data)
 
       // Manejar respuesta exitosa
       setReservationDialogOpen(false)
-      setSnackbarOpen(true)
-      setSnackbarMessage("¡Reserva realizada con éxito! Te hemos enviado un correo con los detalles.")
-      setSnackbarSeverity("success")
+
+      Swal.fire({
+        title: "¡Reserva realizada!",
+        text: "Hemos enviado los detalles a tu correo electrónico.",
+        icon: "success",
+        confirmButtonText: "Excelente",
+      })
 
       // Resetear formulario
       setReservationForm({
+        documento: "",
         fechaEntrada: "",
         fechaSalida: "",
         huespedes: 1,
@@ -1648,7 +1842,7 @@ function Landing() {
         telefono: "",
       })
     } catch (error) {
-      console.error("Error al crear reserva:", error)
+      console.error("Error al registrar cliente:", error)
 
       // Mostrar mensaje de error más detallado
       const errorMessage =
@@ -1657,9 +1851,12 @@ function Landing() {
         error.message ||
         "Error al procesar la reserva. Por favor intenta nuevamente."
 
-      setSnackbarOpen(true)
-      setSnackbarMessage(errorMessage)
-      setSnackbarSeverity("error")
+      Swal.fire({
+        title: "Error",
+        text: errorMessage,
+        icon: "error",
+        confirmButtonText: "Entendido",
+      })
     } finally {
       setLoading(false)
     }
@@ -1915,7 +2112,26 @@ function Landing() {
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               value={reservationForm.fechaEntrada}
-              onChange={(e) => setReservationForm({ ...reservationForm, fechaEntrada: e.target.value })}
+              onChange={(e) => {
+                const today = new Date().toISOString().split("T")[0]
+                const selectedDate = e.target.value
+
+                if (selectedDate < today) {
+                  Swal.fire({
+                    title: "Fecha inválida",
+                    text: "La fecha de entrada debe ser hoy o posterior",
+                    icon: "warning",
+                    toast: true,
+                    position: "top-end",
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                  })
+                  return
+                }
+
+                setReservationForm({ ...reservationForm, fechaEntrada: e.target.value })
+              }}
             />
             <TextField
               className={classes.bookingInput}
@@ -1924,7 +2140,26 @@ function Landing() {
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               value={reservationForm.fechaSalida}
-              onChange={(e) => setReservationForm({ ...reservationForm, fechaSalida: e.target.value })}
+              onChange={(e) => {
+                const entryDate = reservationForm.fechaEntrada
+                const selectedDate = e.target.value
+
+                if (entryDate && selectedDate <= entryDate) {
+                  Swal.fire({
+                    title: "Fecha inválida",
+                    text: "La fecha de salida debe ser posterior a la fecha de entrada",
+                    icon: "warning",
+                    toast: true,
+                    position: "top-end",
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                  })
+                  return
+                }
+
+                setReservationForm({ ...reservationForm, fechaSalida: e.target.value })
+              }}
             />
             <TextField
               className={classes.bookingInput}
@@ -2437,46 +2672,26 @@ function Landing() {
       >
         <DialogTitle className={classes.reservationDialogTitle} disableTypography>
           <Typography variant="h5" style={{ fontWeight: 600 }}>
-            Reservar {selectedApartamento?.nombre}
+            Registrar Cliente para {selectedApartamento?.nombre}
           </Typography>
         </DialogTitle>
         <DialogContent className={classes.reservationDialogContent}>
           <div className={classes.reservationForm}>
             <TextField
-              label="Fecha de entrada"
-              type="date"
-              name="fechaEntrada"
-              value={reservationForm.fechaEntrada}
+              label="Documento"
+              name="documento"
+              value={reservationForm.documento}
               onChange={handleReservationFormChange}
               className={classes.reservationField}
               variant="outlined"
               fullWidth
-              InputLabelProps={{ shrink: true }}
               required
-            />
-            <TextField
-              label="Fecha de salida"
-              type="date"
-              name="fechaSalida"
-              value={reservationForm.fechaSalida}
-              onChange={handleReservationFormChange}
-              className={classes.reservationField}
-              variant="outlined"
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-              required
-            />
-            <TextField
-              label="Número de huéspedes"
-              type="number"
-              name="huespedes"
-              value={reservationForm.huespedes}
-              onChange={handleReservationFormChange}
-              className={classes.reservationField}
-              variant="outlined"
-              fullWidth
-              InputProps={{ inputProps: { min: 1, max: selectedApartamento?.capacidad || 10 } }}
-              required
+              inputProps={{ maxLength: 17 }}
+              helperText={formErrors.documento || "Máximo 17 caracteres"}
+              error={!!formErrors.documento}
+              InputProps={{
+                startAdornment: <Assignment style={{ color: "#0A2463", marginRight: 8 }} />,
+              }}
             />
             <TextField
               label="Nombre completo"
@@ -2487,6 +2702,9 @@ function Landing() {
               variant="outlined"
               fullWidth
               required
+              inputProps={{ maxLength: 60, pattern: "[A-Za-zÁáÉéÍíÓóÚúÑñ\\s]+" }}
+              helperText={formErrors.nombre || "Solo letras, máximo 60 caracteres"}
+              error={!!formErrors.nombre}
             />
             <TextField
               label="Correo electrónico"
@@ -2498,6 +2716,8 @@ function Landing() {
               variant="outlined"
               fullWidth
               required
+              helperText={formErrors.email || "Formato: ejemplo@dominio.com"}
+              error={!!formErrors.email}
             />
             <TextField
               label="Teléfono"
@@ -2508,72 +2728,126 @@ function Landing() {
               variant="outlined"
               fullWidth
               required
+              inputProps={{ maxLength: 17, pattern: "[0-9]+" }}
+              helperText={formErrors.telefono || "Solo números, máximo 17 caracteres"}
+              error={!!formErrors.telefono}
             />
-            <div className={classes.reservationTotal}>
-              <Typography variant="subtitle1" className={classes.reservationTotalTitle}>
-                Resumen de la reserva:
-              </Typography>
-              <div className={classes.reservationTotalRow}>
-                <Typography variant="body2" className={classes.reservationTotalLabel}>
-                  Precio por noche:
+            <TextField
+              label="Fecha de entrada"
+              type="date"
+              name="fechaEntrada"
+              value={reservationForm.fechaEntrada}
+              onChange={handleReservationFormChange}
+              className={classes.reservationField}
+              variant="outlined"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              helperText={formErrors.fechaEntrada}
+              error={!!formErrors.fechaEntrada}
+            />
+            <TextField
+              label="Fecha de salida"
+              type="date"
+              name="fechaSalida"
+              value={reservationForm.fechaSalida}
+              onChange={handleReservationFormChange}
+              className={classes.reservationField}
+              variant="outlined"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              helperText={formErrors.fechaSalida}
+              error={!!formErrors.fechaSalida}
+            />
+            <TextField
+              label="Huéspedes"
+              type="number"
+              name="huespedes"
+              value={reservationForm.huespedes}
+              onChange={handleReservationFormChange}
+              className={classes.reservationField}
+              variant="outlined"
+              fullWidth
+              InputProps={{ inputProps: { min: 1, max: 10 } }}
+            />
+
+            {selectedApartamento && reservationForm.fechaEntrada && reservationForm.fechaSalida && (
+              <div className={classes.reservationTotal}>
+                <Typography variant="h6" className={classes.reservationTotalTitle}>
+                  Resumen de Reserva
                 </Typography>
-                <Typography variant="body2" className={classes.reservationTotalValue}>
-                  ${selectedApartamento?.precio}
-                </Typography>
+                <div className={classes.reservationTotalRow}>
+                  <Typography variant="body2" className={classes.reservationTotalLabel}>
+                    Apartamento:
+                  </Typography>
+                  <Typography variant="body2" className={classes.reservationTotalValue}>
+                    {selectedApartamento.nombre}
+                  </Typography>
+                </div>
+                <div className={classes.reservationTotalRow}>
+                  <Typography variant="body2" className={classes.reservationTotalLabel}>
+                    Precio por noche:
+                  </Typography>
+                  <Typography variant="body2" className={classes.reservationTotalValue}>
+                    ${selectedApartamento.precio}
+                  </Typography>
+                </div>
+                <div className={classes.reservationTotalRow}>
+                  <Typography variant="body2" className={classes.reservationTotalLabel}>
+                    Noches:
+                  </Typography>
+                  <Typography variant="body2" className={classes.reservationTotalValue}>
+                    {calcularNochesEstadia()}
+                  </Typography>
+                </div>
+                <div className={classes.reservationTotalRow}>
+                  <Typography variant="body2" className={classes.reservationTotalLabel}>
+                    Huéspedes:
+                  </Typography>
+                  <Typography variant="body2" className={classes.reservationTotalValue}>
+                    {reservationForm.huespedes}
+                  </Typography>
+                </div>
+                <div className={classes.reservationTotalRow}>
+                  <Typography variant="body1" className={classes.reservationTotalLabel}>
+                    Total:
+                  </Typography>
+                  <Typography variant="body1" className={classes.reservationTotalFinal}>
+                    ${calcularPrecioTotal()}
+                  </Typography>
+                </div>
               </div>
-              <div className={classes.reservationTotalRow}>
-                <Typography variant="body2" className={classes.reservationTotalLabel}>
-                  Número de noches:
-                </Typography>
-                <Typography variant="body2" className={classes.reservationTotalValue}>
-                  {reservationForm.fechaEntrada && reservationForm.fechaSalida
-                    ? Math.ceil(
-                        Math.abs(new Date(reservationForm.fechaSalida) - new Date(reservationForm.fechaEntrada)) /
-                          (1000 * 60 * 60 * 24),
-                      )
-                    : 0}
-                </Typography>
-              </div>
-              <div className={classes.reservationTotalRow}>
-                <Typography variant="subtitle1" className={classes.reservationTotalLabel}>
-                  Total:
-                </Typography>
-                <Typography variant="subtitle1" className={classes.reservationTotalFinal}>
-                  ${calcularPrecioTotal()}
-                </Typography>
-              </div>
-            </div>
+            )}
           </div>
         </DialogContent>
-        <DialogActions className={classes.reservationActions}>
-          <Button onClick={handleReservationClose} className={classes.cancelButton}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleReservationSubmit}
-            variant="contained"
-            className={classes.reservationButton}
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={24} /> : "Confirmar Reserva"}
-          </Button>
-        </DialogActions>
+        <div className={classes.reservationActions}>
+          <Grid container spacing={2}>
+            <Grid item xs={6}>
+              <Button
+                fullWidth
+                variant="text"
+                className={classes.cancelButton}
+                onClick={handleReservationClose}
+                disabled={loading}
+              >
+                Cancelar
+              </Button>
+            </Grid>
+            <Grid item xs={6}>
+              <Button
+                fullWidth
+                variant="contained"
+                className={classes.reservationButton}
+                onClick={handleReservationSubmit}
+                disabled={loading}
+              >
+                {loading ? "Procesando..." : "Confirmar Reserva"}
+              </Button>
+            </Grid>
+          </Grid>
+        </div>
       </Dialog>
-
-      {/* Snackbar de confirmación */}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} elevation={6} variant="filled">
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
     </div>
   )
 }
 
 export default Landing
-

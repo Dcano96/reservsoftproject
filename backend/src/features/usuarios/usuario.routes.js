@@ -1,7 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../../middlewares/authMiddleware");
-const { createUsuario, getUsuarios, getUsuarioById, updateUsuario, deleteUsuario } = require("./usuario.controller");
+const { 
+  createUsuario, 
+  getUsuarios, 
+  getUsuarioById, 
+  updateUsuario, 
+  deleteUsuario, 
+  removeRol,
+  cambiarPassword // Agregamos la función de cambiar contraseña
+} = require("./usuario.controller");
 
 /**
  * Middleware de autorización que soporta ambos formatos:
@@ -70,5 +78,12 @@ router.get("/", authMiddleware, roleMiddleware("usuarios"), getUsuarios);
 router.get("/:id", authMiddleware, roleMiddleware("usuarios"), getUsuarioById);
 router.put("/:id", authMiddleware, roleMiddleware("usuarios"), updateUsuario);
 router.delete("/:id", authMiddleware, roleMiddleware("usuarios"), deleteUsuario);
+
+// Ruta para quitar rol (si existe)
+router.put("/:id/remove-rol", authMiddleware, roleMiddleware("usuarios"), removeRol);
+
+// Ruta para cambiar contraseña - No requiere permisos específicos, solo autenticación
+router.post("/cambiar-password", authMiddleware, cambiarPassword);
+router.post("/:id/cambiar-password", authMiddleware, cambiarPassword);
 
 module.exports = router;

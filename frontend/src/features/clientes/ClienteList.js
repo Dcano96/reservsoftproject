@@ -453,7 +453,8 @@ const ClienteList = () => {
   })
   const [searchTerm, setSearchTerm] = useState("")
   const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [rowsPerPage, setRowsPerPage] = useState(5)
+  const [isValidating, setIsValidating] = useState(false)
 
   const fetchClientes = async () => {
     try {
@@ -507,105 +508,75 @@ const ClienteList = () => {
     setOpen(true)
   }
 
-  const handleClose = () => setOpen(false)
+  // Modificar la función handleClose para que siempre permita cerrar el modal
+  // Reemplazar la función handleClose actual con esta versión:
+
+  const handleClose = () => {
+    // Cerrar el modal sin validaciones
+    setOpen(false)
+    // Limpiar errores al cerrar
+    setFormErrors({
+      nombre: "",
+      documento: "",
+      email: "",
+      telefono: "",
+      password: "",
+    })
+  }
 
   const handleDetails = (cliente) => {
     setSelectedCliente(cliente)
     setDetailsOpen(true)
   }
 
-  const handleCloseDetails = () => setDetailsOpen(false)
+  const handleCloseDetails = () => {
+    setDetailsOpen(false)
+  }
 
   // Modificar la función validateField para evitar validaciones agresivas
   // Reemplazar la función validateField actual con esta versión mejorada:
 
   // Validación en tiempo real
-  const validateField = (name, value) => {
+  const validateField = (name, value, showAlert = false) => {
     let error = ""
 
     // Si estamos en modo edición, ser menos estrictos con las validaciones
-    // para evitar bloqueos de la interfaz
     const isEditing = !!editingId
 
     switch (name) {
       case "nombre":
-        if (!value) {
+        if (!value.trim()) {
           error = "El nombre es obligatorio"
         } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value)) {
           error = "El nombre solo debe contener letras"
-          // Mostrar SweetAlert2 solo si no estamos editando o si el error es grave
-          if (!isEditing) {
-            Swal.fire({
-              icon: "warning",
-              title: "Validación",
-              text: "El nombre solo debe contener letras",
-              toast: true,
-              position: "top-end",
-              showConfirmButton: false,
-              timer: 3000,
-              timerProgressBar: true,
-            })
-          }
+        } else if (value.length > 50) {
+          error = "El nombre no puede tener más de 50 caracteres"
         }
         break
 
       case "documento":
-        if (!value) {
+        if (!value.trim()) {
           error = "El documento es obligatorio"
         } else if (!/^[a-zA-Z0-9]+$/.test(value)) {
           error = "El documento solo debe contener letras y números"
-          if (!isEditing) {
-            Swal.fire({
-              icon: "warning",
-              title: "Validación",
-              text: "El documento solo debe contener letras y números",
-              toast: true,
-              position: "top-end",
-              showConfirmButton: false,
-              timer: 3000,
-              timerProgressBar: true,
-            })
-          }
+        } else if (value.length > 17) {
+          error = "El documento no puede tener más de 17 caracteres"
         }
         break
 
       case "email":
-        if (!value) {
+        if (!value.trim()) {
           error = "El email es obligatorio"
         } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value)) {
           error = "Formato de email inválido"
-          if (!isEditing) {
-            Swal.fire({
-              icon: "warning",
-              title: "Validación",
-              text: "Por favor ingrese un formato de email válido",
-              toast: true,
-              position: "top-end",
-              showConfirmButton: false,
-              timer: 3000,
-              timerProgressBar: true,
-            })
-          }
         }
         break
 
       case "telefono":
-        if (!value) {
+        if (!value.trim()) {
           error = "El teléfono es obligatorio"
         } else if (!/^\d+$/.test(value)) {
           error = "El teléfono solo debe contener números"
-          if (!isEditing) {
-            Swal.fire({
-              icon: "warning",
-              title: "Validación",
-              text: "El teléfono solo debe contener números",
-              toast: true,
-              position: "top-end",
-              showConfirmButton: false,
-              timer: 3000,
-              timerProgressBar: true,
-            })
-          }
         }
         break
 
@@ -614,46 +585,10 @@ const ClienteList = () => {
         if ((!editingId || value) && value) {
           if (!/(?=.*[A-Z])/.test(value)) {
             error = "Debe contener al menos una letra mayúscula"
-            if (!isEditing) {
-              Swal.fire({
-                icon: "warning",
-                title: "Validación de contraseña",
-                text: "La contraseña debe contener al menos una letra mayúscula",
-                toast: true,
-                position: "top-end",
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-              })
-            }
           } else if (!/(?=.*\d)/.test(value)) {
             error = "Debe contener al menos un número"
-            if (!isEditing) {
-              Swal.fire({
-                icon: "warning",
-                title: "Validación de contraseña",
-                text: "La contraseña debe contener al menos un número",
-                toast: true,
-                position: "top-end",
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-              })
-            }
           } else if (!/(?=.*[!@#$%^&*])/.test(value)) {
             error = "Debe contener al menos un carácter especial (!@#$%^&*)"
-            if (!isEditing) {
-              Swal.fire({
-                icon: "warning",
-                title: "Validación de contraseña",
-                text: "La contraseña debe contener al menos un carácter especial (!@#$%^&*)",
-                toast: true,
-                position: "top-end",
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-              })
-            }
           }
         } else if (!editingId && !value) {
           error = "La contraseña es obligatoria"
@@ -670,42 +605,73 @@ const ClienteList = () => {
       [name]: error,
     }))
 
-    return error
+    // Mostrar SweetAlert2 solo si hay error y se debe mostrar la alerta
+    if (error && showAlert) {
+      Swal.fire({
+        icon: "warning",
+        title: "Validación",
+        text: error,
+        confirmButtonColor: "#2563eb",
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      })
+    }
+
+    return !error // Retorna true si no hay error
   }
 
-  // Añadir funciones para manejar el blur y keydown de los campos
-  // Después de la función validateForm, añadir:
-
   // Agregar función para manejar el cambio de foco entre campos
+  // Actualizar la función handleFieldBlur para que no valide si estamos cerrando el modal:
+
   const handleFieldBlur = (e) => {
     const { name, value } = e.target
-    const error = validateField(name, value)
+    // Al perder el foco, validamos pero solo mostramos alertas si el campo no está vacío
+    // o si es un campo obligatorio
+    const showAlert =
+      value.trim() !== "" ||
+      ["nombre", "documento", "email", "telefono"].includes(name) ||
+      (name === "password" && !editingId)
+    const isValidField = validateField(name, value, showAlert)
 
-    // Si no es válido y no estamos en modo edición, devolver el foco al campo
-    if (error && !editingId) {
-      setTimeout(() => {
-        e.target.focus()
-      }, 100)
+    // Si no es válido y debemos mostrar alerta, mostrarla
+    if (!isValidField && showAlert) {
+      Swal.fire({
+        icon: "warning",
+        title: "Validación",
+        text: formErrors[name],
+        confirmButtonColor: "#2563eb",
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      })
     }
   }
 
   // Agregar función para manejar la tecla Tab
+  // Actualizar la función handleKeyDown para que no valide si estamos cerrando el modal:
+
   const handleKeyDown = (e, nextFieldName) => {
-    // Si se presiona Tab y el campo no es válido, prevenir el cambio de foco
     if (e.key === "Tab") {
       const { name, value } = e.target
-      const error = validateField(name, value)
+      const isValidField = validateField(name, value, true)
 
-      // Solo bloquear si hay error y no estamos en modo edición
-      if (error && !editingId) {
-        e.preventDefault()
-
-        // Mostrar SweetAlert2 con el error
+      // No prevenimos el comportamiento por defecto, permitiendo que el Tab funcione normalmente
+      // Solo mostramos la alerta si hay un error
+      if (!isValidField) {
         Swal.fire({
-          icon: "error",
-          title: "Campo inválido",
-          text: formErrors[name] || "Por favor, complete correctamente este campo antes de continuar",
-          confirmButtonColor: "#2563eb",
+          icon: "warning",
+          title: "Campo con errores",
+          text: formErrors[name] || "Este campo contiene errores. Deberá corregirlo antes de enviar el formulario.",
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
         })
       }
     }
@@ -716,47 +682,185 @@ const ClienteList = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData({ ...formData, [name]: value })
+    const prevValue = formData[name]
 
-    // Validar el campo en tiempo real
-    const error = validateField(name, value)
-    setFormErrors((prev) => ({
-      ...prev,
-      [name]: error,
-    }))
+    // Validaciones específicas durante la escritura
+    let updatedValue = value
+
+    if (name === "nombre") {
+      // Solo permitir letras y espacios, máximo 50 caracteres
+      const letrasRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/
+      if (!letrasRegex.test(value)) {
+        Swal.fire({
+          icon: "warning",
+          title: "Validación",
+          text: "El nombre solo debe contener letras",
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+        })
+        updatedValue = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "")
+      }
+    } else if (name === "documento") {
+      // Solo permitir letras y números, máximo 17 caracteres
+      const alfanumericoRegex = /^[a-zA-Z0-9]*$/
+      if (!alfanumericoRegex.test(value)) {
+        Swal.fire({
+          icon: "warning",
+          title: "Validación",
+          text: "El documento solo debe contener letras y números",
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+        })
+        updatedValue = value.replace(/[^a-zA-Z0-9]/g, "")
+      }
+      if (value.length > 17) {
+        Swal.fire({
+          icon: "warning",
+          title: "Validación",
+          text: "El documento no puede tener más de 17 caracteres",
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+        })
+        updatedValue = value.substring(0, 17)
+      }
+    } else if (name === "telefono") {
+      // Solo permitir números, máximo 15 caracteres
+      const numerosRegex = /^[0-9]*$/
+      if (!numerosRegex.test(value)) {
+        Swal.fire({
+          icon: "warning",
+          title: "Validación",
+          text: "El teléfono solo debe contener números",
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+        })
+        updatedValue = value.replace(/[^0-9]/g, "")
+      }
+      if (value.length > 15) {
+        Swal.fire({
+          icon: "warning",
+          title: "Validación",
+          text: "El teléfono no puede tener más de 15 caracteres",
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+        })
+        updatedValue = value.substring(0, 15)
+      }
+    }
+
+    setFormData({ ...formData, [name]: updatedValue })
+
+    // Determinar si estamos borrando texto (la longitud del valor está disminuyendo)
+    const isDeletingText = prevValue && value.length < prevValue.length
+
+    // Validar el campo que cambió, pero no mostrar alertas si:
+    // 1. Es email o password, o
+    // 2. Estamos borrando texto
+    validateField(name, updatedValue, !isDeletingText && name !== "email" && name !== "password")
   }
 
   const validateForm = () => {
-    const errors = {
-      nombre: validateField("nombre", formData.nombre),
-      documento: validateField("documento", formData.documento),
-      email: validateField("email", formData.email),
-      telefono: validateField("telefono", formData.telefono),
-      password: validateField("password", formData.password),
-    }
+    // Si estamos editando, la contraseña puede estar vacía
+    const isPasswordValid = editingId
+      ? true
+      : formData.password && !/^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/.test(formData.password)
+        ? false
+        : true
 
-    setFormErrors(errors)
+    const isValid =
+      formData.nombre.trim() !== "" &&
+      /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(formData.nombre) &&
+      formData.documento.trim() !== "" &&
+      /^[a-zA-Z0-9]+$/.test(formData.documento) &&
+      formData.email.trim() !== "" &&
+      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email) &&
+      formData.telefono.trim() !== "" &&
+      /^\d+$/.test(formData.telefono) &&
+      isPasswordValid
 
-    // Verificar si hay errores
-    return !Object.values(errors).some((error) => error)
+    return isValid
   }
 
   const handleSubmit = async () => {
     // Validar todos los campos antes de enviar
-    const isValid = validateForm()
+    const tempErrors = {}
 
-    if (!isValid) {
+    // Validar nombre
+    if (!formData.nombre.trim()) {
+      tempErrors.nombre = "El nombre es obligatorio"
+    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(formData.nombre)) {
+      tempErrors.nombre = "El nombre solo debe contener letras"
+    }
+
+    // Validar documento
+    if (!formData.documento.trim()) {
+      tempErrors.documento = "El documento es obligatorio"
+    } else if (!/^[a-zA-Z0-9]+$/.test(formData.documento)) {
+      tempErrors.documento = "El documento solo debe contener letras y números"
+    }
+
+    // Validar email
+    if (!formData.email.trim()) {
+      tempErrors.email = "El email es obligatorio"
+    } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email)) {
+      tempErrors.email = "Formato de email inválido"
+    }
+
+    // Validar teléfono
+    if (!formData.telefono.trim()) {
+      tempErrors.telefono = "El teléfono es obligatorio"
+    } else if (!/^\d+$/.test(formData.telefono)) {
+      tempErrors.telefono = "El teléfono solo debe contener números"
+    }
+
+    // Validar contraseña (solo si es nuevo usuario o si se está cambiando)
+    if (!editingId && !formData.password) {
+      tempErrors.password = "La contraseña es obligatoria"
+    } else if (formData.password && !/^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/.test(formData.password)) {
+      tempErrors.password = "La contraseña debe contener al menos una mayúscula, un número y un carácter especial"
+    }
+
+    // Si hay errores, mostrarlos y detener el envío
+    if (Object.keys(tempErrors).length > 0) {
+      setFormErrors(tempErrors)
+
+      // Mostrar alerta con el primer error encontrado
+      const firstError = Object.values(tempErrors)[0]
       Swal.fire({
         icon: "error",
         title: "Error de validación",
-        text: "Por favor corrija los errores en el formulario",
+        text: firstError,
+        confirmButtonColor: "#2563eb",
       })
+
       return
     }
 
+    // Si no hay errores, continuar con el envío
     try {
       if (editingId) {
-        await clienteService.updateCliente(editingId, formData)
+        // Si la contraseña está vacía, eliminarla del objeto para no actualizarla
+        const dataToSend = { ...formData }
+        if (!dataToSend.password) {
+          delete dataToSend.password
+        }
+
+        await clienteService.updateCliente(editingId, dataToSend)
         Swal.fire({
           icon: "success",
           title: "Actualizado",
@@ -779,7 +883,7 @@ const ClienteList = () => {
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "Ocurrió un error al guardar el cliente.",
+        text: error.response?.data?.msg || "Ocurrió un error al guardar el cliente.",
       })
     }
   }
@@ -959,7 +1063,22 @@ const ClienteList = () => {
       {/* Modal para crear/editar cliente */}
       {/* Reemplazar el modal de crear/editar cliente con el diseño actualizado */}
       {/* Buscar la sección del modal de crear/editar y reemplazarla con: */}
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" classes={{ paper: classes.dialogPaper }}>
+      {/* Modificar el componente Dialog para quitar las validaciones al cerrar */}
+      {/* Reemplazar el Dialog actual con esta versión: */}
+      <Dialog
+        open={open}
+        onClose={(event, reason) => {
+          // Solo permitir cerrar con el botón X o el botón Cerrar
+          if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
+            handleClose()
+          }
+        }}
+        disableBackdropClick={true}
+        disableEscapeKeyDown={true}
+        fullWidth
+        maxWidth="sm"
+        classes={{ paper: classes.dialogPaper }}
+      >
         <DialogTitle className={classes.dialogTitle}>
           {editingId ? "Editar Cliente" : "Agregar Cliente"}
           <IconButton onClick={handleClose} className={classes.closeButton}>
@@ -976,21 +1095,22 @@ const ClienteList = () => {
             <TextField
               className={classes.formField}
               margin="dense"
-              label="Nombre"
-              name="nombre"
-              value={formData.nombre}
+              label="Documento"
+              name="documento"
+              value={formData.documento}
               onChange={handleChange}
               onBlur={handleFieldBlur}
-              onKeyDown={(e) => handleKeyDown(e, "documento")}
+              onKeyDown={(e) => handleKeyDown(e, "nombre")}
               fullWidth
               variant="outlined"
-              error={!!formErrors.nombre}
-              helperText={formErrors.nombre}
+              error={!!formErrors.documento}
+              helperText={formErrors.documento}
               required
+              inputProps={{ maxLength: 17 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Person className={classes.fieldIcon} />
+                    <AssignmentInd className={classes.fieldIcon} />
                   </InputAdornment>
                 ),
               }}
@@ -998,21 +1118,22 @@ const ClienteList = () => {
             <TextField
               className={classes.formField}
               margin="dense"
-              label="Documento"
-              name="documento"
-              value={formData.documento}
+              label="Nombre"
+              name="nombre"
+              value={formData.nombre}
               onChange={handleChange}
               onBlur={handleFieldBlur}
               onKeyDown={(e) => handleKeyDown(e, "email")}
               fullWidth
               variant="outlined"
-              error={!!formErrors.documento}
-              helperText={formErrors.documento}
+              error={!!formErrors.nombre}
+              helperText={formErrors.nombre}
               required
+              inputProps={{ maxLength: 50 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <AssignmentInd className={classes.fieldIcon} />
+                    <Person className={classes.fieldIcon} />
                   </InputAdornment>
                 ),
               }}
@@ -1062,7 +1183,7 @@ const ClienteList = () => {
               error={!!formErrors.telefono}
               helperText={formErrors.telefono}
               required
-              inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+              inputProps={{ inputMode: "numeric", pattern: "[0-9]*", maxLength: 15 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -1130,6 +1251,7 @@ const ClienteList = () => {
             </TextField>
           </Box>
         </DialogContent>
+        {/* Modificar los botones de acción para asegurar que Cancelar siempre cierre */}
         <DialogActions className={classes.dialogActions}>
           <Button onClick={handleClose} className={classes.cancelButton}>
             Cancelar
@@ -1142,9 +1264,17 @@ const ClienteList = () => {
 
       {/* Modal de detalles (solo lectura) */}
       {/* Reemplazar la sección del modal de detalles */}
+      {/* Modificar también el Dialog de detalles para asegurar que se pueda cerrar sin problemas: */}
       <Dialog
         open={detailsOpen}
-        onClose={handleCloseDetails}
+        onClose={(event, reason) => {
+          // Solo permitir cerrar con el botón X o el botón Cerrar
+          if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
+            handleCloseDetails()
+          }
+        }}
+        disableBackdropClick={true}
+        disableEscapeKeyDown={true}
         fullWidth
         maxWidth="sm"
         classes={{ paper: classes.dialogPaper }}

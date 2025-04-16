@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Visibility,
   VisibilityOff,
@@ -12,7 +12,7 @@ import {
   LinkedIn,
 } from "@material-ui/icons"
 import authService from "./auth.service"
-import { useHistory } from "react-router-dom"
+import { useHistory, useLocation } from "react-router-dom"
 import "./style.css"
 
 const Login = () => {
@@ -21,7 +21,24 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [successMessage, setSuccessMessage] = useState("")
   const history = useHistory()
+  const location = useLocation()
+
+  // Extraer parámetros de la URL si existen
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const emailParam = params.get("email")
+    const messageParam = params.get("message")
+
+    if (emailParam) {
+      setEmail(emailParam)
+    }
+
+    if (messageParam) {
+      setSuccessMessage(decodeURIComponent(messageParam))
+    }
+  }, [location])
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -29,14 +46,35 @@ const Login = () => {
     setError("")
 
     try {
+      console.log("Intentando login con:", email, "y contraseña proporcionada")
+
+      // Llamada al servicio de autenticación
       const response = await authService.login(email, password)
-      localStorage.setItem("token", response.token)
-      history.replace("/dashboard")
+
+      console.log("Respuesta de login:", response)
+
+      // Si hay un token en la respuesta, guardarlo y redirigir
+      if (response.token) {
+        localStorage.setItem("token", response.token)
+
+        // Redirigir al dashboard o a la página anterior
+        const returnUrl = new URLSearchParams(location.search).get("returnUrl")
+        history.replace(returnUrl || "/dashboard")
+      } else {
+        throw new Error("No se recibió un token válido")
+      }
     } catch (error) {
-      const errorMsg =
-        error.response && error.response.data && error.response.data.msg ? error.response.data.msg : "Error en el login"
+      // Mejorar el manejo de errores para mostrar mensajes más descriptivos
+      let errorMsg = "Error en el login"
+
+      if (error.response && error.response.data && error.response.data.msg) {
+        errorMsg = error.response.data.msg
+      } else if (error.message) {
+        errorMsg = error.message
+      }
+
       setError(errorMsg)
-      console.error("Error en el login", error)
+      console.error("Error en el login:", error)
     } finally {
       setLoading(false)
     }
@@ -66,6 +104,12 @@ const Login = () => {
             <h2>Iniciar sesión</h2>
           </div>
 
+          {successMessage && (
+            <div className="auth-success">
+              <span>{successMessage}</span>
+            </div>
+          )}
+
           {error && (
             <div className="auth-error">
               <span className="auth-error-icon">!</span>
@@ -75,7 +119,7 @@ const Login = () => {
 
           <form className="auth-form" onSubmit={handleLogin}>
             <div className="auth-input-group">
-              <label htmlFor="email">Email Address</label>
+              <label htmlFor="email">Correo electrónico</label>
               <div className="auth-input-container">
                 <EmailOutlined className="auth-input-icon" />
                 <input
@@ -83,14 +127,14 @@ const Login = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email address"
+                  placeholder="Ingresa tu correo electrónico"
                   required
                 />
               </div>
             </div>
 
             <div className="auth-input-group">
-              <label htmlFor="password">Password</label>
+              <label htmlFor="password">Contraseña</label>
               <div className="auth-input-container">
                 <LockOutlined className="auth-input-icon" />
                 <input
@@ -98,7 +142,7 @@ const Login = () => {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
+                  placeholder="Ingresa tu contraseña"
                   required
                 />
                 <button
