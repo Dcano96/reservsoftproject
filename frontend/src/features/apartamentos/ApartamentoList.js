@@ -47,7 +47,6 @@ const formatTarifa = (tarifa) => {
   }).format(tarifa)
 }
 
-// Personalización de las celdas del encabezado
 const StyledTableCell = withStyles((theme) => ({
   head: {
     background: "#2563eb",
@@ -68,32 +67,11 @@ const StyledTableCell = withStyles((theme) => ({
   },
 }))(TableCell)
 
-// Personalización de la celda de apartamento (alineada a la izquierda)
 const ApartamentoTableCell = withStyles((theme) => ({
   body: {
     fontSize: "0.95rem",
     textAlign: "left",
     padding: theme.spacing(1.8),
-    color: "#334155",
-    borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
-  },
-}))(TableCell)
-
-// Personalización para las celdas de la tabla de mobiliarios
-const MobiliarioTableCell = withStyles((theme) => ({
-  head: {
-    background: "#2563eb",
-    color: "#fff",
-    fontWeight: 600,
-    fontSize: "0.9rem",
-    padding: theme.spacing(1.5),
-    textAlign: "center",
-    borderBottom: "none",
-  },
-  body: {
-    fontSize: "0.9rem",
-    padding: theme.spacing(1.5),
-    textAlign: "center",
     color: "#334155",
     borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
   },
@@ -188,14 +166,6 @@ const useStyles = makeStyles((theme) => ({
     background: "#fff",
     width: "100%",
   },
-  tableContainerDetails: {
-    marginTop: theme.spacing(2),
-    borderRadius: theme.spacing(1.5),
-    overflow: "hidden",
-    boxShadow: "0 5px 15px rgba(0, 0, 0, 0.08)",
-    background: "#fff",
-    width: "100%",
-  },
   tableRow: {
     transition: "all 0.3s ease",
     "&:nth-of-type(odd)": {
@@ -281,7 +251,6 @@ const useStyles = makeStyles((theme) => ({
     color: "#64748b",
     fontSize: "1.1rem",
   },
-  // Estilo para el modal de crear/editar (sin modificación)
   dialogPaper: {
     borderRadius: theme.spacing(1.5),
     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
@@ -289,14 +258,13 @@ const useStyles = makeStyles((theme) => ({
     width: "600px",
     maxWidth: "90vw",
   },
-  // Modificación para el modal de detalles (únicamente este modal)
   dialogPaperLarge: {
     borderRadius: theme.spacing(1.5),
     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
     overflow: "hidden",
-    width: "900px", // Más ancho
+    width: "900px",
     maxWidth: "95vw",
-    maxHeight: "70vh", // Menos alto (más angosto verticalmente)
+    maxHeight: "70vh",
   },
   dialogTitle: {
     background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
@@ -455,7 +423,7 @@ const useStyles = makeStyles((theme) => ({
   errorMessage: {
     fontSize: "0.95rem",
     color: "#ef4444",
-    fontWeight: "500",
+    fontWeight: 500,
     marginTop: "4px",
   },
 }))
@@ -464,12 +432,14 @@ const ApartamentoList = () => {
   const classes = useStyles()
   const history = useHistory()
   const [apartamentos, setApartamentos] = useState([])
-  const [open, setOpen] = useState(false) // Modal crear/editar
+  const [open, setOpen] = useState(false)
   const [editingId, setEditingId] = useState(null)
+  // Incluimos "Capacidad" en el estado inicial (como número)
   const [formData, setFormData] = useState({
     Tipo: "Type 1",
     NumeroApto: "",
     Piso: "",
+    Capacidad: 0,
     Tarifa: "",
     Estado: true,
   })
@@ -478,17 +448,12 @@ const ApartamentoList = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [formErrors, setFormErrors] = useState({})
   const [isFormValid, setIsFormValid] = useState(false)
-
-  // Estado para el filtro por tipo (por defecto "Todos")
   const [selectedTipo, setSelectedTipo] = useState("Todos")
-
-  // Estados para el modal de detalles y mobiliarios asociados
   const [openDetails, setOpenDetails] = useState(false)
   const [selectedApartamento, setSelectedApartamento] = useState(null)
   const [mobiliarios, setMobiliarios] = useState([])
-
-  // Cargar lista de Tipos de Apartamento
   const [tipoApartamentos, setTipoApartamentos] = useState([])
+
   useEffect(() => {
     const fetchTipos = async () => {
       try {
@@ -501,11 +466,17 @@ const ApartamentoList = () => {
     fetchTipos()
   }, [])
 
-  // Función para cargar apartamentos (ordenados por Número de Apartamento)
   const fetchApartamentos = async () => {
     try {
       const data = await apartamentoService.getApartamentos()
-      const sortedData = data.sort((a, b) => Number(a.NumeroApto) - Number(b.NumeroApto))
+      console.log("Datos recibidos de la API:", data)
+      // Asegurarse de que todos los apartamentos tengan un valor para Capacidad
+      const dataWithCapacidad = data.map((apt) => ({
+        ...apt,
+        Capacidad: apt.Capacidad != null ? apt.Capacidad : 0,
+      }))
+      console.log("Datos procesados con Capacidad:", dataWithCapacidad)
+      const sortedData = dataWithCapacidad.sort((a, b) => Number(a.NumeroApto) - Number(b.NumeroApto))
       setApartamentos(sortedData)
     } catch (error) {
       console.error("Error fetching apartamentos", error)
@@ -521,7 +492,7 @@ const ApartamentoList = () => {
     fetchApartamentos()
   }, [])
 
-  // Abrir modal de crear/editar (sin modificaciones)
+  // Al abrir el modal: en modo edición usamos una comprobación para no pasar 0 por vacío
   const handleOpen = (apartamento) => {
     setFormErrors({})
     if (apartamento) {
@@ -529,6 +500,8 @@ const ApartamentoList = () => {
         Tipo: apartamento.Tipo || "",
         NumeroApto: apartamento.NumeroApto || "",
         Piso: apartamento.Piso || "",
+        // Usar comprobación para que si el valor es 0 se mantenga 0 y no se reemplace por ""
+        Capacidad: apartamento.Capacidad != null ? apartamento.Capacidad : 0,
         Tarifa: apartamento.Tarifa || "",
         Estado: apartamento.Estado ?? true,
       })
@@ -536,14 +509,12 @@ const ApartamentoList = () => {
       setIsFormValid(true)
     } else {
       setFormData({
-        Tipo:
-          selectedTipo === "Todos"
-            ? tipoApartamentos.length > 0
-              ? tipoApartamentos[0].nombre
-              : "Type 1"
-            : selectedTipo,
+        Tipo: selectedTipo === "Todos"
+          ? tipoApartamentos.length > 0 ? tipoApartamentos[0].nombre : "Type 1"
+          : selectedTipo,
         NumeroApto: "",
         Piso: "",
+        Capacidad: 0,
         Tarifa: "",
         Estado: true,
       })
@@ -555,7 +526,6 @@ const ApartamentoList = () => {
 
   const handleClose = () => setOpen(false)
 
-  // Abrir modal de detalles y cargar mobiliarios asociados
   const handleView = async (apartamento) => {
     setSelectedApartamento(apartamento)
     try {
@@ -578,32 +548,34 @@ const ApartamentoList = () => {
     setMobiliarios([])
   }
 
-  // Manejar cambios en el formulario (para crear/editar)
   const handleChange = (e) => {
     const { name, value } = e.target
     let newValue = value
-    if (["NumeroApto", "Piso", "Tarifa"].includes(name)) {
+    if (["NumeroApto", "Piso", "Capacidad", "Tarifa"].includes(name)) {
       if (value === "" || /^\d+$/.test(value)) {
-        newValue = value === "" ? "" : Number(value)
+        newValue = value === "" ? 0 : Number(value)
       } else {
         return
       }
+    } else if (name === "Estado") {
+      newValue = value === "true" ? true : false
     }
-    setFormData((prev) => ({ ...prev, [name]: newValue }))
+    const updatedFormData = { ...formData, [name]: newValue }
+    setFormData(updatedFormData)
     validateField(name, newValue)
+    validateForm(updatedFormData)
   }
 
-  // Validar campo individual
-  const validateField = async (name, value) => {
+  const validateField = (name, value) => {
     let errorMessage = ""
     if (name === "NumeroApto") {
-      if (!value) {
+      if (value === 0 || value === "") {
         errorMessage = "El número de apartamento es obligatorio"
       } else {
         try {
           if (!editingId || (editingId && formData.NumeroApto !== value)) {
             const existingApartamentos = apartamentos.filter(
-              (apt) => apt.NumeroApto === value && apt.Tipo === formData.Tipo,
+              (apt) => apt.NumeroApto === value && apt.Tipo === formData.Tipo
             )
             if (existingApartamentos.length > 0) {
               errorMessage = `El apartamento número ${value} ya existe para el tipo ${formData.Tipo}`
@@ -614,13 +586,19 @@ const ApartamentoList = () => {
         }
       }
     } else if (name === "Piso") {
-      if (!value) {
+      if (value === 0 || value === "") {
         errorMessage = "El piso es obligatorio"
       } else if (value <= 0) {
         errorMessage = "El piso debe ser un número positivo"
       }
+    } else if (name === "Capacidad") {
+      if (value === "" || value === undefined || value === null) {
+        errorMessage = "La capacidad es obligatoria"
+      } else if (value <= 0) {
+        errorMessage = "La capacidad debe ser mayor que 0"
+      }
     } else if (name === "Tarifa") {
-      if (!value) {
+      if (value === 0 || value === "") {
         errorMessage = "La tarifa es obligatoria"
       } else if (value <= 0) {
         errorMessage = "La tarifa debe ser un valor positivo"
@@ -642,40 +620,42 @@ const ApartamentoList = () => {
         timerProgressBar: true,
       })
     }
-    setTimeout(() => {
-      validateForm({ ...formData, [name]: value })
-    }, 0)
     return !errorMessage
   }
 
-  // Validar formulario completo
   const validateForm = (data) => {
-    const isValid = data.NumeroApto && data.Piso && data.Tarifa
+    // Se exige que los campos numéricos sean mayores a 0
+    const isValid =
+      Number(data.NumeroApto) > 0 &&
+      Number(data.Piso) > 0 &&
+      Number(data.Capacidad) > 0 &&
+      Number(data.Tarifa) > 0
     setIsFormValid(isValid)
   }
 
-  // Enviar formulario (crear/actualizar)
   const handleSubmit = async () => {
     const tempErrors = {}
-    if (!formData.NumeroApto) {
+    if (Number(formData.NumeroApto) <= 0) {
       tempErrors.NumeroApto = "El número de apartamento es obligatorio"
     } else {
       const existingApartamentos = apartamentos.filter(
-        (apt) => apt.NumeroApto === formData.NumeroApto && apt.Tipo === formData.Tipo && apt._id !== editingId,
+        (apt) =>
+          apt.NumeroApto === formData.NumeroApto &&
+          apt.Tipo === formData.Tipo &&
+          apt._id !== editingId
       )
       if (existingApartamentos.length > 0) {
         tempErrors.NumeroApto = `El apartamento número ${formData.NumeroApto} ya existe para el tipo ${formData.Tipo}`
       }
     }
-    if (!formData.Piso) {
-      tempErrors.Piso = "El piso es obligatorio"
-    } else if (formData.Piso <= 0) {
-      tempErrors.Piso = "El piso debe ser un número positivo"
+    if (Number(formData.Piso) <= 0) {
+      tempErrors.Piso = "El piso es obligatorio y debe ser mayor que 0"
     }
-    if (!formData.Tarifa) {
-      tempErrors.Tarifa = "La tarifa es obligatoria"
-    } else if (formData.Tarifa <= 0) {
-      tempErrors.Tarifa = "La tarifa debe ser un valor positivo"
+    if (Number(formData.Capacidad) <= 0) {
+      tempErrors.Capacidad = "La capacidad es obligatoria y debe ser mayor que 0"
+    }
+    if (Number(formData.Tarifa) <= 0) {
+      tempErrors.Tarifa = "La tarifa es obligatoria y debe ser un valor positivo"
     }
     if (Object.keys(tempErrors).length > 0) {
       setFormErrors(tempErrors)
@@ -688,9 +668,20 @@ const ApartamentoList = () => {
       })
       return
     }
+
+    const dataToSend = {
+      ...formData,
+      NumeroApto: Number(formData.NumeroApto),
+      Piso: Number(formData.Piso),
+      Capacidad: Number(formData.Capacidad),
+      Tarifa: Number(formData.Tarifa),
+    }
+
+    console.log("Datos a enviar para guardar:", dataToSend)
+
     try {
       if (editingId) {
-        await apartamentoService.updateApartamento(editingId, formData)
+        await apartamentoService.updateApartamento(editingId, dataToSend)
         Swal.fire({
           icon: "success",
           title: "Actualizado",
@@ -698,7 +689,7 @@ const ApartamentoList = () => {
           confirmButtonColor: "#2563eb",
         })
       } else {
-        await apartamentoService.createApartamento(formData)
+        await apartamentoService.createApartamento(dataToSend)
         Swal.fire({
           icon: "success",
           title: "Creado",
@@ -706,8 +697,11 @@ const ApartamentoList = () => {
           confirmButtonColor: "#2563eb",
         })
       }
-      fetchApartamentos()
-      handleClose()
+      // Esperar un momento para recargar datos
+      setTimeout(async () => {
+        await fetchApartamentos()
+        handleClose()
+      }, 500)
     } catch (error) {
       console.error("Error saving apartamento", error)
       Swal.fire({
@@ -718,7 +712,6 @@ const ApartamentoList = () => {
     }
   }
 
-  // Eliminar apartamento (no se permite si está activo)
   const handleDelete = async (id, Estado) => {
     if (Estado === true) {
       Swal.fire({
@@ -759,14 +752,14 @@ const ApartamentoList = () => {
     }
   }
 
-  // Filtrar apartamentos según tipo y búsqueda
   const filteredApartamentos = apartamentos.filter(
     (a) =>
       (selectedTipo === "Todos" || a.Tipo === selectedTipo) &&
       (searchTerm === "" ||
         a.NumeroApto.toString().includes(searchTerm) ||
         a.Piso.toString().includes(searchTerm) ||
-        a.Tarifa.toString().includes(searchTerm)),
+        a.Capacidad.toString().includes(searchTerm) ||
+        a.Tarifa.toString().includes(searchTerm))
   )
   const paginatedApartamentos = filteredApartamentos.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
   const handleChangePage = (event, newPage) => {
@@ -777,7 +770,6 @@ const ApartamentoList = () => {
     setPage(0)
   }
 
-  // Función para obtener el icono según el tipo
   const getTabIcon = (tipo) => {
     switch (tipo) {
       case "Type 1":
@@ -792,17 +784,10 @@ const ApartamentoList = () => {
   }
 
   return (
-    <Box
-      className={classes.container}
-      style={{ paddingTop: "10px", borderTop: "6px solid #2563eb", borderRadius: "8px" }}
-    >
+    <Box className={classes.container} style={{ paddingTop: "10px", borderTop: "6px solid #2563eb", borderRadius: "8px" }}>
       <Box className={classes.pageHeader}>
-        <Typography variant="h4" className={classes.pageTitle}>
-          Gestión de Apartamentos
-        </Typography>
-        <Typography variant="body1" className={classes.pageSubtitle}>
-          Administra los apartamentos del sistema
-        </Typography>
+        <Typography variant="h4" className={classes.pageTitle}>Gestión de Apartamentos</Typography>
+        <Typography variant="body1" className={classes.pageSubtitle}>Administra los apartamentos del sistema</Typography>
       </Box>
 
       <div className={classes.searchContainer}>
@@ -822,13 +807,7 @@ const ApartamentoList = () => {
           }}
         />
         <Box display="flex" gap={1}>
-          <Button
-            variant="contained"
-            className={classes.addButton}
-            onClick={() => handleOpen(null)}
-            startIcon={<UserPlus size={20} />}
-            style={{ minWidth: "180px" }}
-          >
+          <Button variant="contained" className={classes.addButton} onClick={() => handleOpen(null)} startIcon={<UserPlus size={20} />} style={{ minWidth: "180px" }}>
             Nuevo Apartamento
           </Button>
         </Box>
@@ -838,17 +817,10 @@ const ApartamentoList = () => {
       <Box mb={2}>
         <FormControl fullWidth variant="outlined">
           <InputLabel id="select-tipo-label">Tipos</InputLabel>
-          <Select
-            labelId="select-tipo-label"
-            value={selectedTipo}
-            onChange={(e) => setSelectedTipo(e.target.value)}
-            label="Tipos"
-          >
+          <Select labelId="select-tipo-label" value={selectedTipo} onChange={(e) => setSelectedTipo(e.target.value)} label="Tipos">
             <MenuItem value="Todos">Todos</MenuItem>
             {tipoApartamentos.map((tipo) => (
-              <MenuItem key={tipo._id} value={tipo.nombre}>
-                {tipo.nombre}
-              </MenuItem>
+              <MenuItem key={tipo._id} value={tipo.nombre}>{tipo.nombre}</MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -861,6 +833,7 @@ const ApartamentoList = () => {
             <TableRow style={{ backgroundColor: "#2563eb" }}>
               <StyledTableCell style={{ textAlign: "left", paddingLeft: "24px" }}>Apartamento</StyledTableCell>
               <StyledTableCell>Piso</StyledTableCell>
+              <StyledTableCell>Capacidad</StyledTableCell>
               <StyledTableCell>Tarifa</StyledTableCell>
               <StyledTableCell>Estado</StyledTableCell>
               <StyledTableCell>Acciones</StyledTableCell>
@@ -876,31 +849,23 @@ const ApartamentoList = () => {
                   </Box>
                 </ApartamentoTableCell>
                 <TableCell className={classes.tableCell}>{apartamento.Piso}</TableCell>
+                <TableCell className={classes.tableCell}>{apartamento.Capacidad}</TableCell>
                 <TableCell className={classes.tableCell}>{formatTarifa(apartamento.Tarifa)}</TableCell>
                 <TableCell className={classes.tableCell}>{apartamento.Estado ? "Activo" : "Inactivo"}</TableCell>
                 <TableCell className={`${classes.tableCell} ${classes.actionsCell}`}>
                   <Box display="flex" justifyContent="center" gap={1}>
                     <Tooltip title="Editar apartamento">
-                      <IconButton
-                        className={`${classes.actionButton} ${classes.btnEdit}`}
-                        onClick={() => handleOpen(apartamento)}
-                      >
+                      <IconButton className={`${classes.actionButton} ${classes.btnEdit}`} onClick={() => handleOpen(apartamento)}>
                         <Edit size={18} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Ver detalles">
-                      <IconButton
-                        className={`${classes.actionButton} ${classes.btnDetails}`}
-                        onClick={() => handleView(apartamento)}
-                      >
+                      <IconButton className={`${classes.actionButton} ${classes.btnDetails}`} onClick={() => handleView(apartamento)}>
                         <Eye size={18} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Eliminar apartamento">
-                      <IconButton
-                        className={`${classes.actionButton} ${classes.btnDelete}`}
-                        onClick={() => handleDelete(apartamento._id, apartamento.Estado)}
-                      >
+                      <IconButton className={`${classes.actionButton} ${classes.btnDelete}`} onClick={() => handleDelete(apartamento._id, apartamento.Estado)}>
                         <Delete size={18} />
                       </IconButton>
                     </Tooltip>
@@ -910,7 +875,7 @@ const ApartamentoList = () => {
             ))}
             {filteredApartamentos.length === 0 && (
               <TableRow className={classes.noDataRow}>
-                <TableCell colSpan={5} className={classes.noDataCell}>
+                <TableCell colSpan={6} className={classes.noDataCell}>
                   No se encontraron apartamentos que coincidan con la búsqueda.
                 </TableCell>
               </TableRow>
@@ -931,8 +896,8 @@ const ApartamentoList = () => {
         className={classes.pagination}
       />
 
-      {/* Modal para crear/editar (sin modificaciones) */}
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" classes={{ paper: classes.dialogPaper }}>
+      {/* Modal para crear/editar */}
+      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" classes={{ paper: classes.dialogPaper }} disablePortal={false} container={document.body}>
         <DialogTitle className={classes.dialogTitle}>
           {editingId ? "Editar Apartamento" : "Nuevo Apartamento"}
           <IconButton onClick={handleClose} className={classes.closeButton}>
@@ -943,24 +908,14 @@ const ApartamentoList = () => {
           {/* Sección de Información Básica */}
           <Box className={classes.formSection}>
             <Typography className={classes.sectionTitle}>
-              <Home size={20} />
-              Información Básica
+              <Home size={20} /> Información Básica
             </Typography>
             <FormControl fullWidth variant="outlined" className={classes.formField}>
               <InputLabel id="tipo-label">Tipo de Apartamento</InputLabel>
-              <Select
-                labelId="tipo-label"
-                name="Tipo"
-                value={formData.Tipo}
-                onChange={handleChange}
-                label="Tipo de Apartamento"
-                fullWidth
-              >
+              <Select labelId="tipo-label" name="Tipo" value={formData.Tipo} onChange={handleChange} label="Tipo de Apartamento" fullWidth>
                 {tipoApartamentos.length > 0 ? (
                   tipoApartamentos.map((tipo) => (
-                    <MenuItem key={tipo._id} value={tipo.nombre}>
-                      {tipo.nombre}
-                    </MenuItem>
+                    <MenuItem key={tipo._id} value={tipo.nombre}>{tipo.nombre}</MenuItem>
                   ))
                 ) : (
                   <>
@@ -992,8 +947,7 @@ const ApartamentoList = () => {
           {/* Sección de Ubicación y Tarifa */}
           <Box className={classes.formSection}>
             <Typography className={classes.sectionTitle}>
-              <Building size={20} />
-              Ubicación y Tarifa
+              <Building size={20} /> Ubicación y Tarifa
             </Typography>
             <TextField
               className={classes.formField}
@@ -1010,6 +964,23 @@ const ApartamentoList = () => {
               helperText={formErrors.Piso}
               required
               InputProps={{ inputProps: { min: 1 } }}
+            />
+            {/* Campo Capacidad */}
+            <TextField
+              className={classes.formField}
+              margin="dense"
+              label="Capacidad"
+              name="Capacidad"
+              value={formData.Capacidad}
+              onChange={handleChange}
+              onBlur={() => validateField("Capacidad", formData.Capacidad)}
+              fullWidth
+              type="number"
+              variant="outlined"
+              error={!!formErrors.Capacidad}
+              helperText={formErrors.Capacidad}
+              required
+              InputProps={{ inputProps: { min: 0 } }}
             />
             <TextField
               className={classes.formField}
@@ -1029,14 +1000,7 @@ const ApartamentoList = () => {
             />
             <FormControl fullWidth variant="outlined" className={classes.formField}>
               <InputLabel id="estado-label">Estado</InputLabel>
-              <Select
-                labelId="estado-label"
-                name="Estado"
-                value={formData.Estado}
-                onChange={handleChange}
-                label="Estado"
-                fullWidth
-              >
+              <Select labelId="estado-label" name="Estado" value={formData.Estado} onChange={handleChange} label="Estado" fullWidth>
                 <MenuItem value={true}>Activo</MenuItem>
                 <MenuItem value={false}>Inactivo</MenuItem>
               </Select>
@@ -1044,23 +1008,15 @@ const ApartamentoList = () => {
           </Box>
         </DialogContent>
         <DialogActions className={classes.dialogActions}>
-          <Button onClick={handleClose} className={classes.cancelButton}>
-            Cancelar
-          </Button>
+          <Button onClick={handleClose} className={classes.cancelButton}>Cancelar</Button>
           <Button onClick={handleSubmit} className={classes.submitButton} disabled={!isFormValid}>
             {editingId ? "Actualizar" : "Crear"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Modal de detalles (modificado únicamente este modal) */}
-      <Dialog
-        open={openDetails}
-        onClose={handleCloseDetails}
-        fullWidth
-        maxWidth="md"
-        classes={{ paper: classes.dialogPaperLarge }}
-      >
+      {/* Modal de detalles */}
+      <Dialog open={openDetails} onClose={handleCloseDetails} fullWidth maxWidth="md" classes={{ paper: classes.dialogPaperLarge }} disablePortal={false} container={document.body}>
         <DialogTitle className={classes.dialogTitle}>
           Detalles del Apartamento
           <IconButton onClick={handleCloseDetails} className={classes.closeButton}>
@@ -1076,126 +1032,61 @@ const ApartamentoList = () => {
                 <Chip label={selectedApartamento.Estado ? "Activo" : "Inactivo"} style={{ marginTop: "8px" }} />
               </Box>
               <Divider style={{ margin: "16px 0" }} />
-
-              {/* Agrupación unificada para Tipo, Piso y Tarifa */}
-              {/* Información del apartamento en un solo contenedor */}
               <Box border="1px solid #e2e8f0" borderRadius={4} padding={3} marginBottom={2} bgcolor="#f8fafc">
-                <Typography
-                  variant="subtitle1"
-                  fontWeight={600}
-                  marginBottom={1}
-                  style={{ display: "flex", alignItems: "center" }}
-                >
+                <Typography variant="subtitle1" fontWeight={600} marginBottom={1} style={{ display: "flex", alignItems: "center" }}>
                   <FileText size={20} style={{ marginRight: "8px" }} /> Información
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={4}>
                     <Box display="flex" alignItems="center" marginBottom={1}>
                       <Home size={18} style={{ marginRight: "8px", color: "#64748b" }} />
-                      <Typography variant="body2" color="textSecondary">
-                        Tipo:
-                      </Typography>
+                      <Typography variant="body2" color="textSecondary">Tipo:</Typography>
                     </Box>
-                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>
-                      {selectedApartamento.Tipo}
-                    </Typography>
+                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>{selectedApartamento.Tipo}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={4}>
                     <Box display="flex" alignItems="center" marginBottom={1}>
                       <Layers size={18} style={{ marginRight: "8px", color: "#64748b" }} />
-                      <Typography variant="body2" color="textSecondary">
-                        Piso:
-                      </Typography>
+                      <Typography variant="body2" color="textSecondary">Piso:</Typography>
                     </Box>
-                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>
-                      {selectedApartamento.Piso}
-                    </Typography>
+                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>{selectedApartamento.Piso}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Box display="flex" alignItems="center" marginBottom={1}>
+                      <Layers size={18} style={{ marginRight: "8px", color: "#64748b" }} />
+                      <Typography variant="body2" color="textSecondary">Capacidad:</Typography>
+                    </Box>
+                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>{selectedApartamento.Capacidad}</Typography>
                   </Grid>
                   <Grid item xs={12} sm={4}>
                     <Box display="flex" alignItems="center" marginBottom={1}>
                       <DollarSign size={18} style={{ marginRight: "8px", color: "#64748b" }} />
-                      <Typography variant="body2" color="textSecondary">
-                        Tarifa:
-                      </Typography>
+                      <Typography variant="body2" color="textSecondary">Tarifa:</Typography>
                     </Box>
-                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>
-                      {formatTarifa(selectedApartamento.Tarifa)}
-                    </Typography>
+                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>{formatTarifa(selectedApartamento.Tarifa)}</Typography>
                   </Grid>
                 </Grid>
               </Box>
-
               <Typography className={classes.sectionTitle} style={{ marginTop: "24px" }}>
-                <FileText size={20} />
-                Mobiliarios Asociados
+                <FileText size={20} /> Mobiliarios Asociados
               </Typography>
               <TableContainer component={Paper} className={classes.tableContainerDetails}>
                 <Table style={{ tableLayout: "fixed", width: "100%" }}>
                   <TableHead>
                     <TableRow>
-                      <TableCell
-                        style={{
-                          backgroundColor: "#2563eb",
-                          color: "#fff",
-                          width: "20%",
-                          padding: "16px",
-                          fontSize: "0.9rem",
-                          fontWeight: 600,
-                          borderBottom: "none",
-                        }}
-                      >
+                      <TableCell style={{ backgroundColor: "#2563eb", color: "#fff", width: "20%", padding: "16px", fontSize: "0.9rem", fontWeight: 600, borderBottom: "none" }}>
                         Nombre
                       </TableCell>
-                      <TableCell
-                        style={{
-                          backgroundColor: "#2563eb",
-                          color: "#fff",
-                          width: "20%",
-                          padding: "16px",
-                          fontSize: "0.9rem",
-                          fontWeight: 600,
-                          borderBottom: "none",
-                        }}
-                      >
+                      <TableCell style={{ backgroundColor: "#2563eb", color: "#fff", width: "20%", padding: "16px", fontSize: "0.9rem", fontWeight: 600, borderBottom: "none" }}>
                         Ident. Mobiliario
                       </TableCell>
-                      <TableCell
-                        style={{
-                          backgroundColor: "#2563eb",
-                          color: "#fff",
-                          width: "15%",
-                          padding: "16px",
-                          fontSize: "0.9rem",
-                          fontWeight: 600,
-                          borderBottom: "none",
-                        }}
-                      >
+                      <TableCell style={{ backgroundColor: "#2563eb", color: "#fff", width: "15%", padding: "16px", fontSize: "0.9rem", fontWeight: 600, borderBottom: "none" }}>
                         Estado
                       </TableCell>
-                      <TableCell
-                        style={{
-                          backgroundColor: "#2563eb",
-                          color: "#fff",
-                          width: "25%",
-                          padding: "16px",
-                          fontSize: "0.9rem",
-                          fontWeight: 600,
-                          borderBottom: "none",
-                        }}
-                      >
+                      <TableCell style={{ backgroundColor: "#2563eb", color: "#fff", width: "25%", padding: "16px", fontSize: "0.9rem", fontWeight: 600, borderBottom: "none" }}>
                         Observación
                       </TableCell>
-                      <TableCell
-                        style={{
-                          backgroundColor: "#2563eb",
-                          color: "#fff",
-                          width: "20%",
-                          padding: "16px",
-                          fontSize: "0.9rem",
-                          fontWeight: 600,
-                          borderBottom: "none",
-                        }}
-                      >
+                      <TableCell style={{ backgroundColor: "#2563eb", color: "#fff", width: "20%", padding: "16px", fontSize: "0.9rem", fontWeight: 600, borderBottom: "none" }}>
                         Última actualización
                       </TableCell>
                     </TableRow>
@@ -1208,10 +1099,7 @@ const ApartamentoList = () => {
                         const currentDate = new Date()
                         const diffTime = currentDate - updatedDate
                         const diffDays = diffTime / (1000 * 60 * 60 * 24)
-                        const cellStyle =
-                          mob.estado === "Mantenimiento" && diffDays > 1
-                            ? { backgroundColor: "#fee2e2", color: "#991b1b" }
-                            : {}
+                        const cellStyle = mob.estado === "Mantenimiento" && diffDays > 1 ? { backgroundColor: "#fee2e2", color: "#991b1b" } : {}
                         return (
                           <TableRow key={mob._id}>
                             <TableCell style={{ width: "20%", padding: "16px" }}>{mob.nombre}</TableCell>
@@ -1240,17 +1128,9 @@ const ApartamentoList = () => {
           )}
         </DialogContent>
         <DialogActions className={classes.dialogActions}>
-          <Button onClick={handleCloseDetails} className={classes.cancelButton}>
-            Cerrar
-          </Button>
+          <Button onClick={handleCloseDetails} className={classes.cancelButton}>Cerrar</Button>
           {selectedApartamento && (
-            <Button
-              onClick={() => {
-                handleCloseDetails()
-                handleOpen(selectedApartamento)
-              }}
-              className={classes.submitButton}
-            >
+            <Button onClick={() => { handleCloseDetails(); handleOpen(selectedApartamento) }} className={classes.submitButton}>
               Editar
             </Button>
           )}

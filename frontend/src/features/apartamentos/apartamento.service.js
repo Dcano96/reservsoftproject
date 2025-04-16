@@ -1,67 +1,81 @@
 import api from "../../services/api.js"
 
-const API_URL = "/apartamentos" // Debe coincidir con la ruta montada en el back
-
 const getApartamentos = async () => {
   try {
-    const res = await api.get(API_URL)
-    return res.data
+    const response = await api.get("/apartamentos")
+    console.log("Datos recibidos del servidor (GET):", response.data) // Depuración
+    return response.data
   } catch (error) {
-    console.error("Error en getApartamentos:", error.response?.data || error.message)
+    console.error("Error fetching apartamentos:", error)
     throw error
   }
 }
 
-const getApartamentoById = async (id) => {
+const getApartamento = async (id) => {
   try {
-    const res = await api.get(`${API_URL}/${id}`)
-    return res.data
+    const response = await api.get(`/apartamentos/${id}`)
+    return response.data
   } catch (error) {
-    console.error("Error en getApartamentoById:", error.response?.data || error.message)
+    console.error("Error fetching apartamento:", error)
     throw error
   }
 }
 
 const createApartamento = async (apartamentoData) => {
   try {
-    console.log("Enviando datos al servidor:", apartamentoData)
-    // Se espera que los datos incluyan: Tipo, NumeroApto, Piso, Tarifa y Estado
-    const res = await api.post(API_URL, apartamentoData)
-    return res.data
+    // Convertir los campos numéricos a número antes de enviar
+    const dataToSend = {
+      ...apartamentoData,
+      NumeroApto: Number(apartamentoData.NumeroApto),
+      Piso: Number(apartamentoData.Piso),
+      Capacidad: Number(apartamentoData.Capacidad),
+      Tarifa: Number(apartamentoData.Tarifa),
+    }
+
+    console.log("Enviando datos al servidor (CREATE):", dataToSend)
+    const response = await api.post("/apartamentos", dataToSend)
+    console.log("Respuesta del servidor (CREATE):", response.data) // Depuración
+    return response.data
   } catch (error) {
-    console.error("Error en createApartamento:", error.response?.data || error.message)
+    console.error("Error creating apartamento:", error)
     throw error
   }
 }
 
 const updateApartamento = async (id, apartamentoData) => {
   try {
-    console.log("Actualizando apartamento:", id, apartamentoData)
-    // Se espera que los datos incluyan: Tipo, NumeroApto, Piso, Tarifa y Estado
-    const res = await api.put(`${API_URL}/${id}`, apartamentoData)
-    return res.data
+    const dataToSend = {
+      ...apartamentoData,
+      NumeroApto: Number(apartamentoData.NumeroApto),
+      Piso: Number(apartamentoData.Piso),
+      Capacidad: Number(apartamentoData.Capacidad),
+      Tarifa: Number(apartamentoData.Tarifa),
+    }
+    console.log("Actualizando apartamento:", id)
+    console.log("Datos enviados al servidor (UPDATE):", dataToSend)
+    const response = await api.put(`/apartamentos/${id}`, dataToSend)
+    console.log("Respuesta del servidor (UPDATE):", response.data) // Depuración
+    return response.data
   } catch (error) {
-    console.error("Error en updateApartamento:", error.response?.data || error.message)
+    console.error("Error updating apartamento:", error)
     throw error
   }
 }
 
-const darDeBajaApartamento = async (id) => {
+const deleteApartamento = async (id) => {
   try {
-    console.log("Dando de baja apartamento:", id)
-    // Se modifica el campo "Estado" a false para darlo de baja
-    const res = await api.put(`${API_URL}/${id}`, { Estado: false })
-    return res.data
+    await api.delete(`/apartamentos/${id}`)
+    return // No content on successful deletion
   } catch (error) {
-    console.error("Error en darDeBajaApartamento:", error.response?.data || error.message)
+    console.error("Error deleting apartamento:", error)
     throw error
   }
 }
 
 export default {
   getApartamentos,
-  getApartamentoById,
+  getApartamento,
   createApartamento,
   updateApartamento,
-  darDeBajaApartamento,
+  deleteApartamento,
 }
