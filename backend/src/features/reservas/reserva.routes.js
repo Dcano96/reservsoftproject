@@ -1,3 +1,5 @@
+//Routes de reservas
+
 const express = require("express")
 const router = express.Router()
 const authMiddleware = require("../../middlewares/authMiddleware")
@@ -6,7 +8,7 @@ const reservaController = require("./reserva.controller")
 
 // Rutas públicas
 // IMPORTANTE: Colocar la ruta pública antes de las rutas protegidas
-router.post("/landing", reservaController.crearReservaPublica)
+router.post("/publica", reservaController.crearReservaPublica)
 
 // Rutas protegidas
 router.post("/", authMiddleware, roleMiddleware(), reservaController.crearReserva)

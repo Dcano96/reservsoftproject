@@ -19,28 +19,21 @@ import {
   ListItem,
   ListItemText,
   Divider,
-  Fade,
   Zoom,
   Slide,
-  Dialog,
-  DialogTitle,
-  DialogContent,
   useMediaQuery,
   useTheme,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
 } from "@material-ui/core"
 import { makeStyles } from "@material-ui/core/styles"
 import {
   LocationOn,
   Star,
-  Pool,
-  Wifi,
-  Restaurant,
-  Spa,
-  Phone,
   Menu as MenuIcon,
   Close,
-  CheckCircle,
   LocalHotel,
   Bathtub,
   Person,
@@ -49,25 +42,35 @@ import {
   Favorite,
   FavoriteBorder,
   Search,
-  Email,
-  Instagram,
-  Facebook,
-  Twitter,
-  Room,
-  ArrowForward,
-  AccessTime,
   PlayArrow,
   Visibility,
-  AcUnit,
+  Pool,
+  Wifi,
+  Spa,
   FitnessCenter,
+  Restaurant,
+  AcUnit,
   LocalBar,
   Security,
-  Assignment,
+  Facebook,
+  Instagram,
+  Twitter,
+  Room,
+  Phone,
+  Email,
+  AccessTime,
+  ArrowForward,
+  CheckCircle,
+  CloudUpload,
+  Add,
+  InfoOutlined,
+  Description,
 } from "@material-ui/icons"
 import axios from "axios"
 import { useHistory } from "react-router-dom"
 import Swal from "sweetalert2"
 import "./landing.styles.css" // Importar estilos CSS
+import { Fade } from "@material-ui/core"
 
 // Paleta de colores moderna y elegante
 const theme = {
@@ -1121,6 +1124,8 @@ const useStyles = makeStyles((theme) => ({
   reservationDialogContent: {
     padding: theme.spacing(4),
     backgroundColor: "#FFFAFF",
+    maxHeight: "70vh",
+    overflowY: "auto",
   },
   reservationForm: {
     display: "flex",
@@ -1274,6 +1279,118 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(0.5),
     marginLeft: theme.spacing(1.5),
   },
+  // Nuevos estilos para acompañantes
+  acompanantesSection: {
+    marginTop: theme.spacing(3),
+    padding: theme.spacing(3),
+    backgroundColor: "rgba(10, 36, 99, 0.03)",
+    borderRadius: 8,
+    border: "1px solid rgba(10, 36, 99, 0.1)",
+  },
+  acompanantesTitle: {
+    fontWeight: 600,
+    marginBottom: theme.spacing(2),
+    color: "#0A2463",
+    display: "flex",
+    alignItems: "center",
+    "& svg": {
+      marginRight: theme.spacing(1),
+    },
+  },
+  acompananteItem: {
+    padding: theme.spacing(2),
+    backgroundColor: "#FFFAFF",
+    borderRadius: 4,
+    marginBottom: theme.spacing(2),
+    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+    position: "relative",
+  },
+  removeAcompananteButton: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    minWidth: "auto",
+    width: 30,
+    height: 30,
+    padding: 0,
+  },
+  addAcompananteButton: {
+    marginTop: theme.spacing(1),
+    backgroundColor: "#0A2463",
+    color: "#FFFAFF",
+    "&:hover": {
+      backgroundColor: "#3E92CC",
+    },
+  },
+  // Nuevos estilos para el comprobante de pago
+  uploadSection: {
+    marginTop: theme.spacing(3),
+    padding: theme.spacing(3),
+    backgroundColor: "rgba(10, 36, 99, 0.03)",
+    borderRadius: 8,
+    border: "1px solid rgba(10, 36, 99, 0.1)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+  },
+  uploadTitle: {
+    fontWeight: 600,
+    marginBottom: theme.spacing(2),
+    color: "#0A2463",
+    display: "flex",
+    alignItems: "center",
+    "& svg": {
+      marginRight: theme.spacing(1),
+    },
+  },
+  uploadButton: {
+    marginTop: theme.spacing(2),
+    backgroundColor: "#0A2463",
+    color: "#FFFAFF",
+    padding: theme.spacing(1, 3),
+    "&:hover": {
+      backgroundColor: "#3E92CC",
+    },
+  },
+  fileInput: {
+    display: "none",
+  },
+  filePreview: {
+    width: "100%",
+    maxHeight: 200,
+    objectFit: "contain",
+    marginTop: theme.spacing(2),
+    borderRadius: 4,
+    border: "1px solid rgba(10, 36, 99, 0.2)",
+  },
+  fileName: {
+    marginTop: theme.spacing(1),
+    color: "#8D99AE",
+    fontSize: "0.875rem",
+  },
+  paymentInfo: {
+    marginTop: theme.spacing(2),
+    padding: theme.spacing(2),
+    backgroundColor: "rgba(216, 176, 140, 0.1)",
+    borderRadius: 4,
+    border: "1px solid rgba(216, 176, 140, 0.3)",
+  },
+  paymentInfoTitle: {
+    fontWeight: 600,
+    color: "#0A2463",
+    marginBottom: theme.spacing(1),
+    display: "flex",
+    alignItems: "center",
+    "& svg": {
+      marginRight: theme.spacing(1),
+      color: "#D8B08C",
+    },
+  },
+  paymentInfoText: {
+    color: "#1E1B18",
+    fontSize: "0.9rem",
+    marginBottom: theme.spacing(1),
+  },
 }))
 
 // Datos actualizados para los apartamentos específicos
@@ -1319,7 +1436,7 @@ const apartamentosEjemplo = [
     banos: 3,
     tamano: 120,
     caracteristicas: ["Terraza panorámica", "Jacuzzi", "Bar privado", "Servicio de concierge"],
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-3.png-txItO3avORrYlGt8r75JHZPPdAEP76.jpeg",
+    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-3.png-txItO3avORn7pXvG0Idk6FMgqlbWu7x.jpeg",
     disponible: true,
     tag: "Lujo",
   },
@@ -1364,7 +1481,7 @@ const apartamentosEjemplo = [
     banos: 1,
     tamano: 55,
     caracteristicas: ["Diseño abierto", "Iluminación LED", "Smart TV", "Sonido envolvente"],
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-3.png-txItO3avORrYlGt8r75JHZPPdAEP76.jpeg",
+    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-3.png-txItO3avORn7pXvG0Idk6FMgqlbWu7x.jpeg",
     disponible: true,
     tag: "Moderno",
   },
@@ -1413,6 +1530,7 @@ function Landing() {
   const theme = useTheme()
   const history = useHistory()
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+  const fileInputRef = useRef(null)
 
   // Estados
   const [loading, setLoading] = useState(false)
@@ -1423,23 +1541,32 @@ function Landing() {
   const [searchTerm, setSearchTerm] = useState("")
   const [reservationDialogOpen, setReservationDialogOpen] = useState(false)
   const [selectedApartamento, setSelectedApartamento] = useState(null)
+  // Modificar la inicialización del estado reservationForm para incluir el campo documento
   const [reservationForm, setReservationForm] = useState({
-    documento: "",
-    fechaEntrada: "",
-    fechaSalida: "",
-    huespedes: 1,
-    nombre: "",
+    titular_reserva: "",
     email: "",
     telefono: "",
+    fecha_inicio: "",
+    fecha_fin: "",
+    apartamentos: [],
+    noches_estadia: 1,
+    total: 0,
+    monto_pago: 0,
+    acompanantes: [],
+    documento: "", // Añadir el campo documento
   })
+  // Añadir el campo documento a los errores del formulario
   const [formErrors, setFormErrors] = useState({
-    documento: "",
-    nombre: "",
+    titular_reserva: "",
     email: "",
     telefono: "",
-    fechaEntrada: "",
-    fechaSalida: "",
+    fecha_inicio: "",
+    fecha_fin: "",
+    monto_pago: "",
+    documento: "", // Añadir el campo documento
   })
+  const [comprobantePago, setComprobantePago] = useState(null)
+  const [comprobantePreview, setComprobantePreview] = useState("")
   const [snackbarOpen, setSnackbarOpen] = useState(false)
   const [snackbarMessage, setSnackbarMessage] = useState(
     "¡Cliente registrado con éxito! Te hemos enviado un correo con los detalles.",
@@ -1502,7 +1629,7 @@ function Landing() {
               imagenes: ["/images/apartment-1.jpg", "/images/apartment-2.jpg", "/images/apartment-3.jpg"],
               imagen:
                 apt.Tipo === "Penthouse"
-                  ? "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-3.png-txItO3avORrYlGt8r75JHZPPdAEP76.jpeg"
+                  ? "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-3.png-txItO3avORn7pXvG0Idk6FMgqlbWu7x.jpeg"
                   : apt.Tipo === "Tipo 2"
                     ? "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-2.png-Qb6dNq1YCCbp1obXcopeyIldnr9niD.jpeg"
                     : "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-1.png-7iFT37KEISyEFDtZqRfYvbz1dXw12D.jpeg",
@@ -1623,25 +1750,93 @@ function Landing() {
 
     // Establecer fecha de entrada como hoy por defecto
     const today = new Date().toISOString().split("T")[0]
+
+    // Inicializar el formulario con los valores por defecto
     setReservationForm({
-      ...reservationForm,
-      fechaEntrada: today,
-      fechaSalida: "",
+      titular_reserva: "",
+      email: "",
+      telefono: "",
+      fecha_inicio: today,
+      fecha_fin: "",
+      apartamentos: apartamento ? [apartamento.id] : [],
+      noches_estadia: 1,
+      total: apartamento ? apartamento.precio : 0,
+      monto_pago: apartamento ? apartamento.precio * 0.5 : 0, // 50% del total
+      acompanantes: [],
+      documento: "",
     })
 
     // Resetear errores del formulario
     setFormErrors({
-      documento: "",
-      nombre: "",
+      titular_reserva: "",
       email: "",
       telefono: "",
-      fechaEntrada: "",
-      fechaSalida: "",
+      fecha_inicio: "",
+      fecha_fin: "",
+      monto_pago: "",
+      documento: "",
     })
+
+    // Resetear el comprobante de pago
+    setComprobantePago(null)
+    setComprobantePreview("")
   }
 
   const handleReservationClose = () => {
     setReservationDialogOpen(false)
+  }
+
+  // Agregar/eliminar acompañantes
+  const handleAddAcompanante = () => {
+    const newAcompanante = {
+      nombre: "",
+      apellido: "",
+      documento: "",
+    }
+    setReservationForm({
+      ...reservationForm,
+      acompanantes: [...reservationForm.acompanantes, newAcompanante],
+    })
+  }
+
+  const handleRemoveAcompanante = (index) => {
+    const updatedAcompanantes = [...reservationForm.acompanantes]
+    updatedAcompanantes.splice(index, 1)
+    setReservationForm({
+      ...reservationForm,
+      acompanantes: updatedAcompanantes,
+    })
+  }
+
+  const handleAcompananteChange = (index, field, value) => {
+    const updatedAcompanantes = [...reservationForm.acompanantes]
+    updatedAcompanantes[index] = {
+      ...updatedAcompanantes[index],
+      [field]: value,
+    }
+    setReservationForm({
+      ...reservationForm,
+      acompanantes: updatedAcompanantes,
+    })
+  }
+
+  // Manejar la carga del comprobante de pago
+  const handleComprobanteChange = (event) => {
+    const file = event.target.files[0]
+    if (file) {
+      setComprobantePago(file)
+
+      // Crear una URL para previsualizar la imagen
+      const fileReader = new FileReader()
+      fileReader.onload = () => {
+        setComprobantePreview(fileReader.result)
+      }
+      fileReader.readAsDataURL(file)
+    }
+  }
+
+  const handleUploadClick = () => {
+    fileInputRef.current.click()
   }
 
   // Validación de campos en tiempo real
@@ -1649,22 +1844,13 @@ function Landing() {
     let error = ""
 
     switch (name) {
-      case "nombre":
+      case "titular_reserva":
         if (!value) {
           error = "El nombre es obligatorio"
         } else if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(value)) {
           error = "El nombre solo debe contener letras"
         } else if (value.length > 60) {
-          // Cambiado de 17 a 60 caracteres
           error = "El nombre no puede exceder los 60 caracteres"
-        }
-        break
-
-      case "documento":
-        if (!value) {
-          error = "El documento es obligatorio"
-        } else if (value.length > 17) {
-          error = "El documento no puede exceder los 17 caracteres"
         }
         break
 
@@ -1679,14 +1865,12 @@ function Landing() {
       case "telefono":
         if (!value) {
           error = "El teléfono es obligatorio"
-        } else if (!/^\d+$/.test(value)) {
-          error = "El teléfono solo debe contener números"
-        } else if (value.length > 17) {
-          error = "El teléfono no puede exceder los 17 caracteres"
+        } else if (!/^\+?[0-9]{8,15}$/.test(value)) {
+          error = "Ingrese un número de teléfono válido (8-15 dígitos)"
         }
         break
 
-      case "fechaEntrada":
+      case "fecha_inicio":
         const today = new Date()
         today.setHours(0, 0, 0, 0)
         const entryDate = new Date(value)
@@ -1698,11 +1882,32 @@ function Landing() {
         }
         break
 
-      case "fechaSalida":
+      case "fecha_fin":
         if (!value) {
           error = "La fecha de salida es obligatoria"
-        } else if (reservationForm.fechaEntrada && new Date(value) <= new Date(reservationForm.fechaEntrada)) {
+        } else if (reservationForm.fecha_inicio && new Date(value) <= new Date(reservationForm.fecha_inicio)) {
           error = "La fecha de salida debe ser posterior a la fecha de entrada"
+        }
+        break
+
+      case "monto_pago":
+        const total = calcularPrecioTotal()
+        const minPago = total * 0.5 // 50% del total
+
+        if (!value) {
+          error = "El monto de pago es obligatorio"
+        } else if (Number(value) < minPago) {
+          error = `El pago mínimo debe ser del 50% (${minPago})`
+        } else if (Number(value) > total) {
+          error = "El pago no puede superar el total de la reserva"
+        }
+        break
+
+      case "documento":
+        if (!value) {
+          error = "El documento es obligatorio"
+        } else if (!/^\d{6,12}$/.test(value)) {
+          error = "Ingrese un número de documento válido (6-12 dígitos)"
         }
         break
 
@@ -1721,6 +1926,22 @@ function Landing() {
       ...reservationForm,
       [name]: value,
     })
+
+    // Actualizar el total y el monto de pago si cambian las fechas
+    if (name === "fecha_inicio" || name === "fecha_fin") {
+      if (reservationForm.fecha_inicio && reservationForm.fecha_fin) {
+        const noches = calcularNochesEstadia()
+        const nuevoTotal = selectedApartamento ? selectedApartamento.precio * noches : 0
+        const nuevoMontoPago = nuevoTotal * 0.5 // 50% del total
+
+        setReservationForm((prev) => ({
+          ...prev,
+          noches_estadia: noches,
+          total: nuevoTotal,
+          monto_pago: nuevoMontoPago,
+        }))
+      }
+    }
 
     // Solo validar el email al enviar el formulario, no mientras se escribe
     if (name !== "email") {
@@ -1754,6 +1975,7 @@ function Landing() {
     window.location.href = "/login"
   }
 
+  // Reemplazar la función handleReservationSubmit with this versión actualizada
   const handleReservationSubmit = async () => {
     // Validar el email ahora
     const emailError = validateField("email", reservationForm.email)
@@ -1774,12 +1996,13 @@ function Landing() {
 
     // Validar todos los campos antes de enviar
     const newErrors = {
-      documento: validateField("documento", reservationForm.documento),
-      nombre: validateField("nombre", reservationForm.nombre),
+      titular_reserva: validateField("titular_reserva", reservationForm.titular_reserva),
       email: emailError, // Ya validado
       telefono: validateField("telefono", reservationForm.telefono),
-      fechaEntrada: validateField("fechaEntrada", reservationForm.fechaEntrada),
-      fechaSalida: validateField("fechaSalida", reservationForm.fechaSalida),
+      fecha_inicio: validateField("fecha_inicio", reservationForm.fecha_inicio),
+      fecha_fin: validateField("fecha_fin", reservationForm.fecha_fin),
+      monto_pago: validateField("monto_pago", reservationForm.monto_pago),
+      documento: !reservationForm.documento ? "El documento es obligatorio" : "",
     }
 
     setFormErrors(newErrors)
@@ -1797,59 +2020,96 @@ function Landing() {
       return
     }
 
+    // Verificar si se ha subido el comprobante de pago
+    if (!comprobantePago) {
+      Swal.fire({
+        title: "Comprobante de pago requerido",
+        text: "Por favor suba el comprobante de su pago",
+        icon: "warning",
+        confirmButtonText: "Entendido",
+      })
+      return
+    }
+
     setLoading(true)
 
     try {
-      // Preparar datos para enviar al backend
-      const clienteData = {
-        nombre: reservationForm.nombre,
-        documento: reservationForm.documento,
+      console.log("Preparando datos para enviar al backend...")
+
+      // Preparar datos para la API crearReservaPublica
+      const reservaData = {
+        titular_reserva: reservationForm.titular_reserva,
         email: reservationForm.email,
         telefono: reservationForm.telefono,
-        // Incluir datos de la reserva para el correo
-        fechaEntrada: reservationForm.fechaEntrada,
-        fechaSalida: reservationForm.fechaSalida,
-        huespedes: reservationForm.huespedes,
-        apartamento: selectedApartamento?.nombre || "No especificado",
-        precioPorNoche: selectedApartamento?.precio || 0,
+        fecha_inicio: reservationForm.fecha_inicio,
+        fecha_fin: reservationForm.fecha_fin,
+        apartamento_id: selectedApartamento.id, // Asegurarse de enviar el ID del apartamento
+        huespedes: reservationForm.acompanantes.length + 1, // +1 por el titular
+        documento: reservationForm.documento,
+        monto_pago: reservationForm.monto_pago, // Añadir el monto del pago parcial
       }
 
-      console.log("Enviando datos de cliente y reserva:", clienteData)
+      console.log("Datos a enviar:", reservaData)
 
-      // Usar la nueva ruta pública para registrar clientes
-      const response = await axios.post("/api/clientes/public-register", clienteData)
+      // Usar la ruta pública para crear reservas sin autenticación
+      const response = await axios.post("/api/reservas/publica", reservaData)
 
       console.log("Respuesta del servidor:", response.data)
 
-      // Manejar respuesta exitosa
-      setReservationDialogOpen(false)
+      // Verificar si el cliente ya existía
+      if (response.data.clienteExistente) {
+        Swal.fire({
+          title: "Cliente ya registrado",
+          text: "Hemos encontrado tus datos en nuestro sistema. Tu reserva ha sido registrada correctamente.",
+          icon: "info",
+          confirmButtonText: "Entendido",
+        })
+      } else {
+        // Manejar respuesta exitosa
+        Swal.fire({
+          title: "¡Reserva realizada!",
+          text: "Hemos recibido tu reserva. Te enviaremos los detalles a tu correo electrónico.",
+          icon: "success",
+          confirmButtonText: "Excelente",
+        })
+      }
 
-      Swal.fire({
-        title: "¡Reserva realizada!",
-        text: "Hemos enviado los detalles a tu correo electrónico.",
-        icon: "success",
-        confirmButtonText: "Excelente",
-      })
+      setReservationDialogOpen(false)
 
       // Resetear formulario
       setReservationForm({
-        documento: "",
-        fechaEntrada: "",
-        fechaSalida: "",
-        huespedes: 1,
-        nombre: "",
+        titular_reserva: "",
         email: "",
         telefono: "",
+        fecha_inicio: "",
+        fecha_fin: "",
+        apartamentos: [],
+        noches_estadia: 1,
+        total: 0,
+        monto_pago: 0,
+        acompanantes: [],
+        documento: "",
       })
+      setComprobantePago(null)
+      setComprobantePreview("")
     } catch (error) {
-      console.error("Error al registrar cliente:", error)
+      console.error("Error al registrar reserva:", error)
 
       // Mostrar mensaje de error más detallado
-      const errorMessage =
-        error.response?.data?.msg ||
-        error.response?.data?.message ||
-        error.message ||
-        "Error al procesar la reserva. Por favor intenta nuevamente."
+      let errorMessage = "Error al procesar la reserva. Por favor intenta nuevamente."
+
+      if (error.response) {
+        // El servidor respondió con un código de error
+        console.error("Respuesta de error del servidor:", error.response.data)
+
+        if (error.response.status === 401) {
+          errorMessage = "No se pudo procesar la reserva. Por favor, inténtalo más tarde o contáctanos directamente."
+        } else if (error.response.data?.msg || error.response.data?.message) {
+          errorMessage = error.response.data.msg || error.response.data.message
+        }
+      } else if (error.message) {
+        errorMessage = error.message
+      }
 
       Swal.fire({
         title: "Error",
@@ -1864,12 +2124,12 @@ function Landing() {
 
   // Agregar esta función para calcular noches de estadía
   const calcularNochesEstadia = () => {
-    if (!reservationForm.fechaEntrada || !reservationForm.fechaSalida) {
+    if (!reservationForm.fecha_inicio || !reservationForm.fecha_fin) {
       return 1
     }
 
-    const fechaEntrada = new Date(reservationForm.fechaEntrada)
-    const fechaSalida = new Date(reservationForm.fechaSalida)
+    const fechaEntrada = new Date(reservationForm.fecha_inicio)
+    const fechaSalida = new Date(reservationForm.fecha_fin)
     const diffTime = Math.abs(fechaSalida - fechaEntrada)
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
@@ -1894,12 +2154,12 @@ function Landing() {
 
   // Calcular precio total de la reserva
   const calcularPrecioTotal = () => {
-    if (!selectedApartamento || !reservationForm.fechaEntrada || !reservationForm.fechaSalida) {
+    if (!selectedApartamento || !reservationForm.fecha_inicio || !reservationForm.fecha_fin) {
       return 0
     }
 
-    const fechaEntrada = new Date(reservationForm.fechaEntrada)
-    const fechaSalida = new Date(reservationForm.fechaSalida)
+    const fechaEntrada = new Date(reservationForm.fecha_inicio)
+    const fechaSalida = new Date(reservationForm.fecha_fin)
     const diffTime = Math.abs(fechaSalida - fechaEntrada)
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
@@ -2111,7 +2371,7 @@ function Landing() {
               type="date"
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              value={reservationForm.fechaEntrada}
+              value={reservationForm.fecha_inicio}
               onChange={(e) => {
                 const today = new Date().toISOString().split("T")[0]
                 const selectedDate = e.target.value
@@ -2130,7 +2390,7 @@ function Landing() {
                   return
                 }
 
-                setReservationForm({ ...reservationForm, fechaEntrada: e.target.value })
+                setReservationForm({ ...reservationForm, fecha_inicio: e.target.value })
               }}
             />
             <TextField
@@ -2139,9 +2399,9 @@ function Landing() {
               type="date"
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              value={reservationForm.fechaSalida}
+              value={reservationForm.fecha_fin}
               onChange={(e) => {
-                const entryDate = reservationForm.fechaEntrada
+                const entryDate = reservationForm.fecha_inicio
                 const selectedDate = e.target.value
 
                 if (entryDate && selectedDate <= entryDate) {
@@ -2158,7 +2418,7 @@ function Landing() {
                   return
                 }
 
-                setReservationForm({ ...reservationForm, fechaSalida: e.target.value })
+                setReservationForm({ ...reservationForm, fecha_fin: e.target.value })
               }}
             />
             <TextField
@@ -2167,8 +2427,26 @@ function Landing() {
               type="number"
               variant="outlined"
               InputProps={{ inputProps: { min: 1, max: 10 } }}
-              value={reservationForm.huespedes}
-              onChange={(e) => setReservationForm({ ...reservationForm, huespedes: e.target.value })}
+              value={reservationForm.acompanantes.length + 1} // +1 por el titular
+              onChange={(e) => {
+                const numHuespedes = Number.parseInt(e.target.value) - 1 // -1 porque el titular no es acompañante
+                if (numHuespedes < 0) return
+
+                // Ajustar la lista de acompañantes según el número de huéspedes
+                let nuevosAcompanantes = [...reservationForm.acompanantes]
+                if (numHuespedes < nuevosAcompanantes.length) {
+                  // Reducir la lista
+                  nuevosAcompanantes = nuevosAcompanantes.slice(0, numHuespedes)
+                } else if (numHuespedes > nuevosAcompanantes.length) {
+                  // Aumentar la lista
+                  const acompanantesAdicionales = Array(numHuespedes - nuevosAcompanantes.length)
+                    .fill(0)
+                    .map(() => ({ nombre: "", apellido: "", documento: "" }))
+                  nuevosAcompanantes = [...nuevosAcompanantes, ...acompanantesAdicionales]
+                }
+
+                setReservationForm({ ...reservationForm, acompanantes: nuevosAcompanantes })
+              }}
             />
             <Button
               variant="contained"
@@ -2351,6 +2629,11 @@ function Landing() {
                     <div className={classes.amenityItem}>
                       <Pool /> Piscina
                     </div>
+                  </div>
+                  <div className={classes.amenitiesRow}>
+                    <div className={classes.amenityItem}>
+                      <Pool /> Piscina
+                    </div>
                     <div className={classes.amenityItem}>
                       <Wifi /> WiFi Gratis
                     </div>
@@ -2461,7 +2744,7 @@ function Landing() {
               <div className={classes.featureItem}>
                 <LocalBar className={classes.featureIcon} />
                 <Typography variant="h6" className={classes.featureTitle}>
-                  Bar & Lounge
+                  Bar &amp; Lounge
                 </Typography>
                 <Typography variant="body2" className={classes.featureText}>
                   Disfruta de cócteles exclusivos con las mejores vistas de la ciudad.
@@ -2524,6 +2807,30 @@ function Landing() {
               </Grid>
             ))}
           </Grid>
+        </div>
+      </section>
+
+      {/* Sección CTA */}
+      <section className={classes.ctaSection}>
+        <div className={classes.ctaPattern}></div>
+        <div className={classes.sectionInner}>
+          <div className={classes.ctaContent}>
+            <Typography variant="h3" className={classes.ctaTitle}>
+              ¿Listo para una experiencia inolvidable en Medellín?
+            </Typography>
+            <Typography variant="body1" className={classes.ctaText}>
+              Reserve ahora y obtenga un 10% de descuento en su primera estancia en Nido Sky. Oferta por tiempo
+              limitado.
+            </Typography>
+            <Button
+              variant="contained"
+              size="large"
+              className={classes.ctaButton}
+              onClick={() => scrollToSection(apartamentosRef)}
+            >
+              Reservar Ahora <ArrowForward style={{ marginLeft: 8 }} />
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -2666,46 +2973,52 @@ function Landing() {
       <Dialog
         open={reservationDialogOpen}
         onClose={handleReservationClose}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
         className={classes.reservationDialog}
+        keepMounted
+        disableEnforceFocus
+        disableAutoFocus
       >
         <DialogTitle className={classes.reservationDialogTitle} disableTypography>
           <Typography variant="h5" style={{ fontWeight: 600 }}>
-            Registrar Cliente para {selectedApartamento?.nombre}
+            Reservar {selectedApartamento?.nombre}
           </Typography>
         </DialogTitle>
         <DialogContent className={classes.reservationDialogContent}>
           <div className={classes.reservationForm}>
+            {/* Datos del titular */}
+            <Typography variant="h6" style={{ marginBottom: 16, color: "#0A2463" }}>
+              Datos del titular
+            </Typography>
+
             <TextField
-              label="Documento"
+              label="Documento de identidad"
               name="documento"
-              value={reservationForm.documento}
+              value={reservationForm.documento || ""}
               onChange={handleReservationFormChange}
               className={classes.reservationField}
               variant="outlined"
               fullWidth
               required
-              inputProps={{ maxLength: 17 }}
-              helperText={formErrors.documento || "Máximo 17 caracteres"}
+              helperText={formErrors.documento || "Ingrese su número de documento"}
               error={!!formErrors.documento}
-              InputProps={{
-                startAdornment: <Assignment style={{ color: "#0A2463", marginRight: 8 }} />,
-              }}
             />
+
             <TextField
-              label="Nombre completo"
-              name="nombre"
-              value={reservationForm.nombre}
+              label="Nombre completo del titular"
+              name="titular_reserva"
+              value={reservationForm.titular_reserva}
               onChange={handleReservationFormChange}
               className={classes.reservationField}
               variant="outlined"
               fullWidth
               required
-              inputProps={{ maxLength: 60, pattern: "[A-Za-zÁáÉéÍíÓóÚúÑñ\\s]+" }}
-              helperText={formErrors.nombre || "Solo letras, máximo 60 caracteres"}
-              error={!!formErrors.nombre}
+              inputProps={{ maxLength: 60, pattern: "[A-Za-zÁáÉéÍíÓóÚúÑñs]+" }}
+              helperText={formErrors.titular_reserva || "Solo letras, máximo 60 caracteres"}
+              error={!!formErrors.titular_reserva}
             />
+
             <TextField
               label="Correo electrónico"
               name="email"
@@ -2719,6 +3032,7 @@ function Landing() {
               helperText={formErrors.email || "Formato: ejemplo@dominio.com"}
               error={!!formErrors.email}
             />
+
             <TextField
               label="Teléfono"
               name="telefono"
@@ -2728,49 +3042,230 @@ function Landing() {
               variant="outlined"
               fullWidth
               required
-              inputProps={{ maxLength: 17, pattern: "[0-9]+" }}
-              helperText={formErrors.telefono || "Solo números, máximo 17 caracteres"}
+              helperText={formErrors.telefono || "Formato: +573001234567"}
               error={!!formErrors.telefono}
             />
-            <TextField
-              label="Fecha de entrada"
-              type="date"
-              name="fechaEntrada"
-              value={reservationForm.fechaEntrada}
-              onChange={handleReservationFormChange}
-              className={classes.reservationField}
-              variant="outlined"
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-              helperText={formErrors.fechaEntrada}
-              error={!!formErrors.fechaEntrada}
-            />
-            <TextField
-              label="Fecha de salida"
-              type="date"
-              name="fechaSalida"
-              value={reservationForm.fechaSalida}
-              onChange={handleReservationFormChange}
-              className={classes.reservationField}
-              variant="outlined"
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-              helperText={formErrors.fechaSalida}
-              error={!!formErrors.fechaSalida}
-            />
-            <TextField
-              label="Huéspedes"
-              type="number"
-              name="huespedes"
-              value={reservationForm.huespedes}
-              onChange={handleReservationFormChange}
-              className={classes.reservationField}
-              variant="outlined"
-              fullWidth
-              InputProps={{ inputProps: { min: 1, max: 10 } }}
-            />
 
-            {selectedApartamento && reservationForm.fechaEntrada && reservationForm.fechaSalida && (
+            {/* Datos de la reserva */}
+            <Typography variant="h6" style={{ marginTop: 24, marginBottom: 16, color: "#0A2463" }}>
+              Datos de la reserva
+            </Typography>
+
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Fecha de inicio"
+                  type="date"
+                  name="fecha_inicio"
+                  value={reservationForm.fecha_inicio}
+                  onChange={handleReservationFormChange}
+                  className={classes.reservationField}
+                  variant="outlined"
+                  fullWidth
+                  required
+                  InputLabelProps={{ shrink: true }}
+                  helperText={formErrors.fecha_inicio}
+                  error={!!formErrors.fecha_inicio}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Fecha de fin"
+                  type="date"
+                  name="fecha_fin"
+                  value={reservationForm.fecha_fin}
+                  onChange={handleReservationFormChange}
+                  className={classes.reservationField}
+                  variant="outlined"
+                  fullWidth
+                  required
+                  InputLabelProps={{ shrink: true }}
+                  helperText={formErrors.fecha_fin}
+                  error={!!formErrors.fecha_fin}
+                />
+              </Grid>
+            </Grid>
+
+            <Grid container spacing={2} style={{ marginTop: 8 }}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Noches de estadía"
+                  type="number"
+                  name="noches_estadia"
+                  value={calcularNochesEstadia()}
+                  className={classes.reservationField}
+                  variant="outlined"
+                  fullWidth
+                  InputProps={{ readOnly: true }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Total a pagar"
+                  type="number"
+                  name="total"
+                  value={calcularPrecioTotal()}
+                  className={classes.reservationField}
+                  variant="outlined"
+                  fullWidth
+                  InputProps={{ readOnly: true, startAdornment: <span style={{ marginRight: 8 }}>$</span> }}
+                />
+              </Grid>
+            </Grid>
+
+            <Grid container spacing={2} style={{ marginTop: 8 }}>
+              <Grid item xs={12}>
+                <TextField
+                  label="Monto a pagar (50% mínimo)"
+                  type="number"
+                  name="monto_pago"
+                  value={reservationForm.monto_pago}
+                  onChange={handleReservationFormChange}
+                  className={classes.reservationField}
+                  variant="outlined"
+                  fullWidth
+                  required
+                  InputProps={{
+                    inputProps: { min: calcularPrecioTotal() * 0.5, max: calcularPrecioTotal() },
+                    startAdornment: <span style={{ marginRight: 8 }}>$</span>,
+                  }}
+                  helperText={formErrors.monto_pago || `Mínimo 50%: $${(calcularPrecioTotal() * 0.5).toFixed(2)}`}
+                  error={!!formErrors.monto_pago}
+                />
+              </Grid>
+            </Grid>
+
+            {/* Sección para subir comprobante de pago */}
+            <div className={classes.uploadSection}>
+              <Typography variant="h6" className={classes.uploadTitle}>
+                <CloudUpload /> Comprobante de Pago
+              </Typography>
+
+              <div className={classes.paymentInfo}>
+                <Typography variant="subtitle1" className={classes.paymentInfoTitle}>
+                  <InfoOutlined /> Información de Pago
+                </Typography>
+                <Typography variant="body2" className={classes.paymentInfoText}>
+                  Para confirmar su reserva, debe realizar un pago del 50% del valor total.
+                </Typography>
+                <Typography variant="body2" className={classes.paymentInfoText}>
+                  <strong>Banco:</strong> Bancolombia
+                </Typography>
+                <Typography variant="body2" className={classes.paymentInfoText}>
+                  <strong>Cuenta:</strong> 123-456789-00
+                </Typography>
+                <Typography variant="body2" className={classes.paymentInfoText}>
+                  <strong>Titular:</strong> Nido Sky S.A.S.
+                </Typography>
+                <Typography variant="body2" className={classes.paymentInfoText}>
+                  <strong>NIT:</strong> 900.123.456-7
+                </Typography>
+              </div>
+
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                className={classes.fileInput}
+                ref={fileInputRef}
+                onChange={handleComprobanteChange}
+              />
+
+              <Button
+                variant="contained"
+                className={classes.uploadButton}
+                onClick={handleUploadClick}
+                startIcon={<CloudUpload />}
+              >
+                Subir Comprobante
+              </Button>
+
+              {comprobantePago && (
+                <Box mt={2} display="flex" flexDirection="column" alignItems="center">
+                  {comprobantePreview && comprobantePago.type.includes("image") ? (
+                    <img
+                      src={comprobantePreview || "/placeholder.svg"}
+                      alt="Vista previa"
+                      className={classes.filePreview}
+                    />
+                  ) : (
+                    <Description style={{ fontSize: 60, color: "#0A2463" }} />
+                  )}
+                  <Typography variant="body2" className={classes.fileName}>
+                    {comprobantePago.name}
+                  </Typography>
+                </Box>
+              )}
+            </div>
+
+            {/* Sección de acompañantes */}
+            <div className={classes.acompanantesSection}>
+              <Typography variant="h6" className={classes.acompanantesTitle}>
+                <Person /> Acompañantes
+              </Typography>
+
+              {reservationForm.acompanantes.map((acompanante, index) => (
+                <div key={index} className={classes.acompananteItem}>
+                  <IconButton
+                    size="small"
+                    className={classes.removeAcompananteButton}
+                    onClick={() => handleRemoveAcompanante(index)}
+                  >
+                    <Close />
+                  </IconButton>
+
+                  <Typography variant="subtitle2" style={{ marginBottom: 12 }}>
+                    Acompañante {index + 1}
+                  </Typography>
+
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        label="Nombre"
+                        value={acompanante.nombre}
+                        onChange={(e) => handleAcompananteChange(index, "nombre", e.target.value)}
+                        className={classes.reservationField}
+                        variant="outlined"
+                        fullWidth
+                        required
+                        inputProps={{
+                          maxLength: 60,
+                          pattern: "[A-Za-zÁáÉéÍíÓóÚúÑñs]+",
+                        }}
+                        helperText="Solo letras, máximo 60 caracteres"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        label="Apellido"
+                        value={acompanante.apellido}
+                        onChange={(e) => handleAcompananteChange(index, "apellido", e.target.value)}
+                        className={classes.reservationField}
+                        variant="outlined"
+                        fullWidth
+                        required
+                        inputProps={{
+                          maxLength: 60,
+                          pattern: "[A-Za-zÁáÉéÍíÓóÚúÑñs]+",
+                        }}
+                        helperText="Solo letras, máximo 60 caracteres"
+                      />
+                    </Grid>
+                  </Grid>
+                </div>
+              ))}
+
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                className={classes.addAcompananteButton}
+                onClick={handleAddAcompanante}
+              >
+                Agregar acompañante
+              </Button>
+            </div>
+
+            {/* Resumen de la reserva */}
+            {selectedApartamento && reservationForm.fecha_inicio && reservationForm.fecha_fin && (
               <div className={classes.reservationTotal}>
                 <Typography variant="h6" className={classes.reservationTotalTitle}>
                   Resumen de Reserva
@@ -2804,7 +3299,7 @@ function Landing() {
                     Huéspedes:
                   </Typography>
                   <Typography variant="body2" className={classes.reservationTotalValue}>
-                    {reservationForm.huespedes}
+                    {reservationForm.acompanantes.length + 1} {/* +1 por el titular */}
                   </Typography>
                 </div>
                 <div className={classes.reservationTotalRow}>
@@ -2813,6 +3308,22 @@ function Landing() {
                   </Typography>
                   <Typography variant="body1" className={classes.reservationTotalFinal}>
                     ${calcularPrecioTotal()}
+                  </Typography>
+                </div>
+                <div className={classes.reservationTotalRow}>
+                  <Typography variant="body1" className={classes.reservationTotalLabel}>
+                    Pago inicial (50%):
+                  </Typography>
+                  <Typography variant="body1" className={classes.reservationTotalFinal}>
+                    ${reservationForm.monto_pago}
+                  </Typography>
+                </div>
+                <div className={classes.reservationTotalRow}>
+                  <Typography variant="body1" className={classes.reservationTotalLabel}>
+                    Saldo pendiente:
+                  </Typography>
+                  <Typography variant="body1" className={classes.reservationTotalFinal}>
+                    ${calcularPrecioTotal() - reservationForm.monto_pago}
                   </Typography>
                 </div>
               </div>
