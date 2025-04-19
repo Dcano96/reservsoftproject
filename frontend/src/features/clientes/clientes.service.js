@@ -1,4 +1,4 @@
-import api from "../../services/api"
+import api from "../../services/api" // Ruta correcta a services/api.js
 
 const API_URL = "/clientes" // Debe coincidir con la ruta montada en el back
 
@@ -46,14 +46,69 @@ const cambiarPassword = async (passwordActual, nuevoPassword) => {
   }
 }
 
-// Nueva función para obtener las reservas del cliente autenticado
+// Función para obtener las reservas del cliente autenticado
 const getMisReservas = async () => {
   try {
+    console.log("Solicitando mis reservas al servidor...")
+    // Verificar que el token esté disponible
+    const token = localStorage.getItem("token")
+    if (!token) {
+      console.warn("No hay token disponible para la solicitud")
+    }
+
     const response = await api.get(`${API_URL}/mis-reservas`)
-    return response.data.reservas
+    console.log("Respuesta de mis reservas:", response.data)
+
+    // Verificar la estructura de la respuesta
+    if (response.data && Array.isArray(response.data)) {
+      return response.data
+    } else if (response.data && Array.isArray(response.data.reservas)) {
+      return response.data.reservas
+    } else {
+      console.log("Formato de respuesta inesperado:", response.data)
+      return response.data
+    }
   } catch (error) {
     console.error("Error al obtener mis reservas:", error)
-    throw error
+
+    // Mejorar el mensaje de error
+    let errorMessage = "Error al obtener las reservas"
+
+    if (error.response) {
+      errorMessage = error.response.data?.msg || `Error ${error.response.status}: ${error.response.statusText}`
+      console.error("Respuesta del servidor:", error.response.data)
+    } else if (error.request) {
+      errorMessage = "No se recibió respuesta del servidor"
+    } else {
+      errorMessage = error.message
+    }
+
+    throw new Error(errorMessage)
+  }
+}
+
+// Función para obtener los detalles de una reserva específica
+const getDetalleReserva = async (reservaId) => {
+  try {
+    console.log(`Solicitando detalles de la reserva ${reservaId}...`)
+    const response = await api.get(`${API_URL}/reservas/${reservaId}`)
+
+    console.log("Detalles de reserva obtenidos:", response.data)
+    return response.data
+  } catch (error) {
+    console.error(`Error al obtener los detalles de la reserva ${reservaId}:`, error)
+
+    let errorMessage = "Error al obtener los detalles de la reserva"
+
+    if (error.response) {
+      errorMessage = error.response.data?.msg || `Error ${error.response.status}: ${error.response.statusText}`
+    } else if (error.request) {
+      errorMessage = "No se recibió respuesta del servidor"
+    } else {
+      errorMessage = error.message
+    }
+
+    throw new Error(errorMessage)
   }
 }
 
@@ -65,5 +120,6 @@ export default {
   deleteCliente,
   getProfile,
   cambiarPassword,
-  getMisReservas, // Exportar la nueva función
+  getMisReservas,
+  getDetalleReserva,
 }

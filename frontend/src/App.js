@@ -29,6 +29,9 @@ function App() {
         {/* Nueva ruta protegida para el perfil de usuario */}
         <ProtectedRoute path="/perfil" component={UserProfile} />
 
+        {/* Nueva ruta protegida para el perfil de cliente */}
+        <ProtectedRoute path="/perfil-cliente" component={UserProfile} />
+
         {/* Otras rutas para clientes, usuarios, etc. */}
 
         {/* Ruta de fallback */}

@@ -1,14 +1,32 @@
 const nodemailer = require("nodemailer")
 
 // Configuración del transporter de nodemailer usando las variables de entorno existentes
+// con valores por defecto para Gmail si no están configuradas
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || "smtp.gmail.com", // Valor por defecto para Gmail
-  port: process.env.EMAIL_PORT || 587, // Puerto estándar para TLS
-  secure: process.env.EMAIL_SECURE === "true" || false, // Por defecto, false para TLS
+  port: Number.parseInt(process.env.EMAIL_PORT || "587"), // Puerto estándar para TLS
+  secure: process.env.EMAIL_SECURE === "true" ? true : false, // Por defecto, false para TLS
   auth: {
-    user: process.env.EMAIL_USER, // Ya existe en tu .env
-    pass: process.env.EMAIL_PASS, // Ya existe en tu .env (usamos EMAIL_PASS en lugar de EMAIL_PASSWORD)
+    user: process.env.EMAIL_USER || "dgoez2020@gmail.com", // Valor por defecto
+    pass: process.env.EMAIL_PASS || "qrlj smsh jsdb tjbv", // Valor por defecto
   },
+  debug: true, // Habilitar debugging
+  logger: true, // Habilitar logging
+})
+
+// Verificar la conexión al iniciar
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("Error al verificar la configuración del servidor SMTP:", error)
+    console.error("Detalles de la configuración SMTP:")
+    console.error("- HOST:", process.env.EMAIL_HOST || "smtp.gmail.com")
+    console.error("- PORT:", process.env.EMAIL_PORT || "587")
+    console.error("- SECURE:", process.env.EMAIL_SECURE === "true" ? true : false)
+    console.error("- USER:", process.env.EMAIL_USER || "dgoez2020@gmail.com")
+    console.error("- PASS: [OCULTO]")
+  } else {
+    console.log("Servidor SMTP listo para enviar mensajes")
+  }
 })
 
 // Función para formatear fechas en formato legible
@@ -20,12 +38,17 @@ const formatDate = (dateString) => {
 // Función para enviar correo de confirmación de reserva
 exports.sendReservationConfirmation = async (cliente, reservationData, password = null) => {
   try {
+    console.log("Enviando correo de confirmación con los siguientes datos:")
+    console.log("Cliente:", cliente)
+    console.log("Datos de reserva:", reservationData)
+    console.log("¿Contraseña temporal?", password ? "Sí" : "No")
+
     // Calcular noches y precio total
     const fechaEntrada = new Date(reservationData.fechaEntrada)
     const fechaSalida = new Date(reservationData.fechaSalida)
     const diffTime = Math.abs(fechaSalida - fechaEntrada)
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    const precioTotal = reservationData.precioPorNoche * diffDays
+    const precioTotal = reservationData.total || reservationData.precioPorNoche * diffDays
 
     // Crear contenido HTML del correo
     const htmlContent = `
@@ -136,11 +159,11 @@ exports.sendReservationConfirmation = async (cliente, reservationData, password 
               </tr>
               <tr>
                 <td>Precio por noche:</td>
-                <td>$${reservationData.precioPorNoche}</td>
+                <td>${reservationData.precioPorNoche}</td>
               </tr>
               <tr>
                 <td>Precio total:</td>
-                <td><strong>$${precioTotal}</strong></td>
+                <td><strong>${precioTotal}</strong></td>
               </tr>
             </table>
           </div>
@@ -186,21 +209,74 @@ exports.sendReservationConfirmation = async (cliente, reservationData, password 
       </html>
     `
 
+    // Versión de texto plano para clientes que no soportan HTML
+    const textContent = `
+      ¡Reserva Confirmada!
+      
+      Hola ${cliente.nombre},
+      
+      ¡Gracias por elegir Nido Sky para tu estancia en Medellín! Tu reserva ha sido confirmada exitosamente.
+      
+      Detalles de tu Reserva:
+      - Apartamento: ${reservationData.apartamento}
+      - Fecha de entrada: ${formatDate(reservationData.fechaEntrada)}
+      - Fecha de salida: ${formatDate(reservationData.fechaSalida)}
+      - Número de noches: ${diffDays}
+      - Huéspedes: ${reservationData.huespedes}
+      - Precio por noche: ${reservationData.precioPorNoche}
+      - Precio total: ${precioTotal}
+      
+      ${
+        password
+          ? `
+      Tus Credenciales de Acceso:
+      Hemos creado una cuenta para ti en nuestro sistema. Puedes acceder con las siguientes credenciales:
+      - Email: ${cliente.email}
+      - Contraseña: ${password}
+      
+      Te recomendamos cambiar tu contraseña después del primer inicio de sesión.
+      `
+          : ""
+      }
+      
+      Si tienes alguna pregunta o necesitas hacer cambios en tu reserva, no dudes en contactarnos.
+      
+      Información de Contacto:
+      Teléfono: +57 300 123 4567
+      Email: info@nidosky.com
+      Dirección: Calle 10 #43E-25, El Poblado, Medellín, Colombia
+      
+      © ${new Date().getFullYear()} Nido Sky. Todos los derechos reservados.
+      Este correo fue enviado a ${cliente.email} porque realizaste una reserva en Nido Sky.
+    `
+
     // Configurar opciones del correo
     const mailOptions = {
-      from: `"Nido Sky" <${process.env.EMAIL_USER}>`,
+      from: `"Nido Sky" <${process.env.EMAIL_USER || "dgoez2020@gmail.com"}>`,
       to: cliente.email,
       subject: "Confirmación de tu Reserva en Nido Sky",
       html: htmlContent,
+      text: textContent, // Versión de texto plano
     }
 
     // Enviar el correo
+    console.log("Enviando correo a:", cliente.email)
     const info = await transporter.sendMail(mailOptions)
     console.log("Correo enviado:", info.messageId)
+
+    // Si estamos en modo de prueba, mostrar la URL de vista previa
+    if (process.env.NODE_ENV === "development") {
+      console.log("Vista previa URL:", nodemailer.getTestMessageUrl(info))
+    }
 
     return { success: true, messageId: info.messageId }
   } catch (error) {
     console.error("Error al enviar correo:", error)
+    console.error("Detalles del error:")
+    if (error.code) console.error("- Código:", error.code)
+    if (error.command) console.error("- Comando:", error.command)
+    if (error.response) console.error("- Respuesta:", error.response)
+
     return { success: false, error: error.message }
   }
 }
@@ -284,7 +360,7 @@ exports.sendPasswordRecovery = async (email, resetToken) => {
     `
 
     const mailOptions = {
-      from: `"Nido Sky" <${process.env.EMAIL_USER}>`,
+      from: `"Nido Sky" <${process.env.EMAIL_USER || "dgoez2020@gmail.com"}>`,
       to: email,
       subject: "Recuperación de Contraseña - Nido Sky",
       html: htmlContent,
@@ -299,3 +375,5 @@ exports.sendPasswordRecovery = async (email, resetToken) => {
     return { success: false, error: error.message }
   }
 }
+
+module.exports = exports

@@ -10,7 +10,7 @@ import {
   Twitter,
   Instagram,
   LinkedIn,
-  Home
+  Home,
 } from "@material-ui/icons"
 import authService from "./auth.service"
 import { useHistory, useLocation } from "react-router-dom"
@@ -46,6 +46,18 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault()
+
+    // Validar campos antes de enviar
+    if (!email.trim()) {
+      setError("Por favor, ingresa tu correo electrónico")
+      return
+    }
+
+    if (!password) {
+      setError("Por favor, ingresa tu contraseña")
+      return
+    }
+
     setLoading(true)
     setError("")
 
@@ -59,11 +71,62 @@ const Login = () => {
 
       // Si hay un token en la respuesta, guardarlo y redirigir
       if (response.token) {
+        // Guardar el token en localStorage
         localStorage.setItem("token", response.token)
 
-        // Redirigir al dashboard o a la página anterior
+        // Verificar si es un cliente
+        const isCliente =
+          response.usuario &&
+          (response.usuario.isCliente === true ||
+            response.usuario.rol === "cliente" ||
+            (typeof response.usuario.rol === "string" && response.usuario.rol.toLowerCase() === "cliente"))
+
+        console.log("¿Es cliente?", isCliente, "Datos:", response.usuario)
+
+        // Guardar información del usuario con la bandera isCliente actualizada
+        if (response.usuario) {
+          const userInfo = {
+            id: response.usuario.id,
+            nombre: response.usuario.nombre,
+            email: response.usuario.email,
+            rol: response.usuario.rol,
+            // Asegurarse de que isCliente sea correcto basado en nuestra verificación
+            isCliente: isCliente,
+          }
+
+          localStorage.setItem("usuario", JSON.stringify(userInfo))
+          console.log("Información de usuario guardada:", userInfo)
+
+          // También guardar una bandera específica para el tipo de usuario
+          // Esto nos ayudará a detectar el tipo de usuario en otras partes de la app
+          localStorage.setItem("userType", isCliente ? "cliente" : "admin")
+        }
+
+        // Establecer la bandera de navegación directa para que ProtectedRoute permita el acceso
+        sessionStorage.setItem("navegacionDirecta", "true")
+
+        // Determinar la ruta de redirección
+        // CAMBIO: Ahora todos los usuarios van al dashboard, independientemente de su rol
+        let redirectPath
+
+        // Para cualquier usuario, usar returnUrl o dashboard
         const returnUrl = new URLSearchParams(location.search).get("returnUrl")
-        history.replace(returnUrl || "/dashboard")
+        redirectPath = returnUrl || "/dashboard"
+
+        // Guardar una bandera para indicar que es un cliente que acaba de iniciar sesión
+        // Esto puede ser útil si el dashboard necesita mostrar contenido específico para clientes
+        if (isCliente) {
+          localStorage.setItem("clienteLogin", "true")
+          console.log("Usuario identificado como cliente, redirigiendo al dashboard común:", redirectPath)
+        } else {
+          console.log("Usuario no cliente, redirigiendo a:", redirectPath)
+        }
+
+        // Pequeño retraso para asegurar que localStorage se actualice antes de la redirección
+        setTimeout(() => {
+          console.log("Ejecutando redirección a:", redirectPath)
+          history.replace(redirectPath)
+        }, 100)
       } else {
         throw new Error("No se recibió un token válido")
       }
@@ -96,11 +159,7 @@ const Login = () => {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-image-column">
-          <img
-            src={piscinaImage || "/placeholder.svg"}
-            alt="Piscina Hotel Nido Sky"
-            className="auth-image"
-          />
+          <img src={piscinaImage || "/placeholder.svg"} alt="Piscina Hotel Nido Sky" className="auth-image" />
         </div>
 
         <div className="auth-form-column">
@@ -187,11 +246,7 @@ const Login = () => {
               )}
             </button>
 
-            <button 
-              type="button" 
-              className="auth-button auth-button-secondary" 
-              onClick={goToLandingPage}
-            >
+            <button type="button" className="auth-button auth-button-secondary" onClick={goToLandingPage}>
               <Home className="auth-button-icon" />
               Ir a Página Principal
             </button>

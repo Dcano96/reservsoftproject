@@ -1,5 +1,6 @@
 const Usuario = require("../usuarios/usuario.model")
-const Rol = require("../roles/rol.model") // Importamos el modelo de roles
+const Cliente = require("../clientes/cliente.model") // Añadido para buscar también en clientes
+const Rol = require("../roles/rol.model")
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 const nodemailer = require("nodemailer")
@@ -25,38 +26,184 @@ exports.register = async (req, res) => {
   }
 }
 
-// Login (incluye permisos en el token)
+// Login mejorado (incluye permisos en el token y mejor manejo de errores)
 exports.login = async (req, res) => {
-  const { email, password } = req.body
+  console.log("[LOGIN] Solicitud recibida:", {
+    body: req.body,
+    headers: req.headers["content-type"],
+  })
+
+  // Extraer email y password, asegurándose de limpiar cualquier espacio o carácter especial
+  let { email, password } = req.body
+
+  // Limpiar el email (quitar espacios)
+  email = email ? email.trim() : email
+
+  // Limpiar la contraseña (quitar caracteres de control como tabulaciones)
+  if (password) {
+    // Eliminar caracteres de control como \t (tab), \n (nueva línea), etc.
+    password = password.replace(/[\x00-\x1F\x7F-\x9F]/g, "")
+    console.log("[LOGIN] Contraseña limpiada:", password)
+  }
+
+  if (!email || !password) {
+    console.log("[LOGIN] Faltan credenciales:", { email: !!email, password: !!password })
+    return res.status(400).json({
+      msg: "Por favor, proporcione email y contraseña",
+      received: { email: !!email, password: !!password },
+    })
+  }
+
   try {
-    const usuario = await Usuario.findOne({ email })
-    if (!usuario) return res.status(400).json({ msg: "Credenciales inválidas" })
+    // Primero buscamos en la tabla de usuarios
+    let usuario = await Usuario.findOne({ email })
+    let isCliente = false
+
+    // Si no se encuentra en usuarios, buscamos en clientes
+    if (!usuario) {
+      console.log(`[LOGIN] Usuario no encontrado, buscando en clientes: ${email}`)
+      const cliente = await Cliente.findOne({ email })
+
+      if (cliente) {
+        console.log(`[LOGIN] Cliente encontrado: ${cliente._id}`)
+        usuario = cliente
+        isCliente = true
+      } else {
+        console.log(`[LOGIN] No se encontró ni usuario ni cliente con email: ${email}`)
+        return res.status(400).json({ msg: "Credenciales inválidas" })
+      }
+    }
 
     // Verificar si el usuario está activo
     if (!usuario.estado) {
+      console.log(`[LOGIN] Usuario/cliente inactivo: ${email}`)
       return res.status(403).json({ msg: "Usuario inactivo. Contacte al administrador." })
     }
 
-    const isMatch = await bcrypt.compare(password, usuario.password)
-    if (!isMatch) return res.status(400).json({ msg: "Credenciales inválidas" })
+    // Comparar contraseña
+    console.log(`[LOGIN] Verificando contraseña para: ${email}`)
 
-    // Consultar el rol completo para obtener los permisos
-    const rol = await Rol.findOne({ nombre: usuario.rol })
+    // Intentar comparar con bcrypt
+    let isMatch = false
+    try {
+      isMatch = await bcrypt.compare(password, usuario.password)
+      console.log(`[LOGIN] Resultado de comparación bcrypt: ${isMatch}`)
+    } catch (bcryptError) {
+      console.error(`[LOGIN] Error en bcrypt.compare:`, bcryptError)
+      // Si hay error en bcrypt, intentamos una comparación directa (solo para depuración)
+      console.log(`[LOGIN] Intentando comparación alternativa...`)
+    }
 
+    // Si la comparación normal falla, intentar con la contraseña temporal sin procesar
+    if (!isMatch && req.body.password) {
+      try {
+        isMatch = await bcrypt.compare(req.body.password, usuario.password)
+        console.log(`[LOGIN] Resultado de comparación con contraseña original: ${isMatch}`)
+      } catch (altError) {
+        console.error(`[LOGIN] Error en comparación alternativa:`, altError)
+      }
+    }
+
+    if (!isMatch) {
+      console.log(`[LOGIN] Contraseña incorrecta para: ${email}`)
+
+      // Generar una nueva contraseña temporal y actualizarla en la base de datos
+      // Esto es una solución temporal para usuarios que no pueden acceder
+      const tempPassword = `Temp${Math.random().toString(36).substring(2, 8)}1!`
+      const salt = await bcrypt.genSalt(10)
+      const hashedPassword = await bcrypt.hash(tempPassword, salt)
+
+      usuario.password = hashedPassword
+      await usuario.save()
+
+      console.log(`[LOGIN] Se ha generado una nueva contraseña temporal: ${tempPassword}`)
+
+      // Enviar la nueva contraseña por correo
+      try {
+        const transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+          },
+          tls: {
+            rejectUnauthorized: false,
+          },
+        })
+
+        const mailOptions = {
+          to: usuario.email,
+          from: `"Hotel Nido Sky" <${process.env.EMAIL_USER}>`,
+          subject: "Nueva contraseña temporal - Hotel Nido Sky",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+              <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #4a5568;">Nueva Contraseña Temporal</h2>
+              </div>
+              <p>Hola <strong>${usuario.nombre}</strong>,</p>
+              <p>Hemos detectado que has tenido problemas para iniciar sesión. Se ha generado una nueva contraseña temporal para tu cuenta:</p>
+              <div style="text-align: center; margin: 20px 0; padding: 15px; background-color: #f7fafc; border-radius: 5px; font-size: 24px; font-weight: bold; letter-spacing: 2px;">
+                ${tempPassword}
+              </div>
+              <p>Por favor, utiliza esta nueva contraseña para iniciar sesión y cámbiala después de acceder.</p>
+              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #718096; font-size: 0.9em;">
+                <p>Saludos,<br>Equipo de Hotel Nido Sky</p>
+              </div>
+            </div>
+          `,
+        }
+
+        await transporter.sendMail(mailOptions)
+        console.log(`[LOGIN] Correo con nueva contraseña temporal enviado a ${usuario.email}`)
+      } catch (emailError) {
+        console.error("[LOGIN] Error al enviar correo con nueva contraseña temporal:", emailError)
+      }
+
+      return res.status(400).json({
+        msg: "Credenciales inválidas. Se ha enviado una nueva contraseña temporal a tu correo electrónico.",
+      })
+    }
+
+    // Determinar rol y permisos
+    const rolNombre = usuario.rol || "cliente"
+    let permisos = []
+
+    try {
+      // Consultar el rol completo para obtener los permisos
+      const rol = await Rol.findOne({ nombre: rolNombre })
+      if (rol) {
+        permisos = rol.permisos || []
+      }
+    } catch (rolError) {
+      console.error(`[LOGIN] Error al obtener rol: ${rolError.message}`)
+      // Si hay error al obtener el rol, continuamos con permisos vacíos
+    }
+
+    // Crear payload para el token
     const payload = {
       usuario: {
         id: usuario._id,
-        rol: usuario.rol,
-        permisos: rol ? rol.permisos : [], // Se incluye el array de permisos
+        nombre: usuario.nombre,
+        email: usuario.email,
+        documento: usuario.documento,
+        rol: rolNombre,
+        permisos: permisos,
+        isCliente: isCliente,
       },
     }
+
+    // Generar token
     jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "12h" }, (err, token) => {
-      if (err) throw err
-      res.json({ token })
+      if (err) {
+        console.error(`[LOGIN] Error al generar token: ${err.message}`)
+        throw err
+      }
+      console.log(`[LOGIN] Login exitoso para: ${email}`)
+      res.json({ token, usuario: payload.usuario })
     })
   } catch (error) {
-    console.error(error)
-    res.status(500).send("Error en el servidor")
+    console.error(`[LOGIN] Error general: ${error.message}`)
+    res.status(500).json({ msg: "Error en el servidor", error: error.message })
   }
 }
 
@@ -71,26 +218,39 @@ exports.forgotPassword = async (req, res) => {
   console.log(`[FORGOT PASSWORD] Solicitud recibida para email: ${email}`)
 
   try {
-    const usuario = await Usuario.findOne({ email })
+    // Buscar primero en usuarios
+    let usuario = await Usuario.findOne({ email })
+    let isCliente = false
 
-    // Si no existe el usuario, enviamos una respuesta genérica por seguridad
+    // Si no está en usuarios, buscar en clientes
     if (!usuario) {
-      console.log(`[FORGOT PASSWORD] Usuario con email ${email} no encontrado`)
-      return res.json({
-        msg: "Si el correo existe en nuestra base de datos, recibirás un enlace de recuperación",
-      })
+      console.log(`[FORGOT PASSWORD] Usuario no encontrado, buscando en clientes: ${email}`)
+      const cliente = await Cliente.findOne({ email })
+
+      if (cliente) {
+        console.log(`[FORGOT PASSWORD] Cliente encontrado: ${cliente._id}`)
+        usuario = cliente
+        isCliente = true
+      } else {
+        console.log(`[FORGOT PASSWORD] No se encontró ni usuario ni cliente con email: ${email}`)
+        // Respuesta genérica por seguridad
+        return res.json({
+          msg: "Si el correo existe en nuestra base de datos, recibirás un enlace de recuperación",
+        })
+      }
     }
 
     // Verificar si el usuario está activo
     if (!usuario.estado) {
-      console.log(`[FORGOT PASSWORD] Usuario con email ${email} está inactivo`)
+      console.log(`[FORGOT PASSWORD] Usuario/cliente inactivo: ${email}`)
       return res.json({
         msg: "Si el correo existe en nuestra base de datos, recibirás un enlace de recuperación",
       })
     }
 
-    // Generar una contraseña temporal simple (solo letras y números)
-    const tempPassword = crypto.randomBytes(4).toString("hex") // 8 caracteres alfanuméricos
+    // Generar una contraseña temporal simple pero que cumpla con los requisitos
+    // Formato: Temp + 6 caracteres alfanuméricos + 1! (para cumplir requisitos)
+    const tempPassword = `Temp${Math.random().toString(36).substring(2, 8)}1!`
 
     // Hashear la contraseña temporal antes de guardarla
     const salt = await bcrypt.genSalt(10)
@@ -237,10 +397,23 @@ exports.adminResetPassword = async (req, res) => {
   }
 
   try {
-    const usuario = await Usuario.findOne({ email })
+    // Buscar primero en usuarios
+    let usuario = await Usuario.findOne({ email })
+    let isCliente = false
 
+    // Si no está en usuarios, buscar en clientes
     if (!usuario) {
-      return res.status(404).json({ msg: "Usuario no encontrado" })
+      console.log(`[ADMIN RESET] Usuario no encontrado, buscando en clientes: ${email}`)
+      const cliente = await Cliente.findOne({ email })
+
+      if (cliente) {
+        console.log(`[ADMIN RESET] Cliente encontrado: ${cliente._id}`)
+        usuario = cliente
+        isCliente = true
+      } else {
+        console.log(`[ADMIN RESET] No se encontró ni usuario ni cliente con email: ${email}`)
+        return res.status(404).json({ msg: "Usuario no encontrado" })
+      }
     }
 
     const salt = await bcrypt.genSalt(10)
