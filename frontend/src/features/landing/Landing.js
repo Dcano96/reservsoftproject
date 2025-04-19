@@ -1543,6 +1543,7 @@ function Landing() {
   const [selectedApartamento, setSelectedApartamento] = useState(null)
   // Modificar la inicialización del estado reservationForm para incluir el campo documento
   const [reservationForm, setReservationForm] = useState({
+    documento: "", // Añadir el campo documento
     titular_reserva: "",
     email: "",
     telefono: "",
@@ -1553,7 +1554,7 @@ function Landing() {
     total: 0,
     monto_pago: 0,
     acompanantes: [],
-    documento: "", // Añadir el campo documento
+    
   })
   // Añadir el campo documento a los errores del formulario
   const [formErrors, setFormErrors] = useState({
@@ -1791,7 +1792,7 @@ function Landing() {
     const newAcompanante = {
       nombre: "",
       apellido: "",
-      documento: "",
+      documento_acompanante: "",
     }
     setReservationForm({
       ...reservationForm,
@@ -2047,6 +2048,11 @@ function Landing() {
         huespedes: reservationForm.acompanantes.length + 1, // +1 por el titular
         documento: reservationForm.documento,
         monto_pago: reservationForm.monto_pago, // Añadir el monto del pago parcial
+        acompanantes: reservationForm.acompanantes.map(acompanante => ({
+          nombre: acompanante.nombre,
+          apellido: acompanante.apellido,
+          numero_documento: acompanante.documento_acompanante // Convertir documento_acompanante a numero_documento
+        }))
       }
 
       console.log("Datos a enviar:", reservaData)
@@ -3248,6 +3254,17 @@ function Landing() {
                           pattern: "[A-Za-zÁáÉéÍíÓóÚúÑñs]+",
                         }}
                         helperText="Solo letras, máximo 60 caracteres"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                      <TextField
+                        label="Número de documento"
+                        value={acompanante.documento_acompanante || ""} // Cambiar a "numero_documento"
+                        onChange={(e) => handleAcompananteChange(index, "documento_acompanante", e.target.value)} // Cambiar a "numero_documento"
+                        className={classes.reservationField}
+                        variant="outlined"
+                        fullWidth
+                        required
                       />
                     </Grid>
                   </Grid>
