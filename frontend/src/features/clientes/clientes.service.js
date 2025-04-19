@@ -1,72 +1,28 @@
-import api from "../../services/api" // Ruta correcta a services/api.js
+import axios from "axios"
 
-const API_URL = "/clientes" // Debe coincidir con la ruta montada en el back
-
-const getClientes = async () => {
-  const res = await api.get(API_URL)
-  return res.data
-}
-
-const getClienteById = async (id) => {
-  const res = await api.get(`${API_URL}/${id}`)
-  return res.data
-}
-
-const createCliente = async (clienteData) => {
-  const res = await api.post(API_URL, clienteData)
-  return res.data
-}
-
-const updateCliente = async (id, clienteData) => {
-  const res = await api.put(`${API_URL}/${id}`, clienteData)
-  return res.data
-}
-
-const deleteCliente = async (id) => {
-  const res = await api.delete(`${API_URL}/${id}`)
-  return res.data
-}
-
-const getProfile = async () => {
-  const res = await api.get(`${API_URL}/profile/me`) // Ajustado según tu ruta en cliente.routes.js
-  return res.data
-}
-
-// Nueva función para cambiar la contraseña
-const cambiarPassword = async (passwordActual, nuevoPassword) => {
-  try {
-    const res = await api.post(`${API_URL}/cambiar-password`, {
-      passwordActual,
-      nuevoPassword,
-    })
-    return res.data
-  } catch (error) {
-    console.error("Error al cambiar la contraseña:", error.response?.data || error.message)
-    throw error
-  }
-}
+// URL base para las peticiones a la API
+const API_URL = "/api/clientes"
 
 // Función para obtener las reservas del cliente autenticado
 const getMisReservas = async () => {
   try {
     console.log("Solicitando mis reservas al servidor...")
-    // Verificar que el token esté disponible
-    const token = localStorage.getItem("token")
-    if (!token) {
-      console.warn("No hay token disponible para la solicitud")
-    }
+    const response = await axios.get(`${API_URL}/mis-reservas`)
 
-    const response = await api.get(`${API_URL}/mis-reservas`)
     console.log("Respuesta de mis reservas:", response.data)
 
-    // Verificar la estructura de la respuesta
+    // Verificar la estructura de la respuesta y manejar diferentes formatos
     if (response.data && Array.isArray(response.data)) {
       return response.data
     } else if (response.data && Array.isArray(response.data.reservas)) {
       return response.data.reservas
-    } else {
-      console.log("Formato de respuesta inesperado:", response.data)
+    } else if (response.data && typeof response.data === "object") {
+      // Si la respuesta es un objeto pero no tiene la propiedad reservas como array
+      console.log("Formato de respuesta inesperado, devolviendo objeto completo:", response.data)
       return response.data
+    } else {
+      console.log("Formato de respuesta no reconocido, devolviendo array vacío")
+      return []
     }
   } catch (error) {
     console.error("Error al obtener mis reservas:", error)
@@ -75,11 +31,14 @@ const getMisReservas = async () => {
     let errorMessage = "Error al obtener las reservas"
 
     if (error.response) {
+      // El servidor respondió con un código de error
       errorMessage = error.response.data?.msg || `Error ${error.response.status}: ${error.response.statusText}`
       console.error("Respuesta del servidor:", error.response.data)
     } else if (error.request) {
+      // La petición fue hecha pero no se recibió respuesta
       errorMessage = "No se recibió respuesta del servidor"
     } else {
+      // Error al configurar la petición
       errorMessage = error.message
     }
 
@@ -90,18 +49,34 @@ const getMisReservas = async () => {
 // Función para obtener los detalles de una reserva específica
 const getDetalleReserva = async (reservaId) => {
   try {
-    console.log(`Solicitando detalles de la reserva ${reservaId}...`)
-    const response = await api.get(`${API_URL}/reservas/${reservaId}`)
+    // Obtener el token de autenticación
+    const token = localStorage.getItem("token")
+
+    if (!token) {
+      throw new Error("No hay token de autenticación")
+    }
+
+    // Configurar los headers con el token
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+
+    // Realizar la petición para obtener los detalles de la reserva
+    const response = await axios.get(`${API_URL}/reservas/${reservaId}`, config)
 
     console.log("Detalles de reserva obtenidos:", response.data)
+
     return response.data
   } catch (error) {
     console.error(`Error al obtener los detalles de la reserva ${reservaId}:`, error)
 
+    // Mejorar el mensaje de error
     let errorMessage = "Error al obtener los detalles de la reserva"
 
     if (error.response) {
-      errorMessage = error.response.data?.msg || `Error ${error.response.status}: ${error.response.statusText}`
+      errorMessage = error.response.data.msg || `Error ${error.response.status}: ${error.response.statusText}`
     } else if (error.request) {
       errorMessage = "No se recibió respuesta del servidor"
     } else {
@@ -112,14 +87,8 @@ const getDetalleReserva = async (reservaId) => {
   }
 }
 
+// Exportar las funciones del servicio
 export default {
-  getClientes,
-  getClienteById,
-  createCliente,
-  updateCliente,
-  deleteCliente,
-  getProfile,
-  cambiarPassword,
   getMisReservas,
   getDetalleReserva,
 }
