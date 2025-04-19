@@ -938,7 +938,7 @@ const ReservasList = () => {
   const agregarAcompanante = () => {
     setFormData((prev) => ({
       ...prev,
-      acompanantes: [...(prev.acompanantes || []), { nombre: "", apellido: "", documento: "" }],
+      acompanantes: [...(prev.acompanantes || []), { nombre: "", apellido: "", documento_acompanante: "" }],
     }))
   }
 
@@ -1744,8 +1744,8 @@ const ReservasList = () => {
                   />
                   <TextField
                     label="Documento"
-                    name="documento"
-                    value={acomp.documento}
+                    name="documento_acompanante"
+                    value={acomp.documento_acompanante}
                     onChange={(e) => handleAcompananteChange(index, e)}
                     style={{ flex: "1 1 30%" }}
                     variant="outlined"
@@ -1931,7 +1931,7 @@ const ReservasList = () => {
                             <Box key={idx} display="flex" alignItems="center" mb={1}>
                               <Person fontSize="small" style={{ marginRight: 8, color: "#64748b" }} />
                               <span>
-                                {acomp.nombre} {acomp.apellido} ({acomp.documento})
+                                {acomp.nombre} {acomp.apellido} ({acomp.numero_documento || acomp.documento_acompanante || acomp.documento || "N/A"})
                               </span>
                             </Box>
                           ))
