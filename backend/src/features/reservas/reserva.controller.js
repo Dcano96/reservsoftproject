@@ -1,3 +1,4 @@
+// Controlador para manejar las reservas de apartamentos
 const Reserva = require("./reserva.model")
 const Apartamento = require("../apartamento/apartamento.model")
 const mongoose = require("mongoose")
@@ -48,7 +49,7 @@ exports.crearReserva = async (req, res) => {
     // Calcular noches de estadía
     const diffTime = Math.abs(fin - inicio)
     const noches_estadia = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    
+
     if (noches_estadia < 1) {
       return res.status(400).json({
         msg: "La estadía debe ser de al menos una noche",
@@ -126,7 +127,7 @@ exports.crearReserva = async (req, res) => {
 
     const reserva = new Reserva(reservaData)
     await reserva.save()
-    
+
     res.status(201).json({
       msg: "Reserva creada correctamente",
       reserva,
@@ -134,16 +135,16 @@ exports.crearReserva = async (req, res) => {
     })
   } catch (error) {
     console.error("Error al crear reserva:", error)
-    
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map(err => err.message)
+
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((err) => err.message)
       return res.status(400).json({
         msg: "Error de validación",
         details: messages,
         error: true,
       })
     }
-    
+
     res.status(500).json({
       msg: "Error en el servidor al crear la reserva",
       error: true,
@@ -226,11 +227,10 @@ exports.actualizarReserva = async (req, res) => {
     }
 
     // Actualizar la reserva sin realizar validaciones adicionales sobre los datos enviados
-    const reservaActualizada = await Reserva.findByIdAndUpdate(
-      id,
-      req.body,
-      { new: true, runValidators: false }
-    ).populate("apartamentos")
+    const reservaActualizada = await Reserva.findByIdAndUpdate(id, req.body, {
+      new: true,
+      runValidators: false,
+    }).populate("apartamentos")
 
     if (!reservaActualizada) {
       return res.status(404).json({
@@ -246,7 +246,7 @@ exports.actualizarReserva = async (req, res) => {
     })
   } catch (error) {
     console.error("Error al actualizar reserva:", error)
-    
+
     res.status(500).json({
       msg: "Error en el servidor al actualizar la reserva",
       error: true,
@@ -378,16 +378,16 @@ exports.agregarAcompanante = async (req, res) => {
     })
   } catch (error) {
     console.error("Error al agregar acompañante:", error)
-    
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map(err => err.message)
+
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((err) => err.message)
       return res.status(400).json({
         msg: "Error de validación",
         details: messages,
         error: true,
       })
     }
-    
+
     res.status(500).json({
       msg: "Error en el servidor al agregar acompañante",
       error: true,
@@ -477,16 +477,16 @@ exports.actualizarAcompanante = async (req, res) => {
     })
   } catch (error) {
     console.error("Error al actualizar acompañante:", error)
-    
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map(err => err.message)
+
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((err) => err.message)
       return res.status(400).json({
         msg: "Error de validación",
         details: messages,
         error: true,
       })
     }
-    
+
     res.status(500).json({
       msg: "Error en el servidor al actualizar acompañante",
       error: true,
@@ -555,9 +555,19 @@ exports.crearReservaPublica = async (req, res) => {
   try {
     console.log("Recibida solicitud de reserva pública:", req.body)
 
-    const { titular_reserva, email, telefono, fecha_inicio, fecha_fin, apartamento_id, huespedes } = req.body
+    const {
+      titular_reserva,
+      email,
+      telefono,
+      fecha_inicio,
+      fecha_fin,
+      apartamento_id,
+      huespedes,
+      documento,
+      monto_pago,
+    } = req.body
 
-    if (!titular_reserva || !email || !telefono || !fecha_inicio || !fecha_fin || !apartamento_id) {
+    if (!titular_reserva || !email || !telefono || !fecha_inicio || !fecha_fin || !apartamento_id || !documento) {
       console.log("Faltan campos obligatorios")
       return res.status(400).json({
         msg: "Todos los campos son obligatorios",
@@ -565,6 +575,7 @@ exports.crearReservaPublica = async (req, res) => {
       })
     }
 
+    // Validaciones de formato
     const nombreRegex = /^[a-zA-ZÀ-ÿ\s]+$/
     if (!nombreRegex.test(titular_reserva)) {
       return res.status(400).json({
@@ -589,6 +600,7 @@ exports.crearReservaPublica = async (req, res) => {
       })
     }
 
+    // Validar formato de fechas
     const inicio = new Date(fecha_inicio)
     const fin = new Date(fecha_fin)
 
@@ -608,7 +620,7 @@ exports.crearReservaPublica = async (req, res) => {
 
     const diffTime = Math.abs(fin - inicio)
     const noches_estadia = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    
+
     if (noches_estadia < 1) {
       return res.status(400).json({
         msg: "La estadía debe ser de al menos una noche",
@@ -621,6 +633,44 @@ exports.crearReservaPublica = async (req, res) => {
         msg: "ID de apartamento inválido",
         error: true,
       })
+    }
+
+    // Verificar si el cliente ya existe
+    const Cliente = require("../clientes/cliente.model")
+    let cliente = await Cliente.findOne({
+      $or: [{ documento }, { email }],
+    })
+
+    let clienteExistente = false
+
+    if (cliente) {
+      clienteExistente = true
+      console.log("Cliente ya registrado:", cliente._id)
+    } else {
+      // Si no existe, crear un nuevo cliente
+      try {
+        // Generar una contraseña aleatoria
+        const crypto = require("crypto")
+        const randomPassword = crypto.randomBytes(4).toString("hex")
+        const bcrypt = require("bcryptjs")
+        const salt = await bcrypt.genSalt(10)
+        const hashedPassword = await bcrypt.hash(randomPassword, salt)
+
+        cliente = new Cliente({
+          nombre: titular_reserva,
+          documento,
+          email,
+          telefono,
+          password: hashedPassword,
+          rol: "cliente",
+        })
+
+        await cliente.save()
+        console.log("Nuevo cliente creado:", cliente._id)
+      } catch (clienteError) {
+        console.error("Error al crear cliente:", clienteError)
+        // Continuamos con la reserva aunque falle la creación del cliente
+      }
     }
 
     const apartamento = await Apartamento.findById(apartamento_id)
@@ -650,6 +700,28 @@ exports.crearReservaPublica = async (req, res) => {
 
     const total = apartamento.Tarifa * noches_estadia
 
+    // Validar el monto del pago parcial
+    let pagos_parciales = 0
+    if (monto_pago) {
+      const montoNumerico = Number.parseFloat(monto_pago)
+      if (!isNaN(montoNumerico) && montoNumerico > 0) {
+        // Verificar que el pago parcial no exceda el total
+        if (montoNumerico <= total) {
+          pagos_parciales = montoNumerico
+        } else {
+          return res.status(400).json({
+            msg: "El pago parcial no puede ser mayor que el total de la reserva",
+            error: true,
+          })
+        }
+      }
+    }
+
+    // Generar un número de reserva único
+    // Buscar el último número de reserva y aumentarlo en 1
+    const ultimaReserva = await Reserva.findOne().sort({ numero_reserva: -1 })
+    const nuevoNumeroReserva = ultimaReserva && ultimaReserva.numero_reserva ? ultimaReserva.numero_reserva + 1 : 1000
+
     console.log("Creando nueva reserva con datos:", {
       titular_reserva,
       fecha_inicio,
@@ -657,8 +729,11 @@ exports.crearReservaPublica = async (req, res) => {
       apartamentos: [apartamento_id],
       noches_estadia,
       total,
+      pagos_parciales,
       email,
       telefono,
+      numero_reserva: nuevoNumeroReserva,
+      documento,
     })
 
     const nuevaReserva = new Reserva({
@@ -668,33 +743,46 @@ exports.crearReservaPublica = async (req, res) => {
       apartamentos: [apartamento_id],
       noches_estadia,
       total,
-      pagos_parciales: 0,
+      pagos_parciales,
       estado: "pendiente",
       email,
       telefono,
       acompanantes: [],
+      numero_reserva: nuevoNumeroReserva,
+      titular_documento: documento,
     })
 
     await nuevaReserva.save()
     console.log("Reserva creada exitosamente:", nuevaReserva._id)
 
+    // Enviar correo de confirmación aquí si es necesario...
+
     res.status(201).json({
       msg: "Reserva creada correctamente. Pronto nos pondremos en contacto contigo.",
       reserva: nuevaReserva,
+      clienteExistente,
+      clienteInfo: clienteExistente
+        ? {
+            nombre: cliente.nombre,
+            documento: cliente.documento,
+            email: cliente.email,
+            telefono: cliente.telefono,
+          }
+        : null,
       error: false,
     })
   } catch (error) {
     console.error("Error al crear reserva desde landing:", error)
-    
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map(err => err.message)
+
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((err) => err.message)
       return res.status(400).json({
         msg: "Error de validación",
         details: messages,
         error: true,
       })
     }
-    
+
     res.status(500).json({
       msg: "Error en el servidor al crear la reserva",
       error: true,

@@ -1,5 +1,9 @@
+//Landing Controller
+
 const Landing = require("./landing.model")
 const Apartamento = require("../apartamento/apartamento.model")
+const Reserva = require("../reservas/reserva.model")
+const Cliente = require("../clientes/cliente.model")
 
 // Obtener la información de la landing page
 exports.getLandingInfo = async (req, res) => {
@@ -64,7 +68,7 @@ exports.getFeaturedApartments = async (req, res) => {
           "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-2.png-Qb6dNq1YCCbp1obXcopeyIldnr9niD.jpeg"
       } else if (apt.Tipo === "Penthouse") {
         imagen =
-          "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-3.png-txItO3avORrYlGt8r75JHZPPdAEP76.jpeg"
+          "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-3.png-txItO3avORn7pXvG0Idk6FMgqlbWu7x.jpeg"
       }
 
       return {
@@ -174,3 +178,71 @@ exports.addTestimonial = async (req, res) => {
   }
 }
 
+
+// ----------------------------------------------------------
+// Función agregada para crear reserva desde la landing
+// ----------------------------------------------------------
+exports.crearReservaDesdeLanding = async (req, res) => {
+  try {
+    const {
+      documento,
+      nombre,
+      email,
+      telefono,
+      fecha_inicio,
+      fecha_fin,
+      pagos_parciales,
+      estado,
+      acompanantes,
+      apartamentos,
+      noches_estadia,
+      total,
+    } = req.body
+
+    // Validar campos obligatorios
+    if (
+      !documento ||
+      !nombre ||
+      !fecha_inicio ||
+      !fecha_fin ||
+      !apartamentos?.length ||
+      total == null
+    ) {
+      return res.status(400).json({ msg: "Faltan datos obligatorios." })
+    }
+
+    // Crear cliente si no existe
+    let cliente = await Cliente.findOne({ documento })
+    if (!cliente) {
+      cliente = new Cliente({ documento, nombre, email, telefono })
+      await cliente.save()
+    }
+
+    // Crear la reserva
+    const nuevaReserva = new Reserva({
+      titular_reserva: nombre,
+      email,
+      telefono,
+      fecha_inicio,
+      fecha_fin,
+      apartamentos,
+      noches_estadia,
+      total,
+      pagos_parciales,
+      estado,
+      acompanantes,
+    })
+    await nuevaReserva.save()
+
+    return res.status(201).json({
+      msg: "Reserva y cliente registrados correctamente",
+      reserva: nuevaReserva,
+    })
+  } catch (error) {
+    console.error("Error al crear la reserva desde la landing:", error)
+    return res.status(500).json({
+      msg: "Error interno al procesar la reserva.",
+      error: error.message,
+    })
+  }
+}
