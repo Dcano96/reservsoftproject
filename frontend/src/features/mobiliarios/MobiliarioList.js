@@ -52,10 +52,10 @@ import mobiliarioService from "./mobiliario.service"
 import apartamentoService from "../apartamentos/apartamento.service"
 import "./mobiliario.styles.css"
 
-// Personalización de las celdas del encabezado
+// Personalización de las celdas del encabezado con anchos fijos
 const StyledTableCell = withStyles((theme) => ({
   head: {
-    backgroundColor: "#2563EB", // Azul sólido como en la imagen
+    backgroundColor: "#2563EB",
     color: "#fff",
     fontWeight: 600,
     textTransform: "uppercase",
@@ -64,13 +64,19 @@ const StyledTableCell = withStyles((theme) => ({
     textAlign: "center",
     letterSpacing: "0.8px",
     borderBottom: "none",
-    boxShadow: "none", // Quitar sombra
+    boxShadow: "none",
     borderRight: "none",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
   body: {
     fontSize: "0.95rem",
     textAlign: "center",
     padding: theme.spacing(1.8),
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
 }))(TableCell)
 
@@ -187,6 +193,9 @@ const useStyles = makeStyles((theme) => ({
     fontSize: "0.95rem",
     color: "#334155",
     borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   },
   actionsCell: {
     minWidth: 150,
@@ -240,8 +249,11 @@ const useStyles = makeStyles((theme) => ({
   mobiliarioContainer: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "center",
-    padding: theme.spacing(1),
+    justifyContent: "flex-start", // Cambiado de center a flex-start
+    width: "100%",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   },
   pagination: {
     borderRadius: theme.spacing(1),
@@ -578,7 +590,8 @@ const MobiliarioList = () => {
     if (!formData.identMobiliario.trim()) {
       newErrors.identMobiliario = "La identificación es requerida."
     }
-    if (!formData.estado.trim()) {
+    // Solo validar estado en modo edición
+    if (editingId && !formData.estado.trim()) {
       newErrors.estado = "El estado es requerido."
     }
     if (!formData.observacion.trim()) {
@@ -792,33 +805,46 @@ const MobiliarioList = () => {
       </div>
 
       <TableContainer component={Paper} className={classes.tableContainer}>
-        <Table style={{ borderCollapse: "collapse" }}>
+        <Table style={{ tableLayout: "fixed", width: "100%" }}>
           <TableHead>
             <TableRow style={{ backgroundColor: "#2563EB" }}>
-              <StyledTableCell>Nombre</StyledTableCell>
-              <StyledTableCell>Ident. Mobiliario</StyledTableCell>
-              <StyledTableCell onClick={handleEstadoHeaderClick} style={{ cursor: "pointer" }}>
+              <StyledTableCell style={{ width: "25%" }}>Nombre</StyledTableCell>
+              <StyledTableCell style={{ width: "20%" }}>Ident. Mobiliario</StyledTableCell>
+              <StyledTableCell onClick={handleEstadoHeaderClick} style={{ width: "15%", cursor: "pointer" }}>
                 <span className={classes.filterButton}>
                   Estado <Filter size={14} style={{ marginLeft: "4px" }} />
                 </span>
               </StyledTableCell>
-              <StyledTableCell>Observación</StyledTableCell>
-              <StyledTableCell>Acciones</StyledTableCell>
+              <StyledTableCell style={{ width: "25%" }}>Observación</StyledTableCell>
+              <StyledTableCell style={{ width: "15%" }}>Acciones</StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {paginatedMobiliarios.map((mobiliario) => (
               <TableRow key={mobiliario._id} className={classes.tableRow}>
-                <TableCell className={classes.tableCell}>
-                  <Box display="flex" alignItems="center" justifyContent="center">
+                <TableCell
+                  className={classes.tableCell}
+                  style={{ width: "25%", maxWidth: "25%", overflow: "hidden", textOverflow: "ellipsis" }}
+                >
+                  <Box display="flex" alignItems="center" justifyContent="flex-start" style={{ width: "100%" }}>
                     <Avatar className={classes.mobiliarioAvatar}>
                       <Package size={18} />
                     </Avatar>
-                    <Typography variant="body2">{mobiliario.nombre}</Typography>
+                    <Typography
+                      variant="body2"
+                      style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                    >
+                      {mobiliario.nombre}
+                    </Typography>
                   </Box>
                 </TableCell>
-                <TableCell className={classes.tableCell}>{mobiliario.identMobiliario}</TableCell>
-                <TableCell className={classes.tableCell}>
+                <TableCell
+                  className={classes.tableCell}
+                  style={{ width: "20%", maxWidth: "20%", overflow: "hidden", textOverflow: "ellipsis" }}
+                >
+                  {mobiliario.identMobiliario}
+                </TableCell>
+                <TableCell className={classes.tableCell} style={{ width: "15%", maxWidth: "15%" }}>
                   <Chip
                     label={mobiliario.estado}
                     className={`${classes.estadoChip} ${
@@ -832,12 +858,18 @@ const MobiliarioList = () => {
                     }`}
                   />
                 </TableCell>
-                <TableCell className={classes.tableCell}>
+                <TableCell
+                  className={classes.tableCell}
+                  style={{ width: "25%", maxWidth: "25%", overflow: "hidden", textOverflow: "ellipsis" }}
+                >
                   {mobiliario.observacion.length > 30
                     ? `${mobiliario.observacion.substring(0, 30)}...`
                     : mobiliario.observacion}
                 </TableCell>
-                <TableCell className={`${classes.tableCell} ${classes.actionsCell}`}>
+                <TableCell
+                  className={`${classes.tableCell} ${classes.actionsCell}`}
+                  style={{ width: "15%", maxWidth: "15%" }}
+                >
                   <Box display="flex" justifyContent="center" gap={1}>
                     <Tooltip title="Editar mobiliario">
                       <IconButton
@@ -962,31 +994,34 @@ const MobiliarioList = () => {
               <Activity size={20} />
               Estado y Observaciones
             </Typography>
-            <TextField
-              className={classes.formField}
-              select
-              margin="dense"
-              label="Estado"
-              name="estado"
-              value={formData.estado}
-              onChange={handleChange}
-              fullWidth
-              variant="outlined"
-              error={!!errors.estado}
-              helperText={errors.estado}
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Activity size={18} className={classes.fieldIcon} />
-                  </InputAdornment>
-                ),
-              }}
-            >
-              <MenuItem value="Activo">Activo</MenuItem>
-              <MenuItem value="Inactivo">Inactivo</MenuItem>
-              <MenuItem value="Mantenimiento">Mantenimiento</MenuItem>
-            </TextField>
+            {/* Campo Estado - Solo visible en modo edición */}
+            {editingId ? (
+              <TextField
+                className={classes.formField}
+                select
+                margin="dense"
+                label="Estado"
+                name="estado"
+                value={formData.estado}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+                error={!!errors.estado}
+                helperText={errors.estado}
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Activity size={18} className={classes.fieldIcon} />
+                    </InputAdornment>
+                  ),
+                }}
+              >
+                <MenuItem value="Activo">Activo</MenuItem>
+                <MenuItem value="Inactivo">Inactivo</MenuItem>
+                <MenuItem value="Mantenimiento">Mantenimiento</MenuItem>
+              </TextField>
+            ) : null}
             <TextField
               className={classes.formField}
               margin="dense"
