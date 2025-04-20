@@ -12,6 +12,7 @@ const {
   publicRegister,
   cambiarPassword,
   obtenerReservasCliente,
+  getMisReservas,
 } = require("./cliente.controller")
 
 // Ruta pública para registro de clientes desde la landing page
@@ -30,7 +31,11 @@ router.get("/profile", authMiddleware, getProfile)
 // Ruta para que el cliente cambie su contraseña
 router.post("/cambiar-password", authMiddleware, cambiarPassword)
 
-// Nueva ruta para obtener las reservas del cliente autenticado
+// Ruta existente para obtener las reservas del cliente autenticado
 router.get("/mis-reservas", authMiddleware, obtenerReservasCliente)
+
+// Nueva ruta para obtener las reservas del cliente (sin verificación de permisos)
+// Esta ruta es accesible directamente con el token de autenticación
+router.get("/mis-reservas/all", authMiddleware, getMisReservas)
 
 module.exports = router

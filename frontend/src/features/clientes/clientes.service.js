@@ -56,17 +56,35 @@ const getMisReservas = async () => {
       console.warn("No hay token disponible para la solicitud")
     }
 
-    const response = await api.get(`${API_URL}/mis-reservas`)
-    console.log("Respuesta de mis reservas:", response.data)
+    // Usar la nueva ruta que no requiere verificación de permisos
+    try {
+      const response = await api.get(`${API_URL}/mis-reservas/all`)
+      console.log("Respuesta de mis reservas (nueva ruta):", response.data)
 
-    // Verificar la estructura de la respuesta
-    if (response.data && Array.isArray(response.data)) {
-      return response.data
-    } else if (response.data && Array.isArray(response.data.reservas)) {
-      return response.data.reservas
-    } else {
-      console.log("Formato de respuesta inesperado:", response.data)
-      return response.data
+      // Verificar la estructura de la respuesta
+      if (response.data && Array.isArray(response.data)) {
+        return response.data
+      } else if (response.data && Array.isArray(response.data.reservas)) {
+        return response.data.reservas
+      } else {
+        console.log("Formato de respuesta inesperado:", response.data)
+        return response.data
+      }
+    } catch (newRouteError) {
+      // Si la nueva ruta falla (por ejemplo, si no existe), intentar con la ruta original
+      console.log("Error en la nueva ruta, intentando con la ruta original:", newRouteError.message)
+      const response = await api.get(`${API_URL}/mis-reservas`)
+      console.log("Respuesta de mis reservas (ruta original):", response.data)
+
+      // Verificar la estructura de la respuesta
+      if (response.data && Array.isArray(response.data)) {
+        return response.data
+      } else if (response.data && Array.isArray(response.data.reservas)) {
+        return response.data.reservas
+      } else {
+        console.log("Formato de respuesta inesperado:", response.data)
+        return response.data
+      }
     }
   } catch (error) {
     console.error("Error al obtener mis reservas:", error)

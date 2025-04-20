@@ -888,7 +888,9 @@ const ClienteList = () => {
     }
   }
 
+  // Reemplazar la función handleDelete actual con esta versión mejorada
   const handleDelete = async (id) => {
+    // Primero mostramos el diálogo de confirmación
     const confirmDelete = await Swal.fire({
       title: "¿Eliminar cliente?",
       text: "Esta acción no se puede deshacer",
@@ -902,20 +904,28 @@ const ClienteList = () => {
 
     if (confirmDelete.isConfirmed) {
       try {
+        // Intentamos eliminar el cliente
         await clienteService.deleteCliente(id)
+
+        // Si no hay error, mostramos mensaje de éxito
         Swal.fire({
           icon: "success",
           title: "Eliminado",
           text: "El cliente se eliminó correctamente.",
           confirmButtonColor: "#2563eb",
         })
+
+        // Actualizamos la lista de clientes
         fetchClientes()
       } catch (error) {
         console.error("Error deleting cliente", error)
+
+        // Mostramos el mensaje de error específico o genérico
         Swal.fire({
           icon: "error",
-          title: "Error",
-          text: "Ocurrió un error al eliminar el cliente.",
+          title: "No se puede eliminar",
+          text: error.response?.data?.msg || "Ocurrió un error al eliminar el cliente.",
+          confirmButtonColor: "#2563eb",
         })
       }
     }

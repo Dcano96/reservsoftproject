@@ -4,6 +4,8 @@ const Landing = require("./landing.model")
 const Apartamento = require("../apartamento/apartamento.model")
 const Reserva = require("../reservas/reserva.model")
 const Cliente = require("../clientes/cliente.model")
+const usuarioController = require("../usuarios/usuario.controller") // Importar el controlador de usuarios
+const bcrypt = require("bcryptjs")
 const path = require("path")
 console.log("Ruta actual:", __dirname)
 console.log("Intentando resolver ruta del mailer...")
@@ -362,18 +364,27 @@ exports.getFeaturedApartments = async (req, res) => {
 
     // Transformar los datos para que coincidan con lo que espera el componente Landing
     const apartamentosFormateados = apartamentos.map((apt) => {
+      // Añadir logging para depuración
+      console.log(`Procesando apartamento: ID=${apt._id}, Tipo=${apt.Tipo}, NumeroApto=${apt.NumeroApto}`)
+
       // Asignar imagen según el tipo de apartamento
-      let imagen =
-        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-1.png-7iFT37KEISyEFDtZqRfYvbz1dXw12D.jpeg" // Por defecto
-      if (apt.Tipo === "Tipo 1") {
-        imagen =
-          "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-1.png-7iFT37KEISyEFDtZqRfYvbz1dXw12D.jpeg"
-      } else if (apt.Tipo === "Tipo 2") {
-        imagen =
-          "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-2.png-Qb6dNq1YCCbp1obXcopeyIldnr9niD.jpeg"
-      } else if (apt.Tipo === "Penthouse") {
-        imagen =
-          "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-3.png-txItO3avORn7pXvG0Idk6FMgqlbWu7x.jpeg"
+      let imagen = "/imagen-1.png" // Por defecto
+
+      // Normalizar el tipo para comparación (eliminar espacios y convertir a minúsculas)
+      const tipoNormalizado = apt.Tipo ? apt.Tipo.trim().toLowerCase() : ""
+      console.log(`Tipo normalizado: "${tipoNormalizado}"`)
+
+      if (tipoNormalizado === "tipo 1" || tipoNormalizado === "tipo1") {
+        console.log(`Asignando imagen-1.png para apartamento tipo 1: ${apt._id}`)
+        imagen = "/imagen-1.png"
+      } else if (tipoNormalizado === "tipo 2" || tipoNormalizado === "tipo2") {
+        console.log(`Asignando imagen-2.png para apartamento tipo 2: ${apt._id}`)
+        imagen = "/imagen-2.png"
+      } else if (tipoNormalizado === "penthouse") {
+        console.log(`Asignando imagen-3.png para apartamento penthouse: ${apt._id}`)
+        imagen = "/imagen-3.png"
+      } else {
+        console.log(`Tipo no reconocido: "${apt.Tipo}", usando imagen por defecto`)
       }
 
       return {
@@ -525,13 +536,62 @@ exports.crearReservaDesdeLanding = async (req, res) => {
     // Crear cliente si no existe
     let cliente = await Cliente.findOne({ documento })
     let esClienteNuevo = false
+    let passwordTemporal = null
 
     if (!cliente) {
       console.log("Cliente no encontrado, creando nuevo cliente:", { documento, nombre, email })
       esClienteNuevo = true
-      cliente = new Cliente({ documento, nombre, email, telefono })
+
+      // Generar contraseña temporal
+      passwordTemporal = Math.random().toString(36).slice(-8)
+      console.log("Contraseña temporal generada:", passwordTemporal)
+
+      // Encriptar la contraseña para el cliente
+      const salt = await bcrypt.genSalt(10)
+      const hashedPassword = await bcrypt.hash(passwordTemporal, salt)
+
+      // Crear el cliente
+      cliente = new Cliente({
+        documento,
+        nombre,
+        email,
+        telefono,
+        password: hashedPassword,
+        rol: "cliente",
+      })
       await cliente.save()
       console.log("Nuevo cliente creado con ID:", cliente._id)
+
+      // Crear usuario correspondiente
+      try {
+        console.log("Intentando crear usuario con email:", email)
+
+        // Verificar si ya existe un usuario con el mismo email
+        const Usuario = require("../usuarios/usuario.model")
+        let usuario = await Usuario.findOne({ email })
+
+        if (!usuario) {
+          console.log("No existe usuario con este email, creando nuevo usuario")
+          // Crear el usuario con los mismos datos del cliente
+          usuario = new Usuario({
+            nombre,
+            documento,
+            email,
+            telefono,
+            password: hashedPassword, // Usar la misma contraseña encriptada que se usó para el cliente
+            rol: "cliente",
+          })
+
+          await usuario.save()
+          console.log("Nuevo usuario creado con ID:", usuario._id)
+        } else {
+          console.log("Ya existe un usuario con el email:", email, "ID:", usuario._id)
+        }
+      } catch (errorUsuario) {
+        console.error("Error detallado al crear usuario:", errorUsuario)
+        console.error("Mensaje de error:", errorUsuario.message)
+        // No interrumpimos el flujo si falla la creación del usuario
+      }
     } else {
       console.log("Cliente existente encontrado:", cliente._id)
     }
@@ -561,10 +621,6 @@ exports.crearReservaDesdeLanding = async (req, res) => {
       "Información del apartamento:",
       apartamento ? `${apartamento.NumeroApto} - ${apartamento.Tipo}` : "No encontrado",
     )
-
-    // Generar contraseña temporal si es un cliente nuevo
-    const passwordTemporal = esClienteNuevo ? Math.random().toString(36).slice(-8) : null
-    console.log("¿Es cliente nuevo?", esClienteNuevo, "Contraseña temporal:", passwordTemporal || "No generada")
 
     // Enviar correo de confirmación
     try {

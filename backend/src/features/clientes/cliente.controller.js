@@ -3,6 +3,8 @@ const Usuario = require("../usuarios/usuario.model")
 const bcrypt = require("bcryptjs")
 const nodemailer = require("nodemailer")
 const crypto = require("crypto")
+const jwt = require("jsonwebtoken")
+const mongoose = require("mongoose")
 
 // Función para generar una contraseña aleatoria segura
 const generateRandomPassword = () => {
@@ -546,7 +548,7 @@ exports.publicRegister = async (req, res) => {
         <html lang="es">
         <head>
           <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta name="viewport" content="width:device-width, initial-scale=1.0">
           <title>[ADMIN] Nueva Reserva - Hotel Nido Sky</title>
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -780,6 +782,7 @@ exports.publicRegister = async (req, res) => {
               <div class="section">
                 <h3 class="section-title">
                   <img src="https://img.icons8.com/ios-filled/50/0A2463/calendar-plus.png" alt="Reserva" class="section-title-icon">
+                  Detalles de la Reserva  alt="Reserva" class="section-title-icon">
                   Detalles de la Reserva
                 </h3>
                 
@@ -922,14 +925,37 @@ exports.deleteCliente = async (req, res) => {
       return res.status(404).json({ msg: "Cliente no encontrado" })
     }
 
-    await cliente.remove()
-    res.json({ msg: "Cliente eliminado" })
+    // Verificar si el cliente tiene reservas confirmadas
+    const Reserva = require("../reservas/reserva.model")
+
+    // Buscar reservas confirmadas del cliente
+    const reservasConfirmadas = await Reserva.find({
+      $or: [
+        { email: cliente.email },
+        { titular_reserva: cliente.nombre },
+        { titular_documento: cliente.documento },
+        { documento: cliente.documento },
+      ],
+      estado: "confirmada",
+    }).countDocuments()
+
+    // Si tiene reservas confirmadas, no permitir la eliminación
+    if (reservasConfirmadas > 0) {
+      return res.status(400).json({
+        msg: "No se puede eliminar el cliente porque tiene una reserva confirmada",
+        reservasConfirmadas,
+      })
+    }
+
+    // Si no tiene reservas confirmadas, proceder con la eliminación
+    await Cliente.findByIdAndDelete(req.params.id)
+    res.json({ msg: "Cliente eliminado correctamente" })
   } catch (error) {
-    console.error(error)
+    console.error("Error al eliminar cliente:", error)
     if (error.kind === "ObjectId") {
       return res.status(404).json({ msg: "Cliente no encontrado" })
     }
-    res.status(500).send("Error en el servidor")
+    res.status(500).json({ msg: "Error en el servidor", error: error.message })
   }
 }
 
@@ -1034,6 +1060,170 @@ exports.obtenerReservasCliente = async (req, res) => {
       msg: "Error en el servidor al obtener las reservas del cliente",
       error: true,
       details: error.message,
+    })
+  }
+}
+
+// Nueva función para obtener las reservas del cliente autenticado
+exports.getMisReservas = async (req, res) => {
+  try {
+    console.log("Obteniendo reservas del cliente autenticado")
+
+    // Obtener el token del encabezado de autorización
+    const token = req.header("Authorization")?.replace("Bearer ", "")
+    if (!token) {
+      return res.status(401).json({ msg: "No hay token, autorización denegada" })
+    }
+
+    // Decodificar el token para obtener la información del usuario
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "palabrasecreta")
+    const usuarioId = decoded.usuario?._id || decoded.usuario?.id || decoded.uid
+    const usuarioEmail = decoded.usuario?.email
+    const usuarioDocumento = decoded.usuario?.documento
+
+    if (!usuarioId && !usuarioEmail && !usuarioDocumento) {
+      return res.status(401).json({ msg: "Token inválido" })
+    }
+
+    console.log("Información del usuario del token:", {
+      id: usuarioId,
+      email: usuarioEmail,
+      documento: usuarioDocumento,
+    })
+
+    // Buscar el cliente por el ID de usuario, email o documento
+    let cliente
+
+    if (usuarioEmail) {
+      console.log("Buscando cliente por email:", usuarioEmail)
+      cliente = await Cliente.findOne({ email: usuarioEmail })
+    }
+
+    // Si no se encontró por email, buscar por documento
+    if (!cliente && usuarioDocumento) {
+      console.log("Buscando cliente por documento:", usuarioDocumento)
+      cliente = await Cliente.findOne({ documento: usuarioDocumento })
+    }
+
+    // Si aún no se encuentra, intentar buscar por ID
+    if (!cliente && usuarioId) {
+      console.log("Buscando cliente por ID de usuario:", usuarioId)
+      cliente = await Cliente.findOne({ _id: usuarioId })
+    }
+
+    if (!cliente) {
+      console.log("No se encontró el cliente asociado al usuario")
+      return res.status(404).json({ msg: "No se encontró el cliente asociado a este usuario" })
+    }
+
+    console.log("Cliente encontrado:", cliente._id)
+
+    // Importar el modelo Reserva
+    const Reserva = require("../reservas/reserva.model")
+    const Apartamento = require("../apartamento/apartamento.model")
+
+    // Buscar las reservas del cliente por documento, email o nombre
+    const query = {
+      $or: [{ email: cliente.email }, { titular_reserva: cliente.nombre }],
+    }
+
+    // Si el cliente tiene documento, agregarlo a la consulta
+    if (cliente.documento) {
+      query.$or.push({ titular_documento: cliente.documento })
+      query.$or.push({ documento: cliente.documento })
+    }
+
+    console.log("Consultando reservas con:", JSON.stringify(query))
+
+    // Obtener las reservas y poblar los datos de apartamentos
+    const reservas = await Reserva.find(query)
+      .populate({
+        path: "apartamentos",
+        model: Apartamento,
+      })
+      .sort({ fecha_inicio: -1 })
+
+    console.log(`Se encontraron ${reservas.length} reservas para el cliente`)
+
+    // Procesar las reservas para mostrar exactamente los mismos datos que en el correo
+    const reservasFormateadas = reservas.map((reserva) => {
+      // Convertir el documento Mongoose a un objeto plano
+      const reservaObj = reserva.toObject()
+
+      // Información del apartamento
+      let apartamentoInfo = "Apartamento"
+      let precioPorNoche = 0
+
+      // Verificar si hay apartamentos en la reserva
+      if (reservaObj.apartamentos && reservaObj.apartamentos.length > 0) {
+        const apartamento = reservaObj.apartamentos[0]
+        console.log("Datos del apartamento:", JSON.stringify(apartamento, null, 2))
+
+        // Obtener el número y tipo del apartamento (si existen)
+        if (apartamento.NumeroApto !== undefined && apartamento.Tipo) {
+          apartamentoInfo = `${apartamento.NumeroApto} - ${apartamento.Tipo}`
+        } else if (apartamento.NumeroApto !== undefined) {
+          apartamentoInfo = `${apartamento.NumeroApto}`
+        } else if (apartamento.Tipo) {
+          apartamentoInfo = apartamento.Tipo
+        }
+
+        // Obtener el precio por noche
+        precioPorNoche = apartamento.Tarifa || 0
+      }
+
+      // Calcular noches de estancia
+      let nochesEstadia = reservaObj.noches_estadia
+      if (!nochesEstadia && reservaObj.fecha_inicio && reservaObj.fecha_fin) {
+        const fechaInicio = new Date(reservaObj.fecha_inicio)
+        const fechaFin = new Date(reservaObj.fecha_fin)
+        const diffTime = Math.abs(fechaFin - fechaInicio)
+        nochesEstadia = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      }
+
+      // Calcular precio total
+      let precioTotal = reservaObj.total
+      if (!precioTotal && nochesEstadia && precioPorNoche) {
+        precioTotal = nochesEstadia * precioPorNoche
+      }
+
+      // Formatear fechas en español
+      const formatearFecha = (fecha) => {
+        if (!fecha) return "Fecha no disponible"
+
+        const opciones = { weekday: "long", year: "numeric", month: "long", day: "numeric" }
+        return new Date(fecha).toLocaleDateString("es-ES", opciones)
+      }
+
+      // Crear objeto con los datos exactos que se muestran en el correo
+      const detallesReserva = {
+        apartamento: apartamentoInfo,
+        fechaEntrada: formatearFecha(reservaObj.fecha_inicio),
+        fechaSalida: formatearFecha(reservaObj.fecha_fin),
+        numeroNoches: nochesEstadia || 0,
+        huespedes: reservaObj.acompanantes?.length + 1 || 1, // +1 por el titular
+        precioPorNoche: precioPorNoche,
+        precioTotal: precioTotal || 0,
+      }
+
+      return {
+        ...reservaObj,
+        detallesReserva,
+        // Mantener estos campos para compatibilidad con el frontend
+        apartamentoInfo,
+        precioPorNoche,
+        nochesEstadia,
+        precioTotal,
+      }
+    })
+
+    console.log("Reservas formateadas con los datos reales del apartamento")
+    return res.json(reservasFormateadas)
+  } catch (error) {
+    console.error("Error al obtener las reservas del cliente:", error)
+    return res.status(500).json({
+      msg: "Error al obtener las reservas",
+      error: error.message,
     })
   }
 }

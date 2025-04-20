@@ -25,6 +25,49 @@ exports.createUsuario = async (req, res) => {
   }
 }
 
+// Método para crear usuario desde otros controladores (sin respuesta HTTP)
+exports.createUsuarioInterno = async (userData) => {
+  try {
+    console.log("[createUsuarioInterno] Iniciando creación de usuario interno con datos:", {
+      nombre: userData.nombre,
+      documento: userData.documento,
+      email: userData.email,
+      rol: userData.rol || "cliente",
+    })
+
+    // Verificar si ya existe un usuario con el mismo email
+    let usuario = await Usuario.findOne({ email: userData.email })
+
+    if (usuario) {
+      console.log("[createUsuarioInterno] El usuario ya existe con ID:", usuario._id)
+      return { success: false, msg: "El usuario ya existe", usuario }
+    }
+
+    // Encriptar la contraseña
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(userData.password, salt)
+
+    // Crear el nuevo usuario
+    usuario = new Usuario({
+      nombre: userData.nombre,
+      documento: userData.documento,
+      email: userData.email,
+      telefono: userData.telefono,
+      password: hashedPassword,
+      rol: userData.rol || "cliente",
+    })
+
+    // Guardar el usuario
+    const usuarioGuardado = await usuario.save()
+    console.log("[createUsuarioInterno] Usuario creado correctamente con ID:", usuarioGuardado._id)
+
+    return { success: true, msg: "Usuario creado correctamente", usuario: usuarioGuardado }
+  } catch (error) {
+    console.error("[createUsuarioInterno] Error al crear usuario:", error)
+    return { success: false, msg: "Error al crear usuario", error: error.message }
+  }
+}
+
 // Listar todos los usuarios
 exports.getUsuarios = async (req, res) => {
   try {
@@ -136,11 +179,11 @@ exports.removeRol = async (req, res) => {
 exports.cambiarPassword = async (req, res) => {
   try {
     console.log("[CAMBIAR PASSWORD] Iniciando cambio de contraseña para usuario")
-    
+
     // Obtener el ID del usuario desde los parámetros o desde el token
     const usuarioId = req.params.id || req.usuario._id || req.usuario.id
     console.log("[CAMBIAR PASSWORD] ID del usuario:", usuarioId)
-    
+
     const { passwordActual, nuevoPassword } = req.body
 
     // Buscar el usuario en la base de datos
