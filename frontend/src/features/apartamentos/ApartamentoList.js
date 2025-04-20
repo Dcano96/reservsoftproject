@@ -445,7 +445,7 @@ const ApartamentoList = () => {
   })
   const [searchTerm, setSearchTerm] = useState("")
   const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [rowsPerPage, setRowsPerPage] = useState(5)
   const [formErrors, setFormErrors] = useState({})
   const [isFormValid, setIsFormValid] = useState(false)
   const [selectedTipo, setSelectedTipo] = useState("Todos")
@@ -508,10 +508,26 @@ const ApartamentoList = () => {
       setEditingId(apartamento._id)
       setIsFormValid(true)
     } else {
+      // Verificar si hay tipos activos disponibles
+      const tiposActivos = tipoApartamentos.filter((tipo) => tipo.estado)
+      if (tiposActivos.length === 0) {
+        Swal.fire({
+          icon: "warning",
+          title: "No hay tipos disponibles",
+          text: "No hay tipos de apartamentos activos disponibles para crear un nuevo apartamento.",
+          confirmButtonColor: "#2563eb",
+        })
+        return
+      }
+
+      // Seleccionar el primer tipo activo por defecto
+      const tipoInicial =
+        selectedTipo === "Todos" || !tiposActivos.some((t) => t.nombre === selectedTipo)
+          ? tiposActivos[0]?.nombre || ""
+          : selectedTipo
+
       setFormData({
-        Tipo: selectedTipo === "Todos"
-          ? tipoApartamentos.length > 0 ? tipoApartamentos[0].nombre : "Type 1"
-          : selectedTipo,
+        Tipo: tipoInicial,
         NumeroApto: "",
         Piso: "",
         Capacidad: 0,
@@ -575,7 +591,7 @@ const ApartamentoList = () => {
         try {
           if (!editingId || (editingId && formData.NumeroApto !== value)) {
             const existingApartamentos = apartamentos.filter(
-              (apt) => apt.NumeroApto === value && apt.Tipo === formData.Tipo
+              (apt) => apt.NumeroApto === value && apt.Tipo === formData.Tipo,
             )
             if (existingApartamentos.length > 0) {
               errorMessage = `El apartamento número ${value} ya existe para el tipo ${formData.Tipo}`
@@ -626,23 +642,29 @@ const ApartamentoList = () => {
   const validateForm = (data) => {
     // Se exige que los campos numéricos sean mayores a 0
     const isValid =
-      Number(data.NumeroApto) > 0 &&
-      Number(data.Piso) > 0 &&
-      Number(data.Capacidad) > 0 &&
-      Number(data.Tarifa) > 0
+      Number(data.NumeroApto) > 0 && Number(data.Piso) > 0 && Number(data.Capacidad) > 0 && Number(data.Tarifa) > 0
     setIsFormValid(isValid)
   }
 
   const handleSubmit = async () => {
+    // Verificar si el tipo de apartamento está inactivo
+    const tipoSeleccionado = tipoApartamentos.find((tipo) => tipo.nombre === formData.Tipo)
+    if (tipoSeleccionado && !tipoSeleccionado.estado && !editingId) {
+      Swal.fire({
+        icon: "error",
+        title: "Error de validación",
+        text: "No se puede crear un apartamento con un tipo inactivo.",
+        confirmButtonColor: "#2563eb",
+      })
+      return
+    }
+
     const tempErrors = {}
     if (Number(formData.NumeroApto) <= 0) {
       tempErrors.NumeroApto = "El número de apartamento es obligatorio"
     } else {
       const existingApartamentos = apartamentos.filter(
-        (apt) =>
-          apt.NumeroApto === formData.NumeroApto &&
-          apt.Tipo === formData.Tipo &&
-          apt._id !== editingId
+        (apt) => apt.NumeroApto === formData.NumeroApto && apt.Tipo === formData.Tipo && apt._id !== editingId,
       )
       if (existingApartamentos.length > 0) {
         tempErrors.NumeroApto = `El apartamento número ${formData.NumeroApto} ya existe para el tipo ${formData.Tipo}`
@@ -759,7 +781,7 @@ const ApartamentoList = () => {
         a.NumeroApto.toString().includes(searchTerm) ||
         a.Piso.toString().includes(searchTerm) ||
         a.Capacidad.toString().includes(searchTerm) ||
-        a.Tarifa.toString().includes(searchTerm))
+        a.Tarifa.toString().includes(searchTerm)),
   )
   const paginatedApartamentos = filteredApartamentos.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
   const handleChangePage = (event, newPage) => {
@@ -784,10 +806,17 @@ const ApartamentoList = () => {
   }
 
   return (
-    <Box className={classes.container} style={{ paddingTop: "10px", borderTop: "6px solid #2563eb", borderRadius: "8px" }}>
+    <Box
+      className={classes.container}
+      style={{ paddingTop: "10px", borderTop: "6px solid #2563eb", borderRadius: "8px" }}
+    >
       <Box className={classes.pageHeader}>
-        <Typography variant="h4" className={classes.pageTitle}>Gestión de Apartamentos</Typography>
-        <Typography variant="body1" className={classes.pageSubtitle}>Administra los apartamentos del sistema</Typography>
+        <Typography variant="h4" className={classes.pageTitle}>
+          Gestión de Apartamentos
+        </Typography>
+        <Typography variant="body1" className={classes.pageSubtitle}>
+          Administra los apartamentos del sistema
+        </Typography>
       </Box>
 
       <div className={classes.searchContainer}>
@@ -807,7 +836,13 @@ const ApartamentoList = () => {
           }}
         />
         <Box display="flex" gap={1}>
-          <Button variant="contained" className={classes.addButton} onClick={() => handleOpen(null)} startIcon={<UserPlus size={20} />} style={{ minWidth: "180px" }}>
+          <Button
+            variant="contained"
+            className={classes.addButton}
+            onClick={() => handleOpen(null)}
+            startIcon={<UserPlus size={20} />}
+            style={{ minWidth: "180px" }}
+          >
             Nuevo Apartamento
           </Button>
         </Box>
@@ -817,10 +852,17 @@ const ApartamentoList = () => {
       <Box mb={2}>
         <FormControl fullWidth variant="outlined">
           <InputLabel id="select-tipo-label">Tipos</InputLabel>
-          <Select labelId="select-tipo-label" value={selectedTipo} onChange={(e) => setSelectedTipo(e.target.value)} label="Tipos">
+          <Select
+            labelId="select-tipo-label"
+            value={selectedTipo}
+            onChange={(e) => setSelectedTipo(e.target.value)}
+            label="Tipos"
+          >
             <MenuItem value="Todos">Todos</MenuItem>
             {tipoApartamentos.map((tipo) => (
-              <MenuItem key={tipo._id} value={tipo.nombre}>{tipo.nombre}</MenuItem>
+              <MenuItem key={tipo._id} value={tipo.nombre}>
+                {tipo.nombre}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -855,17 +897,26 @@ const ApartamentoList = () => {
                 <TableCell className={`${classes.tableCell} ${classes.actionsCell}`}>
                   <Box display="flex" justifyContent="center" gap={1}>
                     <Tooltip title="Editar apartamento">
-                      <IconButton className={`${classes.actionButton} ${classes.btnEdit}`} onClick={() => handleOpen(apartamento)}>
+                      <IconButton
+                        className={`${classes.actionButton} ${classes.btnEdit}`}
+                        onClick={() => handleOpen(apartamento)}
+                      >
                         <Edit size={18} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Ver detalles">
-                      <IconButton className={`${classes.actionButton} ${classes.btnDetails}`} onClick={() => handleView(apartamento)}>
+                      <IconButton
+                        className={`${classes.actionButton} ${classes.btnDetails}`}
+                        onClick={() => handleView(apartamento)}
+                      >
                         <Eye size={18} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Eliminar apartamento">
-                      <IconButton className={`${classes.actionButton} ${classes.btnDelete}`} onClick={() => handleDelete(apartamento._id, apartamento.Estado)}>
+                      <IconButton
+                        className={`${classes.actionButton} ${classes.btnDelete}`}
+                        onClick={() => handleDelete(apartamento._id, apartamento.Estado)}
+                      >
                         <Delete size={18} />
                       </IconButton>
                     </Tooltip>
@@ -897,7 +948,15 @@ const ApartamentoList = () => {
       />
 
       {/* Modal para crear/editar */}
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" classes={{ paper: classes.dialogPaper }} disablePortal={false} container={document.body}>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        fullWidth
+        maxWidth="sm"
+        classes={{ paper: classes.dialogPaper }}
+        disablePortal={false}
+        container={document.body}
+      >
         <DialogTitle className={classes.dialogTitle}>
           {editingId ? "Editar Apartamento" : "Nuevo Apartamento"}
           <IconButton onClick={handleClose} className={classes.closeButton}>
@@ -912,10 +971,19 @@ const ApartamentoList = () => {
             </Typography>
             <FormControl fullWidth variant="outlined" className={classes.formField}>
               <InputLabel id="tipo-label">Tipo de Apartamento</InputLabel>
-              <Select labelId="tipo-label" name="Tipo" value={formData.Tipo} onChange={handleChange} label="Tipo de Apartamento" fullWidth>
+              <Select
+                labelId="tipo-label"
+                name="Tipo"
+                value={formData.Tipo}
+                onChange={handleChange}
+                label="Tipo de Apartamento"
+                fullWidth
+              >
                 {tipoApartamentos.length > 0 ? (
                   tipoApartamentos.map((tipo) => (
-                    <MenuItem key={tipo._id} value={tipo.nombre}>{tipo.nombre}</MenuItem>
+                    <MenuItem key={tipo._id} value={tipo.nombre} disabled={!tipo.estado}>
+                      {tipo.nombre} {!tipo.estado && "(Inactivo)"}
+                    </MenuItem>
                   ))
                 ) : (
                   <>
@@ -1000,7 +1068,14 @@ const ApartamentoList = () => {
             />
             <FormControl fullWidth variant="outlined" className={classes.formField}>
               <InputLabel id="estado-label">Estado</InputLabel>
-              <Select labelId="estado-label" name="Estado" value={formData.Estado} onChange={handleChange} label="Estado" fullWidth>
+              <Select
+                labelId="estado-label"
+                name="Estado"
+                value={formData.Estado}
+                onChange={handleChange}
+                label="Estado"
+                fullWidth
+              >
                 <MenuItem value={true}>Activo</MenuItem>
                 <MenuItem value={false}>Inactivo</MenuItem>
               </Select>
@@ -1008,7 +1083,9 @@ const ApartamentoList = () => {
           </Box>
         </DialogContent>
         <DialogActions className={classes.dialogActions}>
-          <Button onClick={handleClose} className={classes.cancelButton}>Cancelar</Button>
+          <Button onClick={handleClose} className={classes.cancelButton}>
+            Cancelar
+          </Button>
           <Button onClick={handleSubmit} className={classes.submitButton} disabled={!isFormValid}>
             {editingId ? "Actualizar" : "Crear"}
           </Button>
@@ -1016,7 +1093,15 @@ const ApartamentoList = () => {
       </Dialog>
 
       {/* Modal de detalles */}
-      <Dialog open={openDetails} onClose={handleCloseDetails} fullWidth maxWidth="md" classes={{ paper: classes.dialogPaperLarge }} disablePortal={false} container={document.body}>
+      <Dialog
+        open={openDetails}
+        onClose={handleCloseDetails}
+        fullWidth
+        maxWidth="md"
+        classes={{ paper: classes.dialogPaperLarge }}
+        disablePortal={false}
+        container={document.body}
+      >
         <DialogTitle className={classes.dialogTitle}>
           Detalles del Apartamento
           <IconButton onClick={handleCloseDetails} className={classes.closeButton}>
@@ -1033,37 +1118,58 @@ const ApartamentoList = () => {
               </Box>
               <Divider style={{ margin: "16px 0" }} />
               <Box border="1px solid #e2e8f0" borderRadius={4} padding={3} marginBottom={2} bgcolor="#f8fafc">
-                <Typography variant="subtitle1" fontWeight={600} marginBottom={1} style={{ display: "flex", alignItems: "center" }}>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={600}
+                  marginBottom={1}
+                  style={{ display: "flex", alignItems: "center" }}
+                >
                   <FileText size={20} style={{ marginRight: "8px" }} /> Información
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={4}>
                     <Box display="flex" alignItems="center" marginBottom={1}>
                       <Home size={18} style={{ marginRight: "8px", color: "#64748b" }} />
-                      <Typography variant="body2" color="textSecondary">Tipo:</Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        Tipo:
+                      </Typography>
                     </Box>
-                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>{selectedApartamento.Tipo}</Typography>
+                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>
+                      {selectedApartamento.Tipo}
+                    </Typography>
                   </Grid>
                   <Grid item xs={12} sm={4}>
                     <Box display="flex" alignItems="center" marginBottom={1}>
                       <Layers size={18} style={{ marginRight: "8px", color: "#64748b" }} />
-                      <Typography variant="body2" color="textSecondary">Piso:</Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        Piso:
+                      </Typography>
                     </Box>
-                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>{selectedApartamento.Piso}</Typography>
+                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>
+                      {selectedApartamento.Piso}
+                    </Typography>
                   </Grid>
                   <Grid item xs={12} sm={4}>
                     <Box display="flex" alignItems="center" marginBottom={1}>
                       <Layers size={18} style={{ marginRight: "8px", color: "#64748b" }} />
-                      <Typography variant="body2" color="textSecondary">Capacidad:</Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        Capacidad:
+                      </Typography>
                     </Box>
-                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>{selectedApartamento.Capacidad}</Typography>
+                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>
+                      {selectedApartamento.Capacidad}
+                    </Typography>
                   </Grid>
                   <Grid item xs={12} sm={4}>
                     <Box display="flex" alignItems="center" marginBottom={1}>
                       <DollarSign size={18} style={{ marginRight: "8px", color: "#64748b" }} />
-                      <Typography variant="body2" color="textSecondary">Tarifa:</Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        Tarifa:
+                      </Typography>
                     </Box>
-                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>{formatTarifa(selectedApartamento.Tarifa)}</Typography>
+                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>
+                      {formatTarifa(selectedApartamento.Tarifa)}
+                    </Typography>
                   </Grid>
                 </Grid>
               </Box>
@@ -1074,19 +1180,69 @@ const ApartamentoList = () => {
                 <Table style={{ tableLayout: "fixed", width: "100%" }}>
                   <TableHead>
                     <TableRow>
-                      <TableCell style={{ backgroundColor: "#2563eb", color: "#fff", width: "20%", padding: "16px", fontSize: "0.9rem", fontWeight: 600, borderBottom: "none" }}>
+                      <TableCell
+                        style={{
+                          backgroundColor: "#2563eb",
+                          color: "#fff",
+                          width: "20%",
+                          padding: "16px",
+                          fontSize: "0.9rem",
+                          fontWeight: 600,
+                          borderBottom: "none",
+                        }}
+                      >
                         Nombre
                       </TableCell>
-                      <TableCell style={{ backgroundColor: "#2563eb", color: "#fff", width: "20%", padding: "16px", fontSize: "0.9rem", fontWeight: 600, borderBottom: "none" }}>
+                      <TableCell
+                        style={{
+                          backgroundColor: "#2563eb",
+                          color: "#fff",
+                          width: "20%",
+                          padding: "16px",
+                          fontSize: "0.9rem",
+                          fontWeight: 600,
+                          borderBottom: "none",
+                        }}
+                      >
                         Ident. Mobiliario
                       </TableCell>
-                      <TableCell style={{ backgroundColor: "#2563eb", color: "#fff", width: "15%", padding: "16px", fontSize: "0.9rem", fontWeight: 600, borderBottom: "none" }}>
+                      <TableCell
+                        style={{
+                          backgroundColor: "#2563eb",
+                          color: "#fff",
+                          width: "15%",
+                          padding: "16px",
+                          fontSize: "0.9rem",
+                          fontWeight: 600,
+                          borderBottom: "none",
+                        }}
+                      >
                         Estado
                       </TableCell>
-                      <TableCell style={{ backgroundColor: "#2563eb", color: "#fff", width: "25%", padding: "16px", fontSize: "0.9rem", fontWeight: 600, borderBottom: "none" }}>
+                      <TableCell
+                        style={{
+                          backgroundColor: "#2563eb",
+                          color: "#fff",
+                          width: "25%",
+                          padding: "16px",
+                          fontSize: "0.9rem",
+                          fontWeight: 600,
+                          borderBottom: "none",
+                        }}
+                      >
                         Observación
                       </TableCell>
-                      <TableCell style={{ backgroundColor: "#2563eb", color: "#fff", width: "20%", padding: "16px", fontSize: "0.9rem", fontWeight: 600, borderBottom: "none" }}>
+                      <TableCell
+                        style={{
+                          backgroundColor: "#2563eb",
+                          color: "#fff",
+                          width: "20%",
+                          padding: "16px",
+                          fontSize: "0.9rem",
+                          fontWeight: 600,
+                          borderBottom: "none",
+                        }}
+                      >
                         Última actualización
                       </TableCell>
                     </TableRow>
@@ -1099,7 +1255,10 @@ const ApartamentoList = () => {
                         const currentDate = new Date()
                         const diffTime = currentDate - updatedDate
                         const diffDays = diffTime / (1000 * 60 * 60 * 24)
-                        const cellStyle = mob.estado === "Mantenimiento" && diffDays > 1 ? { backgroundColor: "#fee2e2", color: "#991b1b" } : {}
+                        const cellStyle =
+                          mob.estado === "Mantenimiento" && diffDays > 1
+                            ? { backgroundColor: "#fee2e2", color: "#991b1b" }
+                            : {}
                         return (
                           <TableRow key={mob._id}>
                             <TableCell style={{ width: "20%", padding: "16px" }}>{mob.nombre}</TableCell>
@@ -1128,9 +1287,17 @@ const ApartamentoList = () => {
           )}
         </DialogContent>
         <DialogActions className={classes.dialogActions}>
-          <Button onClick={handleCloseDetails} className={classes.cancelButton}>Cerrar</Button>
+          <Button onClick={handleCloseDetails} className={classes.cancelButton}>
+            Cerrar
+          </Button>
           {selectedApartamento && (
-            <Button onClick={() => { handleCloseDetails(); handleOpen(selectedApartamento) }} className={classes.submitButton}>
+            <Button
+              onClick={() => {
+                handleCloseDetails()
+                handleOpen(selectedApartamento)
+              }}
+              className={classes.submitButton}
+            >
               Editar
             </Button>
           )}
