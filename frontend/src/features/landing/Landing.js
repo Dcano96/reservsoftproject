@@ -1393,7 +1393,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }))
 
-// Datos actualizados para los apartamentos específicos
+// Modificar las rutas de imágenes en apartamentosEjemplo
 const apartamentosEjemplo = [
   {
     id: 1,
@@ -1406,7 +1406,7 @@ const apartamentosEjemplo = [
     banos: 1,
     tamano: 45,
     caracteristicas: ["Balcón", "Vista a la ciudad", "Cocina equipada", "WiFi de alta velocidad"],
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-1.png-7iFT37KEISyEFDtZqRfYvbz1dXw12D.jpeg",
+    imagen: "/imagen-1.png",
     disponible: true,
     tag: "Popular",
   },
@@ -1421,7 +1421,7 @@ const apartamentosEjemplo = [
     banos: 2,
     tamano: 75,
     caracteristicas: ["Sala de estar", "Comedor", "Terraza", "Smart TV"],
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-2.png-Qb6dNq1YCCbp1obXcopeyIldnr9niD.jpeg",
+    imagen: "/imagen-2.png",
     disponible: true,
     tag: "Familiar",
   },
@@ -1436,7 +1436,7 @@ const apartamentosEjemplo = [
     banos: 3,
     tamano: 120,
     caracteristicas: ["Terraza panorámica", "Jacuzzi", "Bar privado", "Servicio de concierge"],
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-3.png-txItO3avORn7pXvG0Idk6FMgqlbWu7x.jpeg",
+    imagen: "/imagen-3.png",
     disponible: true,
     tag: "Lujo",
   },
@@ -1451,7 +1451,7 @@ const apartamentosEjemplo = [
     banos: 1,
     tamano: 60,
     caracteristicas: ["Escritorio de trabajo", "Cafetera", "Minibar", "Caja fuerte"],
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-1.png-7iFT37KEISyEFDtZqRfYvbz1dXw12D.jpeg",
+    imagen: "/imagen-1.png",
     disponible: true,
     tag: "Ejecutivo",
   },
@@ -1466,7 +1466,7 @@ const apartamentosEjemplo = [
     banos: 2,
     tamano: 85,
     caracteristicas: ["Cocina completa", "Área de juegos", "Lavadora", "Secadora"],
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-2.png-Qb6dNq1YCCbp1obXcopeyIldnr9niD.jpeg",
+    imagen: "/imagen-2.png",
     disponible: true,
     tag: "Familiar",
   },
@@ -1481,7 +1481,7 @@ const apartamentosEjemplo = [
     banos: 1,
     tamano: 55,
     caracteristicas: ["Diseño abierto", "Iluminación LED", "Smart TV", "Sonido envolvente"],
-    imagen: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-3.png-txItO3avORn7pXvG0Idk6FMgqlbWu7x.jpeg",
+    imagen: "/imagen-3.png",
     disponible: true,
     tag: "Moderno",
   },
@@ -1554,7 +1554,6 @@ function Landing() {
     total: 0,
     monto_pago: 0,
     acompanantes: [],
-    
   })
   // Añadir el campo documento a los errores del formulario
   const [formErrors, setFormErrors] = useState({
@@ -1608,36 +1607,42 @@ function Landing() {
         }
 
         // Si no hay apartamentos destacados, intentar con todos los apartamentos
+        // Modificar la parte donde se asignan las imágenes en fetchApartamentos
         try {
           const response = await axios.get("/api/apartamentos")
           console.log("Respuesta de la API general:", response.data)
 
           if (response.data && response.data.length > 0) {
             // Transformar los datos para que coincidan con el formato esperado
-            const apartamentosFormateados = response.data.map((apt) => ({
-              _id: apt._id, // Mantener el ObjectId original
-              id: apt._id, // Duplicar para compatibilidad
-              nombre: `Apartamento ${apt.NumeroApto} - ${apt.Tipo}`,
-              tipo: apt.Tipo,
-              descripcion: `Lujoso apartamento tipo ${apt.Tipo} ubicado en el piso ${apt.Piso} con todas las comodidades.`,
-              ubicacion: "El Poblado, Medellín",
-              precio: apt.Tarifa,
-              capacidad: 4,
-              camas: 2,
-              banos: 1,
-              tamano: 75,
-              caracteristicas: ["Balcón", "Vista a la ciudad", "Cocina equipada", "WiFi de alta velocidad"],
-              imagenes: ["/images/apartment-1.jpg", "/images/apartment-2.jpg", "/images/apartment-3.jpg"],
-              imagen:
-                apt.Tipo === "Penthouse"
-                  ? "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-3.png-txItO3avORn7pXvG0Idk6FMgqlbWu7x.jpeg"
-                  : apt.Tipo === "Tipo 2"
-                    ? "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-2.png-Qb6dNq1YCCbp1obXcopeyIldnr9niD.jpeg"
-                    : "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/imagen-1.png-7iFT37KEISyEFDtZqRfYvbz1dXw12D.jpeg",
-              estado: apt.Estado ? "disponible" : "no disponible",
-              disponible: apt.Estado,
-              tag: apt.Tipo === "Penthouse" ? "Lujo" : apt.Tipo === "Tipo 2" ? "Familiar" : "Popular",
-            }))
+            const apartamentosFormateados = response.data.map((apt) => {
+              // Determinar la imagen basada en el tipo, asegurando que Penthouse siempre use imagen-3.png
+              let imagenUrl = "/imagen-1.png"
+              if (apt.Tipo === "Penthouse") {
+                imagenUrl = "/imagen-3.png"
+              } else if (apt.Tipo === "Tipo 2") {
+                imagenUrl = "/imagen-2.png"
+              }
+
+              return {
+                _id: apt._id, // Mantener el ObjectId original
+                id: apt._id, // Duplicar para compatibilidad
+                nombre: `Apartamento ${apt.NumeroApto} - ${apt.Tipo}`,
+                tipo: apt.Tipo,
+                descripcion: `Lujoso apartamento tipo ${apt.Tipo} ubicado en el piso ${apt.Piso} con todas las comodidades.`,
+                ubicacion: "El Poblado, Medellín",
+                precio: apt.Tarifa,
+                capacidad: 4,
+                camas: 2,
+                banos: 1,
+                tamano: 75,
+                caracteristicas: ["Balcón", "Vista a la ciudad", "Cocina equipada", "WiFi de alta velocidad"],
+                imagenes: ["/images/apartment-1.jpg", "/images/apartment-2.jpg", "/images/apartment-3.jpg"],
+                imagen: imagenUrl, // Usar la imagen determinada
+                estado: apt.Estado ? "disponible" : "no disponible",
+                disponible: apt.Estado,
+                tag: apt.Tipo === "Penthouse" ? "Lujo" : apt.Tipo === "Tipo 2" ? "Familiar" : "Popular",
+              }
+            })
 
             // Limitar a 6 apartamentos
             const limitedApartamentos = apartamentosFormateados.slice(0, 6)
@@ -2048,11 +2053,11 @@ function Landing() {
         huespedes: reservationForm.acompanantes.length + 1, // +1 por el titular
         documento: reservationForm.documento,
         monto_pago: reservationForm.monto_pago, // Añadir el monto del pago parcial
-        acompanantes: reservationForm.acompanantes.map(acompanante => ({
+        acompanantes: reservationForm.acompanantes.map((acompanante) => ({
           nombre: acompanante.nombre,
           apellido: acompanante.apellido,
-          numero_documento: acompanante.documento_acompanante // Convertir documento_acompanante a numero_documento
-        }))
+          numero_documento: acompanante.documento_acompanante, // Convertir documento_acompanante a numero_documento
+        })),
       }
 
       console.log("Datos a enviar:", reservaData)
@@ -2180,9 +2185,25 @@ function Landing() {
   }
 
   // Función para manejar errores de carga de imágenes
+  // Modificar la función handleImageError para dar prioridad a los penthouses
   const handleImageError = (e) => {
     e.target.onerror = null // Prevenir bucles infinitos
-    e.target.src = "https://via.placeholder.com/600x400?text=Imagen+no+disponible"
+    console.error("Error al cargar imagen:", e.target.src)
+
+    // Determinar qué imagen de respaldo usar basado en el nombre del apartamento o tipo
+    const apartmentElement = e.target.closest(".MuiCard-root")
+    const apartmentTitle = apartmentElement?.querySelector(".MuiTypography-h5")?.textContent || ""
+    const apartmentTag = apartmentElement?.querySelector(".MuiChip-label")?.textContent || ""
+
+    // Verificar si es un penthouse por el título o etiqueta
+    if (apartmentTitle.includes("Penthouse") || apartmentTag.includes("Lujo") || apartmentTag.includes("Penthouse")) {
+      console.log("Cargando imagen de respaldo para Penthouse")
+      e.target.src = "/imagen-3.png"
+    } else if (apartmentTitle.includes("Tipo 2") || apartmentTag.includes("Familiar")) {
+      e.target.src = "/imagen-2.png"
+    } else {
+      e.target.src = "/imagen-1.png"
+    }
   }
 
   return (
@@ -2813,30 +2834,6 @@ function Landing() {
               </Grid>
             ))}
           </Grid>
-        </div>
-      </section>
-
-      {/* Sección CTA */}
-      <section className={classes.ctaSection}>
-        <div className={classes.ctaPattern}></div>
-        <div className={classes.sectionInner}>
-          <div className={classes.ctaContent}>
-            <Typography variant="h3" className={classes.ctaTitle}>
-              ¿Listo para una experiencia inolvidable en Medellín?
-            </Typography>
-            <Typography variant="body1" className={classes.ctaText}>
-              Reserve ahora y obtenga un 10% de descuento en su primera estancia en Nido Sky. Oferta por tiempo
-              limitado.
-            </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              className={classes.ctaButton}
-              onClick={() => scrollToSection(apartamentosRef)}
-            >
-              Reservar Ahora <ArrowForward style={{ marginLeft: 8 }} />
-            </Button>
-          </div>
         </div>
       </section>
 

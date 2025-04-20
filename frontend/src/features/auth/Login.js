@@ -16,8 +16,8 @@ import authService from "./auth.service"
 import { useHistory, useLocation } from "react-router-dom"
 import "./style.css"
 
-// Importar la imagen directamente
-import piscinaImage from "../img/piscina.png"
+// Eliminar la importación directa
+// import piscinaImage from "/piscina.png"
 
 const Login = () => {
   const [email, setEmail] = useState("")
@@ -159,7 +159,11 @@ const Login = () => {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-image-column">
-          <img src={piscinaImage || "/placeholder.svg"} alt="Piscina Hotel Nido Sky" className="auth-image" />
+          <img
+            src={process.env.PUBLIC_URL + "/piscina.png" || "/placeholder.svg"}
+            alt="Piscina Hotel Nido Sky"
+            className="auth-image"
+          />
         </div>
 
         <div className="auth-form-column">
