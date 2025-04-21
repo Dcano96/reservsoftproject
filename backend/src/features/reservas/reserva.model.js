@@ -11,7 +11,7 @@ const AcompananteSchema = new mongoose.Schema({
     required: true,
     match: [/^[a-zA-ZÀ-ÿ\s]+$/, "El apellido solo puede contener letras y espacios"],
   },
-  documento: { type: String, required: true },
+  documento_acompanante: { type: String, required: true },
   telefono: {
     type: String,
     match: [/^\+?[0-9\s\-$$$$]+$/, "Por favor ingrese un número de teléfono válido"], // Validación más flexible

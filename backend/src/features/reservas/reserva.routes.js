@@ -9,6 +9,7 @@ const reservaController = require("./reserva.controller")
 // Rutas públicas
 // IMPORTANTE: Colocar la ruta pública antes de las rutas protegidas
 router.post("/publica", reservaController.crearReservaPublica)
+router.get("/fechas-reservadas/:id", reservaController.obtenerFechasReservadas)
 
 // Rutas protegidas
 router.post("/", authMiddleware, roleMiddleware(), reservaController.crearReserva)
