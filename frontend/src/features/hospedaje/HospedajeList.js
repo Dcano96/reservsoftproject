@@ -29,13 +29,28 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Stepper,
+  Step,
+  StepLabel,
+  MobileStepper,
 } from "@material-ui/core"
-import { Edit, Delete, Info, X, Search, Download, UserPlus, Home } from "lucide-react"
+import {
+  Edit,
+  Delete,
+  Info,
+  X,
+  Search,
+  Download,
+  UserPlus,
+  Home,
+  ArrowUpIcon as ArrowBack,
+  ArrowUpIcon as ArrowForward,
+  Check,
+} from "lucide-react"
 import {
   Person,
   AssignmentInd,
   CalendarToday,
-  VerifiedUser,
   AccountCircle,
   ContactMail,
   PermIdentity,
@@ -44,6 +59,11 @@ import {
   EventNote,
   Group,
   LocalOffer,
+  CheckCircle,
+  Email,
+  PhoneAndroid,
+  KeyboardArrowRight,
+  KeyboardArrowLeft,
 } from "@material-ui/icons"
 import Swal from "sweetalert2"
 import hospedajeService from "./hospedaje.service"
@@ -140,6 +160,7 @@ const useStyles = makeStyles((theme) => ({
     background: "#fff",
     borderRadius: theme.spacing(1),
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+    minWidth: "280px", // Ancho mínimo para evitar que el texto se corte
     "& .MuiOutlinedInput-root": {
       borderRadius: theme.spacing(1),
       "&:hover .MuiOutlinedInput-notchedOutline": {
@@ -149,6 +170,18 @@ const useStyles = makeStyles((theme) => ({
         borderColor: "#2563eb",
         borderWidth: "2px",
       },
+    },
+    "& .MuiInputLabel-outlined": {
+      transform: "translate(14px, 14px) scale(1)", // Ajustar posición de la etiqueta
+      "&.MuiInputLabel-shrink": {
+        transform: "translate(14px, -6px) scale(0.75)", // Ajustar posición cuando está reducida
+      },
+    },
+    "& .MuiOutlinedInput-input": {
+      padding: "12px 14px 12px 0", // Ajustar padding del input
+    },
+    [theme.breakpoints.down("xs")]: {
+      width: "100%", // En móviles, ocupar todo el ancho
     },
   },
   addButton: {
@@ -212,6 +245,12 @@ const useStyles = makeStyles((theme) => ({
       boxShadow: "0 3px 10px rgba(0, 0, 0, 0.1)",
     },
   },
+  checkedInRow: {
+    backgroundColor: "rgba(220, 252, 231, 0.7) !important", // Verde claro para filas con check-in
+    "&:hover": {
+      backgroundColor: "rgba(220, 252, 231, 0.9) !important",
+    },
+  },
   tableCell: {
     textAlign: "center",
     padding: theme.spacing(1.8),
@@ -268,11 +307,24 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: 600,
     marginRight: theme.spacing(1),
   },
+  checkedInAvatar: {
+    backgroundColor: "#10b981", // Avatar verde para clientes con check-in
+  },
   hospedajeContainer: {
     display: "flex",
     alignItems: "center",
     justifyContent: "flex-start", // Alineación a la izquierda
     width: "100%",
+  },
+  checkInIndicator: {
+    display: "flex",
+    alignItems: "center",
+    color: "#10b981",
+    fontWeight: 600,
+    "& svg": {
+      marginRight: theme.spacing(0.5),
+      fontSize: "1rem",
+    },
   },
   pagination: {
     borderRadius: theme.spacing(1),
@@ -319,10 +371,10 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   dialogContent: {
-    padding: theme.spacing(4, 3, 3, 3),
+    padding: theme.spacing(3),
     backgroundColor: "#fff",
     "& .MuiTextField-root": {
-      marginBottom: theme.spacing(2.5),
+      marginBottom: theme.spacing(2),
     },
   },
   dialogActions: {
@@ -388,7 +440,7 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   formField: {
-    marginBottom: theme.spacing(2.5),
+    marginBottom: theme.spacing(2),
     "& .MuiOutlinedInput-root": {
       borderRadius: theme.spacing(1),
       "&:hover .MuiOutlinedInput-notchedOutline": {
@@ -553,6 +605,167 @@ const useStyles = makeStyles((theme) => ({
       backgroundColor: "#2563eb",
     },
   },
+  // Nuevos estilos para el wizard paso a paso
+  stepperContainer: {
+    marginBottom: theme.spacing(3),
+  },
+  stepContent: {
+    padding: theme.spacing(2, 0),
+    minHeight: "auto",
+  },
+  stepperNavButtons: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginTop: theme.spacing(3),
+  },
+  stepIcon: {
+    color: "#2563eb",
+    "&.MuiStepIcon-active": {
+      color: "#2563eb",
+    },
+    "&.MuiStepIcon-completed": {
+      color: "#10b981",
+    },
+  },
+  stepLabel: {
+    "& .MuiStepLabel-label": {
+      fontSize: "0.9rem",
+      fontWeight: 500,
+      "&.MuiStepLabel-active": {
+        fontWeight: 600,
+        color: "#2563eb",
+      },
+      "&.MuiStepLabel-completed": {
+        fontWeight: 600,
+        color: "#10b981",
+      },
+    },
+  },
+  stepperRoot: {
+    backgroundColor: "transparent",
+    padding: theme.spacing(1, 0),
+  },
+  stepperMobile: {
+    backgroundColor: "transparent",
+    padding: theme.spacing(1, 0),
+    flexGrow: 1,
+  },
+  stepperMobileButton: {
+    background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+    color: "#fff",
+    "&:hover": {
+      background: "linear-gradient(135deg, #1d4ed8, #1e40af)",
+    },
+  },
+  stepperProgress: {
+    width: "100%",
+    marginBottom: theme.spacing(2),
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#e2e8f0",
+    position: "relative",
+    overflow: "hidden",
+  },
+  stepperProgressBar: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    height: "100%",
+    backgroundColor: "#2563eb",
+    transition: "width 0.3s ease",
+  },
+  stepperTitle: {
+    fontSize: "1.1rem",
+    fontWeight: 600,
+    color: "#1e293b",
+    marginBottom: theme.spacing(1),
+    textAlign: "center",
+  },
+  stepperSubtitle: {
+    fontSize: "0.9rem",
+    color: "#64748b",
+    marginBottom: theme.spacing(2),
+    textAlign: "center",
+  },
+  stepperNextButton: {
+    background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+    color: "#fff",
+    fontWeight: 500,
+    padding: "8px 24px",
+    "&:hover": {
+      background: "linear-gradient(135deg, #1d4ed8, #1e40af)",
+    },
+  },
+  stepperBackButton: {
+    color: "#64748b",
+    fontWeight: 500,
+    padding: "8px 24px",
+    "&:hover": {
+      backgroundColor: "rgba(0, 0, 0, 0.05)",
+    },
+  },
+  stepperFinishButton: {
+    background: "linear-gradient(135deg, #10b981, #059669)",
+    color: "#fff",
+    fontWeight: 500,
+    padding: "8px 24px",
+    "&:hover": {
+      background: "linear-gradient(135deg, #059669, #047857)",
+    },
+  },
+  stepperSummaryItem: {
+    display: "flex",
+    justifyContent: "space-between",
+    padding: theme.spacing(1.5),
+    borderBottom: "1px solid #e2e8f0",
+    "&:last-child": {
+      borderBottom: "none",
+    },
+  },
+  stepperSummaryLabel: {
+    fontWeight: 600,
+    color: "#1e293b",
+  },
+  stepperSummaryValue: {
+    color: "#334155",
+  },
+  stepperSummaryCard: {
+    padding: theme.spacing(2),
+    borderRadius: theme.spacing(1),
+    backgroundColor: "#f8fafc",
+    border: "1px solid #e2e8f0",
+    marginBottom: theme.spacing(2),
+  },
+  // Estilos mejorados para el modal de creación
+  wizardDialog: {
+    "& .MuiDialog-paper": {
+      width: "100%",
+      maxWidth: "700px",
+      margin: "16px",
+      height: "auto",
+      maxHeight: "calc(100% - 32px)",
+      display: "flex",
+      flexDirection: "column",
+    },
+  },
+  wizardContent: {
+    padding: theme.spacing(3),
+    overflowY: "auto",
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
+  },
+  fieldGroup: {
+    marginBottom: theme.spacing(2),
+  },
+  inputField: {
+    marginBottom: theme.spacing(2),
+  },
+  stepContentWrapper: {
+    flex: 1,
+    overflowY: "auto",
+    padding: theme.spacing(1, 0),
+  },
 }))
 
 const HospedajeList = () => {
@@ -567,6 +780,8 @@ const HospedajeList = () => {
     numeroReserva: "",
     cliente: "",
     numeroIdentificacion: "",
+    email: "", // Nuevo campo para email
+    telefono: "", // Nuevo campo para teléfono
     fecha_inicio: "",
     fecha_fin: "",
     apartamentos: [],
@@ -593,6 +808,17 @@ const HospedajeList = () => {
   const [roomPage, setRoomPage] = useState(0)
   const [roomRowsPerPage, setRoomRowsPerPage] = useState(5)
   const [apartamentosOptions, setApartamentosOptions] = useState([])
+  // Estado para el wizard paso a paso
+  const [activeStep, setActiveStep] = useState(0)
+
+  // Pasos del wizard
+  const steps = [
+    { label: "Información del Cliente", description: "Datos personales del cliente" },
+    { label: "Fechas y Apartamentos", description: "Selección de fechas y apartamentos" },
+    { label: "Descuentos", description: "Aplicar descuentos (opcional)" },
+    { label: "Acompañantes", description: "Agregar acompañantes (opcional)" },
+    { label: "Resumen", description: "Revisar y confirmar" },
+  ]
 
   // Cargar hospedajes
   const fetchHospedajes = async () => {
@@ -676,6 +902,8 @@ const HospedajeList = () => {
         numeroReserva: hospedaje.numeroReserva || "",
         cliente: hospedaje.cliente || "",
         numeroIdentificacion: hospedaje.numeroIdentificacion || "",
+        email: hospedaje.email || "", // Nuevo campo
+        telefono: hospedaje.telefono || "", // Nuevo campo
         fecha_inicio: hospedaje.fecha_inicio ? hospedaje.fecha_inicio.substring(0, 10) : "",
         fecha_fin: hospedaje.fecha_fin ? hospedaje.fecha_fin.substring(0, 10) : "",
         apartamentos: Array.isArray(hospedaje.apartamentos)
@@ -695,6 +923,8 @@ const HospedajeList = () => {
         numeroReserva: "",
         cliente: "",
         numeroIdentificacion: "",
+        email: "", // Nuevo campo
+        telefono: "", // Nuevo campo
         fecha_inicio: "",
         fecha_fin: "",
         apartamentos: [],
@@ -706,10 +936,14 @@ const HospedajeList = () => {
       })
       setEditingId(null)
     }
+    setActiveStep(0) // Reiniciar el paso activo del wizard
     setOpen(true)
   }
 
-  const handleClose = () => setOpen(false)
+  const handleClose = () => {
+    setOpen(false)
+    setActiveStep(0) // Reiniciar el paso activo del wizard
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -739,6 +973,26 @@ const HospedajeList = () => {
           icon: "warning",
           title: "Validación",
           text: "El número de identificación solo acepta letras y números",
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 3000,
+        })
+      }
+    }
+    // Validación para el campo email (formato de email)
+    else if (name === "email") {
+      setFormData((prev) => ({ ...prev, [name]: value }))
+    }
+    // Validación para el campo telefono (solo números)
+    else if (name === "telefono") {
+      if (/^[0-9]*$/.test(value) || value === "") {
+        setFormData((prev) => ({ ...prev, [name]: value }))
+      } else {
+        Swal.fire({
+          icon: "warning",
+          title: "Validación",
+          text: "El teléfono solo acepta números",
           toast: true,
           position: "top-end",
           showConfirmButton: false,
@@ -1218,7 +1472,6 @@ Estado: ${hospedaje.estado}`
   const handleExportExcel = () => {
     const data = hospedajes.map((h) => ({
       "Número de Reserva": h.numeroReserva,
-      "Titular Reserva": (h.reservaInfo && h.reservaInfo.titular_reserva) || "",
       Cliente: h.cliente,
       "Fecha Inicio": h.fecha_inicio ? h.fecha_inicio.substring(0, 10) : "",
       "Fecha Fin": h.fecha_fin ? h.fecha_fin.substring(0, 10) : "",
@@ -1276,198 +1529,70 @@ Estado: ${hospedaje.estado}`
     }
   }
 
-  return (
-    <Box
-      className={classes.container}
-      style={{ paddingTop: "10px", borderTop: "6px solid #2563eb", borderRadius: "8px" }}
-    >
-      <Box className={classes.pageHeader}>
-        <Typography variant="h4" className={classes.pageTitle}>
-          Gestión de Hospedajes
-        </Typography>
-        <Typography variant="body1" className={classes.pageSubtitle}>
-          Administra los hospedajes del sistema
-        </Typography>
-      </Box>
+  // Verificar si un hospedaje tiene check-in
+  const hasCheckIn = (hospedaje) => {
+    return (
+      hospedaje.checkInData &&
+      hospedaje.checkInData.find((d) => d.servicio === "CheckInGeneral" && d.checkIn) !== undefined
+    )
+  }
 
-      {/* Barra de búsqueda */}
-      <Box className={classes.searchContainer}>
-        <TextField
-          label="Buscar por Número de Reserva o Cliente"
-          variant="outlined"
-          size="small"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className={classes.searchField}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search size={20} color="#64748b" />
-              </InputAdornment>
-            ),
-          }}
-        />
-        <Box display="flex" gap={1}>
-          <Tooltip title="Exportar Excel">
-            <IconButton className={`${classes.iconButton} ${classes.excelButton}`} onClick={handleExportExcel}>
-              <Download size={20} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Ver Habitaciones">
-            <IconButton className={`${classes.iconButton} ${classes.habitacionesButton}`} onClick={openRoomsModal}>
-              <Home size={20} />
-            </IconButton>
-          </Tooltip>
-          <Button
-            variant="contained"
-            className={classes.addButton}
-            onClick={() => handleOpen(null)}
-            startIcon={<UserPlus size={20} />}
-          >
-            Crear Hospedaje
-          </Button>
-        </Box>
-      </Box>
+  // Funciones para el wizard paso a paso
+  const handleNext = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep + 1)
+  }
 
-      {/* Tabla de hospedajes */}
-      <TableContainer component={Paper} className={classes.tableContainer}>
-        <Table>
-          <TableHead>
-            <TableRow style={{ backgroundColor: "#2563eb" }}>
-              <StyledTableCell style={{ textAlign: "left", paddingLeft: "24px" }}>Cliente</StyledTableCell>
-              <StyledTableCell>Número</StyledTableCell>
-              <StyledTableCell>Titular Reserva</StyledTableCell>
-              <StyledTableCell>Fecha Inicio</StyledTableCell>
-              <StyledTableCell>Fecha Fin</StyledTableCell>
-              <StyledTableCell>Apartamentos</StyledTableCell>
-              <StyledTableCell>Estadía</StyledTableCell>
-              <StyledTableCell>Total</StyledTableCell>
-              <StyledTableCell>Estado</StyledTableCell>
-              <StyledTableCell>Acciones</StyledTableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {paginatedHospedajes.map((h) => (
-              <TableRow key={h._id} className={classes.tableRow}>
-                <UserTableCell
-                  style={{
-                    paddingLeft: "24px",
-                    cursor: "pointer",
-                    ...(h.checkInData && h.checkInData.find((d) => d.servicio === "CheckInGeneral" && d.checkIn)
-                      ? { fontWeight: "bold" }
-                      : {}),
-                  }}
-                  onClick={() => openCheckInModal(h)}
-                  title="Hacer Check‑in / Check‑out"
-                >
-                  <Box className={classes.hospedajeContainer}>
-                    <Avatar className={classes.hospedajeAvatar}>{getInitials(h.cliente)}</Avatar>
-                    <Typography variant="body2">{h.cliente}</Typography>
-                  </Box>
-                </UserTableCell>
-                <TableCell className={classes.tableCell}>{h.numeroReserva}</TableCell>
-                <TableCell className={classes.tableCell}>
-                  {(h.reservaInfo && h.reservaInfo.titular_reserva) || "N/A"}
-                </TableCell>
-                <TableCell className={classes.tableCell}>
-                  {h.fecha_inicio ? h.fecha_inicio.substring(0, 10) : ""}
-                </TableCell>
-                <TableCell className={classes.tableCell}>{h.fecha_fin ? h.fecha_fin.substring(0, 10) : ""}</TableCell>
-                <TableCell className={classes.tableCell}>
-                  {Array.isArray(h.apartamentos)
-                    ? h.apartamentos.map((apt) => (apt.NumeroApto ? `Apartamento ${apt.NumeroApto}` : apt)).join(", ")
-                    : h.apartamentos}
-                </TableCell>
-                <TableCell className={classes.tableCell}>{h.estadia}</TableCell>
-                <TableCell className={classes.tableCell}>
-                  {Number(h.total).toLocaleString("es-CO", { style: "currency", currency: "COP" })}
-                </TableCell>
-                <TableCell className={classes.tableCell}>
-                  <Chip
-                    label={h.estado.charAt(0).toUpperCase() + h.estado.slice(1)}
-                    className={`${classes.estadoChip} ${getEstadoClass(h.estado)}`}
-                    onClick={() => handleToggleState(h._id, h.estado)}
-                  />
-                </TableCell>
-                <TableCell className={`${classes.tableCell} ${classes.actionsCell}`}>
-                  <Box display="flex" justifyContent="center" gap={1}>
-                    <Tooltip title="Ver detalles">
-                      <IconButton
-                        className={`${classes.actionButton} ${classes.btnDetails}`}
-                        onClick={() => handleDetails(h)}
-                      >
-                        <Info size={18} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Editar hospedaje">
-                      <IconButton
-                        className={`${classes.actionButton} ${classes.btnEdit}`}
-                        onClick={() => handleOpen(h)}
-                      >
-                        <Edit size={18} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Descargar PDF">
-                      <IconButton
-                        className={`${classes.actionButton} ${classes.btnDownload}`}
-                        onClick={() => handleDownloadPDF(h)}
-                      >
-                        <Download size={18} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Eliminar hospedaje">
-                      <IconButton
-                        className={`${classes.actionButton} ${classes.btnDelete}`}
-                        onClick={() => handleDelete(h._id, h.estado)}
-                      >
-                        <Delete size={18} />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-            {paginatedHospedajes.length === 0 && (
-              <TableRow className={classes.noDataRow}>
-                <TableCell colSpan={10} className={classes.noDataCell}>
-                  No se encontraron hospedajes que coincidan con la búsqueda.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+  const handleBack = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep - 1)
+  }
 
-      <TablePagination
-        component={Paper}
-        count={filteredHospedajes.length}
-        page={page}
-        onPageChange={handleChangePage}
-        rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-        labelRowsPerPage="Filas por página:"
-        rowsPerPageOptions={[5, 10, 25, 50, 100]}
-        className={classes.pagination}
-      />
+  const handleReset = () => {
+    setActiveStep(0)
+  }
 
-      {/* Modal para crear/editar hospedaje - Diseño actualizado */}
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" classes={{ paper: classes.dialogPaper }}>
-        <DialogTitle className={classes.dialogTitle}>
-          {editingId ? "Editar Hospedaje" : "Agregar Hospedaje"}
-          <IconButton onClick={handleClose} className={classes.closeButton}>
-            <X size={20} />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent className={classes.dialogContent}>
-          {/* Sección de Información Básica */}
-          <Box className={classes.formSection}>
-            <Typography className={classes.sectionTitle}>
-              <AccountCircle />
-              Información Básica
+  // Validar si se puede avanzar al siguiente paso
+  const canAdvance = () => {
+    switch (activeStep) {
+      case 0: // Información del Cliente
+        return (
+          formData.cliente.trim() !== "" &&
+          formData.numeroIdentificacion.trim() !== "" &&
+          formData.email.trim() !== "" &&
+          formData.telefono.trim() !== ""
+        )
+      case 1: // Fechas y Apartamentos
+        return (
+          formData.fecha_inicio !== "" &&
+          formData.fecha_fin !== "" &&
+          formData.apartamentos.length > 0 &&
+          formData.estadia !== "" &&
+          formData.total !== ""
+        )
+      case 2: // Descuentos
+        return true // Descuentos son opcionales
+      case 3: // Acompañantes
+        return true // Acompañantes son opcionales
+      case 4: // Resumen
+        return true // Siempre se puede finalizar
+      default:
+        return false
+    }
+  }
+
+  // Renderizar el contenido del paso actual
+  const getStepContent = (step) => {
+    switch (step) {
+      case 0: // Información del Cliente
+        return (
+          <Box>
+            <Typography className={classes.stepperTitle}>Información del Cliente</Typography>
+            <Typography className={classes.stepperSubtitle}>
+              Ingrese los datos personales del cliente para el hospedaje
             </Typography>
+
             {editingId && (
               <TextField
-                className={classes.formField}
+                className={classes.inputField}
                 margin="dense"
                 label="Número de Reserva"
                 name="numeroReserva"
@@ -1483,10 +1608,11 @@ Estado: ${hospedaje.estado}`
                     </InputAdornment>
                   ),
                 }}
+                size="small"
               />
             )}
             <TextField
-              className={classes.formField}
+              className={classes.inputField}
               margin="dense"
               label="Cliente"
               name="cliente"
@@ -1505,7 +1631,7 @@ Estado: ${hospedaje.estado}`
               size="small"
             />
             <TextField
-              className={classes.formField}
+              className={classes.inputField}
               margin="dense"
               label="Número de Identificación"
               name="numeroIdentificacion"
@@ -1523,18 +1649,59 @@ Estado: ${hospedaje.estado}`
               }}
               size="small"
             />
+            <TextField
+              className={classes.inputField}
+              margin="dense"
+              label="Email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              fullWidth
+              variant="outlined"
+              required
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Email className={classes.fieldIcon} />
+                  </InputAdornment>
+                ),
+              }}
+              size="small"
+            />
+            <TextField
+              className={classes.inputField}
+              margin="dense"
+              label="Teléfono"
+              name="telefono"
+              value={formData.telefono}
+              onChange={handleChange}
+              fullWidth
+              variant="outlined"
+              required
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <PhoneAndroid className={classes.fieldIcon} />
+                  </InputAdornment>
+                ),
+              }}
+              size="small"
+            />
           </Box>
-
-          {/* Sección de Fechas y Apartamentos */}
-          <Box className={classes.formSection}>
-            <Typography className={classes.sectionTitle}>
-              <EventAvailable />
-              Fechas y Apartamentos
+        )
+      case 1: // Fechas y Apartamentos
+        return (
+          <Box>
+            <Typography className={classes.stepperTitle}>Fechas y Apartamentos</Typography>
+            <Typography className={classes.stepperSubtitle}>
+              Seleccione las fechas de hospedaje y los apartamentos
             </Typography>
-            <Grid container spacing={2}>
+
+            <Grid container spacing={2} className={classes.fieldGroup}>
               <Grid item xs={12} md={6}>
                 <TextField
-                  className={classes.formField}
+                  className={classes.inputField}
                   margin="dense"
                   label="Fecha Inicio"
                   name="fecha_inicio"
@@ -1557,7 +1724,7 @@ Estado: ${hospedaje.estado}`
               </Grid>
               <Grid item xs={12} md={6}>
                 <TextField
-                  className={classes.formField}
+                  className={classes.inputField}
                   margin="dense"
                   label="Fecha Fin"
                   name="fecha_fin"
@@ -1580,7 +1747,7 @@ Estado: ${hospedaje.estado}`
               </Grid>
             </Grid>
 
-            <FormControl fullWidth margin="dense" className={classes.formField} size="small">
+            <FormControl fullWidth margin="dense" className={classes.inputField} size="small">
               <InputLabel id="apartamentos-label">Apartamentos</InputLabel>
               <Select
                 labelId="apartamentos-label"
@@ -1607,10 +1774,10 @@ Estado: ${hospedaje.estado}`
               </Select>
             </FormControl>
 
-            <Grid container spacing={2}>
+            <Grid container spacing={2} className={classes.fieldGroup}>
               <Grid item xs={12} md={6}>
                 <TextField
-                  className={classes.formField}
+                  className={classes.inputField}
                   margin="dense"
                   label="Estadía"
                   name="estadia"
@@ -1630,7 +1797,7 @@ Estado: ${hospedaje.estado}`
               </Grid>
               <Grid item xs={12} md={6}>
                 <TextField
-                  className={classes.formField}
+                  className={classes.inputField}
                   margin="dense"
                   label="Total"
                   name="total"
@@ -1653,7 +1820,7 @@ Estado: ${hospedaje.estado}`
 
             <TextField
               select
-              className={classes.formField}
+              className={classes.inputField}
               margin="dense"
               label="Estado"
               name="estado"
@@ -1675,16 +1842,16 @@ Estado: ${hospedaje.estado}`
               <MenuItem value="cancelada">Cancelada</MenuItem>
             </TextField>
           </Box>
+        )
+      case 2: // Descuentos
+        return (
+          <Box>
+            <Typography className={classes.stepperTitle}>Descuentos</Typography>
+            <Typography className={classes.stepperSubtitle}>Aplique descuentos al hospedaje (opcional)</Typography>
 
-          {/* Sección de Descuento */}
-          <Box className={classes.formSection}>
-            <Typography className={classes.sectionTitle}>
-              <LocalOffer />
-              Descuento
-            </Typography>
-            <Grid container spacing={2}>
+            <Grid container spacing={2} className={classes.fieldGroup}>
               <Grid item xs={12} md={4}>
-                <FormControl fullWidth className={classes.formField} margin="dense" size="small">
+                <FormControl fullWidth className={classes.inputField} margin="dense" size="small">
                   <InputLabel id="porcentaje-label">Porcentaje</InputLabel>
                   <Select
                     labelId="porcentaje-label"
@@ -1712,7 +1879,7 @@ Estado: ${hospedaje.estado}`
               </Grid>
               <Grid item xs={12} md={4}>
                 <TextField
-                  className={classes.formField}
+                  className={classes.inputField}
                   margin="dense"
                   label="Precio Original"
                   name="precioOriginal"
@@ -1734,7 +1901,7 @@ Estado: ${hospedaje.estado}`
               </Grid>
               <Grid item xs={12} md={4}>
                 <TextField
-                  className={classes.formField}
+                  className={classes.inputField}
                   margin="dense"
                   label="Precio con Descuento"
                   name="precioConDescuento"
@@ -1756,13 +1923,13 @@ Estado: ${hospedaje.estado}`
               </Grid>
             </Grid>
           </Box>
+        )
+      case 3: // Acompañantes
+        return (
+          <Box>
+            <Typography className={classes.stepperTitle}>Acompañantes</Typography>
+            <Typography className={classes.stepperSubtitle}>Agregue acompañantes al hospedaje (opcional)</Typography>
 
-          {/* Sección de Acompañantes */}
-          <Box className={classes.formSection}>
-            <Typography className={classes.sectionTitle}>
-              <Group />
-              Acompañantes
-            </Typography>
             {formData.acompanantes &&
               formData.acompanantes.map((acomp, index) => (
                 <Box key={index} className={classes.acompananteContainer}>
@@ -1828,15 +1995,426 @@ Estado: ${hospedaje.estado}`
               Agregar Acompañante
             </Button>
           </Box>
+        )
+      case 4: // Resumen
+        return (
+          <Box>
+            <Typography className={classes.stepperTitle}>Resumen del Hospedaje</Typography>
+            <Typography className={classes.stepperSubtitle}>Revise la información antes de finalizar</Typography>
+
+            <Box className={classes.stepperSummaryCard}>
+              <Typography className={classes.detailsCardTitle}>
+                <AccountCircle />
+                Información del Cliente
+              </Typography>
+              <Box className={classes.stepperSummaryItem}>
+                <Typography className={classes.stepperSummaryLabel}>Cliente:</Typography>
+                <Typography className={classes.stepperSummaryValue}>{formData.cliente}</Typography>
+              </Box>
+              <Box className={classes.stepperSummaryItem}>
+                <Typography className={classes.stepperSummaryLabel}>Identificación:</Typography>
+                <Typography className={classes.stepperSummaryValue}>{formData.numeroIdentificacion}</Typography>
+              </Box>
+              <Box className={classes.stepperSummaryItem}>
+                <Typography className={classes.stepperSummaryLabel}>Email:</Typography>
+                <Typography className={classes.stepperSummaryValue}>{formData.email}</Typography>
+              </Box>
+              <Box className={classes.stepperSummaryItem}>
+                <Typography className={classes.stepperSummaryLabel}>Teléfono:</Typography>
+                <Typography className={classes.stepperSummaryValue}>{formData.telefono}</Typography>
+              </Box>
+            </Box>
+
+            <Box className={classes.stepperSummaryCard}>
+              <Typography className={classes.detailsCardTitle}>
+                <EventAvailable />
+                Fechas y Apartamentos
+              </Typography>
+              <Box className={classes.stepperSummaryItem}>
+                <Typography className={classes.stepperSummaryLabel}>Fecha Inicio:</Typography>
+                <Typography className={classes.stepperSummaryValue}>{formData.fecha_inicio}</Typography>
+              </Box>
+              <Box className={classes.stepperSummaryItem}>
+                <Typography className={classes.stepperSummaryLabel}>Fecha Fin:</Typography>
+                <Typography className={classes.stepperSummaryValue}>{formData.fecha_fin}</Typography>
+              </Box>
+              <Box className={classes.stepperSummaryItem}>
+                <Typography className={classes.stepperSummaryLabel}>Apartamentos:</Typography>
+                <Typography className={classes.stepperSummaryValue}>
+                  {formData.apartamentos
+                    .map((aptId) => {
+                      const apt = apartamentosOptions.find((item) => item.id === aptId)
+                      return apt ? apt.label : aptId
+                    })
+                    .join(", ")}
+                </Typography>
+              </Box>
+              <Box className={classes.stepperSummaryItem}>
+                <Typography className={classes.stepperSummaryLabel}>Estadía:</Typography>
+                <Typography className={classes.stepperSummaryValue}>{formData.estadia} días</Typography>
+              </Box>
+              <Box className={classes.stepperSummaryItem}>
+                <Typography className={classes.stepperSummaryLabel}>Total:</Typography>
+                <Typography className={classes.stepperSummaryValue}>
+                  {Number(formData.total).toLocaleString("es-CO", { style: "currency", currency: "COP" })}
+                </Typography>
+              </Box>
+              <Box className={classes.stepperSummaryItem}>
+                <Typography className={classes.stepperSummaryLabel}>Estado:</Typography>
+                <Typography className={classes.stepperSummaryValue}>
+                  <Chip
+                    label={formData.estado.charAt(0).toUpperCase() + formData.estado.slice(1)}
+                    className={`${classes.estadoChip} ${getEstadoClass(formData.estado)}`}
+                    size="small"
+                  />
+                </Typography>
+              </Box>
+            </Box>
+
+            {formData.descuento && formData.descuento.porcentaje && (
+              <Box className={classes.stepperSummaryCard}>
+                <Typography className={classes.detailsCardTitle}>
+                  <LocalOffer />
+                  Descuento
+                </Typography>
+                <Box className={classes.stepperSummaryItem}>
+                  <Typography className={classes.stepperSummaryLabel}>Porcentaje:</Typography>
+                  <Typography className={classes.stepperSummaryValue}>{formData.descuento.porcentaje}%</Typography>
+                </Box>
+                <Box className={classes.stepperSummaryItem}>
+                  <Typography className={classes.stepperSummaryLabel}>Precio Original:</Typography>
+                  <Typography className={classes.stepperSummaryValue}>
+                    {Number(formData.descuento.precioOriginal).toLocaleString("es-CO", {
+                      style: "currency",
+                      currency: "COP",
+                    })}
+                  </Typography>
+                </Box>
+                <Box className={classes.stepperSummaryItem}>
+                  <Typography className={classes.stepperSummaryLabel}>Precio con Descuento:</Typography>
+                  <Typography className={classes.stepperSummaryValue}>
+                    {Number(formData.descuento.precioConDescuento).toLocaleString("es-CO", {
+                      style: "currency",
+                      currency: "COP",
+                    })}
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+
+            {formData.acompanantes && formData.acompanantes.length > 0 && (
+              <Box className={classes.stepperSummaryCard}>
+                <Typography className={classes.detailsCardTitle}>
+                  <Group />
+                  Acompañantes
+                </Typography>
+                {formData.acompanantes.map((acomp, index) => (
+                  <Box key={index} className={classes.stepperSummaryItem}>
+                    <Typography className={classes.stepperSummaryLabel}>Acompañante {index + 1}:</Typography>
+                    <Typography className={classes.stepperSummaryValue}>
+                      {acomp.nombre} {acomp.apellido} - {acomp.documento}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            )}
+          </Box>
+        )
+      default:
+        return "Paso desconocido"
+    }
+  }
+
+  return (
+    <Box
+      className={classes.container}
+      style={{ paddingTop: "10px", borderTop: "6px solid #2563eb", borderRadius: "8px" }}
+    >
+      <Box className={classes.pageHeader}>
+        <Typography variant="h4" className={classes.pageTitle}>
+          Gestión de Hospedajes
+        </Typography>
+        <Typography variant="body1" className={classes.pageSubtitle}>
+          Administra los hospedajes del sistema
+        </Typography>
+      </Box>
+
+      {/* Barra de búsqueda */}
+      <Box className={classes.searchContainer}>
+        <TextField
+          label="Buscar por reserva o cliente"
+          variant="outlined"
+          size="small"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className={classes.searchField}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search size={20} color="#64748b" />
+              </InputAdornment>
+            ),
+          }}
+        />
+        <Box display="flex" gap={1}>
+          <Tooltip title="Exportar Excel">
+            <IconButton className={`${classes.iconButton} ${classes.excelButton}`} onClick={handleExportExcel}>
+              <Download size={20} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Ver Habitaciones">
+            <IconButton className={`${classes.iconButton} ${classes.habitacionesButton}`} onClick={openRoomsModal}>
+              <Home size={20} />
+            </IconButton>
+          </Tooltip>
+          <Button
+            variant="contained"
+            className={classes.addButton}
+            onClick={() => handleOpen(null)}
+            startIcon={<UserPlus size={20} />}
+          >
+            Crear Hospedaje
+          </Button>
+        </Box>
+      </Box>
+
+      {/* Tabla de hospedajes */}
+      <TableContainer component={Paper} className={classes.tableContainer}>
+        <Table>
+          <TableHead>
+            <TableRow style={{ backgroundColor: "#2563eb" }}>
+              <StyledTableCell style={{ textAlign: "left", paddingLeft: "24px" }}>Cliente</StyledTableCell>
+              <StyledTableCell>Número</StyledTableCell>
+              <StyledTableCell>Fecha Inicio</StyledTableCell>
+              <StyledTableCell>Fecha Fin</StyledTableCell>
+              <StyledTableCell>Apartamentos</StyledTableCell>
+              <StyledTableCell>Estadía</StyledTableCell>
+              <StyledTableCell>Total</StyledTableCell>
+              <StyledTableCell>Estado</StyledTableCell>
+              <StyledTableCell>Acciones</StyledTableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {paginatedHospedajes.map((h) => {
+              const checkedIn = hasCheckIn(h)
+              return (
+                <TableRow key={h._id} className={`${classes.tableRow} ${checkedIn ? classes.checkedInRow : ""}`}>
+                  <UserTableCell
+                    style={{
+                      paddingLeft: "24px",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => openCheckInModal(h)}
+                    title="Hacer Check‑in / Check‑out"
+                  >
+                    <Box className={classes.hospedajeContainer}>
+                      <Avatar className={`${classes.hospedajeAvatar} ${checkedIn ? classes.checkedInAvatar : ""}`}>
+                        {getInitials(h.cliente)}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="body2" style={{ fontWeight: checkedIn ? 600 : 400 }}>
+                          {h.cliente}
+                        </Typography>
+                        {checkedIn && (
+                          <Typography variant="caption" className={classes.checkInIndicator}>
+                            <CheckCircle fontSize="small" /> Check-in realizado
+                          </Typography>
+                        )}
+                      </Box>
+                    </Box>
+                  </UserTableCell>
+                  <TableCell className={classes.tableCell}>{h.numeroReserva}</TableCell>
+                  <TableCell className={classes.tableCell}>
+                    {h.fecha_inicio ? h.fecha_inicio.substring(0, 10) : ""}
+                  </TableCell>
+                  <TableCell className={classes.tableCell}>{h.fecha_fin ? h.fecha_fin.substring(0, 10) : ""}</TableCell>
+                  <TableCell className={classes.tableCell}>
+                    {Array.isArray(h.apartamentos)
+                      ? h.apartamentos.map((apt) => (apt.NumeroApto ? `Apartamento ${apt.NumeroApto}` : apt)).join(", ")
+                      : h.apartamentos}
+                  </TableCell>
+                  <TableCell className={classes.tableCell}>{h.estadia}</TableCell>
+                  <TableCell className={classes.tableCell}>
+                    {Number(h.total).toLocaleString("es-CO", { style: "currency", currency: "COP" })}
+                  </TableCell>
+                  <TableCell className={classes.tableCell}>
+                    <Chip
+                      label={h.estado.charAt(0).toUpperCase() + h.estado.slice(1)}
+                      className={`${classes.estadoChip} ${getEstadoClass(h.estado)}`}
+                      onClick={() => handleToggleState(h._id, h.estado)}
+                    />
+                  </TableCell>
+                  <TableCell className={`${classes.tableCell} ${classes.actionsCell}`}>
+                    <Box display="flex" justifyContent="center" gap={1}>
+                      <Tooltip title="Ver detalles">
+                        <IconButton
+                          className={`${classes.actionButton} ${classes.btnDetails}`}
+                          onClick={() => handleDetails(h)}
+                        >
+                          <Info size={18} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Editar hospedaje">
+                        <IconButton
+                          className={`${classes.actionButton} ${classes.btnEdit}`}
+                          onClick={() => handleOpen(h)}
+                        >
+                          <Edit size={18} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Descargar PDF">
+                        <IconButton
+                          className={`${classes.actionButton} ${classes.btnDownload}`}
+                          onClick={() => handleDownloadPDF(h)}
+                        >
+                          <Download size={18} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Eliminar hospedaje">
+                        <IconButton
+                          className={`${classes.actionButton} ${classes.btnDelete}`}
+                          onClick={() => handleDelete(h._id, h.estado)}
+                        >
+                          <Delete size={18} />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              )
+            })}
+            {paginatedHospedajes.length === 0 && (
+              <TableRow className={classes.noDataRow}>
+                <TableCell colSpan={9} className={classes.noDataCell}>
+                  No se encontraron hospedajes que coincidan con la búsqueda.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <TablePagination
+        component={Paper}
+        count={filteredHospedajes.length}
+        page={page}
+        onPageChange={handleChangePage}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        labelRowsPerPage="Filas por página:"
+        rowsPerPageOptions={[5, 10, 25, 50, 100]}
+        className={classes.pagination}
+      />
+
+      {/* Modal para crear/editar hospedaje - Diseño actualizado como wizard paso a paso */}
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        fullWidth
+        maxWidth="md"
+        classes={{ paper: classes.dialogPaper }}
+        className={classes.wizardDialog}
+      >
+        <DialogTitle className={classes.dialogTitle}>
+          {editingId ? "Editar Hospedaje" : "Agregar Hospedaje"}
+          <IconButton onClick={handleClose} className={classes.closeButton}>
+            <X size={20} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent className={classes.dialogContent}>
+          {/* Barra de progreso */}
+          <Box className={classes.stepperProgress}>
+            <Box
+              className={classes.stepperProgressBar}
+              style={{ width: `${((activeStep + 1) / steps.length) * 100}%` }}
+            />
+          </Box>
+
+          {/* Stepper para pantallas medianas y grandes */}
+          <Box className={classes.stepperContainer} display={{ xs: "none", sm: "block" }}>
+            <Stepper activeStep={activeStep} className={classes.stepperRoot}>
+              {steps.map((step, index) => (
+                <Step key={step.label}>
+                  <StepLabel StepIconProps={{ classes: { root: classes.stepIcon } }} className={classes.stepLabel}>
+                    {step.label}
+                  </StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+          </Box>
+
+          {/* Stepper para móviles */}
+          <Box className={classes.stepperContainer} display={{ xs: "block", sm: "none" }}>
+            <MobileStepper
+              variant="dots"
+              steps={steps.length}
+              position="static"
+              activeStep={activeStep}
+              className={classes.stepperMobile}
+              nextButton={
+                <Button
+                  size="small"
+                  onClick={handleNext}
+                  disabled={activeStep === steps.length - 1 || !canAdvance()}
+                  className={classes.stepperMobileButton}
+                >
+                  Siguiente
+                  <KeyboardArrowRight />
+                </Button>
+              }
+              backButton={
+                <Button
+                  size="small"
+                  onClick={handleBack}
+                  disabled={activeStep === 0}
+                  className={classes.stepperMobileButton}
+                >
+                  <KeyboardArrowLeft />
+                  Atrás
+                </Button>
+              }
+            />
+          </Box>
+
+          {/* Contenido del paso actual */}
+          <Box className={classes.stepContentWrapper}>
+            <Box className={classes.stepContent}>{getStepContent(activeStep)}</Box>
+          </Box>
+
+          {/* Botones de navegación */}
+          <Box className={classes.stepperNavButtons}>
+            <Button
+              disabled={activeStep === 0}
+              onClick={handleBack}
+              className={classes.stepperBackButton}
+              startIcon={<ArrowBack />}
+            >
+              Atrás
+            </Button>
+            <Box>
+              {activeStep === steps.length - 1 ? (
+                <Button
+                  variant="contained"
+                  onClick={handleSaveHospedaje}
+                  className={classes.stepperFinishButton}
+                  startIcon={<Check />}
+                >
+                  Finalizar
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  onClick={handleNext}
+                  className={classes.stepperNextButton}
+                  disabled={!canAdvance()}
+                  endIcon={<ArrowForward />}
+                >
+                  Siguiente
+                </Button>
+              )}
+            </Box>
+          </Box>
         </DialogContent>
-        <DialogActions className={classes.dialogActions}>
-          <Button onClick={handleClose} className={classes.cancelButton}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSaveHospedaje} className={classes.submitButton}>
-            {editingId ? "Actualizar" : "Crear"}
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {/* Modal de detalles (solo lectura) - Diseño actualizado */}
@@ -1883,11 +2461,11 @@ Estado: ${hospedaje.estado}`
                 <Grid item xs={12} sm={6}>
                   <Box className={classes.detailsCard}>
                     <Typography className={classes.detailsCardTitle}>
-                      <VerifiedUser />
-                      Titular Reserva
+                      <ContactMail />
+                      Número de Identificación
                     </Typography>
                     <Typography className={classes.detailsCardContent}>
-                      {(selectedHospedaje.reservaInfo && selectedHospedaje.reservaInfo.titular_reserva) || "N/A"}
+                      {selectedHospedaje.numeroIdentificacion}
                     </Typography>
                   </Box>
                 </Grid>
@@ -1895,11 +2473,23 @@ Estado: ${hospedaje.estado}`
                 <Grid item xs={12} sm={6}>
                   <Box className={classes.detailsCard}>
                     <Typography className={classes.detailsCardTitle}>
-                      <ContactMail />
-                      Número de Identificación
+                      <Email />
+                      Email
                     </Typography>
                     <Typography className={classes.detailsCardContent}>
-                      {selectedHospedaje.numeroIdentificacion}
+                      {selectedHospedaje.email || "No especificado"}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <Box className={classes.detailsCard}>
+                    <Typography className={classes.detailsCardTitle}>
+                      <PhoneAndroid />
+                      Teléfono
+                    </Typography>
+                    <Typography className={classes.detailsCardContent}>
+                      {selectedHospedaje.telefono || "No especificado"}
                     </Typography>
                   </Box>
                 </Grid>
