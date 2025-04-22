@@ -2,6 +2,8 @@
 const Reserva = require("./reserva.model")
 const Apartamento = require("../apartamento/apartamento.model")
 const mongoose = require("mongoose")
+// Importar el mailer
+const mailer = require("../../../config/mailer")
 
 // Función para validar ObjectId
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id)
@@ -644,6 +646,7 @@ exports.crearReservaPublica = async (req, res) => {
     })
 
     let clienteExistente = false
+    let randomPassword = "";
 
     if (cliente) {
       clienteExistente = true
@@ -653,7 +656,7 @@ exports.crearReservaPublica = async (req, res) => {
       try {
         // Generar una contraseña aleatoria
         const crypto = require("crypto")
-        const randomPassword = crypto.randomBytes(4).toString("hex")
+        randomPassword = crypto.randomBytes(4).toString("hex")
         const bcrypt = require("bcryptjs")
         const salt = await bcrypt.genSalt(10)
         const hashedPassword = await bcrypt.hash(randomPassword, salt)
@@ -774,7 +777,33 @@ if (numero_acompanantes !== undefined) {
     await nuevaReserva.save()
     console.log("Reserva creada exitosamente:", nuevaReserva._id)
 
-    // Enviar correo de confirmación aquí si es necesario...
+    // Enviar correo de confirmación
+    try {
+      const clienteData = {
+        nombre: titular_reserva,
+        email: email,
+        documento: documento,
+        telefono: telefono
+      };
+      
+      const reservationData = {
+        apartamento: apartamento.Tipo || `Apartamento ${apartamento.NumeroApto}`,
+        fechaEntrada: fecha_inicio,
+        fechaSalida: fecha_fin,
+        huespedes: numAcompanantes + 1, // Titular + acompañantes
+        precioPorNoche: apartamento.Tarifa,
+        total: total
+      };
+      
+      // Si es un nuevo cliente, enviar la contraseña temporal
+      const password = clienteExistente ? null : randomPassword;
+      
+      await mailer.sendReservationConfirmation(clienteData, reservationData, password);
+      console.log("Correo de confirmación enviado a:", email);
+    } catch (emailError) {
+      console.error("Error al enviar correo de confirmación:", emailError);
+      // No fallamos si el correo no se envía
+    }
 
     res.status(201).json({
       msg: "Reserva creada correctamente. Pronto nos pondremos en contacto contigo.",
