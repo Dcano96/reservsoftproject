@@ -24,11 +24,11 @@ import {
   Avatar,
   InputAdornment,
   Divider,
-  Grid,
   Chip,
   FormControl,
   InputLabel,
   Select,
+  Grid,
 } from "@material-ui/core"
 import { Edit, Delete, Eye, X, Search, UserPlus, Home, Building, Layers, FileText, DollarSign } from "lucide-react"
 import { useHistory } from "react-router-dom"
@@ -426,6 +426,69 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: 500,
     marginTop: "4px",
   },
+  radioGroup: {
+    display: "flex",
+    flexDirection: "row",
+    marginTop: theme.spacing(1),
+  },
+  radioButton: {
+    marginRight: theme.spacing(3),
+  },
+  estadoLabel: {
+    fontWeight: 500,
+    color: "#1e293b",
+    marginBottom: theme.spacing(1),
+  },
+  activeRadio: {
+    color: "#10b981",
+    "&.Mui-checked": {
+      color: "#10b981",
+    },
+  },
+  inactiveRadio: {
+    color: "#ef4444",
+    "&.Mui-checked": {
+      color: "#ef4444",
+    },
+  },
+  infoCard: {
+    backgroundColor: "#f8fafc",
+    borderRadius: theme.spacing(1),
+    padding: theme.spacing(2),
+    marginBottom: theme.spacing(3),
+    border: "1px solid #e2e8f0",
+  },
+  infoList: {
+    padding: 0,
+  },
+  infoListItem: {
+    padding: theme.spacing(0.5, 0),
+    "&:not(:last-child)": {
+      marginBottom: theme.spacing(1),
+    },
+  },
+  infoIcon: {
+    minWidth: "30px",
+    color: "#2563eb",
+  },
+  infoLabel: {
+    fontWeight: 500,
+    color: "#64748b",
+    width: "120px",
+    flexShrink: 0,
+  },
+  infoValue: {
+    color: "#334155",
+    fontWeight: 500,
+  },
+  tableContainerDetails: {
+    marginBottom: theme.spacing(3),
+    borderRadius: theme.spacing(1.5),
+    overflow: "hidden",
+    boxShadow: "0 5px 15px rgba(0, 0, 0, 0.08)",
+    background: "#fff",
+    width: "100%",
+  },
 }))
 
 const ApartamentoList = () => {
@@ -496,6 +559,7 @@ const ApartamentoList = () => {
   const handleOpen = (apartamento) => {
     setFormErrors({})
     if (apartamento) {
+      console.log("Abriendo formulario para editar apartamento:", apartamento)
       setFormData({
         Tipo: apartamento.Tipo || "",
         NumeroApto: apartamento.NumeroApto || "",
@@ -567,6 +631,9 @@ const ApartamentoList = () => {
   const handleChange = (e) => {
     const { name, value } = e.target
     let newValue = value
+
+    console.log(`Campo cambiado: ${name}, Valor: ${value}, Tipo: ${typeof value}`)
+
     if (["NumeroApto", "Piso", "Capacidad", "Tarifa"].includes(name)) {
       if (value === "" || /^\d+$/.test(value)) {
         newValue = value === "" ? 0 : Number(value)
@@ -574,9 +641,14 @@ const ApartamentoList = () => {
         return
       }
     } else if (name === "Estado") {
-      newValue = value === "true" ? true : false
+      // Convertir explícitamente a booleano
+      newValue = value === "true"
+      console.log(`Valor de Estado convertido a: ${newValue} (${typeof newValue})`)
     }
+
     const updatedFormData = { ...formData, [name]: newValue }
+    console.log("Datos del formulario actualizados:", updatedFormData)
+
     setFormData(updatedFormData)
     validateField(name, newValue)
     validateForm(updatedFormData)
@@ -734,25 +806,36 @@ const ApartamentoList = () => {
     }
   }
 
-  const handleDelete = async (id, Estado) => {
-    if (Estado === true) {
+  // Keep the original handleDelete function for actual deletion
+  const handleDelete = async (id) => {
+    // Primero, encontrar el apartamento por su ID para verificar su estado
+    const apartamentoToDelete = apartamentos.find((apt) => apt._id === id)
+
+    // Verificar si el apartamento está activo
+    if (apartamentoToDelete && apartamentoToDelete.Estado) {
+      // Si está activo, mostrar la alerta personalizada
       Swal.fire({
         icon: "warning",
         title: "Acción no permitida",
         text: "No se puede eliminar un apartamento activo.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#3085d6",
       })
-      return
+      return // Detener la ejecución para no continuar con la eliminación
     }
+
+    // Si no está activo, proceder con la confirmación de eliminación normal
     const confirmDelete = await Swal.fire({
       title: "¿Eliminar apartamento?",
       text: "Esta acción no se puede deshacer",
-      icon: "question",
+      icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Sí, eliminar",
       cancelButtonText: "Cancelar",
       confirmButtonColor: "#ef4444",
       cancelButtonColor: "#64748b",
     })
+
     if (confirmDelete.isConfirmed) {
       try {
         await apartamentoService.deleteApartamento(id)
@@ -765,11 +848,24 @@ const ApartamentoList = () => {
         fetchApartamentos()
       } catch (error) {
         console.error("Error deleting apartamento", error)
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Ocurrió un error al eliminar el apartamento.",
-        })
+
+        // Verificar si es un error 400 (Bad Request)
+        if (error.response && error.response.status === 400) {
+          Swal.fire({
+            icon: "warning",
+            title: "Acción no permitida",
+            text: "No se puede eliminar este apartamento porque tiene registros asociados.",
+            confirmButtonColor: "#3085d6",
+          })
+        } else {
+          // Para otros tipos de errores, mostrar un mensaje genérico
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Ocurrió un error al eliminar el apartamento.",
+            confirmButtonColor: "#2563eb",
+          })
+        }
       }
     }
   }
@@ -915,7 +1011,7 @@ const ApartamentoList = () => {
                     <Tooltip title="Eliminar apartamento">
                       <IconButton
                         className={`${classes.actionButton} ${classes.btnDelete}`}
-                        onClick={() => handleDelete(apartamento._id, apartamento.Estado)}
+                        onClick={() => handleDelete(apartamento._id)}
                       >
                         <Delete size={18} />
                       </IconButton>
@@ -1066,18 +1162,20 @@ const ApartamentoList = () => {
               required
               InputProps={{ inputProps: { min: 1 } }}
             />
+
+            {/* Selector para el Estado */}
             <FormControl fullWidth variant="outlined" className={classes.formField}>
               <InputLabel id="estado-label">Estado</InputLabel>
               <Select
                 labelId="estado-label"
                 name="Estado"
-                value={formData.Estado}
+                value={formData.Estado.toString()}
                 onChange={handleChange}
                 label="Estado"
                 fullWidth
               >
-                <MenuItem value={true}>Activo</MenuItem>
-                <MenuItem value={false}>Inactivo</MenuItem>
+                <MenuItem value="true">Activo</MenuItem>
+                <MenuItem value="false">Inactivo</MenuItem>
               </Select>
             </FormControl>
           </Box>
@@ -1117,62 +1215,63 @@ const ApartamentoList = () => {
                 <Chip label={selectedApartamento.Estado ? "Activo" : "Inactivo"} style={{ marginTop: "8px" }} />
               </Box>
               <Divider style={{ margin: "16px 0" }} />
-              <Box border="1px solid #e2e8f0" borderRadius={4} padding={3} marginBottom={2} bgcolor="#f8fafc">
+              <Box border="1px solid #e2e8f0" borderRadius={4} padding={2} marginBottom={2} bgcolor="#f8fafc">
                 <Typography
                   variant="subtitle1"
                   fontWeight={600}
-                  marginBottom={1}
+                  marginBottom={0.5}
                   style={{ display: "flex", alignItems: "center" }}
                 >
-                  <FileText size={20} style={{ marginRight: "8px" }} /> Información
+                  <FileText size={18} style={{ marginRight: "8px" }} /> Información
                 </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={4}>
-                    <Box display="flex" alignItems="center" marginBottom={1}>
-                      <Home size={18} style={{ marginRight: "8px", color: "#64748b" }} />
+                <Grid container spacing={1}>
+                  <Grid item xs={12} sm={6}>
+                    <Box display="flex" alignItems="center" marginBottom={0.5}>
+                      <Home size={16} style={{ marginRight: "8px", color: "#64748b" }} />
                       <Typography variant="body2" color="textSecondary">
                         Tipo:
                       </Typography>
                     </Box>
-                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>
+                    <Typography variant="body1" style={{ paddingLeft: "24px", fontSize: "0.95rem" }}>
                       {selectedApartamento.Tipo}
                     </Typography>
                   </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <Box display="flex" alignItems="center" marginBottom={1}>
-                      <Layers size={18} style={{ marginRight: "8px", color: "#64748b" }} />
+                  <Grid item xs={12} sm={6}>
+                    <Box display="flex" alignItems="center" marginBottom={0.5}>
+                      <Layers size={16} style={{ marginRight: "8px", color: "#64748b" }} />
                       <Typography variant="body2" color="textSecondary">
                         Piso:
                       </Typography>
                     </Box>
-                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>
+                    <Typography variant="body1" style={{ paddingLeft: "24px", fontSize: "0.95rem" }}>
                       {selectedApartamento.Piso}
                     </Typography>
                   </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <Box display="flex" alignItems="center" marginBottom={1}>
-                      <Layers size={18} style={{ marginRight: "8px", color: "#64748b" }} />
+                  <Grid item xs={12} sm={6}>
+                    <Box display="flex" alignItems="center" marginBottom={0.5}>
+                      <Layers size={16} style={{ marginRight: "8px", color: "#64748b" }} />
                       <Typography variant="body2" color="textSecondary">
                         Capacidad:
                       </Typography>
                     </Box>
-                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>
+                    <Typography variant="body1" style={{ paddingLeft: "24px", fontSize: "0.95rem" }}>
                       {selectedApartamento.Capacidad}
                     </Typography>
                   </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <Box display="flex" alignItems="center" marginBottom={1}>
-                      <DollarSign size={18} style={{ marginRight: "8px", color: "#64748b" }} />
+                  <Grid item xs={12} sm={6}>
+                    <Box display="flex" alignItems="center" marginBottom={0.5}>
+                      <DollarSign size={16} style={{ marginRight: "8px", color: "#64748b" }} />
                       <Typography variant="body2" color="textSecondary">
                         Tarifa:
                       </Typography>
                     </Box>
-                    <Typography variant="body1" style={{ paddingLeft: "26px" }}>
+                    <Typography variant="body1" style={{ paddingLeft: "24px", fontSize: "0.95rem" }}>
                       {formatTarifa(selectedApartamento.Tarifa)}
                     </Typography>
                   </Grid>
                 </Grid>
               </Box>
+
               <Typography className={classes.sectionTitle} style={{ marginTop: "24px" }}>
                 <FileText size={20} /> Mobiliarios Asociados
               </Typography>
