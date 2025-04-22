@@ -565,6 +565,8 @@ exports.crearReservaPublica = async (req, res) => {
       huespedes,
       documento,
       monto_pago,
+      acompanantes,
+      numero_acompanantes
     } = req.body
 
     if (!titular_reserva || !email || !telefono || !fecha_inicio || !fecha_fin || !apartamento_id || !documento) {
@@ -642,7 +644,6 @@ exports.crearReservaPublica = async (req, res) => {
     })
 
     let clienteExistente = false
-    let passwordOriginal = null // Variable para guardar la contraseña sin hashear
 
     if (cliente) {
       clienteExistente = true
@@ -653,8 +654,6 @@ exports.crearReservaPublica = async (req, res) => {
         // Generar una contraseña aleatoria
         const crypto = require("crypto")
         const randomPassword = crypto.randomBytes(4).toString("hex")
-        passwordOriginal = randomPassword // Guardar la contraseña original sin hashear
-        
         const bcrypt = require("bcryptjs")
         const salt = await bcrypt.genSalt(10)
         const hashedPassword = await bcrypt.hash(randomPassword, salt)
@@ -670,7 +669,6 @@ exports.crearReservaPublica = async (req, res) => {
 
         await cliente.save()
         console.log("Nuevo cliente creado:", cliente._id)
-        console.log("Contraseña temporal generada:", passwordOriginal) // Log para verificar
       } catch (clienteError) {
         console.error("Error al crear cliente:", clienteError)
         // Continuamos con la reserva aunque falle la creación del cliente
@@ -740,6 +738,22 @@ exports.crearReservaPublica = async (req, res) => {
       documento,
     })
 
+    // Procesar acompañantes si existen
+    let acompanantesArray = [];
+      if (acompanantes && Array.isArray(acompanantes) && acompanantes.length > 0) {
+       acompanantesArray = acompanantes;
+}
+
+// Determinar el número de acompañantes
+let numAcompanantes = 0;
+if (numero_acompanantes !== undefined) {
+  // Si se envía explícitamente
+  numAcompanantes = parseInt(numero_acompanantes);
+} else if (acompanantesArray.length > 0) {
+  // Si no, usar la longitud del array
+  numAcompanantes = acompanantesArray.length;
+}
+
     const nuevaReserva = new Reserva({
       titular_reserva,
       fecha_inicio,
@@ -751,7 +765,8 @@ exports.crearReservaPublica = async (req, res) => {
       estado: "pendiente",
       email,
       telefono,
-      acompanantes: [],
+      acompanantes: acompanantesArray,
+      numero_acompanantes: numAcompanantes, // Recibir explícitamente el número de acompañantes
       numero_reserva: nuevoNumeroReserva,
       titular_documento: documento,
     })
@@ -759,56 +774,7 @@ exports.crearReservaPublica = async (req, res) => {
     await nuevaReserva.save()
     console.log("Reserva creada exitosamente:", nuevaReserva._id)
 
-    // Enviar correo de confirmación
-    try {
-      console.log("Iniciando proceso de envío de correo desde reserva pública...")
-
-      // Importar el servicio de correo usando path para resolver la ruta correctamente
-      const path = require("path")
-      const emailService = require(path.join(process.cwd(), "config/mailer"))
-      console.log("Servicio de correo importado correctamente en reserva pública")
-
-      // Preparar datos del cliente
-      const clienteData = {
-        nombre: titular_reserva,
-        email: email
-      }
-
-      // Preparar datos de la reserva
-      const reservationData = {
-        apartamento: `${apartamento.NumeroApto} - ${apartamento.Tipo}`,
-        fechaEntrada: fecha_inicio,
-        fechaSalida: fecha_fin,
-        huespedes: huespedes || 1,
-        precioPorNoche: apartamento.Tarifa,
-        total: total
-      }
-
-      // Enviar correo con la contraseña temporal para clientes nuevos
-      console.log("Enviando correo con los siguientes datos:")
-      console.log("- Cliente:", clienteData)
-      console.log("- Reserva:", reservationData)
-      console.log("- Contraseña temporal:", passwordOriginal || "No aplica")
-
-      const resultado = await emailService.sendReservationConfirmation(
-        clienteData,
-        reservationData,
-        passwordOriginal // Usar la contraseña original sin hashear
-      )
-
-      console.log("Resultado del envío de correo desde reserva pública:", resultado)
-
-      if (!resultado.success) {
-        console.error("Error al enviar correo desde reserva pública:", resultado.error)
-      }
-    } catch (emailError) {
-      console.error("Error detallado al enviar correo desde reserva pública:", emailError)
-      console.error("Mensaje de error:", emailError.message)
-      if (emailError.code) console.error("Código de error:", emailError.code)
-      if (emailError.command) console.error("Comando que falló:", emailError.command)
-      if (emailError.response) console.error("Respuesta del servidor:", emailError.response)
-      // No interrumpimos el flujo si falla el envío del correo
-    }
+    // Enviar correo de confirmación aquí si es necesario...
 
     res.status(201).json({
       msg: "Reserva creada correctamente. Pronto nos pondremos en contacto contigo.",
@@ -843,3 +809,49 @@ exports.crearReservaPublica = async (req, res) => {
     })
   }
 }
+// Obtiene las fechas reservadas para un apartamento específico
+exports.obtenerFechasReservadas = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        msg: "ID de apartamento no proporcionado",
+        error: true,
+      });
+    }
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({
+        msg: "ID de apartamento inválido",
+        error: true,
+      });
+    }
+
+    // Buscar todas las reservas para este apartamento que no estén canceladas
+    const reservas = await Reserva.find({
+      apartamentos: id,
+      estado: { $ne: "cancelada" },
+      // Solo reservas activas y futuras
+      fecha_fin: { $gte: new Date() }
+    });
+
+    // Extraer las fechas reservadas
+    const fechasReservadas = reservas.map(reserva => ({
+      fecha_inicio: reserva.fecha_inicio,
+      fecha_fin: reserva.fecha_fin
+    }));
+ 
+    return res.status(200).json({ 
+      fechasReservadas,
+      error: false 
+    });
+  } catch (error) {
+    console.error('Error al obtener fechas reservadas:', error);
+    return res.status(500).json({ 
+      msg: 'Error al obtener fechas reservadas', 
+      error: true,
+      details: error.message
+    });
+  }
+};
