@@ -1,12 +1,29 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { useHistory } from "react-router-dom"
+import { useHistory, useLocation } from "react-router-dom"
 import axios from "axios"
 import jwtDecode from "jwt-decode" // Versión 3.1.2
 import Swal from "sweetalert2"
 import Chart from "chart.js/auto"
-import { X, LogOut, ChevronLeft, ChevronRight, Menu, BarChart2, Users, User, Building, Sofa, Calendar, CreditCard, Percent, Hotel, Shield, ChevronDown } from 'lucide-react'
+import {
+  X,
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+  Menu,
+  BarChart2,
+  Users,
+  User,
+  Building,
+  Sofa,
+  Calendar,
+  CreditCard,
+  Percent,
+  Hotel,
+  Shield,
+  ChevronDown,
+} from "lucide-react"
 
 import Sidebar from "./Sidebar"
 import Content from "./Content"
@@ -24,11 +41,21 @@ import UserProfile from "../usuarios/UserProfile"
 
 import "./Dashboard.css"
 
+// IMPORTANTE: Obtener el módulo guardado antes de que se monte el componente
+const getSavedModule = () => {
+  try {
+    return localStorage.getItem("moduloDashboard") || null
+  } catch (e) {
+    console.error("Error al leer el módulo guardado:", e)
+    return null
+  }
+}
+
 const Dashboard = () => {
   const history = useHistory()
+  const location = useLocation()
   const [userRole, setUserRole] = useState("")
   const [userName, setUserName] = useState("")
-  // Los permisos pueden venir en formato antiguo (array de strings) o granular (array de objetos)
   const [userPermissions, setUserPermissions] = useState([])
   const [isAdmin, setIsAdmin] = useState(false)
 
@@ -38,18 +65,33 @@ const Dashboard = () => {
   const pagosChartRef = useRef(null)
   const chartInstances = useRef({})
 
+  // IMPORTANTE: Inicializar el módulo seleccionado con el valor guardado
+  // ELIMINAR estas líneas:
+  // const savedModule = getSavedModule()
+  // console.log("Módulo guardado al iniciar:", savedModule)
+  // const [selectedModule, setSelectedModule] = useState(savedModule)
+
+  // REEMPLAZAR con esta implementación simple:
+  const [selectedModule, setSelectedModule] = useState(() => {
+    // Obtener el módulo guardado de localStorage al inicializar
+    return localStorage.getItem("moduloDashboard") || "dashboard"
+  })
+
   // Estado para módulo seleccionado, datos, y controles UI
-  const [selectedModule, setSelectedModule] = useState("clientes")
   const [data, setData] = useState(null)
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [open, setOpen] = useState(true)
 
+  // Referencia para controlar si es la primera carga
+  const isFirstLoad = useRef(true)
+  const moduleInitialized = useRef(false)
+
   // Prevenir navegación con botones de adelante/atrás
   useEffect(() => {
     // Guardar la ubicación actual en el historial
     const currentPath = history.location.pathname
-    
+
     // Función para manejar eventos de navegación
     const handlePopState = (event) => {
       // Si hay un token (sesión activa) y estamos intentando navegar fuera del dashboard
@@ -68,16 +110,16 @@ const Dashboard = () => {
     }
 
     // Agregar listeners para eventos de navegación
-    window.addEventListener('popstate', handlePopState)
-    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener("popstate", handlePopState)
+    window.addEventListener("beforeunload", handleBeforeUnload)
 
     // Reemplazar la entrada actual en el historial para evitar volver atrás
     history.replace(currentPath)
 
     // Limpiar listeners al desmontar
     return () => {
-      window.removeEventListener('popstate', handlePopState)
-      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener("popstate", handlePopState)
+      window.removeEventListener("beforeunload", handleBeforeUnload)
     }
   }, [history])
 
@@ -171,35 +213,46 @@ const Dashboard = () => {
     (module) => module !== "profile" && (isAdmin || hasModulePermission(module, "leer")),
   )
 
-  // Seleccionar el módulo inicial
-  useEffect(() => {
-    const accessibleModules = allModules.filter((module) => hasModulePermission(module, "leer"))
-    if (accessibleModules.includes("dashboard")) {
-      setSelectedModule("dashboard")
-    } else if (accessibleModules.length > 0) {
-      setSelectedModule(accessibleModules[0])
-    } else {
-      setSelectedModule("no-access")
-      setData({ error: "No tienes acceso a ningún módulo del sistema" })
-    }
-  }, [userPermissions])
+  // IMPORTANTE: Efecto para guardar el módulo seleccionado cuando cambie
+  // ELIMINAR estos efectos que están causando problemas:
+  // - Eliminar el efecto que usa moduleInitialized.current
+  // - Eliminar cualquier efecto que modifique selectedModule basado en permisos
 
+  // AÑADIR este efecto simple para guardar el módulo cuando cambie:
   useEffect(() => {
-    if (
-      !isAdmin &&
-      selectedModule !== "no-access" &&
-      selectedModule !== "profile" && // Excluir perfil de esta validación
-      !hasModulePermission(selectedModule, "leer")
-    ) {
-      const accessibleModules = allModules.filter((module) => hasModulePermission(module, "leer"))
-      if (accessibleModules.length > 0) {
-        setSelectedModule(accessibleModules[0])
-      } else {
-        setSelectedModule("no-access")
-        setData({ error: "No tienes acceso a ningún módulo del sistema" })
-      }
+    if (selectedModule) {
+      localStorage.setItem("moduloDashboard", selectedModule)
     }
-  }, [selectedModule, isAdmin, userPermissions])
+  }, [selectedModule])
+
+  // IMPORTANTE: Inicializar el módulo seleccionado si no hay uno guardado o no tiene permiso
+  // ELIMINAR este useEffect
+  // useEffect(() => {
+  //   if (userRole && !moduleInitialized.current) {
+  //     moduleInitialized.current = true
+
+  //     // Si no hay un módulo seleccionado o no tiene permiso para acceder a él
+  //     if (!selectedModule || (selectedModule !== "profile" && !hasModulePermission(selectedModule, "leer"))) {
+  //       console.log("No hay módulo seleccionado o no tiene permiso, seleccionando uno predeterminado")
+
+  //       // Buscar un módulo accesible
+  //       const accessibleModules = allModules.filter(
+  //         (module) => module !== "profile" && hasModulePermission(module, "leer"),
+  //       )
+
+  //       if (accessibleModules.length > 0) {
+  //         console.log("Módulo predeterminado seleccionado:", accessibleModules[0])
+  //         setSelectedModule(accessibleModules[0])
+  //       } else {
+  //         console.log("No hay módulos accesibles")
+  //         setSelectedModule("no-access")
+  //         setData({ error: "No tienes acceso a ningún módulo del sistema" })
+  //       }
+  //     } else {
+  //       console.log("Usando módulo ya seleccionado:", selectedModule)
+  //     }
+  //   }
+  // }, [userRole, selectedModule, allModules])
 
   // Inicializar y actualizar gráficos cuando cambian los datos
   useEffect(() => {
@@ -256,11 +309,11 @@ const Dashboard = () => {
               legend: {
                 display: true,
                 position: "top",
-                labels: { 
+                labels: {
                   font: { size: 14, weight: "bold", family: "'Poppins', sans-serif" },
                   padding: 20,
                   usePointStyle: true,
-                  pointStyle: 'circle'
+                  pointStyle: "circle",
                 },
               },
               tooltip: {
@@ -294,7 +347,7 @@ const Dashboard = () => {
                   text: "Número de Reservas",
                   color: "rgba(56, 189, 248, 1)",
                   font: { weight: "bold", size: 13, family: "'Poppins', sans-serif" },
-                  padding: {top: 10, bottom: 10}
+                  padding: { top: 10, bottom: 10 },
                 },
                 grid: { color: "rgba(0, 0, 0, 0.04)", drawBorder: false },
                 ticks: { font: { size: 12, family: "'Poppins', sans-serif" }, padding: 8 },
@@ -310,13 +363,13 @@ const Dashboard = () => {
                   text: "Porcentaje de Descuento",
                   color: "rgba(251, 146, 60, 1)",
                   font: { weight: "bold", size: 13, family: "'Poppins', sans-serif" },
-                  padding: {top: 10, bottom: 10}
+                  padding: { top: 10, bottom: 10 },
                 },
                 grid: { drawOnChartArea: false },
                 ticks: {
                   callback: (value) => value + "%",
                   font: { size: 12, family: "'Poppins', sans-serif" },
-                  padding: 8
+                  padding: 8,
                 },
               },
               x: {
@@ -336,16 +389,8 @@ const Dashboard = () => {
           datasets: [
             {
               data: [15, 8, 3],
-              backgroundColor: [
-                "rgba(34, 197, 94, 0.85)", 
-                "rgba(56, 189, 248, 0.85)", 
-                "rgba(251, 146, 60, 0.85)"
-              ],
-              borderColor: [
-                "rgba(34, 197, 94, 1)", 
-                "rgba(56, 189, 248, 1)", 
-                "rgba(251, 146, 60, 1)"
-              ],
+              backgroundColor: ["rgba(34, 197, 94, 0.85)", "rgba(56, 189, 248, 0.85)", "rgba(251, 146, 60, 0.85)"],
+              borderColor: ["rgba(34, 197, 94, 1)", "rgba(56, 189, 248, 1)", "rgba(251, 146, 60, 1)"],
               borderWidth: 2,
               hoverOffset: 15,
             },
@@ -365,7 +410,7 @@ const Dashboard = () => {
                   padding: 20,
                   font: { size: 14, family: "'Poppins', sans-serif" },
                   usePointStyle: true,
-                  pointStyle: 'circle',
+                  pointStyle: "circle",
                 },
               },
               tooltip: {
@@ -412,7 +457,7 @@ const Dashboard = () => {
                 "rgba(125, 211, 252, 0.8)",
                 "rgba(186, 230, 253, 0.8)",
                 "rgba(14, 165, 233, 0.8)",
-                "rgba(2, 132, 199, 0.8)"
+                "rgba(2, 132, 199, 0.8)",
               ],
               borderRadius: 10,
               borderSkipped: false,
@@ -431,11 +476,11 @@ const Dashboard = () => {
               legend: {
                 display: true,
                 position: "top",
-                labels: { 
+                labels: {
                   font: { size: 14, weight: "bold", family: "'Poppins', sans-serif" },
                   padding: 20,
                   usePointStyle: true,
-                  pointStyle: 'circle'
+                  pointStyle: "circle",
                 },
               },
               tooltip: {
@@ -448,7 +493,7 @@ const Dashboard = () => {
                 boxPadding: 8,
                 usePointStyle: true,
                 callbacks: {
-                  label: (context) => `$${context.parsed.y.toLocaleString()}`,
+                  label: (context) => `${context.parsed.y.toLocaleString()}`,
                 },
               },
             },
@@ -459,14 +504,14 @@ const Dashboard = () => {
                 ticks: {
                   callback: (value) => "$" + value.toLocaleString(),
                   font: { size: 12, family: "'Poppins', sans-serif" },
-                  padding: 8
+                  padding: 8,
                 },
                 title: {
                   display: true,
                   text: "Monto en Pesos",
                   color: "rgba(56, 189, 248, 1)",
                   font: { weight: "bold", size: 13, family: "'Poppins', sans-serif" },
-                  padding: {top: 10, bottom: 10}
+                  padding: { top: 10, bottom: 10 },
                 },
               },
               x: {
@@ -560,15 +605,17 @@ const Dashboard = () => {
 
   const handleModuleClick = (moduleName) => {
     if (!hasModulePermission(moduleName, "leer")) {
-      Swal.fire({
-        title: "Acceso denegado",
-        text: "No tienes permisos para acceder a este módulo",
-        icon: "warning",
-        confirmButtonColor: "#2563eb",
-        confirmButtonText: "Entendido",
-      })
+      // ELIMINAR cualquier código que muestre alertas relacionadas con permisos de módulos
+      // Swal.fire({
+      //   title: "Acceso denegado",
+      //   text: "No tienes permisos para acceder a este módulo",
+      //   icon: "warning",
+      //   confirmButtonColor: "#2563eb",
+      //   confirmButtonText: "Entendido",
+      // })
       return
     }
+    console.log("Cambiando a módulo:", moduleName)
     setSelectedModule(moduleName)
     fetchData(moduleName)
     setIsMobileMenuOpen(false)
@@ -578,8 +625,9 @@ const Dashboard = () => {
     let isMounted = true
 
     const loadData = async () => {
-      if (userRole && selectedModule !== "no-access" && selectedModule !== "profile") {
+      if (userRole && selectedModule && selectedModule !== "no-access" && selectedModule !== "profile") {
         if (hasModulePermission(selectedModule, "leer")) {
+          console.log("Cargando datos para el módulo:", selectedModule)
           if (selectedModule === "dashboard") {
             await fetchAllModulesData()
           } else {

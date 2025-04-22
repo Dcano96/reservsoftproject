@@ -80,6 +80,33 @@ exports.login = async (req, res) => {
       return res.status(403).json({ msg: "Usuario inactivo. Contacte al administrador." })
     }
 
+    // Verificar si el rol existe y está activo
+    let rolEliminado = false
+    let rolInactivo = false
+
+    if (usuario.rol && typeof usuario.rol === 'string') {
+      // Buscar el rol en la base de datos
+      const rol = await Rol.findOne({ nombre: usuario.rol })
+      
+      if (!rol) {
+        console.log(`[LOGIN] Rol no encontrado para usuario: ${email}`)
+        rolEliminado = true
+      } else if (rol.estado === false) {
+        console.log(`[LOGIN] Rol inactivo para usuario: ${email}`)
+        rolInactivo = true
+      }
+    }
+
+    // Si el rol está eliminado o inactivo, denegar el acceso
+    if (rolEliminado || rolInactivo) {
+      console.log(`[LOGIN] Acceso denegado por rol eliminado o inactivo: ${email}`)
+      return res.status(403).json({ 
+        msg: "Tu rol ha sido desactivado o eliminado. Por favor, contacta al administrador.",
+        rolEliminado,
+        rolInactivo
+      })
+    }
+
     // Comparar contraseña
     console.log(`[LOGIN] Verificando contraseña para: ${email}`)
 
@@ -189,6 +216,9 @@ exports.login = async (req, res) => {
         rol: rolNombre,
         permisos: permisos,
         isCliente: isCliente,
+        // Añadir información sobre el estado del rol
+        rolEliminado: rolEliminado,
+        rolInactivo: rolInactivo
       },
     }
 
@@ -243,6 +273,32 @@ exports.forgotPassword = async (req, res) => {
     // Verificar si el usuario está activo
     if (!usuario.estado) {
       console.log(`[FORGOT PASSWORD] Usuario/cliente inactivo: ${email}`)
+      return res.json({
+        msg: "Si el correo existe en nuestra base de datos, recibirás un enlace de recuperación",
+      })
+    }
+
+    // Verificar si el rol existe y está activo
+    let rolEliminado = false
+    let rolInactivo = false
+
+    if (usuario.rol && typeof usuario.rol === 'string') {
+      // Buscar el rol en la base de datos
+      const rol = await Rol.findOne({ nombre: usuario.rol })
+      
+      if (!rol) {
+        console.log(`[FORGOT PASSWORD] Rol no encontrado para usuario: ${email}`)
+        rolEliminado = true
+      } else if (rol.estado === false) {
+        console.log(`[FORGOT PASSWORD] Rol inactivo para usuario: ${email}`)
+        rolInactivo = true
+      }
+    }
+
+    // Si el rol está eliminado o inactivo, denegar la recuperación de contraseña
+    if (rolEliminado || rolInactivo) {
+      console.log(`[FORGOT PASSWORD] Recuperación denegada por rol eliminado o inactivo: ${email}`)
+      // Respuesta genérica por seguridad
       return res.json({
         msg: "Si el correo existe en nuestra base de datos, recibirás un enlace de recuperación",
       })
@@ -359,6 +415,18 @@ exports.resetPassword = async (req, res) => {
       return res.status(403).json({ msg: "Usuario inactivo. Contacte al administrador." })
     }
 
+    // Verificar si el rol existe y está activo
+    if (usuario.rol && typeof usuario.rol === 'string') {
+      // Buscar el rol en la base de datos
+      const rol = await Rol.findOne({ nombre: usuario.rol })
+      
+      if (!rol) {
+        return res.status(403).json({ msg: "Tu rol ha sido eliminado. Contacta al administrador." })
+      } else if (rol.estado === false) {
+        return res.status(403).json({ msg: "Tu rol ha sido desactivado. Contacta al administrador." })
+      }
+    }
+
     const salt = await bcrypt.genSalt(10)
     usuario.password = await bcrypt.hash(newPassword, salt)
     usuario.resetPasswordToken = undefined
@@ -379,6 +447,18 @@ exports.getUsuario = async (req, res) => {
     // Verificar si el usuario está activo
     if (!usuario.estado) {
       return res.status(403).json({ msg: "Usuario inactivo. Contacte al administrador." })
+    }
+
+    // Verificar si el rol existe y está activo
+    if (usuario.rol && typeof usuario.rol === 'string') {
+      // Buscar el rol en la base de datos
+      const rol = await Rol.findOne({ nombre: usuario.rol })
+      
+      if (!rol) {
+        return res.status(403).json({ msg: "Tu rol ha sido eliminado. Contacta al administrador." })
+      } else if (rol.estado === false) {
+        return res.status(403).json({ msg: "Tu rol ha sido desactivado. Contacta al administrador." })
+      }
     }
 
     res.json(usuario)
@@ -429,5 +509,48 @@ exports.adminResetPassword = async (req, res) => {
   } catch (error) {
     console.error("Error en adminResetPassword:", error)
     res.status(500).json({ msg: "Error en el servidor" })
+  }
+}
+
+// Nuevo endpoint para verificar el estado del rol
+exports.verificarEstadoRol = async (req, res) => {
+  try {
+    // El middleware de autenticación ya debería haber verificado el token
+    // y añadido el usuario a req.usuario
+    const usuarioId = req.usuario.id
+
+    // Buscar el usuario en la base de datos para obtener información actualizada
+    const usuario = await Usuario.findById(usuarioId)
+
+    if (!usuario) {
+      return res.status(404).json({ msg: "Usuario no encontrado" })
+    }
+
+    // Verificar si el rol existe y está activo
+    let rolEliminado = false
+    let rolInactivo = false
+
+    if (usuario.rol && typeof usuario.rol === 'string') {
+      // Buscar el rol en la base de datos
+      const rol = await Rol.findOne({ nombre: usuario.rol })
+      
+      if (!rol) {
+        console.log(`[VERIFICAR ROL] Rol no encontrado para usuario: ${usuario.email}`)
+        rolEliminado = true
+      } else if (rol.estado === false) {
+        console.log(`[VERIFICAR ROL] Rol inactivo para usuario: ${usuario.email}`)
+        rolInactivo = true
+      }
+    }
+
+    // Devolver el estado del rol
+    return res.json({
+      rolActivo: !rolEliminado && !rolInactivo,
+      rolEliminado,
+      rolInactivo,
+    })
+  } catch (error) {
+    console.error("Error al verificar estado del rol:", error)
+    return res.status(500).json({ msg: "Error del servidor al verificar el rol" })
   }
 }

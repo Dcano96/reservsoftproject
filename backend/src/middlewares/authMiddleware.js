@@ -22,8 +22,19 @@ const authMiddleware = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || "palabrasecreta")
+
     // Se asume que el token contiene el objeto usuario con 'rol' y 'permisos'
     req.usuario = decoded.usuario
+
+    // Verificar si el rol está eliminado o inactivo
+    if (req.usuario.rolEliminado || req.usuario.rolInactivo) {
+      return res.status(403).json({
+        msg: "Tu rol ha sido desactivado o eliminado. Por favor, contacta al administrador.",
+        rolEliminado: req.usuario.rolEliminado,
+        rolInactivo: req.usuario.rolInactivo,
+      })
+    }
+
     next()
   } catch (error) {
     res.status(401).json({ msg: "Token no válido" })

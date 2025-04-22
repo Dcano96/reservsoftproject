@@ -565,7 +565,7 @@ const UsuarioList = () => {
         email: "",
         telefono: "",
         password: "",
-        rol: availableRoles.length > 0 ? availableRoles[0].nombre : "cliente",
+        rol: "", // Cambiado a cadena vacía para que no asuma ningún rol por defecto
         estado: true,
       }
       setFormData(newUserData)
@@ -600,6 +600,17 @@ const UsuarioList = () => {
   const handleChange = (e) => {
     const { name, value } = e.target
     const prevValue = formData[name]
+
+    // Si estamos editando al administrador y se intenta cambiar el email, no permitirlo
+    if (editingId && isAdminUser(formData) && name === "email" && value !== formData.email) {
+      Swal.fire({
+        icon: "error",
+        title: "Acción no permitida",
+        text: "No se puede modificar el correo electrónico del usuario administrador",
+        confirmButtonColor: "#2563eb",
+      })
+      return
+    }
 
     // Si estamos editando al administrador, no permitir cambiar el estado a inactivo
     if (editingId && isAdminUser(formData) && name === "estado" && value === false) {
@@ -853,6 +864,18 @@ const UsuarioList = () => {
         icon: "error",
         title: "Acción no permitida",
         text: "No se puede desactivar al usuario administrador",
+        confirmButtonColor: "#2563eb",
+      })
+      return
+    }
+
+    // Si estamos editando al administrador, verificar que no se esté cambiando el email
+    const originalUsuario = usuarios.find((u) => u._id === editingId)
+    if (editingId && isAdminUser(formData) && originalUsuario && formData.email !== originalUsuario.email) {
+      Swal.fire({
+        icon: "error",
+        title: "Acción no permitida",
+        text: "No se puede modificar el correo electrónico del usuario administrador",
         confirmButtonColor: "#2563eb",
       })
       return
@@ -1255,6 +1278,7 @@ const UsuarioList = () => {
           </Box>
 
           {/* Sección de Contacto */}
+
           <Box className={classes.formSection}>
             <Typography className={classes.sectionTitle}>
               <ContactMail />
@@ -1272,9 +1296,13 @@ const UsuarioList = () => {
               fullWidth
               variant="outlined"
               error={!!formErrors.email}
-              helperText={formErrors.email}
+              helperText={
+                formErrors.email ||
+                (editingId && isAdminUser(formData) ? "El email del administrador no se puede modificar" : "")
+              }
               required
               type="email"
+              disabled={editingId && isAdminUser(formData)} // Deshabilitar el campo si es el administrador
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -1363,6 +1391,7 @@ const UsuarioList = () => {
                     ),
                   }}
                 >
+                  <MenuItem value="">Seleccionar rol</MenuItem>
                   {availableRoles.length > 0 ? (
                     availableRoles.map((rol) => (
                       <MenuItem key={rol._id} value={rol.nombre}>

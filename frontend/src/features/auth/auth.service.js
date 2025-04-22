@@ -44,6 +44,9 @@ const login = async (email, password) => {
           email: res.data.usuario.email,
           rol: res.data.usuario.rol,
           isCliente: isCliente,
+          // Añadir información sobre el estado del rol
+          rolEliminado: res.data.usuario.rolEliminado || false,
+          rolInactivo: res.data.usuario.rolInactivo || false,
         }
 
         localStorage.setItem("usuario", JSON.stringify(userInfo))
@@ -109,4 +112,33 @@ const forgotPassword = async (email) => {
   }
 }
 
-export default { login, register, forgotPassword }
+const resetPassword = async (token, password) => {
+  try {
+    const response = await axios.post(`${API_URL}/reset-password`, { token, password })
+    return response.data
+  } catch (error) {
+    console.error("Reset password request failed:", error)
+    throw error
+  }
+}
+
+// Añadir método para verificar el estado del rol
+const verificarEstadoRol = async () => {
+  try {
+    const token = localStorage.getItem("token")
+    if (!token) return { rolActivo: false }
+
+    const res = await axios.get(`${API_URL}/verificar-rol`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    return res.data
+  } catch (error) {
+    console.error("Error al verificar estado del rol:", error)
+    return { rolActivo: false, error: error.message }
+  }
+}
+
+export default { login, register, forgotPassword, resetPassword, verificarEstadoRol }

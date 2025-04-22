@@ -16,9 +16,6 @@ import authService from "./auth.service"
 import { useHistory, useLocation } from "react-router-dom"
 import "./style.css"
 
-// Eliminar la importación directa
-// import piscinaImage from "/piscina.png"
-
 const Login = () => {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -29,7 +26,6 @@ const Login = () => {
   const history = useHistory()
   const location = useLocation()
 
-  // Extraer parámetros de la URL si existen
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     const emailParam = params.get("email")
@@ -47,7 +43,6 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault()
 
-    // Validar campos antes de enviar
     if (!email.trim()) {
       setError("Por favor, ingresa tu correo electrónico")
       return
@@ -64,17 +59,20 @@ const Login = () => {
     try {
       console.log("Intentando login con:", email, "y contraseña proporcionada")
 
-      // Llamada al servicio de autenticación
       const response = await authService.login(email, password)
 
       console.log("Respuesta de login:", response)
 
-      // Si hay un token en la respuesta, guardarlo y redirigir
+      // Verificar si el rol está activo
+      if (response.usuario && (response.usuario.rolEliminado || response.usuario.rolInactivo)) {
+        setError("Tu rol ha sido desactivado o eliminado. Por favor, contacta al administrador.")
+        setLoading(false)
+        return
+      }
+
       if (response.token) {
-        // Guardar el token en localStorage
         localStorage.setItem("token", response.token)
 
-        // Verificar si es un cliente
         const isCliente =
           response.usuario &&
           (response.usuario.isCliente === true ||
@@ -83,38 +81,29 @@ const Login = () => {
 
         console.log("¿Es cliente?", isCliente, "Datos:", response.usuario)
 
-        // Guardar información del usuario con la bandera isCliente actualizada
         if (response.usuario) {
           const userInfo = {
             id: response.usuario.id,
             nombre: response.usuario.nombre,
             email: response.usuario.email,
             rol: response.usuario.rol,
-            // Asegurarse de que isCliente sea correcto basado en nuestra verificación
             isCliente: isCliente,
+            // Guardar información sobre el estado del rol
+            rolEliminado: response.usuario.rolEliminado || false,
+            rolInactivo: response.usuario.rolInactivo || false,
           }
 
           localStorage.setItem("usuario", JSON.stringify(userInfo))
           console.log("Información de usuario guardada:", userInfo)
-
-          // También guardar una bandera específica para el tipo de usuario
-          // Esto nos ayudará a detectar el tipo de usuario en otras partes de la app
           localStorage.setItem("userType", isCliente ? "cliente" : "admin")
         }
 
-        // Establecer la bandera de navegación directa para que ProtectedRoute permita el acceso
         sessionStorage.setItem("navegacionDirecta", "true")
 
-        // Determinar la ruta de redirección
-        // CAMBIO: Ahora todos los usuarios van al dashboard, independientemente de su rol
-        let redirectPath
+        // Redireccionar a la última ruta protegida si existe
+        const ultimaRuta = localStorage.getItem("ultimaRuta")
+        const redirectPath = ultimaRuta || "/dashboard"
 
-        // Para cualquier usuario, usar returnUrl o dashboard
-        const returnUrl = new URLSearchParams(location.search).get("returnUrl")
-        redirectPath = returnUrl || "/dashboard"
-
-        // Guardar una bandera para indicar que es un cliente que acaba de iniciar sesión
-        // Esto puede ser útil si el dashboard necesita mostrar contenido específico para clientes
         if (isCliente) {
           localStorage.setItem("clienteLogin", "true")
           console.log("Usuario identificado como cliente, redirigiendo al dashboard común:", redirectPath)
@@ -122,7 +111,6 @@ const Login = () => {
           console.log("Usuario no cliente, redirigiendo a:", redirectPath)
         }
 
-        // Pequeño retraso para asegurar que localStorage se actualice antes de la redirección
         setTimeout(() => {
           console.log("Ejecutando redirección a:", redirectPath)
           history.replace(redirectPath)
@@ -131,7 +119,6 @@ const Login = () => {
         throw new Error("No se recibió un token válido")
       }
     } catch (error) {
-      // Mejorar el manejo de errores para mostrar mensajes más descriptivos
       let errorMsg = "Error en el login"
 
       if (error.response && error.response.data && error.response.data.msg) {
