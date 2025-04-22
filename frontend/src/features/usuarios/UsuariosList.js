@@ -596,13 +596,49 @@ const UsuarioList = () => {
 
   const handleCloseDetails = () => setDetailsOpen(false)
 
-  // Manejar cambios en el formulario
+  // Modificar la función handleChange para que no permita escribir más caracteres de los permitidos
+  // y solo permita los caracteres válidos según el tipo de campo
+
   const handleChange = (e) => {
     const { name, value } = e.target
     const prevValue = formData[name]
+    let newValue = value
+
+    // Aplicar restricciones según el tipo de campo
+    switch (name) {
+      case "nombre":
+        // Solo letras y espacios, máximo 55 caracteres
+        if (value.length > 55) {
+          newValue = value.slice(0, 55)
+        }
+        // Filtrar caracteres no permitidos (solo letras y espacios)
+        newValue = newValue.replace(/[^A-Za-zÁáÉéÍíÓóÚúÑñ\s]/g, "")
+        break
+
+      case "documento":
+        // Letras y números, máximo 17 caracteres
+        if (value.length > 17) {
+          newValue = value.slice(0, 17)
+        }
+        // Filtrar caracteres no permitidos (solo letras y números)
+        newValue = newValue.replace(/[^A-Za-z0-9]/g, "")
+        break
+
+      case "telefono":
+        // Solo números, máximo 15 caracteres
+        if (value.length > 15) {
+          newValue = value.slice(0, 15)
+        }
+        // Filtrar caracteres no permitidos (solo números)
+        newValue = newValue.replace(/[^0-9]/g, "")
+        break
+
+      default:
+        break
+    }
 
     // Si estamos editando al administrador y se intenta cambiar el email, no permitirlo
-    if (editingId && isAdminUser(formData) && name === "email" && value !== formData.email) {
+    if (editingId && isAdminUser(formData) && name === "email" && newValue !== formData.email) {
       Swal.fire({
         icon: "error",
         title: "Acción no permitida",
@@ -613,7 +649,7 @@ const UsuarioList = () => {
     }
 
     // Si estamos editando al administrador, no permitir cambiar el estado a inactivo
-    if (editingId && isAdminUser(formData) && name === "estado" && value === false) {
+    if (editingId && isAdminUser(formData) && name === "estado" && newValue === false) {
       Swal.fire({
         icon: "error",
         title: "Acción no permitida",
@@ -623,15 +659,16 @@ const UsuarioList = () => {
       return
     }
 
-    setFormData({ ...formData, [name]: value })
+    // Actualizar el estado con el valor filtrado
+    setFormData({ ...formData, [name]: newValue })
 
     // Determinar si estamos borrando texto (la longitud del valor está disminuyendo)
-    const isDeletingText = prevValue && value.length < prevValue.length
+    const isDeletingText = prevValue && newValue.length < prevValue.length
 
     // Validar el campo que cambió, pero no mostrar alertas si:
     // 1. Es email o password, o
     // 2. Estamos borrando texto
-    validateField(name, value, !isDeletingText && name !== "email" && name !== "password")
+    validateField(name, newValue, !isDeletingText && name !== "email" && name !== "password")
   }
 
   // Función para validar campos individuales
@@ -640,20 +677,24 @@ const UsuarioList = () => {
 
     switch (name) {
       case "nombre":
-        // Solo letras y espacios
+        // Solo letras y espacios, máximo 55 caracteres
         if (!value.trim()) {
           errorMessage = "El nombre es obligatorio"
         } else if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(value)) {
           errorMessage = "El nombre solo debe contener letras"
+        } else if (value.length > 55) {
+          errorMessage = "El nombre no puede exceder los 55 caracteres"
         }
         break
 
       case "documento":
-        // Letras y números
+        // Letras y números, máximo 17 caracteres
         if (!value.trim()) {
           errorMessage = "El documento es obligatorio"
         } else if (!/^[A-Za-z0-9]+$/.test(value)) {
           errorMessage = "El documento solo debe contener letras y números"
+        } else if (value.length > 17) {
+          errorMessage = "El documento no puede exceder los 17 caracteres"
         }
         break
 
@@ -667,11 +708,13 @@ const UsuarioList = () => {
         break
 
       case "telefono":
-        // Solo números
+        // Solo números, máximo 15 caracteres
         if (!value.trim()) {
           errorMessage = "El teléfono es obligatorio"
         } else if (!/^\d+$/.test(value)) {
           errorMessage = "El teléfono solo debe contener números"
+        } else if (value.length > 15) {
+          errorMessage = "El teléfono no puede exceder los 15 caracteres"
         }
         break
 
@@ -787,12 +830,15 @@ const UsuarioList = () => {
     const isValid =
       data.nombre.trim() !== "" &&
       /^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(data.nombre) &&
+      data.nombre.length <= 55 &&
       data.documento.trim() !== "" &&
       /^[A-Za-z0-9]+$/.test(data.documento) &&
+      data.documento.length <= 17 &&
       data.email.trim() !== "" &&
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email) &&
       data.telefono.trim() !== "" &&
       /^\d+$/.test(data.telefono) &&
+      data.telefono.length <= 15 &&
       isPasswordValid
 
     setIsFormValid(isValid)
@@ -808,6 +854,8 @@ const UsuarioList = () => {
       tempErrors.nombre = "El nombre es obligatorio"
     } else if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(formData.nombre)) {
       tempErrors.nombre = "El nombre solo debe contener letras"
+    } else if (formData.nombre.length > 55) {
+      tempErrors.nombre = "El nombre no puede exceder los 55 caracteres"
     }
 
     // Validar documento
@@ -815,6 +863,8 @@ const UsuarioList = () => {
       tempErrors.documento = "El documento es obligatorio"
     } else if (!/^[A-Za-z0-9]+$/.test(formData.documento)) {
       tempErrors.documento = "El documento solo debe contener letras y números"
+    } else if (formData.documento.length > 17) {
+      tempErrors.documento = "El documento no puede exceder los 17 caracteres"
     }
 
     // Validar email
@@ -829,6 +879,8 @@ const UsuarioList = () => {
       tempErrors.telefono = "El teléfono es obligatorio"
     } else if (!/^\d+$/.test(formData.telefono)) {
       tempErrors.telefono = "El teléfono solo debe contener números"
+    } else if (formData.telefono.length > 15) {
+      tempErrors.telefono = "El teléfono no puede exceder los 15 caracteres"
     }
 
     // Validar contraseña (solo si es nuevo usuario o si se está cambiando)

@@ -84,10 +84,10 @@ exports.login = async (req, res) => {
     let rolEliminado = false
     let rolInactivo = false
 
-    if (usuario.rol && typeof usuario.rol === 'string') {
+    if (usuario.rol && typeof usuario.rol === "string") {
       // Buscar el rol en la base de datos
       const rol = await Rol.findOne({ nombre: usuario.rol })
-      
+
       if (!rol) {
         console.log(`[LOGIN] Rol no encontrado para usuario: ${email}`)
         rolEliminado = true
@@ -100,10 +100,10 @@ exports.login = async (req, res) => {
     // Si el rol está eliminado o inactivo, denegar el acceso
     if (rolEliminado || rolInactivo) {
       console.log(`[LOGIN] Acceso denegado por rol eliminado o inactivo: ${email}`)
-      return res.status(403).json({ 
+      return res.status(403).json({
         msg: "Tu rol ha sido desactivado o eliminado. Por favor, contacta al administrador.",
         rolEliminado,
-        rolInactivo
+        rolInactivo,
       })
     }
 
@@ -133,61 +133,8 @@ exports.login = async (req, res) => {
 
     if (!isMatch) {
       console.log(`[LOGIN] Contraseña incorrecta para: ${email}`)
-
-      // Generar una nueva contraseña temporal y actualizarla en la base de datos
-      // Esto es una solución temporal para usuarios que no pueden acceder
-      const tempPassword = `Temp${Math.random().toString(36).substring(2, 8)}1!`
-      const salt = await bcrypt.genSalt(10)
-      const hashedPassword = await bcrypt.hash(tempPassword, salt)
-
-      usuario.password = hashedPassword
-      await usuario.save()
-
-      console.log(`[LOGIN] Se ha generado una nueva contraseña temporal: ${tempPassword}`)
-
-      // Enviar la nueva contraseña por correo
-      try {
-        const transporter = nodemailer.createTransport({
-          service: "gmail",
-          auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-          },
-          tls: {
-            rejectUnauthorized: false,
-          },
-        })
-
-        const mailOptions = {
-          to: usuario.email,
-          from: `"Hotel Nido Sky" <${process.env.EMAIL_USER}>`,
-          subject: "Nueva contraseña temporal - Hotel Nido Sky",
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-              <div style="text-align: center; margin-bottom: 20px;">
-                <h2 style="color: #4a5568;">Nueva Contraseña Temporal</h2>
-              </div>
-              <p>Hola <strong>${usuario.nombre}</strong>,</p>
-              <p>Hemos detectado que has tenido problemas para iniciar sesión. Se ha generado una nueva contraseña temporal para tu cuenta:</p>
-              <div style="text-align: center; margin: 20px 0; padding: 15px; background-color: #f7fafc; border-radius: 5px; font-size: 24px; font-weight: bold; letter-spacing: 2px;">
-                ${tempPassword}
-              </div>
-              <p>Por favor, utiliza esta nueva contraseña para iniciar sesión y cámbiala después de acceder.</p>
-              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #718096; font-size: 0.9em;">
-                <p>Saludos,<br>Equipo de Hotel Nido Sky</p>
-              </div>
-            </div>
-          `,
-        }
-
-        await transporter.sendMail(mailOptions)
-        console.log(`[LOGIN] Correo con nueva contraseña temporal enviado a ${usuario.email}`)
-      } catch (emailError) {
-        console.error("[LOGIN] Error al enviar correo con nueva contraseña temporal:", emailError)
-      }
-
       return res.status(400).json({
-        msg: "Credenciales inválidas. Se ha enviado una nueva contraseña temporal a tu correo electrónico.",
+        msg: "Credenciales inválidas. Por favor, verifica tu correo y contraseña.",
       })
     }
 
@@ -218,7 +165,7 @@ exports.login = async (req, res) => {
         isCliente: isCliente,
         // Añadir información sobre el estado del rol
         rolEliminado: rolEliminado,
-        rolInactivo: rolInactivo
+        rolInactivo: rolInactivo,
       },
     }
 
@@ -282,10 +229,10 @@ exports.forgotPassword = async (req, res) => {
     let rolEliminado = false
     let rolInactivo = false
 
-    if (usuario.rol && typeof usuario.rol === 'string') {
+    if (usuario.rol && typeof usuario.rol === "string") {
       // Buscar el rol en la base de datos
       const rol = await Rol.findOne({ nombre: usuario.rol })
-      
+
       if (!rol) {
         console.log(`[FORGOT PASSWORD] Rol no encontrado para usuario: ${email}`)
         rolEliminado = true
@@ -416,10 +363,10 @@ exports.resetPassword = async (req, res) => {
     }
 
     // Verificar si el rol existe y está activo
-    if (usuario.rol && typeof usuario.rol === 'string') {
+    if (usuario.rol && typeof usuario.rol === "string") {
       // Buscar el rol en la base de datos
       const rol = await Rol.findOne({ nombre: usuario.rol })
-      
+
       if (!rol) {
         return res.status(403).json({ msg: "Tu rol ha sido eliminado. Contacta al administrador." })
       } else if (rol.estado === false) {
@@ -450,10 +397,10 @@ exports.getUsuario = async (req, res) => {
     }
 
     // Verificar si el rol existe y está activo
-    if (usuario.rol && typeof usuario.rol === 'string') {
+    if (usuario.rol && typeof usuario.rol === "string") {
       // Buscar el rol en la base de datos
       const rol = await Rol.findOne({ nombre: usuario.rol })
-      
+
       if (!rol) {
         return res.status(403).json({ msg: "Tu rol ha sido eliminado. Contacta al administrador." })
       } else if (rol.estado === false) {
@@ -530,10 +477,10 @@ exports.verificarEstadoRol = async (req, res) => {
     let rolEliminado = false
     let rolInactivo = false
 
-    if (usuario.rol && typeof usuario.rol === 'string') {
+    if (usuario.rol && typeof usuario.rol === "string") {
       // Buscar el rol en la base de datos
       const rol = await Rol.findOne({ nombre: usuario.rol })
-      
+
       if (!rol) {
         console.log(`[VERIFICAR ROL] Rol no encontrado para usuario: ${usuario.email}`)
         rolEliminado = true
