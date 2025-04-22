@@ -11,10 +11,9 @@ const AcompananteSchema = new mongoose.Schema({
     required: true,
     match: [/^[a-zA-ZÀ-ÿ\s]+$/, "El apellido solo puede contener letras y espacios"],
   },
-  documento: { type: String, required: true },
-  telefono: {
+  numero_documento: {  // Cambiado de 'documento' a 'numero_documento'
     type: String,
-    match: [/^\+?[0-9\s\-$$$$]+$/, "Por favor ingrese un número de teléfono válido"], // Validación más flexible
+    required: true,
   },
 })
 
@@ -78,6 +77,7 @@ const ReservaSchema = new mongoose.Schema(
       required: true,
     },
     acompanantes: { type: [AcompananteSchema], default: [] },
+    numero_acompanantes: { type: Number, default: 0 },
   },
   { timestamps: true },
 )
