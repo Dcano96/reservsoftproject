@@ -71,9 +71,9 @@ import { useHistory } from "react-router-dom"
 import Swal from "sweetalert2"
 import "./landing.styles.css" // Importar estilos CSS
 import { Fade } from "@material-ui/core"
-import { MuiPickersUtilsProvider as LocalizationProvider, DatePicker } from '@material-ui/pickers';
-import DateFnsUtils from '@date-io/date-fns';
-import { es } from 'date-fns/locale';
+import { MuiPickersUtilsProvider as LocalizationProvider, DatePicker } from "@material-ui/pickers"
+import DateFnsUtils from "@date-io/date-fns"
+import { es } from "date-fns/locale"
 
 // Paleta de colores moderna y elegante
 const theme = {
@@ -1541,6 +1541,8 @@ function Landing() {
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0)
   const [apartamentos, setApartamentos] = useState([])
   const [filteredApartamentos, setFilteredApartamentos] = useState([])
+  const [showAllApartments, setShowAllApartments] = useState(false)
+  const [allApartamentos, setAllApartamentos] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [reservationDialogOpen, setReservationDialogOpen] = useState(false)
   const [selectedApartamento, setSelectedApartamento] = useState(null)
@@ -1587,94 +1589,92 @@ function Landing() {
   const contactRef = useRef(null)
 
   // Añadir esta función dentro del componente Landing
-const fetchReservedDates = async (apartamentoId) => {
-  try {
-    console.log("Obteniendo fechas reservadas para el apartamento:", apartamentoId);
-    const response = await axios.get(`/api/reservas/fechas-reservadas/${apartamentoId}`);
-    
-    if (response.data && response.data.fechasReservadas) {
-      // Actualizar el estado con las fechas reservadas para este apartamento
-      setReservedDates(prev => ({
-        ...prev,
-        [apartamentoId]: response.data.fechasReservadas
-      }));
-      return response.data.fechasReservadas;
-    }
-    return [];
-  } catch (error) {
-    console.error("Error al obtener fechas reservadas:", error);
-    // Si hay un error, devolver un array vacío
-    return [];
-  }
-};
+  const fetchReservedDates = async (apartamentoId) => {
+    try {
+      console.log("Obteniendo fechas reservadas para el apartamento:", apartamentoId)
+      const response = await axios.get(`/api/reservas/fechas-reservadas/${apartamentoId}`)
 
-// Añadir esta función dentro del componente Landing
-const isDateReserved = (date) => {
-  if (!selectedApartamento || !reservedDates[selectedApartamento.id]) {
-    return false;
-  }
-
-  const dateStr = typeof date === 'string' ? date : date.toISOString().split('T')[0];
-  
-  // Verificar si la fecha está en el array de fechas reservadas
-  return reservedDates[selectedApartamento.id].some(reservedDate => {
-    // Si la fecha reservada es un objeto con fecha_inicio y fecha_fin
-    if (reservedDate.fecha_inicio && reservedDate.fecha_fin) {
-      const inicio = new Date(reservedDate.fecha_inicio);
-      const fin = new Date(reservedDate.fecha_fin);
-      const checkDate = new Date(dateStr);
-      
-      // Verificar si la fecha está dentro del rango
-      return checkDate >= inicio && checkDate <= fin;
-    }
-    
-    // Si es solo una fecha (string)
-    return reservedDate === dateStr;
-  });
-};
-
-
-
-// Añadir esta función dentro del componente Landing
-const getDisabledDates = () => {
-  if (!selectedApartamento || !reservedDates[selectedApartamento.id]) {
-    return [];
-  }
-
-  const disabledDates = [];
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // Añadir todas las fechas anteriores a hoy
-  const pastDates = [];
-  const tempDate = new Date(today);
-  tempDate.setDate(tempDate.getDate() - 1);
-  while (tempDate.getFullYear() >= today.getFullYear() - 1) {
-    pastDates.push(tempDate.toISOString().split('T')[0]);
-    tempDate.setDate(tempDate.getDate() - 1);
-  }
-  
-  // Añadir fechas reservadas
-  reservedDates[selectedApartamento.id].forEach(reservedDate => {
-    if (reservedDate.fecha_inicio && reservedDate.fecha_fin) {
-      // Si es un rango de fechas
-      const inicio = new Date(reservedDate.fecha_inicio);
-      const fin = new Date(reservedDate.fecha_fin);
-      
-      // Añadir todas las fechas en el rango
-      const currentDate = new Date(inicio);
-      while (currentDate <= fin) {
-        disabledDates.push(currentDate.toISOString().split('T')[0]);
-        currentDate.setDate(currentDate.getDate() + 1);
+      if (response.data && response.data.fechasReservadas) {
+        // Actualizar el estado con las fechas reservadas para este apartamento
+        setReservedDates((prev) => ({
+          ...prev,
+          [apartamentoId]: response.data.fechasReservadas,
+        }))
+        return response.data.fechasReservadas
       }
-    } else {
-      // Si es una fecha individual
-      disabledDates.push(reservedDate);
+      return []
+    } catch (error) {
+      console.error("Error al obtener fechas reservadas:", error)
+      // Si hay un error, devolver un array vacío
+      return []
     }
-  });
+  }
 
-  return [...pastDates, ...disabledDates];
-};
+  // Añadir esta función dentro del componente Landing
+  const isDateReserved = (date) => {
+    if (!selectedApartamento || !reservedDates[selectedApartamento.id]) {
+      return false
+    }
+
+    const dateStr = typeof date === "string" ? date : date.toISOString().split("T")[0]
+
+    // Verificar si la fecha está en el array de fechas reservadas
+    return reservedDates[selectedApartamento.id].some((reservedDate) => {
+      // Si la fecha reservada es un objeto con fecha_inicio y fecha_fin
+      if (reservedDate.fecha_inicio && reservedDate.fecha_fin) {
+        const inicio = new Date(reservedDate.fecha_inicio)
+        const fin = new Date(reservedDate.fecha_fin)
+        const checkDate = new Date(dateStr)
+
+        // Verificar si la fecha está dentro del rango
+        return checkDate >= inicio && checkDate <= fin
+      }
+
+      // Si es solo una fecha (string)
+      return reservedDate === dateStr
+    })
+  }
+
+  // Añadir esta función dentro del componente Landing
+  const getDisabledDates = () => {
+    if (!selectedApartamento || !reservedDates[selectedApartamento.id]) {
+      return []
+    }
+
+    const disabledDates = []
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    // Añadir todas las fechas anteriores a hoy
+    const pastDates = []
+    const tempDate = new Date(today)
+    tempDate.setDate(tempDate.getDate() - 1)
+    while (tempDate.getFullYear() >= today.getFullYear() - 1) {
+      pastDates.push(tempDate.toISOString().split("T")[0])
+      tempDate.setDate(tempDate.getDate() - 1)
+    }
+
+    // Añadir fechas reservadas
+    reservedDates[selectedApartamento.id].forEach((reservedDate) => {
+      if (reservedDate.fecha_inicio && reservedDate.fecha_fin) {
+        // Si es un rango de fechas
+        const inicio = new Date(reservedDate.fecha_inicio)
+        const fin = new Date(reservedDate.fecha_fin)
+
+        // Añadir todas las fechas en el rango
+        const currentDate = new Date(inicio)
+        while (currentDate <= fin) {
+          disabledDates.push(currentDate.toISOString().split("T")[0])
+          currentDate.setDate(currentDate.getDate() + 1)
+        }
+      } else {
+        // Si es una fecha individual
+        disabledDates.push(reservedDate)
+      }
+    })
+
+    return [...pastDates, ...disabledDates]
+  }
   // Efectos
   useEffect(() => {
     // Cargar apartamentos desde la API o usar datos de ejemplo
@@ -1688,7 +1688,9 @@ const getDisabledDates = () => {
           console.log("Respuesta de la API de landing:", response.data)
 
           if (response.data && response.data.length > 0) {
-            // Limitar a 6 apartamentos
+            // Guardar todos los apartamentos
+            setAllApartamentos(response.data)
+            // Limitar a 6 apartamentos para la vista inicial
             const limitedApartamentos = response.data.slice(0, 6)
             setApartamentos(limitedApartamentos)
             setFilteredApartamentos(limitedApartamentos)
@@ -1737,7 +1739,9 @@ const getDisabledDates = () => {
               }
             })
 
-            // Limitar a 6 apartamentos
+            // Guardar todos los apartamentos
+            setAllApartamentos(apartamentosFormateados)
+            // Limitar a 6 apartamentos para la vista inicial
             const limitedApartamentos = apartamentosFormateados.slice(0, 6)
             setApartamentos(limitedApartamentos)
             setFilteredApartamentos(limitedApartamentos)
@@ -1750,14 +1754,15 @@ const getDisabledDates = () => {
 
         // Si llegamos aquí, usar datos de ejemplo
         console.log("Usando datos de ejemplo para apartamentos")
-        setApartamentos(apartamentosEjemplo)
-        setFilteredApartamentos(apartamentosEjemplo)
+        setAllApartamentos(apartamentosEjemplo)
+        setApartamentos(apartamentosEjemplo.slice(0, 6))
+        setFilteredApartamentos(apartamentosEjemplo.slice(0, 6))
       } catch (error) {
         console.error("Error al cargar apartamentos:", error)
         console.log("Usando datos de ejemplo debido al error")
         // Si hay error, usar los datos de ejemplo
-        setApartamentos(apartamentosEjemplo)
-        setFilteredApartamentos(apartamentosEjemplo)
+        setApartamentos(apartamentosEjemplo.slice(0, 6))
+        setFilteredApartamentos(apartamentosEjemplo.slice(0, 6))
       }
     }
 
@@ -1810,23 +1815,24 @@ const getDisabledDates = () => {
 
   // Efecto para filtrar apartamentos cuando cambia el término de búsqueda
   useEffect(() => {
-    let filtered = [...apartamentos]
+    // Usar allApartamentos o apartamentos según el estado de showAllApartments
+    const baseApartamentos = [...apartamentos]
 
     // Filtrar por término de búsqueda
     if (searchTerm) {
       const term = searchTerm.toLowerCase()
-      filtered = filtered.filter(
+      const filtered = baseApartamentos.filter(
         (apt) =>
           apt.nombre.toLowerCase().includes(term) ||
           apt.tipo.toLowerCase().includes(term) ||
           apt.caracteristicas?.some((c) => c.toLowerCase().includes(term)),
       )
+      setFilteredApartamentos(filtered)
+    } else {
+      setFilteredApartamentos(baseApartamentos)
     }
-
-    setFilteredApartamentos(filtered)
   }, [searchTerm, apartamentos])
 
-  // Manejadores de eventos
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen)
   }
@@ -1841,6 +1847,38 @@ const getDisabledDates = () => {
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value)
+  }
+
+  const toggleShowAllApartments = () => {
+    if (showAllApartments) {
+      // Si ya estamos mostrando todos, volver a mostrar solo 6
+      const limitedApartamentos = allApartamentos.slice(0, 6)
+      setApartamentos(limitedApartamentos)
+      setFilteredApartamentos(
+        searchTerm
+          ? limitedApartamentos.filter(
+              (apt) =>
+                apt.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                apt.tipo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                apt.caracteristicas?.some((c) => c.toLowerCase().includes(searchTerm.toLowerCase())),
+            )
+          : limitedApartamentos,
+      )
+    } else {
+      // Si estamos mostrando solo 6, mostrar todos
+      setApartamentos(allApartamentos)
+      setFilteredApartamentos(
+        searchTerm
+          ? allApartamentos.filter(
+              (apt) =>
+                apt.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                apt.tipo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                apt.caracteristicas?.some((c) => c.toLowerCase().includes(searchTerm.toLowerCase())),
+            )
+          : allApartamentos,
+      )
+    }
+    setShowAllApartments(!showAllApartments)
   }
 
   const handleReservationOpen = async (apartamento) => {
@@ -1877,13 +1915,13 @@ const getDisabledDates = () => {
     })
 
     // Resetear el comprobante de pago
-    setComprobantePago(null);
-    setComprobantePreview("");
+    setComprobantePago(null)
+    setComprobantePreview("")
 
     // Obtener fechas reservadas para este apartamento
-  if (apartamento && apartamento.id) {
-    await fetchReservedDates(apartamento.id);
-  }
+    if (apartamento && apartamento.id) {
+      await fetchReservedDates(apartamento.id)
+    }
   }
 
   const handleReservationClose = () => {
@@ -1893,19 +1931,19 @@ const getDisabledDates = () => {
   // Agregar/eliminar acompañantes
   const handleAddAcompanante = () => {
     // Verificar si ya se alcanzó el límite de capacidad
-  if (selectedApartamento && reservationForm.acompanantes.length >= selectedApartamento.capacidad - 1) {
-    Swal.fire({
-      title: "Límite de capacidad",
-      text: `Este apartamento tiene capacidad máxima para ${selectedApartamento.capacidad} personas (incluido el titular).`,
-      icon: "warning",
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true,
-    })
-    return
-  }
+    if (selectedApartamento && reservationForm.acompanantes.length >= selectedApartamento.capacidad - 1) {
+      Swal.fire({
+        title: "Límite de capacidad",
+        text: `Este apartamento tiene capacidad máxima para ${selectedApartamento.capacidad} personas (incluido el titular).`,
+        icon: "warning",
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      })
+      return
+    }
     const newAcompanante = {
       nombre: "",
       apellido: "",
@@ -2037,8 +2075,8 @@ const getDisabledDates = () => {
   }
 
   const handleReservationFormChange = (event) => {
-    const { name, value } = event.target;
-  
+    const { name, value } = event.target
+
     // Verificar si la fecha seleccionada está reservada
     if ((name === "fecha_inicio" || name === "fecha_fin") && isDateReserved(value)) {
       Swal.fire({
@@ -2050,8 +2088,8 @@ const getDisabledDates = () => {
         showConfirmButton: false,
         timer: 3000,
         timerProgressBar: true,
-      });
-      return; // No actualizar el estado si la fecha está reservada
+      })
+      return // No actualizar el estado si la fecha está reservada
     }
 
     // Actualizar el valor del campo
@@ -2076,30 +2114,27 @@ const getDisabledDates = () => {
       }
     }
 
-    // Solo validar el email al enviar el formulario, no mientras se escribe
-    if (name !== "email") {
-      // Validar el campo en tiempo real
-      const error = validateField(name, value)
+    // Validar el campo en tiempo real
+    const error = validateField(name, value)
 
-      // Actualizar errores
-      setFormErrors({
-        ...formErrors,
-        [name]: error,
+    // Actualizar errores
+    setFormErrors({
+      ...formErrors,
+      [name]: error,
+    })
+
+    // Mostrar alerta SweetAlert2 solo para campos de fecha
+    if (error && (name === "fecha_inicio" || name === "fecha_fin")) {
+      Swal.fire({
+        title: "Error de validación",
+        text: error,
+        icon: "error",
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
       })
-
-      // Mostrar alerta SweetAlert2 si hay error
-      if (error) {
-        Swal.fire({
-          title: "Error de validación",
-          text: error,
-          icon: "error",
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true,
-        })
-      }
     }
   }
 
@@ -2525,7 +2560,7 @@ const getDisabledDates = () => {
               type="date"
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              inputProps={{ min: new Date().toISOString().split('T')[0] }}
+              inputProps={{ min: new Date().toISOString().split("T")[0] }}
               value={reservationForm.fecha_inicio}
               onChange={(e) => {
                 const today = new Date().toISOString().split("T")[0]
@@ -2554,7 +2589,7 @@ const getDisabledDates = () => {
               type="date"
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              inputProps={{ min: reservationForm.fecha_inicio || new Date().toISOString().split('T')[0] }}
+              inputProps={{ min: reservationForm.fecha_inicio || new Date().toISOString().split("T")[0] }}
               value={reservationForm.fecha_fin}
               onChange={(e) => {
                 const entryDate = reservationForm.fecha_inicio
@@ -2589,19 +2624,19 @@ const getDisabledDates = () => {
                 if (numHuespedes < 0) return
 
                 // Verificar si excede la capacidad máxima
-    if (selectedApartamento && numHuespedes > selectedApartamento.capacidad - 1) {
-      Swal.fire({
-        title: "Límite de capacidad",
-        text: `Este apartamento tiene capacidad máxima para ${selectedApartamento.capacidad} personas (incluido el titular).`,
-        icon: "warning",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-      })
-      return
-    }
+                if (selectedApartamento && numHuespedes > selectedApartamento.capacidad - 1) {
+                  Swal.fire({
+                    title: "Límite de capacidad",
+                    text: `Este apartamento tiene capacidad máxima para ${selectedApartamento.capacidad} personas (incluido el titular).`,
+                    icon: "warning",
+                    toast: true,
+                    position: "top-end",
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                  })
+                  return
+                }
 
                 // Ajustar la lista de acompañantes según el número de huéspedes
                 let nuevosAcompanantes = [...reservationForm.acompanantes]
@@ -2658,6 +2693,17 @@ const getDisabledDates = () => {
                 startAdornment: <Search style={{ color: "#0A2463", marginRight: 8 }} />,
               }}
             />
+            <Button
+              variant="contained"
+              style={{
+                backgroundColor: "#0A2463",
+                color: "#FFFAFF",
+                marginLeft: "10px",
+              }}
+              onClick={toggleShowAllApartments}
+            >
+              {showAllApartments ? "Mostrar 6 apartamentos" : "Ver todos los apartamentos"}
+            </Button>
           </div>
 
           {/* Grid de apartamentos */}
@@ -3148,7 +3194,14 @@ const getDisabledDates = () => {
               variant="outlined"
               fullWidth
               required
-              helperText={formErrors.documento || "Ingrese su número de documento"}
+              inputProps={{
+                maxLength: 12,
+                pattern: "[0-9]*",
+                onInput: (e) => {
+                  e.target.value = e.target.value.replace(/[^0-9]/g, "")
+                },
+              }}
+              helperText={formErrors.documento || "Solo números, 6-12 dígitos"}
               error={!!formErrors.documento}
             />
 
@@ -3156,12 +3209,23 @@ const getDisabledDates = () => {
               label="Nombre completo del titular"
               name="titular_reserva"
               value={reservationForm.titular_reserva}
-              onChange={handleReservationFormChange}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^A-Za-zÁáÉéÍíÓóÚúÑñ\s]/g, "")
+                const event = {
+                  target: {
+                    name: "titular_reserva",
+                    value: value,
+                  },
+                }
+                handleReservationFormChange(event)
+              }}
               className={classes.reservationField}
               variant="outlined"
               fullWidth
               required
-              inputProps={{ maxLength: 60, pattern: "[A-Za-zÁáÉéÍíÓóÚúÑñs]+" }}
+              inputProps={{
+                maxLength: 60,
+              }}
               helperText={formErrors.titular_reserva || "Solo letras, máximo 60 caracteres"}
               error={!!formErrors.titular_reserva}
             />
@@ -3184,12 +3248,24 @@ const getDisabledDates = () => {
               label="Teléfono"
               name="telefono"
               value={reservationForm.telefono}
-              onChange={handleReservationFormChange}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9+]/g, "")
+                const event = {
+                  target: {
+                    name: "telefono",
+                    value: value,
+                  },
+                }
+                handleReservationFormChange(event)
+              }}
               className={classes.reservationField}
               variant="outlined"
               fullWidth
               required
-              helperText={formErrors.telefono || "Formato: +573001234567"}
+              inputProps={{
+                maxLength: 15,
+              }}
+              helperText={formErrors.telefono || "Solo números y +, 8-15 dígitos"}
               error={!!formErrors.telefono}
             />
 
@@ -3200,86 +3276,88 @@ const getDisabledDates = () => {
 
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-              <LocalizationProvider utils={DateFnsUtils} locale={es}>
-  <DatePicker
-    label="Fecha de inicio"
-    value={reservationForm.fecha_inicio ? new Date(reservationForm.fecha_inicio) : null}
-    onChange={(newValue) => {
-      if (newValue) {
-        const formattedDate = newValue.toISOString().split('T')[0];
-        // Usar el mismo manejador de eventos que ya tienes
-        const event = {
-          target: {
-            name: "fecha_inicio",
-            value: formattedDate
-          }
-        };
-        handleReservationFormChange(event);
-      }
-    }}
-    className={classes.reservationField}
-    slotProps={{
-      textField: {
-        variant: "outlined",
-        fullWidth: true,
-        required: true,
-        error: !!formErrors.fecha_inicio,
-        helperText: formErrors.fecha_inicio || "Seleccione una fecha disponible"
-      }
-    }}
-    shouldDisableDate={(date) => {
-      // Deshabilitar fechas anteriores a hoy
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (date < today) return true;
-      
-      // Deshabilitar fechas reservadas
-      return isDateReserved(date);
-    }}
-    disablePast
-  />
-</LocalizationProvider>
+                <LocalizationProvider utils={DateFnsUtils} locale={es}>
+                  <DatePicker
+                    label="Fecha de inicio"
+                    value={reservationForm.fecha_inicio ? new Date(reservationForm.fecha_inicio) : null}
+                    onChange={(newValue) => {
+                      if (newValue) {
+                        const formattedDate = newValue.toISOString().split("T")[0]
+                        // Usar el mismo manejador de eventos que ya tienes
+                        const event = {
+                          target: {
+                            name: "fecha_inicio",
+                            value: formattedDate,
+                          },
+                        }
+                        handleReservationFormChange(event)
+                      }
+                    }}
+                    className={classes.reservationField}
+                    slotProps={{
+                      textField: {
+                        variant: "outlined",
+                        fullWidth: true,
+                        required: true,
+                        error: !!formErrors.fecha_inicio,
+                        helperText: formErrors.fecha_inicio || "Seleccione una fecha disponible",
+                      },
+                    }}
+                    shouldDisableDate={(date) => {
+                      // Deshabilitar fechas anteriores a hoy
+                      const today = new Date()
+                      today.setHours(0, 0, 0, 0)
+                      if (date < today) return true
+
+                      // Deshabilitar fechas reservadas
+                      return isDateReserved(date)
+                    }}
+                    disablePast
+                  />
+                </LocalizationProvider>
               </Grid>
               <Grid item xs={12} sm={6}>
-              <LocalizationProvider utils={DateFnsUtils} locale={es}>
-  <DatePicker
-    label="Fecha de fin"
-    value={reservationForm.fecha_fin ? new Date(reservationForm.fecha_fin) : null}
-    onChange={(newValue) => {
-      if (newValue) {
-        const formattedDate = newValue.toISOString().split('T')[0];
-        // Usar el mismo manejador de eventos que ya tienes
-        const event = {
-          target: {
-            name: "fecha_fin",
-            value: formattedDate
-          }
-        };
-        handleReservationFormChange(event);
-      }
-    }}
-    className={classes.reservationField}
-    slotProps={{
-      textField: {
-        variant: "outlined",
-        fullWidth: true,
-        required: true,
-        error: !!formErrors.fecha_fin,
-        helperText: formErrors.fecha_fin || "Seleccione una fecha de salida"
-      }
-    }}
-    shouldDisableDate={(date) => {
-      // Deshabilitar fechas anteriores a la fecha de inicio
-      const startDate = reservationForm.fecha_inicio ? new Date(reservationForm.fecha_inicio) : new Date();
-      startDate.setHours(0, 0, 0, 0);
-      if (date < startDate) return true;
-      
-      // Deshabilitar fechas reservadas
-      return isDateReserved(date);
-    }}
-    minDate={reservationForm.fecha_inicio ? new Date(reservationForm.fecha_inicio) : new Date()}
-  />
-</LocalizationProvider>
+                <LocalizationProvider utils={DateFnsUtils} locale={es}>
+                  <DatePicker
+                    label="Fecha de fin"
+                    value={reservationForm.fecha_fin ? new Date(reservationForm.fecha_fin) : null}
+                    onChange={(newValue) => {
+                      if (newValue) {
+                        const formattedDate = newValue.toISOString().split("T")[0]
+                        // Usar el mismo manejador de eventos que ya tienes
+                        const event = {
+                          target: {
+                            name: "fecha_fin",
+                            value: formattedDate,
+                          },
+                        }
+                        handleReservationFormChange(event)
+                      }
+                    }}
+                    className={classes.reservationField}
+                    slotProps={{
+                      textField: {
+                        variant: "outlined",
+                        fullWidth: true,
+                        required: true,
+                        error: !!formErrors.fecha_fin,
+                        helperText: formErrors.fecha_fin || "Seleccione una fecha de salida",
+                      },
+                    }}
+                    shouldDisableDate={(date) => {
+                      // Deshabilitar fechas anteriores a la fecha de inicio
+                      const startDate = reservationForm.fecha_inicio
+                        ? new Date(reservationForm.fecha_inicio)
+                        : new Date()
+                      startDate.setHours(0, 0, 0, 0)
+                      if (date < startDate) return true
+
+                      // Deshabilitar fechas reservadas
+                      return isDateReserved(date)
+                    }}
+                    minDate={reservationForm.fecha_inicio ? new Date(reservationForm.fecha_inicio) : new Date()}
+                  />
+                </LocalizationProvider>
               </Grid>
             </Grid>
 
@@ -3333,74 +3411,78 @@ const getDisabledDates = () => {
             </Grid>
 
             {/* Sección para subir comprobante de pago - MODIFICAR ESTA PARTE */}
-<div className={classes.uploadSection}>
-  <Typography variant="h6" className={classes.uploadTitle}>
-    <CloudUpload /> Comprobante de Pago
-  </Typography>
+            <div className={classes.uploadSection}>
+              <Typography variant="h6" className={classes.uploadTitle}>
+                <CloudUpload /> Comprobante de Pago
+              </Typography>
 
-  {/* Contenedor flex horizontal para poner la info y el botón lado a lado */}
-  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-    {/* Información de pago a la izquierda */}
-    <div className={classes.paymentInfo} style={{ flex: 1 }}>
-      <Typography variant="subtitle1" className={classes.paymentInfoTitle}>
-        <InfoOutlined /> Información de Pago
-      </Typography>
-      <Typography variant="body2" className={classes.paymentInfoText}>
-        Para confirmar su reserva, debe realizar un pago del 50% del valor total.
-      </Typography>
-      <Typography variant="body2" className={classes.paymentInfoText}>
-        <strong>Banco:</strong> Bancolombia
-      </Typography>
-      <Typography variant="body2" className={classes.paymentInfoText}>
-        <strong>Cuenta:</strong> 123-456789-00
-      </Typography>
-      <Typography variant="body2" className={classes.paymentInfoText}>
-        <strong>Titular:</strong> Nido Sky S.A.S.
-      </Typography>
-      <Typography variant="body2" className={classes.paymentInfoText}>
-        <strong>NIT:</strong> 900.123.456-7
-      </Typography>
-    </div>
-    
-    {/* Botón y vista previa a la derecha */}
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '200px' }}>
-      <input
-        type="file"
-        accept="image/*,.pdf"
-        className={classes.fileInput}
-        ref={fileInputRef}
-        onChange={handleComprobanteChange}
-      />
+              {/* Contenedor flex horizontal para poner la info y el botón lado a lado */}
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
+                {/* Información de pago a la izquierda */}
+                <div className={classes.paymentInfo} style={{ flex: 1 }}>
+                  <Typography variant="subtitle1" className={classes.paymentInfoTitle}>
+                    <InfoOutlined /> Información de Pago
+                  </Typography>
+                  <Typography variant="body2" className={classes.paymentInfoText}>
+                    Para confirmar su reserva, debe realizar un pago del 50% del valor total.
+                  </Typography>
+                  <Typography variant="body2" className={classes.paymentInfoText}>
+                    <strong>Banco:</strong> Bancolombia
+                  </Typography>
+                  <Typography variant="body2" className={classes.paymentInfoText}>
+                    <strong>Cuenta:</strong> 123-456789-00
+                  </Typography>
+                  <Typography variant="body2" className={classes.paymentInfoText}>
+                    <strong>Titular:</strong> Nido Sky S.A.S.
+                  </Typography>
+                  <Typography variant="body2" className={classes.paymentInfoText}>
+                    <strong>NIT:</strong> 900.123.456-7
+                  </Typography>
+                </div>
 
-      <Button
-        variant="contained"
-        className={classes.uploadButton}
-        onClick={handleUploadClick}
-        startIcon={<CloudUpload />}
-      >
-        Subir Comprobante
-      </Button>
+                {/* Botón y vista previa a la derecha */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: "200px" }}>
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    className={classes.fileInput}
+                    ref={fileInputRef}
+                    onChange={handleComprobanteChange}
+                  />
 
-      {comprobantePago && (
-        <Box mt={2} display="flex" flexDirection="column" alignItems="center">
-          {comprobantePreview && comprobantePago.type.includes("image") ? (
-            <img
-              src={comprobantePreview || "/placeholder.svg"}
-              alt="Vista previa"
-              className={classes.filePreview}
-              style={{ maxHeight: 100, maxWidth: '100%' }}
-            />
-          ) : (
-            <Description style={{ fontSize: 40, color: "#0A2463" }} />
-          )}
-          <Typography variant="body2" className={classes.fileName} style={{ textAlign: 'center', wordBreak: 'break-word' }}>
-            {comprobantePago.name}
-          </Typography>
-        </Box>
-      )}
-    </div>
-  </div>
-</div>
+                  <Button
+                    variant="contained"
+                    className={classes.uploadButton}
+                    onClick={handleUploadClick}
+                    startIcon={<CloudUpload />}
+                  >
+                    Subir Comprobante
+                  </Button>
+
+                  {comprobantePago && (
+                    <Box mt={2} display="flex" flexDirection="column" alignItems="center">
+                      {comprobantePreview && comprobantePago.type.includes("image") ? (
+                        <img
+                          src={comprobantePreview || "/placeholder.svg"}
+                          alt="Vista previa"
+                          className={classes.filePreview}
+                          style={{ maxHeight: 100, maxWidth: "100%" }}
+                        />
+                      ) : (
+                        <Description style={{ fontSize: 40, color: "#0A2463" }} />
+                      )}
+                      <Typography
+                        variant="body2"
+                        className={classes.fileName}
+                        style={{ textAlign: "center", wordBreak: "break-word" }}
+                      >
+                        {comprobantePago.name}
+                      </Typography>
+                    </Box>
+                  )}
+                </div>
+              </div>
+            </div>
 
             {/* Sección de acompañantes */}
             <div className={classes.acompanantesSection}>
@@ -3409,10 +3491,11 @@ const getDisabledDates = () => {
               </Typography>
 
               {/* Añadir mensaje informativo sobre capacidad */}
-  <Typography variant="body2" style={{ marginBottom: 16, color: "#8D99AE" }}>
-    Este apartamento tiene capacidad para {selectedApartamento?.capacidad || 0} personas en total (incluido el titular).
-    Puede agregar hasta {selectedApartamento ? selectedApartamento.capacidad - 1 : 0} acompañantes.
-  </Typography>
+              <Typography variant="body2" style={{ marginBottom: 16, color: "#8D99AE" }}>
+                Este apartamento tiene capacidad para {selectedApartamento?.capacidad || 0} personas en total (incluido
+                el titular). Puede agregar hasta {selectedApartamento ? selectedApartamento.capacidad - 1 : 0}{" "}
+                acompañantes.
+              </Typography>
 
               {reservationForm.acompanantes.map((acompanante, index) => (
                 <div key={index} className={classes.acompananteItem}>
@@ -3429,47 +3512,59 @@ const getDisabledDates = () => {
                   </Typography>
 
                   <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
+                    <Grid item xs={12} sm={4}>
                       <TextField
                         label="Nombre"
                         value={acompanante.nombre}
-                        onChange={(e) => handleAcompananteChange(index, "nombre", e.target.value)}
-                        className={classes.reservationField}
-                        variant="outlined"
-                        fullWidth
-                        required
-                        inputProps={{
-                          maxLength: 60,
-                          pattern: "[A-Za-zÁáÉéÍíÓóÚúÑñs]+",
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^A-Za-zÁáÉéÍíÓóÚúÑñ\s]/g, "")
+                          handleAcompananteChange(index, "nombre", value)
                         }}
-                        helperText="Solo letras, máximo 60 caracteres"
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        label="Apellido"
-                        value={acompanante.apellido}
-                        onChange={(e) => handleAcompananteChange(index, "apellido", e.target.value)}
                         className={classes.reservationField}
                         variant="outlined"
                         fullWidth
                         required
                         inputProps={{
                           maxLength: 60,
-                          pattern: "[A-Za-zÁáÉéÍíÓóÚúÑñs]+",
                         }}
                         helperText="Solo letras, máximo 60 caracteres"
                       />
                     </Grid>
                     <Grid item xs={12} sm={4}>
                       <TextField
-                        label="Número de documento"
-                        value={acompanante.documento_acompanante || ""} // Cambiar a "numero_documento"
-                        onChange={(e) => handleAcompananteChange(index, "documento_acompanante", e.target.value)} // Cambiar a "numero_documento"
+                        label="Apellido"
+                        value={acompanante.apellido}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^A-Za-zÁáÉéÍíÓóÚúÑñ\s]/g, "")
+                          handleAcompananteChange(index, "apellido", value)
+                        }}
                         className={classes.reservationField}
                         variant="outlined"
                         fullWidth
                         required
+                        inputProps={{
+                          maxLength: 60,
+                        }}
+                        helperText="Solo letras, máximo 60 caracteres"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                      <TextField
+                        label="Documento"
+                        value={acompanante.documento_acompanante || ""}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9]/g, "")
+                          handleAcompananteChange(index, "documento_acompanante", value)
+                        }}
+                        className={classes.reservationField}
+                        variant="outlined"
+                        fullWidth
+                        required
+                        inputProps={{
+                          maxLength: 12,
+                          pattern: "[0-9]*",
+                        }}
+                        helperText="Solo números, máximo 12 dígitos"
                       />
                     </Grid>
                   </Grid>
@@ -3481,7 +3576,9 @@ const getDisabledDates = () => {
                 startIcon={<Add />}
                 className={classes.addAcompananteButton}
                 onClick={handleAddAcompanante}
-                disabled={selectedApartamento && reservationForm.acompanantes.length >= selectedApartamento.capacidad - 1}
+                disabled={
+                  selectedApartamento && reservationForm.acompanantes.length >= selectedApartamento.capacidad - 1
+                }
               >
                 Agregar acompañante
               </Button>
