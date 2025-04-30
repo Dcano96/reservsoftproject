@@ -406,7 +406,7 @@ const PagosList = () => {
   const [selectedReservaData, setSelectedReservaData] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [rowsPerPage, setRowsPerPage] = useState(5)
   // Estados para validación de formulario
   const [formErrors, setFormErrors] = useState({
     fecha: "",
@@ -414,6 +414,8 @@ const PagosList = () => {
     estado: "",
   })
   const [isFormValid, setIsFormValid] = useState(false)
+  // Estado para controlar si se debe validar el formulario
+  const [shouldValidate, setShouldValidate] = useState(false)
 
   // Función para formatear a moneda COP
   const formatCOP = (value) => {
@@ -482,6 +484,9 @@ const PagosList = () => {
   }, [formData, selectedReservaData, editingId])
 
   const handleOpen = (pago) => {
+    // Activar validación cuando se abre el formulario para crear/editar
+    setShouldValidate(true)
+
     setFormErrors({
       fecha: "",
       reserva: "",
@@ -492,7 +497,7 @@ const PagosList = () => {
       setFormData({
         fecha: pago.fecha ? new Date(pago.fecha).toISOString().split("T")[0] : "",
         reserva: pago.reserva ? pago.reserva._id || pago.reserva : "",
-        estado: pago.estado,
+        estado: pago.estado || "pendiente",
       })
       setEditingId(pago._id)
       setSelectedReservaData(pago.reserva)
@@ -511,12 +516,31 @@ const PagosList = () => {
   }
 
   const handleClose = () => {
+    // Desactivar validación al cerrar el formulario
+    setShouldValidate(false)
+
+    // Cerrar cualquier SweetAlert2 que pueda estar abierto
+    Swal.close()
+
+    // Cerrar el modal
     setOpen(false)
-    setFormErrors({
-      fecha: "",
-      reserva: "",
-      estado: "",
-    })
+
+    // Limpiar estados después de un breve retraso para evitar problemas de renderizado
+    setTimeout(() => {
+      setFormErrors({
+        fecha: "",
+        reserva: "",
+        estado: "",
+      })
+      setFormData({
+        fecha: "",
+        reserva: "",
+        estado: "pendiente",
+      })
+      setEditingId(null)
+      setSelectedReservaData(null)
+      setIsFormValid(false)
+    }, 100)
   }
 
   const handleDetails = (pago) => {
@@ -524,7 +548,15 @@ const PagosList = () => {
     setDetailsOpen(true)
   }
 
-  const handleCloseDetails = () => setDetailsOpen(false)
+  const handleCloseDetails = () => {
+    // Cerrar el modal de detalles
+    setDetailsOpen(false)
+
+    // Limpiar el estado después de un breve retraso
+    setTimeout(() => {
+      setSelectedPago(null)
+    }, 100)
+  }
 
   // Manejar cambios en el formulario
   const handleChange = (e) => {
@@ -537,10 +569,17 @@ const PagosList = () => {
     } else {
       setFormData({ ...formData, [name]: value })
     }
-    validateField(name, value)
+
+    // Solo validar si shouldValidate es true
+    if (shouldValidate) {
+      validateField(name, value)
+    }
   }
 
   const validateField = (name, value) => {
+    // Si no se debe validar, retornar true sin hacer nada
+    if (!shouldValidate) return true
+
     let errorMessage = ""
     switch (name) {
       case "fecha":
@@ -561,11 +600,15 @@ const PagosList = () => {
       default:
         break
     }
+
     setFormErrors((prev) => ({
       ...prev,
       [name]: errorMessage,
     }))
-    if (errorMessage) {
+
+    // Solo mostrar SweetAlert si hay un error y shouldValidate es true
+    if (errorMessage && shouldValidate) {
+      // Usar toast para mensajes menos intrusivos
       Swal.fire({
         icon: "warning",
         title: "Validación",
@@ -578,48 +621,49 @@ const PagosList = () => {
         timerProgressBar: true,
       })
     }
+
+    // Validar el formulario completo
     setTimeout(() => {
       validateForm({
         ...formData,
         [name]: value,
       })
     }, 0)
+
     return !errorMessage
   }
 
   const handleFieldBlur = (e) => {
+    // Si no se debe validar, no hacer nada
+    if (!shouldValidate) return
+
     const { name, value } = e.target
-    const isValid = validateField(name, value)
-    if (!isValid) {
-      setTimeout(() => {
-        e.target.focus()
-      }, 100)
-    }
+    validateField(name, value)
   }
 
   const handleKeyDown = (e, nextFieldName) => {
+    // Si no se debe validar, no hacer nada
+    if (!shouldValidate) return
+
     if (e.key === "Tab") {
       const { name, value } = e.target
-      const isValid = validateField(name, value)
-      if (!isValid) {
-        e.preventDefault()
-        Swal.fire({
-          icon: "error",
-          title: "Campo inválido",
-          text: formErrors[name] || "Por favor, complete correctamente este campo antes de continuar",
-          confirmButtonColor: "#2563eb",
-        })
-      }
+      validateField(name, value)
     }
   }
 
   const validateForm = (data) => {
+    // Si no se debe validar, no hacer nada
+    if (!shouldValidate) return
+
     const isValid = data.fecha.trim() !== "" && data.reserva.trim() !== "" && data.estado.trim() !== ""
     setIsFormValid(isValid)
   }
 
   // Guardar (crear o actualizar) y actualizar el estado local de pagos de forma optimista
   const handleSubmit = async () => {
+    // Activar validación para el envío del formulario
+    setShouldValidate(true)
+
     const tempErrors = {}
     if (!formData.fecha.trim()) {
       tempErrors.fecha = "La fecha es obligatoria"
@@ -630,6 +674,7 @@ const PagosList = () => {
     if (!formData.estado.trim()) {
       tempErrors.estado = "El estado es obligatorio"
     }
+
     if (Object.keys(tempErrors).length > 0) {
       setFormErrors(tempErrors)
       const firstError = Object.values(tempErrors)[0]
@@ -641,6 +686,7 @@ const PagosList = () => {
       })
       return
     }
+
     try {
       if (editingId) {
         const updatedPago = await pagoService.updatePago(editingId, formData)
@@ -851,272 +897,278 @@ const PagosList = () => {
       />
 
       {/* Modal para crear/editar pago - Diseño actualizado */}
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" classes={{ paper: classes.dialogPaper }}>
-        <DialogTitle className={classes.dialogTitle}>
-          {editingId ? "Editar Pago" : "Agregar Pago"}
-          <IconButton onClick={handleClose} className={classes.closeButton}>
-            <X size={20} />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent className={classes.dialogContent}>
-          {/* Sección de Información del Pago */}
-          <Box className={classes.formSection}>
-            <Typography className={classes.sectionTitle}>
-              <Payment />
-              Información del Pago
-            </Typography>
-            <TextField
-              className={classes.formField}
-              margin="dense"
-              label="Fecha"
-              name="fecha"
-              value={formData.fecha}
-              onChange={handleChange}
-              onBlur={handleFieldBlur}
-              onKeyDown={(e) => handleKeyDown(e, "reserva")}
-              fullWidth
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              variant="outlined"
-              error={!!formErrors.fecha}
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <CalendarToday className={classes.fieldIcon} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Box>
+      {open && (
+        <Dialog
+          open={open}
+          onClose={handleClose}
+          fullWidth
+          maxWidth="sm"
+          classes={{ paper: classes.dialogPaper }}
+          disableBackdropClick
+          disableEscapeKeyDown
+        >
+          <DialogTitle className={classes.dialogTitle}>
+            {editingId ? "Editar Pago" : "Agregar Pago"}
+            <IconButton onClick={handleClose} className={classes.closeButton}>
+              <X size={20} />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent className={classes.dialogContent}>
+            {/* Sección de Información del Pago */}
+            <Box className={classes.formSection}>
+              <Typography className={classes.sectionTitle}>
+                <Payment />
+                Información del Pago
+              </Typography>
+              <TextField
+                className={classes.formField}
+                margin="dense"
+                label="Fecha"
+                name="fecha"
+                value={formData.fecha}
+                onChange={handleChange}
+                onBlur={handleFieldBlur}
+                onKeyDown={(e) => handleKeyDown(e, "reserva")}
+                fullWidth
+                type="date"
+                InputLabelProps={{ shrink: true }}
+                variant="outlined"
+                error={!!formErrors.fecha}
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <CalendarToday className={classes.fieldIcon} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Box>
 
-          {/* Sección de Reserva */}
-          <Box className={classes.formSection}>
-            <Typography className={classes.sectionTitle}>
-              <EventNote />
-              Detalles de la Reserva
-            </Typography>
-            <TextField
-              className={classes.formField}
-              select
-              margin="dense"
-              label="Reserva"
-              name="reserva"
-              value={formData.reserva}
-              onChange={handleChange}
-              onBlur={handleFieldBlur}
-              onKeyDown={(e) => handleKeyDown(e, "estado")}
-              fullWidth
-              variant="outlined"
-              error={!!formErrors.reserva}
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Receipt className={classes.fieldIcon} />
-                  </InputAdornment>
-                ),
-              }}
-            >
-              {reservas.length > 0 ? (
-                reservas.map((reserva) => (
-                  <MenuItem key={reserva._id} value={reserva._id}>
-                    {reserva.numero_reserva} - {reserva.titular_reserva}
-                  </MenuItem>
-                ))
-              ) : (
-                <MenuItem value="">No hay reservas disponibles</MenuItem>
+            {/* Sección de Reserva */}
+            <Box className={classes.formSection}>
+              <Typography className={classes.sectionTitle}>
+                <EventNote />
+                Detalles de la Reserva
+              </Typography>
+              <TextField
+                className={classes.formField}
+                select
+                margin="dense"
+                label="Reserva"
+                name="reserva"
+                value={formData.reserva}
+                onChange={handleChange}
+                onBlur={handleFieldBlur}
+                onKeyDown={(e) => handleKeyDown(e, "estado")}
+                fullWidth
+                variant="outlined"
+                error={!!formErrors.reserva}
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Receipt className={classes.fieldIcon} />
+                    </InputAdornment>
+                  ),
+                }}
+              >
+                {reservas.length > 0 ? (
+                  reservas.map((reserva) => (
+                    <MenuItem key={reserva._id} value={reserva._id}>
+                      {reserva.numero_reserva} - {reserva.titular_reserva}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem value="">No hay reservas disponibles</MenuItem>
+                )}
+              </TextField>
+              {selectedReservaData && (
+                <Box mt={2} p={2} border="1px solid #e2e8f0" borderRadius={4} className={classes.detailsCard}>
+                  <Typography variant="subtitle1" gutterBottom className={classes.detailsCardTitle}>
+                    <Person />
+                    Información de la Reserva
+                  </Typography>
+                  <Typography variant="body2" className={classes.detailsCardContent}>
+                    <strong>Titular:</strong> {selectedReservaData.titular_reserva}
+                  </Typography>
+                  <Typography variant="body2" className={classes.detailsCardContent}>
+                    <strong>Número de Reserva:</strong> {selectedReservaData.numero_reserva}
+                  </Typography>
+                  <Typography variant="body2" className={classes.detailsCardContent}>
+                    <strong>Total:</strong> {formatCOP(selectedReservaData.total || 0)}
+                  </Typography>
+                  <Typography variant="body2" className={classes.detailsCardContent}>
+                    <strong>Pagos Parciales:</strong> {formatCOP(selectedReservaData.pagos_parciales || 0)}
+                  </Typography>
+                  <Typography variant="body2" className={classes.detailsCardContent}>
+                    <strong>Faltante:</strong>{" "}
+                    {formatCOP((selectedReservaData.total || 0) - (selectedReservaData.pagos_parciales || 0))}
+                  </Typography>
+                </Box>
               )}
-            </TextField>
-            {selectedReservaData && (
-              <Box mt={2} p={2} border="1px solid #e2e8f0" borderRadius={4} className={classes.detailsCard}>
-                <Typography variant="subtitle1" gutterBottom className={classes.detailsCardTitle}>
-                  <Person />
-                  Información de la Reserva
-                </Typography>
-                <Typography variant="body2" className={classes.detailsCardContent}>
-                  <strong>Titular:</strong> {selectedReservaData.titular_reserva}
-                </Typography>
-                <Typography variant="body2" className={classes.detailsCardContent}>
-                  <strong>Número de Reserva:</strong> {selectedReservaData.numero_reserva}
-                </Typography>
-                <Typography variant="body2" className={classes.detailsCardContent}>
-                  <strong>Total:</strong> {formatCOP(selectedReservaData.total || 0)}
-                </Typography>
-                <Typography variant="body2" className={classes.detailsCardContent}>
-                  <strong>Pagos Parciales:</strong> {formatCOP(selectedReservaData.pagos_parciales || 0)}
-                </Typography>
-                <Typography variant="body2" className={classes.detailsCardContent}>
-                  <strong>Faltante:</strong>{" "}
-                  {formatCOP((selectedReservaData.total || 0) - (selectedReservaData.pagos_parciales || 0))}
-                </Typography>
-              </Box>
-            )}
-          </Box>
+            </Box>
 
-          {/* Sección de Estado */}
-          <Box className={classes.formSection}>
-            <Typography className={classes.sectionTitle}>
-              <AssignmentInd />
-              Estado del Pago
-            </Typography>
-            <TextField
-              className={classes.formField}
-              select
-              margin="dense"
-              label="Estado"
-              name="estado"
-              value={formData.estado}
-              onChange={handleChange}
-              onBlur={handleFieldBlur}
-              fullWidth
-              variant="outlined"
-              error={!!formErrors.estado}
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <VerifiedUser className={classes.fieldIcon} />
-                  </InputAdornment>
-                ),
-              }}
+            {/* Sección de Estado */}
+            <Box className={classes.formSection}>
+              <Typography className={classes.sectionTitle}>
+                <AssignmentInd />
+                Estado del Pago
+              </Typography>
+              <TextField
+                className={classes.formField}
+                select
+                margin="dense"
+                label="Estado"
+                name="estado"
+                value={formData.estado}
+                onChange={handleChange}
+                onBlur={handleFieldBlur}
+                fullWidth
+                variant="outlined"
+                error={!!formErrors.estado}
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <VerifiedUser className={classes.fieldIcon} />
+                    </InputAdornment>
+                  ),
+                }}
+              >
+                <MenuItem value="pendiente">Pendiente</MenuItem>
+                <MenuItem value="realizado">Realizado</MenuItem>
+                <MenuItem value="fallido">Fallido</MenuItem>
+              </TextField>
+            </Box>
+          </DialogContent>
+          <DialogActions className={classes.dialogActions}>
+            <Button onClick={handleClose} className={classes.cancelButton}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              className={classes.submitButton}
+              disabled={shouldValidate && (!isFormValid || Object.values(formErrors).some((error) => error !== ""))}
             >
-              <MenuItem value="pendiente">Pendiente</MenuItem>
-              <MenuItem value="realizado">Realizado</MenuItem>
-              <MenuItem value="fallido">Fallido</MenuItem>
-            </TextField>
-          </Box>
-        </DialogContent>
-        <DialogActions className={classes.dialogActions}>
-          <Button onClick={handleClose} className={classes.cancelButton}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            className={classes.submitButton}
-            disabled={!isFormValid && Object.values(formErrors).some((error) => error !== "")}
-          >
-            {editingId ? "Actualizar" : "Crear"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+              {editingId ? "Actualizar" : "Crear"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
 
       {/* Modal de detalles (solo lectura) - Diseño actualizado */}
-      <Dialog
-        open={detailsOpen}
-        onClose={handleCloseDetails}
-        fullWidth
-        maxWidth="sm"
-        classes={{ paper: classes.dialogPaper }}
-      >
-        <DialogTitle className={classes.dialogTitle}>
-          Detalles del Pago
-          <IconButton onClick={handleCloseDetails} className={classes.closeButton}>
-            <X size={20} />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent className={classes.dialogContent}>
-          {selectedPago ? (
-            <>
-              <Box className={classes.detailsHeader}>
-                <Avatar className={classes.detailsAvatar}>
-                  <AttachMoney fontSize="large" />
-                </Avatar>
-                <Typography className={classes.detailsName}>
-                  {formatCOP(selectedPago.pagoParcial || selectedPago.monto || 0)}
-                </Typography>
-                <Typography className={classes.detailsDescription}>
-                  Pago {selectedPago.estado} del {new Date(selectedPago.fecha).toLocaleDateString()}
-                </Typography>
-              </Box>
+      {detailsOpen && selectedPago && (
+        <Dialog
+          open={detailsOpen}
+          onClose={handleCloseDetails}
+          fullWidth
+          maxWidth="sm"
+          classes={{ paper: classes.dialogPaper }}
+          disableBackdropClick
+          disableEscapeKeyDown
+        >
+          <DialogTitle className={classes.dialogTitle}>
+            Detalles del Pago
+            <IconButton onClick={handleCloseDetails} className={classes.closeButton}>
+              <X size={20} />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent className={classes.dialogContent}>
+            <Box className={classes.detailsHeader}>
+              <Avatar className={classes.detailsAvatar}>
+                <AttachMoney fontSize="large" />
+              </Avatar>
+              <Typography className={classes.detailsName}>
+                {formatCOP(selectedPago.pagoParcial || selectedPago.monto || 0)}
+              </Typography>
+              <Typography className={classes.detailsDescription}>
+                Pago {selectedPago.estado} del {new Date(selectedPago.fecha).toLocaleDateString()}
+              </Typography>
+            </Box>
 
-              <Divider style={{ margin: "16px 0" }} />
+            <Divider style={{ margin: "16px 0" }} />
 
-              <Grid container spacing={3} className={classes.detailsGrid}>
-                <Grid item xs={12} md={6}>
-                  <Box className={classes.detailsCard}>
-                    <Typography className={classes.detailsCardTitle}>
-                      <Payment />
-                      Pago Parcial
-                    </Typography>
-                    <Typography className={classes.detailsCardContent}>
-                      {formatCOP(selectedPago.pagoParcial || selectedPago.monto || 0)}
-                    </Typography>
-                  </Box>
-                </Grid>
+            <Grid container spacing={3} className={classes.detailsGrid}>
+              <Grid item xs={12} md={6}>
+                <Box className={classes.detailsCard}>
+                  <Typography className={classes.detailsCardTitle}>
+                    <Payment />
+                    Pago Parcial
+                  </Typography>
+                  <Typography className={classes.detailsCardContent}>
+                    {formatCOP(selectedPago.pagoParcial || selectedPago.monto || 0)}
+                  </Typography>
+                </Box>
+              </Grid>
 
-                <Grid item xs={12} md={6}>
-                  <Box className={classes.detailsCard}>
-                    <Typography className={classes.detailsCardTitle}>
-                      <AttachMoney />
-                      Faltante
-                    </Typography>
-                    <Typography className={classes.detailsCardContent}>
-                      {formatCOP(calcularFaltante(selectedPago))}
-                    </Typography>
-                  </Box>
-                </Grid>
+              <Grid item xs={12} md={6}>
+                <Box className={classes.detailsCard}>
+                  <Typography className={classes.detailsCardTitle}>
+                    <AttachMoney />
+                    Faltante
+                  </Typography>
+                  <Typography className={classes.detailsCardContent}>
+                    {formatCOP(calcularFaltante(selectedPago))}
+                  </Typography>
+                </Box>
+              </Grid>
 
-                <Grid item xs={12} md={6}>
-                  <Box className={classes.detailsCard}>
-                    <Typography className={classes.detailsCardTitle}>
-                      <CalendarToday />
-                      Fecha
-                    </Typography>
-                    <Typography className={classes.detailsCardContent}>
-                      {new Date(selectedPago.fecha).toLocaleDateString()}
-                    </Typography>
-                  </Box>
-                </Grid>
+              <Grid item xs={12} md={6}>
+                <Box className={classes.detailsCard}>
+                  <Typography className={classes.detailsCardTitle}>
+                    <CalendarToday />
+                    Fecha
+                  </Typography>
+                  <Typography className={classes.detailsCardContent}>
+                    {new Date(selectedPago.fecha).toLocaleDateString()}
+                  </Typography>
+                </Box>
+              </Grid>
 
-                <Grid item xs={12} md={6}>
-                  <Box className={classes.detailsCard}>
-                    <Typography className={classes.detailsCardTitle}>
-                      <VerifiedUser />
-                      Estado
-                    </Typography>
-                    <Typography className={classes.detailsCardContent}>{selectedPago.estado}</Typography>
-                  </Box>
-                </Grid>
+              <Grid item xs={12} md={6}>
+                <Box className={classes.detailsCard}>
+                  <Typography className={classes.detailsCardTitle}>
+                    <VerifiedUser />
+                    Estado
+                  </Typography>
+                  <Typography className={classes.detailsCardContent}>{selectedPago.estado}</Typography>
+                </Box>
+              </Grid>
 
+              <Grid item xs={12}>
+                <Box className={classes.detailsCard}>
+                  <Typography className={classes.detailsCardTitle}>
+                    <Receipt />
+                    Reserva
+                  </Typography>
+                  <Typography className={classes.detailsCardContent}>
+                    {selectedPago.reserva && typeof selectedPago.reserva === "object"
+                      ? `${selectedPago.reserva.numero_reserva} - ${selectedPago.reserva.titular_reserva}`
+                      : selectedPago.reserva || "N/A"}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              {selectedPago.reserva && typeof selectedPago.reserva === "object" && (
                 <Grid item xs={12}>
                   <Box className={classes.detailsCard}>
                     <Typography className={classes.detailsCardTitle}>
-                      <Receipt />
-                      Reserva
+                      <AttachMoney />
+                      Total Reserva
                     </Typography>
                     <Typography className={classes.detailsCardContent}>
-                      {selectedPago.reserva && typeof selectedPago.reserva === "object"
-                        ? `${selectedPago.reserva.numero_reserva} - ${selectedPago.reserva.titular_reserva}`
-                        : selectedPago.reserva || "N/A"}
+                      {formatCOP(selectedPago.reserva.total || 0)}
                     </Typography>
                   </Box>
                 </Grid>
-
-                {selectedPago.reserva && typeof selectedPago.reserva === "object" && (
-                  <Grid item xs={12}>
-                    <Box className={classes.detailsCard}>
-                      <Typography className={classes.detailsCardTitle}>
-                        <AttachMoney />
-                        Total Reserva
-                      </Typography>
-                      <Typography className={classes.detailsCardContent}>
-                        {formatCOP(selectedPago.reserva.total || 0)}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                )}
-              </Grid>
-            </>
-          ) : (
-            <Typography variant="body1">Cargando detalles...</Typography>
-          )}
-        </DialogContent>
-        <DialogActions className={classes.dialogActions}>
-          <Button onClick={handleCloseDetails} className={classes.cancelButton}>
-            Cerrar
-          </Button>
-          {selectedPago && (
+              )}
+            </Grid>
+          </DialogContent>
+          <DialogActions className={classes.dialogActions}>
+            <Button onClick={handleCloseDetails} className={classes.cancelButton}>
+              Cerrar
+            </Button>
             <Button
               onClick={() => {
                 handleCloseDetails()
@@ -1126,9 +1178,9 @@ const PagosList = () => {
             >
               Editar
             </Button>
-          )}
-        </DialogActions>
-      </Dialog>
+          </DialogActions>
+        </Dialog>
+      )}
     </Box>
   )
 }

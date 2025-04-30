@@ -9,7 +9,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  MenuItem,
   Table,
   TableHead,
   TableBody,
@@ -23,24 +22,19 @@ import {
   Tooltip,
   Avatar,
   InputAdornment,
-  Divider,
-  Grid,
   Chip,
+  MenuItem,
 } from "@material-ui/core"
 import { Edit, Delete, Info, X, Search, UserPlus } from "lucide-react"
 import {
   Person,
   Email,
-  Phone,
-  Security,
   AssignmentInd,
-  CalendarToday,
-  VerifiedUser,
-  VpnKey,
   AccountCircle,
   ContactMail,
-  ContactPhone,
-  PermIdentity, // Reemplazamos Badge por PermIdentity
+  PermIdentity,
+  VpnKey,
+  Phone,
 } from "@material-ui/icons"
 import Swal from "sweetalert2"
 import usuarioService from "./usuarios.service"
@@ -497,6 +491,8 @@ const UsuarioList = () => {
     password: "",
   })
   const [isFormValid, setIsFormValid] = useState(false)
+  // Estado para controlar si se debe validar el formulario
+  const [shouldValidate, setShouldValidate] = useState(false)
 
   // Cargar usuarios
   const fetchUsuarios = async () => {
@@ -535,6 +531,9 @@ const UsuarioList = () => {
 
   // Abrir modal para crear o editar usuario
   const handleOpen = (usuario) => {
+    // Activar validación cuando se abre el formulario para crear/editar
+    setShouldValidate(true)
+
     // Limpiar errores previos
     setFormErrors({
       nombre: "",
@@ -577,6 +576,9 @@ const UsuarioList = () => {
   }
 
   const handleClose = () => {
+    // Desactivar validación al cerrar el formulario
+    setShouldValidate(false)
+
     setOpen(false)
     // Limpiar errores al cerrar
     setFormErrors({
@@ -673,6 +675,9 @@ const UsuarioList = () => {
 
   // Función para validar campos individuales
   const validateField = (name, value, showAlert = true) => {
+    // Si no se debe validar, retornar true sin hacer nada
+    if (!shouldValidate) return true
+
     let errorMessage = ""
 
     switch (name) {
@@ -747,7 +752,7 @@ const UsuarioList = () => {
       Swal.fire({
         icon: "warning",
         title: "Validación",
-        text: errorMessage,
+        text: errorMessage || `El campo ${name} es obligatorio o contiene errores.`,
         confirmButtonColor: "#2563eb",
         toast: true,
         position: "top-end",
@@ -770,21 +775,18 @@ const UsuarioList = () => {
 
   // Agregar función para manejar el cambio de foco entre campos
   const handleFieldBlur = (e) => {
-    const { name, value } = e.target
-    // Al perder el foco, validamos pero solo mostramos alertas si el campo no está vacío
-    // o si es un campo obligatorio
-    const showAlert =
-      value.trim() !== "" ||
-      ["nombre", "documento", "email", "telefono"].includes(name) ||
-      (name === "password" && !editingId)
-    const isValidField = validateField(name, value, showAlert)
+    // Si no se debe validar, no hacer nada
+    if (!shouldValidate) return
 
-    // Si no es válido y debemos mostrar alerta, mostrarla
-    if (!isValidField && showAlert) {
+    const { name, value } = e.target
+    validateField(name, value, true)
+
+    // Si no es válido, mostrar alerta
+    if (formErrors[name]) {
       Swal.fire({
         icon: "warning",
         title: "Validación",
-        text: formErrors[name],
+        text: formErrors[name] || `El campo ${name} es obligatorio o contiene errores.`,
         confirmButtonColor: "#2563eb",
         toast: true,
         position: "top-end",
@@ -797,6 +799,9 @@ const UsuarioList = () => {
 
   // Agregar función para manejar la tecla Tab
   const handleKeyDown = (e, nextFieldName) => {
+    // Si no se debe validar, no hacer nada
+    if (!shouldValidate) return
+
     if (e.key === "Tab") {
       const { name, value } = e.target
       const isValidField = validateField(name, value, true)
@@ -807,7 +812,8 @@ const UsuarioList = () => {
         Swal.fire({
           icon: "warning",
           title: "Campo con errores",
-          text: formErrors[name] || "Este campo contiene errores. Deberá corregirlo antes de enviar el formulario.",
+          text:
+            formErrors[name] || `El campo ${name} contiene errores. Deberá corregirlo antes de enviar el formulario.`,
           toast: true,
           position: "top-end",
           showConfirmButton: false,
@@ -903,7 +909,7 @@ const UsuarioList = () => {
       Swal.fire({
         icon: "error",
         title: "Error de validación",
-        text: firstError,
+        text: firstError || "Por favor, complete todos los campos obligatorios correctamente.",
         confirmButtonColor: "#2563eb",
       })
 
@@ -1330,7 +1336,6 @@ const UsuarioList = () => {
           </Box>
 
           {/* Sección de Contacto */}
-
           <Box className={classes.formSection}>
             <Typography className={classes.sectionTitle}>
               <ContactMail />
@@ -1377,42 +1382,37 @@ const UsuarioList = () => {
               error={!!formErrors.telefono}
               helperText={formErrors.telefono}
               required
-              inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <ContactPhone className={classes.fieldIcon} />
+                    <Phone className={classes.fieldIcon} />
                   </InputAdornment>
                 ),
               }}
             />
           </Box>
 
-          {/* Sección de Seguridad y Acceso */}
+          {/* Sección de Seguridad */}
           <Box className={classes.formSection}>
             <Typography className={classes.sectionTitle}>
-              <Security />
-              Seguridad y Acceso
+              <VpnKey />
+              Seguridad
             </Typography>
             <TextField
               className={classes.formField}
               margin="dense"
-              label="Contraseña"
+              label={editingId ? "Contraseña (dejar en blanco para no cambiar)" : "Contraseña"}
               name="password"
               value={formData.password}
               onChange={handleChange}
               onBlur={handleFieldBlur}
               onKeyDown={(e) => handleKeyDown(e, "rol")}
-              type="password"
               fullWidth
               variant="outlined"
               error={!!formErrors.password}
-              helperText={
-                !editingId
-                  ? "Debe contener al menos una mayúscula, una minúscula, un número y un carácter especial"
-                  : "Dejar en blanco para mantener la contraseña actual"
-              }
+              helperText={formErrors.password}
               required={!editingId}
+              type="password"
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -1421,66 +1421,57 @@ const UsuarioList = () => {
                 ),
               }}
             />
+          </Box>
 
-            {/* Mostrar campos de rol y estado solo si NO es el administrador */}
-            {!(editingId && isAdminUser(formData)) && (
-              <>
-                <TextField
-                  className={classes.formField}
-                  select
-                  margin="dense"
-                  label="Rol"
-                  name="rol"
-                  value={formData.rol}
-                  onChange={handleChange}
-                  fullWidth
-                  variant="outlined"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <VerifiedUser className={classes.fieldIcon} />
-                      </InputAdornment>
-                    ),
-                  }}
-                >
-                  <MenuItem value="">Seleccionar rol</MenuItem>
-                  {availableRoles.length > 0 ? (
-                    availableRoles.map((rol) => (
-                      <MenuItem key={rol._id} value={rol.nombre}>
-                        {rol.nombre}
-                      </MenuItem>
-                    ))
-                  ) : (
-                    <>
-                      <MenuItem value="administrador">administrador</MenuItem>
-                      <MenuItem value="recepcion">recepcion</MenuItem>
-                      <MenuItem value="cliente">cliente</MenuItem>
-                    </>
-                  )}
-                </TextField>
-                <TextField
-                  className={classes.formField}
-                  select
-                  margin="dense"
-                  label="Estado"
-                  name="estado"
-                  value={formData.estado}
-                  onChange={handleChange}
-                  fullWidth
-                  variant="outlined"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <AssignmentInd className={classes.fieldIcon} />
-                      </InputAdornment>
-                    ),
-                  }}
-                >
-                  <MenuItem value={true}>Activo</MenuItem>
-                  <MenuItem value={false}>Inactivo</MenuItem>
-                </TextField>
-              </>
-            )}
+          {/* Sección de Rol */}
+          <Box className={classes.formSection}>
+            <Typography className={classes.sectionTitle}>
+              <AssignmentInd />
+              Rol y Estado
+            </Typography>
+            <TextField
+              className={classes.formField}
+              select
+              margin="dense"
+              label="Rol"
+              name="rol"
+              value={formData.rol}
+              onChange={handleChange}
+              fullWidth
+              variant="outlined"
+              disabled={editingId && isAdminUser(formData)} // Deshabilitar el campo si es el administrador
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <AssignmentInd className={classes.fieldIcon} />
+                  </InputAdornment>
+                ),
+              }}
+            >
+              <MenuItem value="">Sin rol</MenuItem>
+              {availableRoles.map((rol) => (
+                <MenuItem key={rol._id} value={rol.nombre}>
+                  {rol.nombre}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            {/* Campo de estado (activo/inactivo) */}
+            <TextField
+              className={classes.formField}
+              select
+              margin="dense"
+              label="Estado"
+              name="estado"
+              value={formData.estado}
+              onChange={handleChange}
+              fullWidth
+              variant="outlined"
+              disabled={editingId && isAdminUser(formData)} // Deshabilitar el campo si es el administrador
+            >
+              <MenuItem value={true}>Activo</MenuItem>
+              <MenuItem value={false}>Inactivo</MenuItem>
+            </TextField>
           </Box>
         </DialogContent>
         <DialogActions className={classes.dialogActions}>
@@ -1490,24 +1481,17 @@ const UsuarioList = () => {
           <Button
             onClick={handleSubmit}
             className={classes.submitButton}
-            disabled={!isFormValid && Object.values(formErrors).some((error) => error !== "")}
+            disabled={shouldValidate && (!isFormValid || Object.values(formErrors).some((error) => error !== ""))}
           >
             {editingId ? "Actualizar" : "Crear"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Modal de detalles (solo lectura) - Diseño actualizado */}
+      {/* Modal de detalles (solo lectura) */}
       <Dialog
         open={detailsOpen}
-        onClose={(event, reason) => {
-          // Solo permitir cerrar con el botón X o el botón Cerrar
-          if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
-            handleCloseDetails()
-          }
-        }}
-        disableBackdropClick={true}
-        disableEscapeKeyDown={true}
+        onClose={handleCloseDetails}
         fullWidth
         maxWidth="sm"
         classes={{ paper: classes.dialogPaper }}
@@ -1519,111 +1503,74 @@ const UsuarioList = () => {
           </IconButton>
         </DialogTitle>
         <DialogContent className={classes.dialogContent}>
-          {selectedUsuario ? (
+          {selectedUsuario && (
             <>
               <Box className={classes.detailsHeader}>
                 <Avatar className={classes.detailsAvatar}>{getInitials(selectedUsuario.nombre)}</Avatar>
                 <Typography className={classes.detailsName}>{selectedUsuario.nombre}</Typography>
-                <Chip
-                  label={selectedUsuario.estado ? "Activo" : "Inactivo"}
-                  className={`${classes.estadoChip} ${
-                    selectedUsuario.estado ? classes.estadoActivo : classes.estadoInactivo
-                  }`}
-                  style={{ marginTop: "8px" }}
-                />
+                <Typography className={classes.detailsDescription}>
+                  {selectedUsuario.rol || "Usuario sin rol asignado"}
+                </Typography>
               </Box>
 
-              <Divider style={{ margin: "16px 0" }} />
+              <Box className={classes.detailsCard}>
+                <Typography className={classes.detailsCardTitle}>
+                  <PermIdentity />
+                  Información Personal
+                </Typography>
+                <Typography className={classes.detailsCardContent}>
+                  <strong>Documento:</strong> {selectedUsuario.documento}
+                </Typography>
+                <Typography className={classes.detailsCardContent}>
+                  <strong>Estado:</strong>{" "}
+                  <Chip
+                    label={selectedUsuario.estado ? "Activo" : "Inactivo"}
+                    className={`${classes.estadoChip} ${
+                      selectedUsuario.estado ? classes.estadoActivo : classes.estadoInactivo
+                    }`}
+                    size="small"
+                  />
+                </Typography>
+              </Box>
 
-              <Grid container spacing={3} className={classes.detailsGrid}>
-                <Grid item xs={12} md={6}>
-                  <Box className={classes.detailsCard}>
-                    <Typography className={classes.detailsCardTitle}>
-                      <PermIdentity />
-                      Documento
-                    </Typography>
-                    <Typography className={classes.detailsCardContent}>{selectedUsuario.documento}</Typography>
-                  </Box>
-                </Grid>
+              <Box className={classes.detailsCard}>
+                <Typography className={classes.detailsCardTitle}>
+                  <ContactMail />
+                  Contacto
+                </Typography>
+                <Typography className={classes.detailsCardContent}>
+                  <strong>Email:</strong> {selectedUsuario.email}
+                </Typography>
+                <Typography className={classes.detailsCardContent}>
+                  <strong>Teléfono:</strong> {selectedUsuario.telefono}
+                </Typography>
+              </Box>
 
-                <Grid item xs={12} md={6}>
-                  <Box className={classes.detailsCard}>
-                    <Typography className={classes.detailsCardTitle}>
-                      <VerifiedUser />
-                      Rol
-                    </Typography>
-                    <Typography className={classes.detailsCardContent}>{selectedUsuario.rol || "Sin rol"}</Typography>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Box className={classes.detailsCard}>
-                    <Typography className={classes.detailsCardTitle}>
-                      <Email />
-                      Correo Electrónico
-                    </Typography>
-                    <Typography className={classes.detailsCardContent}>{selectedUsuario.email}</Typography>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Box className={classes.detailsCard}>
-                    <Typography className={classes.detailsCardTitle}>
-                      <Phone />
-                      Teléfono
-                    </Typography>
-                    <Typography className={classes.detailsCardContent}>{selectedUsuario.telefono}</Typography>
-                  </Box>
-                </Grid>
-
-                {selectedUsuario.fechaCreacion && (
-                  <Grid item xs={12} md={6}>
-                    <Box className={classes.detailsCard}>
-                      <Typography className={classes.detailsCardTitle}>
-                        <CalendarToday />
-                        Fecha de Creación
-                      </Typography>
-                      <Typography className={classes.detailsCardContent}>
-                        {new Date(selectedUsuario.fechaCreacion).toLocaleString()}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                )}
-
-                {selectedUsuario.ultimoAcceso && (
-                  <Grid item xs={12} md={6}>
-                    <Box className={classes.detailsCard}>
-                      <Typography className={classes.detailsCardTitle}>
-                        <CalendarToday />
-                        Último Acceso
-                      </Typography>
-                      <Typography className={classes.detailsCardContent}>
-                        {new Date(selectedUsuario.ultimoAcceso).toLocaleString()}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                )}
-              </Grid>
+              <Box className={classes.detailsCard}>
+                <Typography className={classes.detailsCardTitle}>
+                  <AssignmentInd />
+                  Rol y Permisos
+                </Typography>
+                <Typography className={classes.detailsCardContent}>
+                  <strong>Rol:</strong> {selectedUsuario.rol || "Sin rol asignado"}
+                </Typography>
+              </Box>
             </>
-          ) : (
-            <Typography variant="body1">Cargando detalles...</Typography>
           )}
         </DialogContent>
         <DialogActions className={classes.dialogActions}>
           <Button onClick={handleCloseDetails} className={classes.cancelButton}>
             Cerrar
           </Button>
-          {selectedUsuario && (
-            <Button
-              onClick={() => {
-                handleCloseDetails()
-                handleOpen(selectedUsuario)
-              }}
-              className={classes.submitButton}
-            >
-              Editar
-            </Button>
-          )}
+          <Button
+            onClick={() => {
+              handleCloseDetails()
+              handleOpen(selectedUsuario)
+            }}
+            className={classes.submitButton}
+          >
+            Editar
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
