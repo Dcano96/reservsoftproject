@@ -11,7 +11,7 @@ const AcompananteSchema = new mongoose.Schema({
     required: true,
     match: [/^[a-zA-ZÀ-ÿ\s]+$/, "El apellido solo puede contener letras y espacios"],
   },
-  numero_documento: {  // Cambiado de 'documento' a 'numero_documento'
+  documento: {  // Cambiado de 'documento' a 'numero_documento'
     type: String,
     required: true,
   },

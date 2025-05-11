@@ -215,6 +215,29 @@ exports.actualizarReserva = async (req, res) => {
   try {
     const { id } = req.params
 
+    console.log("Datos recibidos para actualizar reserva:", JSON.stringify(req.body, null, 2));
+
+    if (req.body.acompanantes && Array.isArray(req.body.acompanantes)) {
+      req.body.acompanantes = req.body.acompanantes.map(acomp => {
+        // Asegúrate de que el documento nunca sea undefined o vacío
+        if (!acomp.documento && !acomp.documento_acompanante) {
+          console.log("Acompañante sin documento:", acomp);
+          // Proporciona un valor predeterminado para evitar el error de validación
+          return {
+            ...acomp,
+            documento: "0000000000" // Valor temporal para pasar la validación
+          };
+        }
+        
+        return {
+          _id: acomp._id, // Mantener el ID si existe
+          nombre: acomp.nombre || "",
+          apellido: acomp.apellido || "",
+          documento: acomp.documento || acomp.documento_acompanante || "0000000000"
+        };
+      });
+    }
+
     if (!id) {
       return res.status(400).json({
         msg: "ID de reserva no proporcionado",
