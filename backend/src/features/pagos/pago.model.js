@@ -81,10 +81,25 @@ PagoSchema.pre('save', async function(next) {
           nuevoTotal -= this._previousMonto;
         }
         
-        // Verificar que no exceda el total de la reserva
-        if (nuevoTotal > reserva.total) {
-          return next(new Error('El monto del pago excede el total pendiente de la reserva'));
-        }
+        PagoSchema.methods.verificarExcedente = async function () {
+  const reserva = await Reserva.findById(this.reserva)
+  if (!reserva) return { excede: false, mensaje: "Reserva no encontrada" }
+
+  const totalPendiente = reserva.total - reserva.pagos_parciales
+
+  if (this.monto > totalPendiente) {
+    const excedente = this.monto - totalPendiente
+    return {
+      excede: true,
+      excedente,
+      mensaje: `El pago excede en ${excedente.toLocaleString("es-CO")} el total pendiente de la reserva`,
+      totalPendiente,
+    }
+  }
+
+  return { excede: false, totalPendiente }
+}
+        
       }
     }
     next();
