@@ -215,27 +215,27 @@ exports.actualizarReserva = async (req, res) => {
   try {
     const { id } = req.params
 
-    console.log("Datos recibidos para actualizar reserva:", JSON.stringify(req.body, null, 2));
+    console.log("Datos recibidos para actualizar reserva:", JSON.stringify(req.body, null, 2))
 
     if (req.body.acompanantes && Array.isArray(req.body.acompanantes)) {
-      req.body.acompanantes = req.body.acompanantes.map(acomp => {
+      req.body.acompanantes = req.body.acompanantes.map((acomp) => {
         // Asegúrate de que el documento nunca sea undefined o vacío
         if (!acomp.documento && !acomp.documento_acompanante) {
-          console.log("Acompañante sin documento:", acomp);
+          console.log("Acompañante sin documento:", acomp)
           // Proporciona un valor predeterminado para evitar el error de validación
           return {
             ...acomp,
-            documento: "0000000000" // Valor temporal para pasar la validación
-          };
+            documento: "0000000000", // Valor temporal para pasar la validación
+          }
         }
-        
+
         return {
           _id: acomp._id, // Mantener el ID si existe
           nombre: acomp.nombre || "",
           apellido: acomp.apellido || "",
-          documento: acomp.documento || acomp.documento_acompanante || "0000000000"
-        };
-      });
+          documento: acomp.documento || acomp.documento_acompanante || "0000000000",
+        }
+      })
     }
 
     if (!id) {
@@ -591,7 +591,7 @@ exports.crearReservaPublica = async (req, res) => {
       documento,
       monto_pago,
       acompanantes,
-      numero_acompanantes
+      numero_acompanantes,
     } = req.body
 
     if (!titular_reserva || !email || !telefono || !fecha_inicio || !fecha_fin || !apartamento_id || !documento) {
@@ -669,7 +669,7 @@ exports.crearReservaPublica = async (req, res) => {
     })
 
     let clienteExistente = false
-    let randomPassword = "";
+    let randomPassword = ""
 
     if (cliente) {
       clienteExistente = true
@@ -765,20 +765,20 @@ exports.crearReservaPublica = async (req, res) => {
     })
 
     // Procesar acompañantes si existen
-    let acompanantesArray = [];
-      if (acompanantes && Array.isArray(acompanantes) && acompanantes.length > 0) {
-       acompanantesArray = acompanantes;
-}
+    let acompanantesArray = []
+    if (acompanantes && Array.isArray(acompanantes) && acompanantes.length > 0) {
+      acompanantesArray = acompanantes
+    }
 
-// Determinar el número de acompañantes
-let numAcompanantes = 0;
-if (numero_acompanantes !== undefined) {
-  // Si se envía explícitamente
-  numAcompanantes = parseInt(numero_acompanantes);
-} else if (acompanantesArray.length > 0) {
-  // Si no, usar la longitud del array
-  numAcompanantes = acompanantesArray.length;
-}
+    // Determinar el número de acompañantes
+    let numAcompanantes = 0
+    if (numero_acompanantes !== undefined) {
+      // Si se envía explícitamente
+      numAcompanantes = Number.parseInt(numero_acompanantes)
+    } else if (acompanantesArray.length > 0) {
+      // Si no, usar la longitud del array
+      numAcompanantes = acompanantesArray.length
+    }
 
     const nuevaReserva = new Reserva({
       titular_reserva,
@@ -802,29 +802,44 @@ if (numero_acompanantes !== undefined) {
 
     // Enviar correo de confirmación
     try {
+      console.log("Preparando envío de correo de confirmación...")
+
       const clienteData = {
         nombre: titular_reserva,
         email: email,
         documento: documento,
-        telefono: telefono
-      };
-      
+        telefono: telefono,
+      }
+
       const reservationData = {
         apartamento: apartamento.Tipo || `Apartamento ${apartamento.NumeroApto}`,
         fechaEntrada: fecha_inicio,
         fechaSalida: fecha_fin,
         huespedes: numAcompanantes + 1, // Titular + acompañantes
         precioPorNoche: apartamento.Tarifa,
-        total: total
-      };
-      
+        total: total,
+      }
+
       // Si es un nuevo cliente, enviar la contraseña temporal
-      const password = clienteExistente ? null : randomPassword;
-      
-      await mailer.sendReservationConfirmation(clienteData, reservationData, password);
-      console.log("Correo de confirmación enviado a:", email);
+      const password = clienteExistente ? null : randomPassword
+
+      // Enviar el correo de forma asíncrona para no bloquear la respuesta
+      mailer
+        .sendReservationConfirmation(clienteData, reservationData, password)
+        .then((result) => {
+          if (result && result.success) {
+            console.log("Correo de confirmación enviado exitosamente a:", email)
+          } else {
+            console.error("Error al enviar correo de confirmación:", result ? result.error : "Sin detalles")
+          }
+        })
+        .catch((emailError) => {
+          console.error("Excepción al enviar correo de confirmación:", emailError)
+        })
+
+      console.log("Proceso de envío de correo iniciado")
     } catch (emailError) {
-      console.error("Error al enviar correo de confirmación:", emailError);
+      console.error("Error al enviar correo de confirmación:", emailError)
       // No fallamos si el correo no se envía
     }
 
@@ -864,20 +879,20 @@ if (numero_acompanantes !== undefined) {
 // Obtiene las fechas reservadas para un apartamento específico
 exports.obtenerFechasReservadas = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params
 
     if (!id) {
       return res.status(400).json({
         msg: "ID de apartamento no proporcionado",
         error: true,
-      });
+      })
     }
 
     if (!isValidObjectId(id)) {
       return res.status(400).json({
         msg: "ID de apartamento inválido",
         error: true,
-      });
+      })
     }
 
     // Buscar todas las reservas para este apartamento que no estén canceladas
@@ -885,25 +900,25 @@ exports.obtenerFechasReservadas = async (req, res) => {
       apartamentos: id,
       estado: { $ne: "cancelada" },
       // Solo reservas activas y futuras
-      fecha_fin: { $gte: new Date() }
-    });
+      fecha_fin: { $gte: new Date() },
+    })
 
     // Extraer las fechas reservadas
-    const fechasReservadas = reservas.map(reserva => ({
+    const fechasReservadas = reservas.map((reserva) => ({
       fecha_inicio: reserva.fecha_inicio,
-      fecha_fin: reserva.fecha_fin
-    }));
- 
-    return res.status(200).json({ 
+      fecha_fin: reserva.fecha_fin,
+    }))
+
+    return res.status(200).json({
       fechasReservadas,
-      error: false 
-    });
+      error: false,
+    })
   } catch (error) {
-    console.error('Error al obtener fechas reservadas:', error);
-    return res.status(500).json({ 
-      msg: 'Error al obtener fechas reservadas', 
+    console.error("Error al obtener fechas reservadas:", error)
+    return res.status(500).json({
+      msg: "Error al obtener fechas reservadas",
       error: true,
-      details: error.message
-    });
+      details: error.message,
+    })
   }
-};
+}
