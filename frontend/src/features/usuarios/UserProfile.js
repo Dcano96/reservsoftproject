@@ -32,6 +32,7 @@ import {
   AccessTime,
   Work,
   VpnKey,
+  VisibilityOff,
 } from "@material-ui/icons"
 import axios from "axios"
 import jwtDecode from "jwt-decode"
@@ -39,6 +40,46 @@ import Swal from "sweetalert2"
 import "./usuarios.styles.css"
 // Añadir esta importación al inicio del archivo
 import MisReservas from "../clientes/mis-reservas"
+
+// Añadir estas constantes después de las importaciones y antes del componente UserProfile
+// Expresiones regulares para validaciones
+const REGEX = {
+  EMAIL: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  EMAIL_INVALIDO: /@\.com|@com\.|@\.|\.@|@-|-@|@.*@|\.\.|,,|@@/,
+  CONTRASENA_FUERTE: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,15}$/,
+  SECUENCIAS_COMUNES: /123456|654321|password|qwerty|abc123|admin123|123abc|contraseña|usuario|admin/i,
+  CARACTERES_REPETIDOS: /(.)\1{3,}/,
+  SECUENCIAS_NUMERICAS: /123456|654321|111111|222222|333333|444444|555555|666666|777777|888888|999999|000000/,
+}
+
+// Validación exhaustiva de contraseña
+const validarPassword = (pass) => {
+  // Validaciones básicas
+  if (!pass) return "La contraseña es obligatoria"
+  if (pass.length < 8) return "La contraseña debe tener al menos 8 caracteres"
+  if (pass.length > 15) return "La contraseña no puede tener más de 15 caracteres"
+
+  // Validación de complejidad
+  if (!/[a-z]/.test(pass)) return "La contraseña debe contener al menos una letra minúscula"
+  if (!/[A-Z]/.test(pass)) return "La contraseña debe contener al menos una letra mayúscula"
+  if (!/[0-9]/.test(pass)) return "La contraseña debe contener al menos un número"
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(pass))
+    return "La contraseña debe contener al menos un carácter especial"
+
+  // Validación de secuencias comunes
+  if (REGEX.SECUENCIAS_COMUNES.test(pass))
+    return "La contraseña no puede contener secuencias comunes o palabras fáciles de adivinar"
+
+  // Validación de caracteres repetidos
+  if (REGEX.CARACTERES_REPETIDOS.test(pass))
+    return "La contraseña no puede contener más de 3 caracteres repetidos consecutivos"
+
+  // Validación de secuencias de teclado
+  if (/qwert|asdfg|zxcvb|12345|09876/.test(pass.toLowerCase()))
+    return "La contraseña no puede contener secuencias de teclado"
+
+  return ""
+}
 
 const UserProfile = () => {
   const [profile, setProfile] = useState(null)
@@ -51,12 +92,21 @@ const UserProfile = () => {
     telefono: "",
     documento: "",
   })
+  // Reemplazar la declaración de estados en el componente UserProfile para añadir los estados de mostrar/ocultar contraseña
   const [passwordData, setPasswordData] = useState({
     passwordActual: "",
     nuevoPassword: "",
     confirmarPassword: "",
   })
+  const [passwordErrors, setPasswordErrors] = useState({
+    passwordActual: "",
+    nuevoPassword: "",
+    confirmarPassword: "",
+  })
   const [passwordLoading, setPasswordLoading] = useState(false)
+  const [showPasswordActual, setShowPasswordActual] = useState(false)
+  const [showNuevoPassword, setShowNuevoPassword] = useState(false)
+  const [showConfirmarPassword, setShowConfirmarPassword] = useState(false)
   const [roleDetails, setRoleDetails] = useState(null)
   const [notification, setNotification] = useState({
     open: false,
@@ -188,12 +238,98 @@ const UserProfile = () => {
     }))
   }
 
+  // Reemplazar la función handlePasswordChange con esta versión mejorada
   const handlePasswordChange = (e) => {
     const { name, value } = e.target
+
+    // Limitar a 15 caracteres máximo
+    if (value.length > 15) {
+      return
+    }
+
     setPasswordData((prev) => ({
       ...prev,
       [name]: value,
     }))
+
+    // Validar en tiempo real
+    if (name === "passwordActual") {
+      setPasswordErrors((prev) => ({
+        ...prev,
+        passwordActual: value ? "" : "La contraseña actual es obligatoria",
+      }))
+    } else if (name === "nuevoPassword") {
+      const error = validarPassword(value)
+      setPasswordErrors((prev) => ({
+        ...prev,
+        nuevoPassword: error,
+        confirmarPassword:
+          passwordData.confirmarPassword && value !== passwordData.confirmarPassword
+            ? "Las contraseñas no coinciden"
+            : "",
+      }))
+    } else if (name === "confirmarPassword") {
+      setPasswordErrors((prev) => ({
+        ...prev,
+        confirmarPassword: value !== passwordData.nuevoPassword ? "Las contraseñas no coinciden" : "",
+      }))
+    }
+  }
+
+  // Añadir estas funciones para manejar los botones de mostrar/ocultar contraseña
+  const handleTogglePasswordActual = () => {
+    setShowPasswordActual(!showPasswordActual)
+  }
+
+  const handleToggleNuevoPassword = () => {
+    setShowNuevoPassword(!showNuevoPassword)
+  }
+
+  const handleToggleConfirmarPassword = () => {
+    setShowConfirmarPassword(!showConfirmarPassword)
+  }
+
+  // Añadir estas funciones para manejar el evento keyDown
+  const handlePasswordActualKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === "Tab") {
+      e.preventDefault()
+      if (!passwordData.passwordActual) {
+        setPasswordErrors((prev) => ({
+          ...prev,
+          passwordActual: "La contraseña actual es obligatoria",
+        }))
+        return
+      }
+      document.getElementById("nuevoPassword").focus()
+    }
+  }
+
+  const handleNuevoPasswordKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === "Tab") {
+      e.preventDefault()
+      const error = validarPassword(passwordData.nuevoPassword)
+      setPasswordErrors((prev) => ({
+        ...prev,
+        nuevoPassword: error,
+      }))
+      if (!error) {
+        document.getElementById("confirmarPassword").focus()
+      }
+    }
+  }
+
+  const handleConfirmarPasswordKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      if (passwordData.confirmarPassword !== passwordData.nuevoPassword) {
+        setPasswordErrors((prev) => ({
+          ...prev,
+          confirmarPassword: "Las contraseñas no coinciden",
+        }))
+        return
+      }
+      handlePasswordSubmit(e)
+    }
   }
 
   // Modificar la función handleSubmit para manejar el caso en que la API falla
@@ -271,23 +407,35 @@ const UserProfile = () => {
     }
   }
 
-  // Función para manejar el cambio de contraseña - Intenta múltiples rutas
-  const handlePasswordSubmit = async () => {
-    // Validar que las contraseñas coincidan
-    if (passwordData.nuevoPassword !== passwordData.confirmarPassword) {
-      setNotification({
-        open: true,
-        message: "Las contraseñas no coinciden",
-        severity: "error",
-      })
+  // Reemplazar la función handlePasswordSubmit con esta versión mejorada
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault()
+
+    // Validar la contraseña actual
+    if (!passwordData.passwordActual) {
+      setPasswordErrors((prev) => ({
+        ...prev,
+        passwordActual: "La contraseña actual es obligatoria",
+      }))
       return
     }
 
-    // Validar que la contraseña tenga al menos 6 caracteres
-    if (passwordData.nuevoPassword.length < 6) {
+    // Validar la nueva contraseña
+    const passwordError = validarPassword(passwordData.nuevoPassword)
+    const confirmError =
+      passwordData.nuevoPassword !== passwordData.confirmarPassword ? "Las contraseñas no coinciden" : ""
+
+    setPasswordErrors({
+      passwordActual: passwordData.passwordActual ? "" : "La contraseña actual es obligatoria",
+      nuevoPassword: passwordError,
+      confirmarPassword: confirmError,
+    })
+
+    // Si hay errores, no continuar
+    if (!passwordData.passwordActual || passwordError || confirmError) {
       setNotification({
         open: true,
-        message: "La nueva contraseña debe tener al menos 6 caracteres",
+        message: "Por favor, corrige los errores en el formulario antes de continuar.",
         severity: "error",
       })
       return
@@ -724,7 +872,7 @@ const UserProfile = () => {
                 />
               </div>
 
-              {/* Sección de cambio de contraseña */}
+              {/* Reemplazar la sección de cambio de contraseña en el JSX con esta versión mejorada */}
               <div className="profile-password-section" style={{ marginBottom: "30px" }}>
                 <Typography
                   variant="h6"
@@ -746,43 +894,99 @@ const UserProfile = () => {
                   <div style={{ marginBottom: "15px" }}>
                     <TextField
                       fullWidth
+                      id="passwordActual"
                       name="passwordActual"
                       label="Contraseña Actual"
-                      type="password"
+                      type={showPasswordActual ? "text" : "password"}
                       value={passwordData.passwordActual}
                       onChange={handlePasswordChange}
+                      onKeyDown={handlePasswordActualKeyDown}
                       variant="outlined"
                       required
+                      error={!!passwordErrors.passwordActual}
+                      helperText={passwordErrors.passwordActual}
                       className="profile-text-field"
+                      InputProps={{
+                        endAdornment: (
+                          <button
+                            type="button"
+                            className="auth-password-toggle"
+                            onClick={handleTogglePasswordActual}
+                            aria-label={showPasswordActual ? "Ocultar contraseña" : "Mostrar contraseña"}
+                            style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                          >
+                            {showPasswordActual ? <VisibilityOff /> : <Visibility />}
+                          </button>
+                        ),
+                      }}
+                      inputProps={{ maxLength: 15 }}
                     />
                   </div>
 
                   <div style={{ marginBottom: "15px" }}>
                     <TextField
                       fullWidth
+                      id="nuevoPassword"
                       name="nuevoPassword"
                       label="Nueva Contraseña"
-                      type="password"
+                      type={showNuevoPassword ? "text" : "password"}
                       value={passwordData.nuevoPassword}
                       onChange={handlePasswordChange}
+                      onKeyDown={handleNuevoPasswordKeyDown}
                       variant="outlined"
                       required
-                      helperText="Mínimo 6 caracteres"
+                      error={!!passwordErrors.nuevoPassword}
+                      helperText={
+                        passwordErrors.nuevoPassword ||
+                        "La contraseña debe tener entre 8-15 caracteres, incluir mayúsculas, minúsculas, números y caracteres especiales."
+                      }
                       className="profile-text-field"
+                      InputProps={{
+                        endAdornment: (
+                          <button
+                            type="button"
+                            className="auth-password-toggle"
+                            onClick={handleToggleNuevoPassword}
+                            aria-label={showNuevoPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                            style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                          >
+                            {showNuevoPassword ? <VisibilityOff /> : <Visibility />}
+                          </button>
+                        ),
+                      }}
+                      inputProps={{ maxLength: 15 }}
                     />
                   </div>
 
                   <div style={{ marginBottom: "20px" }}>
                     <TextField
                       fullWidth
+                      id="confirmarPassword"
                       name="confirmarPassword"
                       label="Confirmar Nueva Contraseña"
-                      type="password"
+                      type={showConfirmarPassword ? "text" : "password"}
                       value={passwordData.confirmarPassword}
                       onChange={handlePasswordChange}
+                      onKeyDown={handleConfirmarPasswordKeyDown}
                       variant="outlined"
                       required
+                      error={!!passwordErrors.confirmarPassword}
+                      helperText={passwordErrors.confirmarPassword}
                       className="profile-text-field"
+                      InputProps={{
+                        endAdornment: (
+                          <button
+                            type="button"
+                            className="auth-password-toggle"
+                            onClick={handleToggleConfirmarPassword}
+                            aria-label={showConfirmarPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                            style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                          >
+                            {showConfirmarPassword ? <VisibilityOff /> : <Visibility />}
+                          </button>
+                        ),
+                      }}
+                      inputProps={{ maxLength: 15 }}
                     />
                   </div>
 
