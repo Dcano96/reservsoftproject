@@ -6,6 +6,205 @@ const crypto = require("crypto")
 const jwt = require("jsonwebtoken")
 const mongoose = require("mongoose")
 
+// Expresiones regulares para validaciones
+const REGEX = {
+  SOLO_NUMEROS: /^\d+$/,
+  SOLO_LETRAS_ESPACIOS: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/,
+  EMAIL: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  EMAIL_INVALIDO: /@\.com|@com\.|@\.|\.@|@-|-@|@.*@|\.\.|,,|@@/,
+  CONTRASENA_FUERTE: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,15}$/,
+  SECUENCIAS_COMUNES: /123456|654321|password|qwerty|abc123|admin123|123abc|contraseña|usuario|admin/i,
+  CARACTERES_REPETIDOS: /(.)\1{3,}/,
+  SECUENCIAS_NUMERICAS: /123456|654321|111111|222222|333333|444444|555555|666666|777777|888888|999999|000000/,
+}
+
+// Constantes para validaciones
+const VALIDACION = {
+  DOCUMENTO: {
+    MIN_LENGTH: 6,
+    MAX_LENGTH: 15,
+  },
+  NOMBRE: {
+    MIN_LENGTH: 6,
+    MAX_LENGTH: 30,
+  },
+  TELEFONO: {
+    MIN_LENGTH: 7,
+    MAX_LENGTH: 10,
+  },
+  CONTRASENA: {
+    MIN_LENGTH: 8,
+    MAX_LENGTH: 15,
+  },
+}
+
+// Funciones de validación
+const validarDocumento = (documento) => {
+  // Validaciones básicas
+  if (!documento) return "El documento es obligatorio"
+  if (documento.trim() === "") return "El documento no puede estar vacío"
+  if (!REGEX.SOLO_NUMEROS.test(documento)) return "El documento debe contener solo números"
+  if (documento.length < VALIDACION.DOCUMENTO.MIN_LENGTH) return "El documento debe tener al menos 6 dígitos"
+  if (documento.length > VALIDACION.DOCUMENTO.MAX_LENGTH) return "El documento no puede tener más de 15 dígitos"
+
+  // Validaciones de seguridad
+  if (REGEX.CARACTERES_REPETIDOS.test(documento))
+    return "El documento no puede contener más de 3 dígitos repetidos consecutivos"
+
+  if (REGEX.SECUENCIAS_NUMERICAS.test(documento)) return "El documento no puede contener secuencias numéricas obvias"
+
+  // Validación de documento con todos ceros
+  if (/^0+$/.test(documento)) return "El documento no puede contener solo ceros"
+
+  // Validación de documento con valor muy bajo
+  if (Number.parseInt(documento) < 1000) return "El documento no parece válido (valor muy bajo)"
+
+  return null // Sin errores
+}
+
+const validarNombre = (nombre) => {
+  // Validaciones básicas
+  if (!nombre) return "El nombre es obligatorio"
+  if (nombre.trim() === "") return "El nombre no puede estar vacío"
+  if (nombre.length < VALIDACION.NOMBRE.MIN_LENGTH) return "El nombre debe tener al menos 6 caracteres"
+  if (nombre.length > VALIDACION.NOMBRE.MAX_LENGTH) return "El nombre no puede tener más de 30 caracteres"
+
+  // Validación de solo letras y espacios (sin caracteres especiales ni números)
+  if (!REGEX.SOLO_LETRAS_ESPACIOS.test(nombre)) return "El nombre solo debe contener letras y espacios"
+
+  // Validación de espacios múltiples
+  if (/\s{2,}/.test(nombre)) return "El nombre no puede contener espacios múltiples consecutivos"
+
+  // Validación de al menos dos palabras (nombre y apellido)
+  const palabras = nombre.trim().split(/\s+/)
+  if (palabras.length < 2) return "Debe ingresar al menos nombre y apellido"
+
+  // Validación de longitud mínima para cada palabra
+  for (const palabra of palabras) {
+    if (palabra.length < 2) return "Cada palabra del nombre debe tener al menos 2 caracteres"
+  }
+
+  // Validación de palabras inapropiadas o nombres genéricos
+  const palabrasProhibidas = ["admin", "usuario", "test", "prueba", "administrador"]
+  for (const prohibida of palabrasProhibidas) {
+    if (nombre.toLowerCase().includes(prohibida)) return "El nombre contiene palabras no permitidas"
+  }
+
+  return null // Sin errores
+}
+
+// Modificar la función validarTelefono para permitir cualquier número inicial
+const validarTelefono = (telefono) => {
+  // Validaciones básicas
+  if (!telefono) return "El teléfono es obligatorio"
+  if (telefono.trim() === "") return "El teléfono no puede estar vacío"
+  if (!REGEX.SOLO_NUMEROS.test(telefono)) return "El teléfono debe contener solo números"
+  if (telefono.length < VALIDACION.TELEFONO.MIN_LENGTH) return "El teléfono debe tener al menos 7 dígitos"
+  if (telefono.length > VALIDACION.TELEFONO.MAX_LENGTH) return "El teléfono no puede tener más de 10 dígitos"
+
+  // Validaciones de seguridad
+  if (REGEX.CARACTERES_REPETIDOS.test(telefono))
+    return "El teléfono no puede contener más de 3 dígitos repetidos consecutivos"
+
+  if (REGEX.SECUENCIAS_NUMERICAS.test(telefono)) return "El teléfono no puede contener secuencias numéricas obvias"
+
+  // Validación de teléfono con todos ceros
+  if (/^0+$/.test(telefono)) return "El teléfono no puede contener solo ceros"
+
+  // Eliminamos la validación que requiere que los números de 10 dígitos empiecen con 3
+  // y que los números de 7 dígitos no empiecen con 0
+
+  // Validación de teléfonos de emergencia o servicios
+  const numerosEspeciales = ["123", "911", "112", "119"]
+  if (numerosEspeciales.includes(telefono)) return "No se permite el uso de números de emergencia"
+
+  return null // Sin errores
+}
+
+// Modificar la función validarEmail para permitir dominios como .co y luego .com
+const validarEmail = (email) => {
+  // Validaciones básicas
+  if (!email) return "El correo electrónico es obligatorio"
+  if (email.trim() === "") return "El correo electrónico no puede estar vacío"
+
+  // Validación de formato básico
+  if (!REGEX.EMAIL.test(email)) return "Formato de correo electrónico inválido"
+
+  // Validación de patrones inválidos específicos
+  if (REGEX.EMAIL_INVALIDO.test(email)) return "El correo contiene patrones inválidos (como @.com, @., etc.)"
+
+  // Validación de longitud
+  if (email.length < 6) return "El correo debe tener al menos 6 caracteres"
+  if (email.length > 50) return "El correo no puede tener más de 50 caracteres"
+
+  // Validación de partes del email
+  const [localPart, domainPart] = email.split("@")
+
+  // Validación de la parte local
+  if (!localPart || localPart.length < 1) return "La parte local del correo no puede estar vacía"
+  if (localPart.length > 64) return "La parte local del correo es demasiado larga"
+  if (/^[.-]|[.-]$/.test(localPart)) return "La parte local no puede comenzar ni terminar con puntos o guiones"
+
+  // Validación del dominio
+  if (!domainPart || !domainPart.includes("."))
+    return "El dominio del correo debe incluir una extensión (ej: .com, .net)"
+
+  // Verificar que el dominio tenga un formato válido
+  // Dividir el dominio en partes separadas por puntos
+  const domainParts = domainPart.split(".")
+
+  // Verificar que todas las partes del dominio sean válidas
+  for (let i = 0; i < domainParts.length; i++) {
+    const part = domainParts[i]
+    // Cada parte debe contener al menos un carácter y solo caracteres alfanuméricos o guiones
+    if (part.length === 0 || !/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(part)) {
+      return "El dominio del correo contiene partes inválidas"
+    }
+  }
+
+  // Verificar que el TLD sea válido (2-6 caracteres, solo letras)
+  const tld = domainParts[domainParts.length - 1]
+  if (!tld || tld.length < 2 || tld.length > 6 || !/^[a-zA-Z]+$/.test(tld)) {
+    return "La extensión del dominio no es válida o contiene caracteres no permitidos"
+  }
+
+  // Validación de dominios temporales o no recomendados
+  const dominiosNoRecomendados = ["tempmail", "mailinator", "guerrillamail", "10minutemail", "yopmail"]
+  for (const dominio of dominiosNoRecomendados) {
+    if (domainPart.toLowerCase().includes(dominio)) return "No se permiten correos de servicios temporales"
+  }
+
+  return null // Sin errores
+}
+
+const validarPassword = (password) => {
+  // Validaciones básicas
+  if (!password) return "La contraseña es obligatoria"
+  if (password.length < VALIDACION.CONTRASENA.MIN_LENGTH) return "La contraseña debe tener al menos 8 caracteres"
+  if (password.length > VALIDACION.CONTRASENA.MAX_LENGTH) return "La contraseña no puede tener más de 15 caracteres"
+
+  // Validación de complejidad
+  if (!/[a-z]/.test(password)) return "La contraseña debe contener al menos una letra minúscula"
+  if (!/[A-Z]/.test(password)) return "La contraseña debe contener al menos una letra mayúscula"
+  if (!/[0-9]/.test(password)) return "La contraseña debe contener al menos un número"
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password))
+    return "La contraseña debe contener al menos un carácter especial"
+
+  // Validación de secuencias comunes
+  if (REGEX.SECUENCIAS_COMUNES.test(password))
+    return "La contraseña no puede contener secuencias comunes o palabras fáciles de adivinar"
+
+  // Validación de caracteres repetidos
+  if (REGEX.CARACTERES_REPETIDOS.test(password))
+    return "La contraseña no puede contener más de 3 caracteres repetidos consecutivos"
+
+  // Validación de secuencias de teclado
+  if (/qwert|asdfg|zxcvb|12345|09876/.test(password.toLowerCase()))
+    return "La contraseña no puede contener secuencias de teclado"
+
+  return null // Sin errores
+}
+
 // Función para generar una contraseña aleatoria segura
 const generateRandomPassword = () => {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*"
@@ -20,6 +219,19 @@ const generateRandomPassword = () => {
 exports.createCliente = async (req, res) => {
   const { nombre, documento, email, telefono } = req.body
   try {
+    // Validar los campos
+    const errorDocumento = validarDocumento(documento)
+    if (errorDocumento) return res.status(400).json({ msg: errorDocumento })
+
+    const errorNombre = validarNombre(nombre)
+    if (errorNombre) return res.status(400).json({ msg: errorNombre })
+
+    const errorTelefono = validarTelefono(telefono)
+    if (errorTelefono) return res.status(400).json({ msg: errorTelefono })
+
+    const errorEmail = validarEmail(email)
+    if (errorEmail) return res.status(400).json({ msg: errorEmail })
+
     // Verificar si ya existe un cliente con ese documento o email
     let cliente = await Cliente.findOne({ $or: [{ documento }, { email }] })
     if (cliente) {
@@ -56,6 +268,19 @@ exports.publicRegister = async (req, res) => {
     req.body
 
   try {
+    // Validar los campos
+    const errorDocumento = validarDocumento(documento)
+    if (errorDocumento) return res.status(400).json({ msg: errorDocumento })
+
+    const errorNombre = validarNombre(nombre)
+    if (errorNombre) return res.status(400).json({ msg: errorNombre })
+
+    const errorTelefono = validarTelefono(telefono)
+    if (errorTelefono) return res.status(400).json({ msg: errorTelefono })
+
+    const errorEmail = validarEmail(email)
+    if (errorEmail) return res.status(400).json({ msg: errorEmail })
+
     // Verificar si ya existe un cliente con ese documento o email
     let cliente = await Cliente.findOne({ $or: [{ documento }, { email }] })
     const clienteExistente = !!cliente
@@ -548,7 +773,7 @@ exports.publicRegister = async (req, res) => {
         <html lang="es">
         <head>
           <meta charset="UTF-8">
-          <meta name="viewport" content="width:device-width, initial-scale=1.0">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>[ADMIN] Nueva Reserva - Hotel Nido Sky</title>
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -782,7 +1007,6 @@ exports.publicRegister = async (req, res) => {
               <div class="section">
                 <h3 class="section-title">
                   <img src="https://img.icons8.com/ios-filled/50/0A2463/calendar-plus.png" alt="Reserva" class="section-title-icon">
-                  Detalles de la Reserva  alt="Reserva" class="section-title-icon">
                   Detalles de la Reserva
                 </h3>
                 
@@ -883,6 +1107,19 @@ exports.getClienteById = async (req, res) => {
 exports.updateCliente = async (req, res) => {
   const { nombre, documento, email, telefono } = req.body
   try {
+    // Validar los campos
+    const errorDocumento = validarDocumento(documento)
+    if (errorDocumento) return res.status(400).json({ msg: errorDocumento })
+
+    const errorNombre = validarNombre(nombre)
+    if (errorNombre) return res.status(400).json({ msg: errorNombre })
+
+    const errorTelefono = validarTelefono(telefono)
+    if (errorTelefono) return res.status(400).json({ msg: errorTelefono })
+
+    const errorEmail = validarEmail(email)
+    if (errorEmail) return res.status(400).json({ msg: errorEmail })
+
     const cliente = await Cliente.findById(req.params.id)
     if (!cliente) {
       return res.status(404).json({ msg: "Cliente no encontrado" })
@@ -917,45 +1154,86 @@ exports.updateCliente = async (req, res) => {
   }
 }
 
-// Eliminar un cliente
+// Eliminar un cliente - VERSIÓN FORZADA
 exports.deleteCliente = async (req, res) => {
+  console.log(`[DELETE CLIENTE FORZADO] Iniciando eliminación del cliente con ID: ${req.params.id}`)
+
   try {
+    // Verificar si el cliente existe
     const cliente = await Cliente.findById(req.params.id)
     if (!cliente) {
+      console.log(`[DELETE CLIENTE FORZADO] Cliente con ID ${req.params.id} no encontrado`)
       return res.status(404).json({ msg: "Cliente no encontrado" })
     }
 
-    // Verificar si el cliente tiene reservas confirmadas
+    console.log(`[DELETE CLIENTE FORZADO] Cliente encontrado: ${cliente.nombre} (${cliente.email})`)
+    console.log(`[DELETE CLIENTE FORZADO] Documento: ${cliente.documento || "No disponible"}`)
+
+    // Importar el modelo Reserva
     const Reserva = require("../reservas/reserva.model")
 
-    // Buscar reservas confirmadas del cliente
-    const reservasConfirmadas = await Reserva.find({
-      $or: [
-        { email: cliente.email },
-        { titular_reserva: cliente.nombre },
-        { titular_documento: cliente.documento },
-        { documento: cliente.documento },
-      ],
-      estado: "confirmada",
-    }).countDocuments()
+    // Buscar todas las reservas asociadas al cliente (solo para logging)
+    const todasLasReservas = await Reserva.find({
+      $or: [{ email: cliente.email }, { titular_documento: cliente.documento }, { documento: cliente.documento }],
+    })
 
-    // Si tiene reservas confirmadas, no permitir la eliminación
-    if (reservasConfirmadas > 0) {
-      return res.status(400).json({
-        msg: "No se puede eliminar el cliente porque tiene una reserva confirmada",
-        reservasConfirmadas,
+    console.log(`[DELETE CLIENTE FORZADO] Se encontraron ${todasLasReservas.length} reservas en total`)
+
+    // Mostrar detalles de cada reserva para depuración
+    if (todasLasReservas.length > 0) {
+      console.log("[DELETE CLIENTE FORZADO] Detalles de las reservas encontradas:")
+      todasLasReservas.forEach((reserva, index) => {
+        console.log(`[DELETE CLIENTE FORZADO] Reserva #${index + 1}:`)
+        console.log(`  - ID: ${reserva._id}`)
+        console.log(`  - Email: ${reserva.email}`)
+        console.log(`  - Titular: ${reserva.titular_reserva}`)
+        console.log(`  - Documento: ${reserva.titular_documento || reserva.documento}`)
+        console.log(`  - Estado: ${reserva.estado || "No definido"}`)
       })
     }
 
-    // Si no tiene reservas confirmadas, proceder con la eliminación
-    await Cliente.findByIdAndDelete(req.params.id)
-    res.json({ msg: "Cliente eliminado correctamente" })
-  } catch (error) {
-    console.error("Error al eliminar cliente:", error)
-    if (error.kind === "ObjectId") {
-      return res.status(404).json({ msg: "Cliente no encontrado" })
+    // Contar reservas confirmadas (solo para logging)
+    const reservasConfirmadas = todasLasReservas.filter((r) => r.estado === "confirmada")
+    console.log(`[DELETE CLIENTE FORZADO] De las cuales ${reservasConfirmadas.length} están confirmadas`)
+
+    // IMPORTANTE: Procedemos con la eliminación SIN IMPORTAR si tiene reservas confirmadas
+    console.log(`[DELETE CLIENTE FORZADO] Procediendo a eliminar el cliente ${cliente._id} de forma forzada`)
+
+    // Usar deleteOne para eliminar directamente
+    const resultado = await Cliente.deleteOne({ _id: req.params.id })
+
+    console.log(`[DELETE CLIENTE FORZADO] Resultado de la eliminación:`, resultado)
+
+    if (resultado.deletedCount === 0) {
+      console.log(`[DELETE CLIENTE FORZADO] No se pudo eliminar el cliente ${cliente._id}`)
+      return res.status(500).json({
+        msg: "No se pudo eliminar el cliente",
+        error: true,
+      })
     }
-    res.status(500).json({ msg: "Error en el servidor", error: error.message })
+
+    // Devolver respuesta exitosa con información adicional
+    res.json({
+      msg: "Cliente eliminado correctamente",
+      eliminacionForzada: reservasConfirmadas.length > 0,
+      reservasEncontradas: todasLasReservas.length,
+      reservasConfirmadas: reservasConfirmadas.length,
+      resultado,
+    })
+  } catch (error) {
+    console.error("[DELETE CLIENTE FORZADO] Error al eliminar cliente:", error)
+
+    // Verificar si es un error de ID inválido
+    if (error.name === "CastError" || error.kind === "ObjectId") {
+      return res.status(404).json({ msg: "Cliente no encontrado - ID inválido" })
+    }
+
+    // Devolver información detallada del error
+    res.status(500).json({
+      msg: "Error en el servidor al eliminar el cliente",
+      error: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    })
   }
 }
 
@@ -977,6 +1255,10 @@ exports.cambiarPassword = async (req, res) => {
   const { passwordActual, nuevoPassword } = req.body
 
   try {
+    // Validar la nueva contraseña
+    const errorPassword = validarPassword(nuevoPassword)
+    if (errorPassword) return res.status(400).json({ msg: errorPassword })
+
     // Obtener el ID del cliente desde el token de autenticación
     const clienteId = req.usuario.id
 
@@ -1223,6 +1505,321 @@ exports.getMisReservas = async (req, res) => {
     console.error("Error al obtener las reservas del cliente:", error)
     return res.status(500).json({
       msg: "Error al obtener las reservas",
+      error: error.message,
+    })
+  }
+}
+
+// Endpoint de diagnóstico para verificar reservas de un cliente
+exports.diagnosticoReservasCliente = async (req, res) => {
+  try {
+    const { clienteId } = req.params
+
+    console.log(`[DIAGNOSTICO] Iniciando diagnóstico para cliente ID: ${clienteId}`)
+
+    // Verificar si el cliente existe
+    const cliente = await Cliente.findById(clienteId)
+    if (!cliente) {
+      console.log(`[DIAGNOSTICO] Cliente con ID ${clienteId} no encontrado`)
+      return res.status(404).json({
+        msg: "Cliente no encontrado",
+        error: true,
+      })
+    }
+
+    console.log(`[DIAGNOSTICO] Cliente encontrado: ${cliente.nombre} (${cliente.email})`)
+    console.log(`[DIAGNOSTICO] Documento: ${cliente.documento || "No disponible"}`)
+
+    // Importar el modelo Reserva
+    const Reserva = require("../reservas/reserva.model")
+
+    // Buscar todas las reservas asociadas al cliente
+    const todasLasReservas = await Reserva.find({
+      $or: [{ email: cliente.email }, { titular_documento: cliente.documento }, { documento: cliente.documento }],
+    })
+
+    console.log(`[DIAGNOSTICO] Se encontraron ${todasLasReservas.length} reservas en total`)
+
+    // Agrupar reservas por estado
+    const reservasPorEstado = {
+      pendientes: [],
+      confirmadas: [],
+      canceladas: [],
+    }
+
+    // Procesar cada reserva
+    todasLasReservas.forEach((reserva) => {
+      const estado = reserva.estado || "pendiente"
+
+      // Crear un objeto simplificado de la reserva
+      const reservaSimplificada = {
+        id: reserva._id,
+        numero_reserva: reserva.numero_reserva,
+        titular: reserva.titular_reserva,
+        email: reserva.email,
+        documento: reserva.titular_documento || reserva.documento,
+        fecha_inicio: reserva.fecha_inicio,
+        fecha_fin: reserva.fecha_fin,
+        estado: estado,
+        total: reserva.total,
+      }
+
+      // Agregar a la categoría correspondiente
+      if (estado === "confirmada") {
+        reservasPorEstado.confirmadas.push(reservaSimplificada)
+      } else if (estado === "cancelada") {
+        reservasPorEstado.canceladas.push(reservaSimplificada)
+      } else {
+        reservasPorEstado.pendientes.push(reservaSimplificada)
+      }
+    })
+
+    // Preparar respuesta
+    const respuesta = {
+      cliente: {
+        id: cliente._id,
+        nombre: cliente.nombre,
+        email: cliente.email,
+        documento: cliente.documento,
+        telefono: cliente.telefono,
+      },
+      resumen: {
+        total_reservas: todasLasReservas.length,
+        confirmadas: reservasPorEstado.confirmadas.length,
+        pendientes: reservasPorEstado.pendientes.length,
+        canceladas: reservasPorEstado.canceladas.length,
+      },
+      puede_eliminar: reservasPorEstado.confirmadas.length === 0,
+      reservas: reservasPorEstado,
+    }
+
+    console.log(
+      `[DIAGNOSTICO] Diagnóstico completado. Cliente ${respuesta.puede_eliminar ? "PUEDE" : "NO PUEDE"} ser eliminado`,
+    )
+
+    return res.status(200).json(respuesta)
+  } catch (error) {
+    console.error("[DIAGNOSTICO] Error:", error)
+    return res.status(500).json({
+      msg: "Error al realizar el diagnóstico",
+      error: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    })
+  }
+}
+
+// Actualizar el cliente y el usuario correspondiente
+exports.updateClienteAndUsuario = async (req, res) => {
+  const { nombre, documento, email, telefono } = req.body
+  const { id } = req.params
+
+  try {
+    // Validar los campos
+    const errorDocumento = validarDocumento(documento)
+    if (errorDocumento) return res.status(400).json({ msg: errorDocumento })
+
+    const errorNombre = validarNombre(nombre)
+    if (errorNombre) return res.status(400).json({ msg: errorNombre })
+
+    const errorTelefono = validarTelefono(telefono)
+    if (errorTelefono) return res.status(400).json({ msg: errorTelefono })
+
+    const errorEmail = validarEmail(email)
+    if (errorEmail) return res.status(400).json({ msg: errorEmail })
+
+    // Verificar si el cliente existe
+    const cliente = await Cliente.findById(id)
+    if (!cliente) {
+      return res.status(404).json({ msg: "Cliente no encontrado" })
+    }
+
+    // Verificar si el nuevo email o documento ya existe en otro cliente
+    if (email !== cliente.email || documento !== cliente.documento) {
+      const existingCliente = await Cliente.findOne({
+        $or: [
+          { email, _id: { $ne: id } },
+          { documento, _id: { $ne: id } },
+        ],
+      })
+      if (existingCliente) {
+        return res.status(400).json({ msg: "El email o documento ya está en uso por otro cliente" })
+      }
+    }
+
+    // Actualizar el cliente
+    cliente.nombre = nombre
+    cliente.documento = documento
+    cliente.email = email
+    cliente.telefono = telefono
+
+    await cliente.save()
+
+    // Buscar y actualizar el usuario correspondiente si existe
+    const usuario = await Usuario.findOne({ email: cliente.email })
+    if (usuario) {
+      usuario.nombre = nombre
+      usuario.documento = documento
+      usuario.telefono = telefono
+      // No actualizamos el email del usuario para mantener la coherencia con el login
+      await usuario.save()
+      console.log(`[UPDATE CLIENTE] Usuario con email ${cliente.email} también actualizado`)
+    }
+
+    res.json({
+      msg: "Cliente actualizado correctamente",
+      cliente,
+    })
+  } catch (error) {
+    console.error("[UPDATE CLIENTE] Error:", error)
+    if (error.kind === "ObjectId") {
+      return res.status(404).json({ msg: "Cliente no encontrado - ID inválido" })
+    }
+    res.status(500).json({
+      msg: "Error en el servidor al actualizar el cliente",
+      error: error.message,
+    })
+  }
+}
+
+// Verificar si un cliente puede ser eliminado
+exports.verificarEliminacion = async (req, res) => {
+  try {
+    const { id } = req.params
+
+    // Verificar si el cliente existe
+    const cliente = await Cliente.findById(id)
+    if (!cliente) {
+      return res.status(404).json({ msg: "Cliente no encontrado" })
+    }
+
+    // Importar el modelo Reserva
+    const Reserva = require("../reservas/reserva.model")
+
+    // Buscar reservas confirmadas
+    const reservasConfirmadas = await Reserva.find({
+      $or: [{ email: cliente.email }, { titular_documento: cliente.documento }, { documento: cliente.documento }],
+      estado: "confirmada",
+    })
+
+    const puedeEliminar = reservasConfirmadas.length === 0
+
+    res.json({
+      puedeEliminar,
+      reservasConfirmadas: reservasConfirmadas.length,
+      msg: puedeEliminar
+        ? "El cliente puede ser eliminado"
+        : `El cliente tiene ${reservasConfirmadas.length} reservas confirmadas y no puede ser eliminado`,
+    })
+  } catch (error) {
+    console.error("[VERIFICAR ELIMINACION] Error:", error)
+    res.status(500).json({
+      msg: "Error al verificar si el cliente puede ser eliminado",
+      error: error.message,
+    })
+  }
+}
+
+// Buscar clientes por nombre, email o documento
+exports.buscarClientes = async (req, res) => {
+  try {
+    const { termino } = req.params
+
+    if (!termino || termino.trim() === "") {
+      return res.status(400).json({ msg: "El término de búsqueda es requerido" })
+    }
+
+    // Crear expresión regular para búsqueda insensible a mayúsculas/minúsculas
+    const regex = new RegExp(termino, "i")
+
+    // Buscar clientes que coincidan con el término en nombre, email o documento
+    const clientes = await Cliente.find({
+      $or: [{ nombre: regex }, { email: regex }, { documento: regex }],
+    }).limit(10) // Limitar a 10 resultados
+
+    res.json(clientes)
+  } catch (error) {
+    console.error("[BUSCAR CLIENTES] Error:", error)
+    res.status(500).json({
+      msg: "Error al buscar clientes",
+      error: error.message,
+    })
+  }
+}
+
+// Obtener estadísticas de clientes
+exports.getEstadisticasClientes = async (req, res) => {
+  try {
+    // Total de clientes
+    const totalClientes = await Cliente.countDocuments()
+
+    // Clientes nuevos en el último mes
+    const fechaUnMesAtras = new Date()
+    fechaUnMesAtras.setMonth(fechaUnMesAtras.getMonth() - 1)
+
+    const clientesNuevos = await Cliente.countDocuments({
+      createdAt: { $gte: fechaUnMesAtras },
+    })
+
+    // Importar el modelo Reserva
+    const Reserva = require("../reservas/reserva.model")
+
+    // Clientes con reservas
+    const clientesConReservas = await Reserva.distinct("email").length
+
+    // Clientes sin reservas
+    const clientesSinReservas = totalClientes - clientesConReservas
+
+    res.json({
+      totalClientes,
+      clientesNuevos,
+      clientesConReservas,
+      clientesSinReservas,
+      porcentajeNuevos: totalClientes > 0 ? (clientesNuevos / totalClientes) * 100 : 0,
+      porcentajeConReservas: totalClientes > 0 ? (clientesConReservas / totalClientes) * 100 : 0,
+    })
+  } catch (error) {
+    console.error("[ESTADISTICAS CLIENTES] Error:", error)
+    res.status(500).json({
+      msg: "Error al obtener estadísticas de clientes",
+      error: error.message,
+    })
+  }
+}
+
+// Exportar cliente a Excel/CSV
+exports.exportarClientes = async (req, res) => {
+  try {
+    // Obtener todos los clientes
+    const clientes = await Cliente.find(
+      {},
+      {
+        nombre: 1,
+        documento: 1,
+        email: 1,
+        telefono: 1,
+        createdAt: 1,
+      },
+    )
+
+    // Formatear los datos para CSV
+    let csvData = "Nombre,Documento,Email,Teléfono,Fecha de Registro\n"
+
+    clientes.forEach((cliente) => {
+      const fechaRegistro = cliente.createdAt ? new Date(cliente.createdAt).toLocaleDateString() : "No disponible"
+
+      csvData += `"${cliente.nombre}","${cliente.documento}","${cliente.email}","${cliente.telefono}","${fechaRegistro}"\n`
+    })
+
+    // Configurar cabeceras para descarga
+    res.setHeader("Content-Type", "text/csv")
+    res.setHeader("Content-Disposition", "attachment; filename=clientes.csv")
+
+    // Enviar el CSV
+    res.send(csvData)
+  } catch (error) {
+    console.error("[EXPORTAR CLIENTES] Error:", error)
+    res.status(500).json({
+      msg: "Error al exportar clientes",
       error: error.message,
     })
   }

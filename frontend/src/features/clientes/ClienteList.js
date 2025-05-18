@@ -1,14 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   TextField,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  MenuItem,
   Table,
   TableHead,
   TableBody,
@@ -17,20 +12,67 @@ import {
   TableContainer,
   Paper,
   Box,
-  TablePagination,
-  IconButton,
-  Tooltip,
   Avatar,
   InputAdornment,
   Typography,
+  TablePagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  FormControlLabel,
+  Switch,
+  Grid,
 } from "@material-ui/core"
-import { Edit, Delete, Info, X, Search, UserPlus } from "lucide-react"
-// Añadir las importaciones necesarias para los iconos
-import { Person, Email, Phone, Security, AssignmentInd, VpnKey, VerifiedUser } from "@material-ui/icons"
+// Cambiar la importación de iconos para usar Delete en lugar de Trash2
+import { Search, UserPlus, Edit, Delete, Info, X, User, FileText, Phone, Mail, Key, Check } from "lucide-react"
 import Swal from "sweetalert2"
 import clienteService from "./clientes.service"
 import "./clientes.styles.css"
 import { makeStyles, withStyles } from "@material-ui/core/styles"
+
+// Expresiones regulares para validaciones
+const REGEX = {
+  SOLO_NUMEROS: /^\d+$/,
+  SOLO_LETRAS_ESPACIOS: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/,
+  EMAIL: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  EMAIL_INVALIDO: /@\.com|@com\.|@\.|\.@|@-|-@|@.*@|\.\.|,,|@@/,
+  CONTRASENA_FUERTE: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,15}$/,
+  SECUENCIAS_COMUNES: /123456|654321|password|qwerty|abc123|admin123|123abc|contraseña|usuario|admin/i,
+  CARACTERES_REPETIDOS: /(.)\1{3,}/,
+  SECUENCIAS_NUMERICAS: /123456|654321|111111|222222|333333|444444|555555|666666|777777|888888|999999|000000/,
+}
+
+// Actualizar las constantes de validación para que coincidan con el controlador
+const VALIDACION = {
+  DOCUMENTO: {
+    MIN_LENGTH: 6,
+    MAX_LENGTH: 15,
+  },
+  NOMBRE: {
+    MIN_LENGTH: 6,
+    MAX_LENGTH: 30,
+  },
+  TELEFONO: {
+    MIN_LENGTH: 7,
+    MAX_LENGTH: 10,
+  },
+  CONTRASENA: {
+    MIN_LENGTH: 8,
+    MAX_LENGTH: 15,
+  },
+}
+
+// Añadir mensajes instructivos para cada campo
+const MENSAJES_INSTRUCTIVOS = {
+  DOCUMENTO: "Ingrese un número de documento entre 6 y 15 dígitos, solo números.",
+  NOMBRE: "Ingrese nombre completo entre 6 y 30 caracteres, solo letras y espacios.",
+  TELEFONO: "Ingrese un número telefónico entre 7 y 10 dígitos, solo números.",
+  EMAIL: "Ingresa tu email (formato: usuario@dominio.com)",
+  PASSWORD:
+    "La contraseña debe tener entre 8 y 15 caracteres, incluir mayúsculas, minúsculas, números y caracteres especiales.",
+}
 
 // Modificar el StyledTableCell para que tenga un fondo azul sólido sin gradiente
 const StyledTableCell = withStyles((theme) => ({
@@ -187,33 +229,35 @@ const useStyles = makeStyles((theme) => ({
   },
   actionButton: {
     margin: theme.spacing(0, 0.5),
-    transition: "transform 0.3s, box-shadow 0.3s",
+    transition: "transform 0.3s",
     borderRadius: "50%",
     padding: theme.spacing(1),
+    width: 36,
+    height: 36,
+    minWidth: 36,
     "&:hover": {
-      transform: "scale(1.15)",
-      boxShadow: "0 3px 8px rgba(0, 0, 0, 0.2)",
+      transform: "scale(1.1)",
     },
   },
   btnEdit: {
     backgroundColor: "#10b981",
     color: "#fff",
     "&:hover": {
-      backgroundColor: "#059669",
+      backgroundColor: "#10b981",
     },
   },
   btnDelete: {
     backgroundColor: "#ef4444",
     color: "#fff",
     "&:hover": {
-      backgroundColor: "#dc2626",
+      backgroundColor: "#ef4444",
     },
   },
   btnDetails: {
     backgroundColor: "#3b82f6",
     color: "#fff",
     "&:hover": {
-      backgroundColor: "#2563eb",
+      backgroundColor: "#3b82f6",
     },
   },
   userAvatar: {
@@ -400,16 +444,15 @@ const useStyles = makeStyles((theme) => ({
   },
   estadoChip: {
     fontWeight: 600,
-    padding: theme.spacing(0.5, 1.5),
-    borderRadius: theme.spacing(1),
+    padding: theme.spacing(0.5, 0),
+    borderRadius: 0,
+    backgroundColor: "transparent",
   },
   estadoActivo: {
-    backgroundColor: "#dcfce7",
-    color: "#166534",
+    color: "#10b981",
   },
   estadoInactivo: {
-    backgroundColor: "#fee2e2",
-    color: "#991b1b",
+    color: "#ef4444",
   },
   clienteContainer: {
     display: "flex",
@@ -454,7 +497,28 @@ const ClienteList = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(5)
-  const [isValidating, setIsValidating] = useState(false)
+  const [fieldValidation, setFieldValidation] = useState({
+    documento: false,
+    nombre: false,
+    telefono: false,
+    email: false,
+    password: false,
+  })
+  const [touched, setTouched] = useState({
+    documento: false,
+    nombre: false,
+    telefono: false,
+    email: false,
+    password: false,
+  })
+
+  // Referencias para los campos del formulario
+  const documentoRef = useRef(null)
+  const nombreRef = useRef(null)
+  const telefonoRef = useRef(null)
+  const emailRef = useRef(null)
+  const passwordRef = useRef(null)
+  const estadoRef = useRef(null)
 
   const fetchClientes = async () => {
     try {
@@ -475,13 +539,27 @@ const ClienteList = () => {
   }, [])
 
   const handleOpen = (cliente) => {
-    // Reset form errors
+    // Reset form errors and validation states
     setFormErrors({
       nombre: "",
       documento: "",
       email: "",
       telefono: "",
       password: "",
+    })
+    setFieldValidation({
+      documento: false,
+      nombre: false,
+      telefono: false,
+      email: false,
+      password: false,
+    })
+    setTouched({
+      documento: false,
+      nombre: false,
+      telefono: false,
+      email: false,
+      password: false,
     })
 
     if (cliente) {
@@ -494,6 +572,14 @@ const ClienteList = () => {
         estado: cliente.estado,
       })
       setEditingId(cliente._id)
+      // Si estamos editando, consideramos los campos existentes como válidos
+      setFieldValidation({
+        documento: true,
+        nombre: true,
+        telefono: true,
+        email: true,
+        password: true, // La contraseña es opcional al editar
+      })
     } else {
       setFormData({
         nombre: "",
@@ -506,10 +592,14 @@ const ClienteList = () => {
       setEditingId(null)
     }
     setOpen(true)
-  }
 
-  // Modificar la función handleClose para que siempre permita cerrar el modal
-  // Reemplazar la función handleClose actual con esta versión:
+    // Enfocar el primer campo después de que el modal se abra
+    setTimeout(() => {
+      if (documentoRef.current) {
+        documentoRef.current.focus()
+      }
+    }, 100)
+  }
 
   const handleClose = () => {
     // Cerrar el modal sin validaciones
@@ -533,68 +623,231 @@ const ClienteList = () => {
     setDetailsOpen(false)
   }
 
-  // Modificar la función validateField para evitar validaciones agresivas
-  // Reemplazar la función validateField actual con esta versión mejorada:
+  // Funciones de validación mejoradas
+  const validarDocumento = (value) => {
+    if (!value) {
+      return "El documento es obligatorio"
+    }
+    if (value.trim() === "") {
+      return "El documento no puede estar vacío"
+    }
+    if (!REGEX.SOLO_NUMEROS.test(value)) {
+      return "El documento debe contener solo números"
+    }
+    if (value.length < VALIDACION.DOCUMENTO.MIN_LENGTH) {
+      return `El documento debe tener al menos ${VALIDACION.DOCUMENTO.MIN_LENGTH} dígitos`
+    }
+    if (value.length > VALIDACION.DOCUMENTO.MAX_LENGTH) {
+      return `El documento no puede tener más de ${VALIDACION.DOCUMENTO.MAX_LENGTH} dígitos`
+    }
+    if (REGEX.CARACTERES_REPETIDOS.test(value)) {
+      return "El documento no puede contener más de 3 dígitos repetidos consecutivos"
+    }
+    if (REGEX.SECUENCIAS_NUMERICAS.test(value)) {
+      return "El documento no puede contener secuencias numéricas obvias"
+    }
+    if (/^0+$/.test(value)) {
+      return "El documento no puede contener solo ceros"
+    }
+    if (Number.parseInt(value) < 1000) {
+      return "El documento no parece válido (valor muy bajo)"
+    }
+    return ""
+  }
 
-  // Validación en tiempo real
-  const validateField = (name, value, showAlert = false) => {
+  const validarNombre = (value) => {
+    if (!value) {
+      return "El nombre es obligatorio"
+    }
+    if (value.trim() === "") {
+      return "El nombre no puede estar vacío"
+    }
+    if (!REGEX.SOLO_LETRAS_ESPACIOS.test(value)) {
+      return "El nombre solo debe contener letras y espacios"
+    }
+    if (value.length < VALIDACION.NOMBRE.MIN_LENGTH) {
+      return `El nombre debe tener al menos ${VALIDACION.NOMBRE.MIN_LENGTH} caracteres`
+    }
+    if (value.length > VALIDACION.NOMBRE.MAX_LENGTH) {
+      return `El nombre no puede tener más de ${VALIDACION.NOMBRE.MAX_LENGTH} caracteres`
+    }
+    if (/\s{2,}/.test(value)) {
+      return "El nombre no puede contener espacios múltiples consecutivos"
+    }
+
+    const palabras = value.trim().split(/\s+/)
+    if (palabras.length < 2) {
+      return "Debe ingresar al menos nombre y apellido"
+    }
+
+    for (const palabra of palabras) {
+      if (palabra.length < 2) {
+        return "Cada palabra del nombre debe tener al menos 2 caracteres"
+      }
+    }
+
+    const palabrasProhibidas = ["admin", "usuario", "test", "prueba", "administrador"]
+    for (const prohibida of palabrasProhibidas) {
+      if (value.toLowerCase().includes(prohibida)) {
+        return "El nombre contiene palabras no permitidas"
+      }
+    }
+
+    return ""
+  }
+
+  // Modificar la función validarTelefono para permitir cualquier número inicial
+  const validarTelefono = (value) => {
+    if (!value) {
+      return "El teléfono es obligatorio"
+    }
+    if (value.trim() === "") {
+      return "El teléfono no puede estar vacío"
+    }
+    if (!REGEX.SOLO_NUMEROS.test(value)) {
+      return "El teléfono debe contener solo números"
+    }
+    if (value.length < VALIDACION.TELEFONO.MIN_LENGTH) {
+      return `El teléfono debe tener al menos ${VALIDACION.TELEFONO.MIN_LENGTH} dígitos`
+    }
+    if (value.length > VALIDACION.TELEFONO.MAX_LENGTH) {
+      return `El teléfono no puede tener más de ${VALIDACION.TELEFONO.MAX_LENGTH} dígitos`
+    }
+    if (REGEX.SECUENCIAS_NUMERICAS.test(value)) {
+      return "El teléfono no puede contener secuencias numéricas obvias"
+    }
+    if (/^0+$/.test(value)) {
+      return "El teléfono no puede contener solo ceros"
+    }
+
+    // Eliminamos la validación que requiere que los números de 10 dígitos empiecen con 3
+    // y que los números de 7 dígitos no empiecen con 0
+
+    const numerosEspeciales = ["123", "911", "112", "119"]
+    if (numerosEspeciales.includes(value)) {
+      return "No se permite el uso de números de emergencia"
+    }
+
+    return ""
+  }
+
+  // Modificar la función validarEmail para no permitir caracteres después del TLD
+  const validarEmail = (em) => {
+    // Validaciones básicas
+    if (!em) return "El correo electrónico es obligatorio"
+    if (em.trim() === "") return "El correo electrónico no puede estar vacío"
+
+    // Validación de formato básico
+    if (!REGEX.EMAIL.test(em)) return "Formato de correo electrónico inválido"
+
+    // Validación de patrones inválidos específicos
+    if (REGEX.EMAIL_INVALIDO.test(em)) return "El correo contiene patrones inválidos (como @.com, @., etc.)"
+
+    // Validación de longitud
+    if (em.length < 6) return "El correo debe tener al menos 6 caracteres"
+    if (em.length > 50) return "El correo no puede tener más de 50 caracteres"
+
+    // Validación de partes del email
+    const [localPart, domainPart] = em.split("@")
+
+    // Validación de la parte local
+    if (!localPart || localPart.length < 1) return "La parte local del correo no puede estar vacía"
+    if (localPart.length > 64) return "La parte local del correo es demasiado larga"
+    if (/^[.-]|[.-]$/.test(localPart)) return "La parte local no puede comenzar ni terminar con puntos o guiones"
+
+    // Validación del dominio
+    if (!domainPart || !domainPart.includes("."))
+      return "El dominio del correo debe incluir una extensión (ej: .com, .net)"
+
+    // Verificar que el dominio tenga un formato válido y que no haya caracteres después del TLD
+    // Dividir el dominio en partes separadas por puntos
+    const domainParts = domainPart.split(".")
+
+    // Verificar que todas las partes del dominio sean válidas
+    for (let i = 0; i < domainParts.length; i++) {
+      const part = domainParts[i]
+      // Cada parte debe contener al menos un carácter y solo caracteres alfanuméricos o guiones
+      if (part.length === 0 || !/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(part)) {
+        return "El dominio del correo contiene partes inválidas"
+      }
+    }
+
+    // Verificar que el TLD sea válido (2-6 caracteres, solo letras)
+    const tld = domainParts[domainParts.length - 1]
+    if (!tld || tld.length < 2 || tld.length > 6 || !/^[a-zA-Z]+$/.test(tld)) {
+      return "La extensión del dominio no es válida o contiene caracteres no permitidos"
+    }
+
+    // Validación de dominios temporales o no recomendados
+    const dominiosNoRecomendados = ["tempmail", "mailinator", "guerrillamail", "10minutemail", "yopmail"]
+    for (const dominio of dominiosNoRecomendados) {
+      if (domainPart.toLowerCase().includes(dominio)) return "No se permiten correos de servicios temporales"
+    }
+
+    return ""
+  }
+
+  const validarPassword = (value, isEditing) => {
+    // Si estamos editando y el campo está vacío, no validamos
+    if (isEditing && !value) {
+      return ""
+    }
+
+    if (!value) {
+      return "La contraseña es obligatoria"
+    }
+    if (value.length < VALIDACION.CONTRASENA.MIN_LENGTH) {
+      return `La contraseña debe tener al menos ${VALIDACION.CONTRASENA.MIN_LENGTH} caracteres`
+    }
+    if (value.length > VALIDACION.CONTRASENA.MAX_LENGTH) {
+      return `La contraseña no puede tener más de ${VALIDACION.CONTRASENA.MAX_LENGTH} caracteres`
+    }
+    if (!/[a-z]/.test(value)) {
+      return "La contraseña debe contener al menos una letra minúscula"
+    }
+    if (!/[A-Z]/.test(value)) {
+      return "La contraseña debe contener al menos una letra mayúscula"
+    }
+    if (!/[0-9]/.test(value)) {
+      return "La contraseña debe contener al menos un número"
+    }
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value)) {
+      return "La contraseña debe contener al menos un carácter especial"
+    }
+    if (REGEX.SECUENCIAS_COMUNES.test(value)) {
+      return "La contraseña no puede contener secuencias comunes o palabras fáciles de adivinar"
+    }
+    if (REGEX.CARACTERES_REPETIDOS.test(value)) {
+      return "La contraseña no puede contener más de 3 caracteres repetidos consecutivos"
+    }
+    if (/qwert|asdfg|zxcvb|12345|09876/.test(value.toLowerCase())) {
+      return "La contraseña no puede contener secuencias de teclado"
+    }
+
+    return ""
+  }
+
+  // Función para validar un campo específico
+  const validateField = (name, value) => {
     let error = ""
-
-    // Si estamos en modo edición, ser menos estrictos con las validaciones
     const isEditing = !!editingId
 
     switch (name) {
-      case "nombre":
-        if (!value.trim()) {
-          error = "El nombre es obligatorio"
-        } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value)) {
-          error = "El nombre solo debe contener letras"
-        } else if (value.length > 50) {
-          error = "El nombre no puede tener más de 50 caracteres"
-        }
-        break
-
       case "documento":
-        if (!value.trim()) {
-          error = "El documento es obligatorio"
-        } else if (!/^[a-zA-Z0-9]+$/.test(value)) {
-          error = "El documento solo debe contener letras y números"
-        } else if (value.length > 17) {
-          error = "El documento no puede tener más de 17 caracteres"
-        }
+        error = validarDocumento(value)
         break
-
-      case "email":
-        if (!value.trim()) {
-          error = "El email es obligatorio"
-        } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value)) {
-          error = "Formato de email inválido"
-        }
+      case "nombre":
+        error = validarNombre(value)
         break
-
       case "telefono":
-        if (!value.trim()) {
-          error = "El teléfono es obligatorio"
-        } else if (!/^\d+$/.test(value)) {
-          error = "El teléfono solo debe contener números"
-        }
+        error = validarTelefono(value)
         break
-
+      case "email":
+        error = validarEmail(value)
+        break
       case "password":
-        // Solo validar si no está en modo edición o si se está ingresando una contraseña
-        if ((!editingId || value) && value) {
-          if (!/(?=.*[A-Z])/.test(value)) {
-            error = "Debe contener al menos una letra mayúscula"
-          } else if (!/(?=.*\d)/.test(value)) {
-            error = "Debe contener al menos un número"
-          } else if (!/(?=.*[!@#$%^&*])/.test(value)) {
-            error = "Debe contener al menos un carácter especial (!@#$%^&*)"
-          }
-        } else if (!editingId && !value) {
-          error = "La contraseña es obligatoria"
-        }
+        error = validarPassword(value, isEditing)
         break
-
       default:
         break
     }
@@ -605,249 +858,269 @@ const ClienteList = () => {
       [name]: error,
     }))
 
-    // Mostrar SweetAlert2 solo si hay error y se debe mostrar la alerta
-    if (error && showAlert) {
-      Swal.fire({
-        icon: "warning",
-        title: "Validación",
-        text: error,
-        confirmButtonColor: "#2563eb",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-      })
-    }
+    // Actualizar el estado de validación del campo
+    setFieldValidation((prev) => ({
+      ...prev,
+      [name]: !error,
+    }))
 
     return !error // Retorna true si no hay error
   }
 
-  // Agregar función para manejar el cambio de foco entre campos
-  // Actualizar la función handleFieldBlur para que no valide si estamos cerrando el modal:
-
+  // Manejar el cambio de foco entre campos
   const handleFieldBlur = (e) => {
     const { name, value } = e.target
-    // Al perder el foco, validamos pero solo mostramos alertas si el campo no está vacío
-    // o si es un campo obligatorio
-    const showAlert =
-      value.trim() !== "" ||
-      ["nombre", "documento", "email", "telefono"].includes(name) ||
-      (name === "password" && !editingId)
-    const isValidField = validateField(name, value, showAlert)
 
-    // Si no es válido y debemos mostrar alerta, mostrarla
-    if (!isValidField && showAlert) {
-      Swal.fire({
-        icon: "warning",
-        title: "Validación",
-        text: formErrors[name],
-        confirmButtonColor: "#2563eb",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-      })
+    // Marcar el campo como tocado
+    setTouched((prev) => ({
+      ...prev,
+      [name]: true,
+    }))
+
+    // Validar el campo
+    if (name === "email") {
+      const error = validarEmail(value)
+      setFormErrors((prev) => ({ ...prev, email: error }))
+      setFieldValidation((prev) => ({ ...prev, email: !error }))
+    } else {
+      validateField(name, value)
     }
   }
 
-  // Agregar función para manejar la tecla Tab
-  // Actualizar la función handleKeyDown para que no valide si estamos cerrando el modal:
-
+  // Manejar la tecla Enter/Tab para navegar entre campos
   const handleKeyDown = (e, nextFieldName) => {
-    if (e.key === "Tab") {
-      const { name, value } = e.target
-      const isValidField = validateField(name, value, true)
+    const { name, value } = e.target
 
-      // No prevenimos el comportamiento por defecto, permitiendo que el Tab funcione normalmente
-      // Solo mostramos la alerta si hay un error
-      if (!isValidField) {
-        Swal.fire({
-          icon: "warning",
-          title: "Campo con errores",
-          text: formErrors[name] || "Este campo contiene errores. Deberá corregirlo antes de enviar el formulario.",
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true,
-        })
+    if (e.key === "Enter" || e.key === "Tab") {
+      e.preventDefault()
+
+      // Validar el campo actual
+      let isValid = false
+
+      if (name === "email") {
+        const error = validarEmail(value)
+        setFormErrors((prev) => ({ ...prev, email: error }))
+        setFieldValidation((prev) => ({ ...prev, email: !error }))
+        isValid = !error
+      } else {
+        isValid = validateField(name, value)
+      }
+
+      // Si el campo es válido, pasar al siguiente
+      if (isValid && nextFieldName) {
+        switch (nextFieldName) {
+          case "nombre":
+            nombreRef.current?.focus()
+            break
+          case "telefono":
+            telefonoRef.current?.focus()
+            break
+          case "email":
+            emailRef.current?.focus()
+            break
+          case "password":
+            passwordRef.current?.focus()
+            break
+          case "estado":
+            estadoRef.current?.focus()
+            break
+          default:
+            break
+        }
       }
     }
   }
 
-  // Modificar la función handleChange para usar las nuevas funciones
-  // Reemplazar la función handleChange actual con:
+  // Modificar la función handleChange para asegurar que el campo de teléfono se marque como "tocado" inmediatamente
+  // y que la validación se realice con cada pulsación de tecla
 
+  // Reemplazar la función handleChange completa con esta versión:
   const handleChange = (e) => {
     const { name, value } = e.target
-    const prevValue = formData[name]
+
+    // Marcar el campo como tocado tan pronto como el usuario comience a escribir
+    setTouched((prev) => ({
+      ...prev,
+      [name]: true,
+    }))
 
     // Validaciones específicas durante la escritura
     let updatedValue = value
 
     if (name === "nombre") {
-      // Solo permitir letras y espacios, máximo 50 caracteres
+      // Solo permitir letras y espacios
       const letrasRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/
       if (!letrasRegex.test(value)) {
-        Swal.fire({
-          icon: "warning",
-          title: "Validación",
-          text: "El nombre solo debe contener letras",
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true,
-        })
-        updatedValue = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "")
+        // No actualizar el estado si el último carácter no es una letra o espacio
+        return
       }
     } else if (name === "documento") {
-      // Solo permitir letras y números, máximo 17 caracteres
-      const alfanumericoRegex = /^[a-zA-Z0-9]*$/
-      if (!alfanumericoRegex.test(value)) {
-        Swal.fire({
-          icon: "warning",
-          title: "Validación",
-          text: "El documento solo debe contener letras y números",
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true,
-        })
-        updatedValue = value.replace(/[^a-zA-Z0-9]/g, "")
-      }
-      if (value.length > 17) {
-        Swal.fire({
-          icon: "warning",
-          title: "Validación",
-          text: "El documento no puede tener más de 17 caracteres",
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true,
-        })
-        updatedValue = value.substring(0, 17)
-      }
-    } else if (name === "telefono") {
-      // Solo permitir números, máximo 15 caracteres
+      // Solo permitir números
       const numerosRegex = /^[0-9]*$/
       if (!numerosRegex.test(value)) {
-        Swal.fire({
-          icon: "warning",
-          title: "Validación",
-          text: "El teléfono solo debe contener números",
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true,
-        })
-        updatedValue = value.replace(/[^0-9]/g, "")
+        // No actualizar el estado si hay caracteres que no son números
+        return
       }
-      if (value.length > 15) {
-        Swal.fire({
-          icon: "warning",
-          title: "Validación",
-          text: "El teléfono no puede tener más de 15 caracteres",
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true,
-        })
-        updatedValue = value.substring(0, 15)
+
+      if (value.length > VALIDACION.DOCUMENTO.MAX_LENGTH) {
+        updatedValue = value.substring(0, VALIDACION.DOCUMENTO.MAX_LENGTH)
       }
+    } else if (name === "telefono") {
+      // Solo permitir números
+      const numerosRegex = /^[0-9]*$/
+      if (!numerosRegex.test(value)) {
+        // No actualizar el estado si hay caracteres que no son números
+        return
+      }
+
+      if (value.length > VALIDACION.TELEFONO.MAX_LENGTH) {
+        updatedValue = value.substring(0, VALIDACION.TELEFONO.MAX_LENGTH)
+      }
+    } else if (name === "email") {
+      // Validación para email en tiempo real
+      // Permitir solo caracteres válidos para email
+      const emailRegex = /^[a-zA-Z0-9._%+-]*@?[a-zA-Z0-9.-]*\.?[a-zA-Z]*$/
+      if (!emailRegex.test(value)) {
+        // No actualizar si hay caracteres inválidos
+        return
+      }
+
+      // No permitir múltiples @ o puntos consecutivos
+      if (value.includes("@@") || value.includes("..") || value.includes(".@") || value.includes("@.")) {
+        return
+      }
+
+      // No permitir más de un @
+      const atCount = (value.match(/@/g) || []).length
+      if (atCount > 1) {
+        return
+      }
+
+      // Verificar si ya tiene un TLD válido completo (.com, .net, etc.)
+      if (formData.email.includes("@") && formData.email.includes(".")) {
+        const currentParts = formData.email.split("@")
+        const newParts = value.split("@")
+
+        if (currentParts.length > 1 && newParts.length > 1) {
+          const currentDomain = currentParts[1]
+          const newDomain = newParts[1]
+
+          // Verificar si el dominio actual termina con un TLD completo
+          // Lista de TLDs completos comunes que no deben permitir más caracteres
+          const completeTLDs = [".com", ".net", ".org", ".edu", ".gov", ".mil", ".int"]
+
+          // Verificar si el dominio actual termina con alguno de los TLDs completos
+          const hasTLDComplete = completeTLDs.some((tld) => currentDomain.endsWith(tld))
+
+          // Si tiene un TLD completo y el nuevo dominio es más largo, no permitir más caracteres
+          if (hasTLDComplete && newDomain.length > currentDomain.length) {
+            return
+          }
+        }
+      }
+    } else if (name === "password" && value.length > VALIDACION.CONTRASENA.MAX_LENGTH) {
+      updatedValue = value.substring(0, VALIDACION.CONTRASENA.MAX_LENGTH)
     }
 
-    setFormData({ ...formData, [name]: updatedValue })
+    // Actualizar el estado del formulario con el nuevo valor
+    setFormData((prev) => ({
+      ...prev,
+      [name]: updatedValue,
+    }))
 
-    // Determinar si estamos borrando texto (la longitud del valor está disminuyendo)
-    const isDeletingText = prevValue && value.length < prevValue.length
+    // Validar todos los campos en tiempo real
+    let error = ""
+    const isEditing = !!editingId
 
-    // Validar el campo que cambió, pero no mostrar alertas si:
-    // 1. Es email o password, o
-    // 2. Estamos borrando texto
-    validateField(name, updatedValue, !isDeletingText && name !== "email" && name !== "password")
+    switch (name) {
+      case "documento":
+        error = validarDocumento(updatedValue)
+        break
+      case "nombre":
+        error = validarNombre(updatedValue)
+        break
+      case "telefono":
+        error = validarTelefono(updatedValue)
+        break
+      case "email":
+        error = validarEmail(updatedValue)
+        break
+      case "password":
+        error = validarPassword(updatedValue, isEditing)
+        break
+      default:
+        break
+    }
+
+    // Actualizar errores y estado de validación
+    setFormErrors((prev) => ({
+      ...prev,
+      [name]: error,
+    }))
+
+    setFieldValidation((prev) => ({
+      ...prev,
+      [name]: !error,
+    }))
   }
 
+  // Validar todo el formulario
   const validateForm = () => {
-    // Si estamos editando, la contraseña puede estar vacía
-    const isPasswordValid = editingId
-      ? true
-      : formData.password && !/^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/.test(formData.password)
-        ? false
-        : true
+    // Marcar todos los campos como tocados
+    setTouched({
+      documento: true,
+      nombre: true,
+      telefono: true,
+      email: true,
+      password: true,
+    })
 
-    const isValid =
-      formData.nombre.trim() !== "" &&
-      /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(formData.nombre) &&
-      formData.documento.trim() !== "" &&
-      /^[a-zA-Z0-9]+$/.test(formData.documento) &&
-      formData.email.trim() !== "" &&
-      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email) &&
-      formData.telefono.trim() !== "" &&
-      /^\d+$/.test(formData.telefono) &&
-      isPasswordValid
+    // Validar todos los campos
+    const documentoError = validarDocumento(formData.documento)
+    const nombreError = validarNombre(formData.nombre)
+    const telefonoError = validarTelefono(formData.telefono)
+    const emailError = validarEmail(formData.email)
+    const passwordError = validarPassword(formData.password, !!editingId)
 
-    return isValid
+    // Actualizar todos los errores
+    setFormErrors({
+      documento: documentoError,
+      nombre: nombreError,
+      telefono: telefonoError,
+      email: emailError,
+      password: passwordError,
+    })
+
+    // Actualizar el estado de validación de los campos
+    setFieldValidation({
+      documento: !documentoError,
+      nombre: !nombreError,
+      telefono: !telefonoError,
+      email: !emailError,
+      password: editingId ? true : !passwordError, // Si estamos editando, la contraseña es opcional
+    })
+
+    // El formulario es válido si no hay errores
+    return !documentoError && !nombreError && !telefonoError && !emailError && (editingId ? true : !passwordError)
   }
 
   const handleSubmit = async () => {
     // Validar todos los campos antes de enviar
-    const tempErrors = {}
+    const isValid = validateForm()
 
-    // Validar nombre
-    if (!formData.nombre.trim()) {
-      tempErrors.nombre = "El nombre es obligatorio"
-    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(formData.nombre)) {
-      tempErrors.nombre = "El nombre solo debe contener letras"
-    }
-
-    // Validar documento
-    if (!formData.documento.trim()) {
-      tempErrors.documento = "El documento es obligatorio"
-    } else if (!/^[a-zA-Z0-9]+$/.test(formData.documento)) {
-      tempErrors.documento = "El documento solo debe contener letras y números"
-    }
-
-    // Validar email
-    if (!formData.email.trim()) {
-      tempErrors.email = "El email es obligatorio"
-    } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email)) {
-      tempErrors.email = "Formato de email inválido"
-    }
-
-    // Validar teléfono
-    if (!formData.telefono.trim()) {
-      tempErrors.telefono = "El teléfono es obligatorio"
-    } else if (!/^\d+$/.test(formData.telefono)) {
-      tempErrors.telefono = "El teléfono solo debe contener números"
-    }
-
-    // Validar contraseña (solo si es nuevo usuario o si se está cambiando)
-    if (!editingId && !formData.password) {
-      tempErrors.password = "La contraseña es obligatoria"
-    } else if (formData.password && !/^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/.test(formData.password)) {
-      tempErrors.password = "La contraseña debe contener al menos una mayúscula, un número y un carácter especial"
-    }
-
-    // Si hay errores, mostrarlos y detener el envío
-    if (Object.keys(tempErrors).length > 0) {
-      setFormErrors(tempErrors)
-
-      // Mostrar alerta con el primer error encontrado
-      const firstError = Object.values(tempErrors)[0]
-      Swal.fire({
-        icon: "error",
-        title: "Error de validación",
-        text: firstError,
-        confirmButtonColor: "#2563eb",
-      })
-
+    // Si hay errores, enfocar el primer campo con error
+    if (!isValid) {
+      if (!fieldValidation.documento) {
+        documentoRef.current?.focus()
+      } else if (!fieldValidation.nombre) {
+        nombreRef.current?.focus()
+      } else if (!fieldValidation.telefono) {
+        telefonoRef.current?.focus()
+      } else if (!fieldValidation.email) {
+        emailRef.current?.focus()
+      } else if (!fieldValidation.password && !editingId) {
+        passwordRef.current?.focus()
+      }
       return
     }
 
@@ -888,7 +1161,7 @@ const ClienteList = () => {
     }
   }
 
-  // Reemplazar la función handleDelete actual con esta versión mejorada
+  // Función para eliminar cliente
   const handleDelete = async (id) => {
     // Primero mostramos el diálogo de confirmación
     const confirmDelete = await Swal.fire({
@@ -1001,56 +1274,56 @@ const ClienteList = () => {
               <StyledTableCell>Email</StyledTableCell>
               <StyledTableCell>Teléfono</StyledTableCell>
               <StyledTableCell>Estado</StyledTableCell>
-              <StyledTableCell>Acciones</StyledTableCell>
+              <StyledTableCell>ACCIONES</StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {paginatedClientes.map((cliente) => (
-              <TableRow key={cliente._id} className={classes.tableRow}>
-                <ClienteTableCell style={{ paddingLeft: "24px" }}>
-                  <Box className={classes.clienteContainer}>
-                    <Avatar className={classes.userAvatar}>{getInitials(cliente.nombre)}</Avatar>
-                    <Typography variant="body2">{cliente.nombre}</Typography>
-                  </Box>
-                </ClienteTableCell>
-                <TableCell className={classes.tableCell}>{cliente.documento}</TableCell>
-                <TableCell className={classes.tableCell}>{cliente.email}</TableCell>
-                <TableCell className={classes.tableCell}>{cliente.telefono}</TableCell>
-                <TableCell className={classes.tableCell}>{cliente.estado ? "Activo" : "Inactivo"}</TableCell>
-                <TableCell className={`${classes.tableCell} ${classes.actionsCell}`}>
-                  <Box display="flex" justifyContent="center" gap={1}>
-                    <Tooltip title="Editar cliente">
+            {paginatedClientes.length > 0 ? (
+              paginatedClientes.map((cliente) => (
+                <TableRow key={cliente._id} className={classes.tableRow}>
+                  <ClienteTableCell style={{ paddingLeft: "24px" }}>
+                    <Box className={classes.clienteContainer}>
+                      <Avatar className={classes.userAvatar}>{getInitials(cliente.nombre)}</Avatar>
+                      <Typography variant="body2">{cliente.nombre}</Typography>
+                    </Box>
+                  </ClienteTableCell>
+                  <TableCell>{cliente.documento}</TableCell>
+                  <TableCell>{cliente.email}</TableCell>
+                  <TableCell>{cliente.telefono}</TableCell>
+                  <TableCell>{cliente.estado ? "Activo" : "Inactivo"}</TableCell>
+                  <TableCell className={classes.actionsCell}>
+                    <Box display="flex" justifyContent="center" gap={1}>
                       <IconButton
                         className={`${classes.actionButton} ${classes.btnEdit}`}
                         onClick={() => handleOpen(cliente)}
+                        aria-label="Editar"
                       >
-                        <Edit size={18} />
+                        <Edit size={20} />
                       </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Ver detalles">
                       <IconButton
                         className={`${classes.actionButton} ${classes.btnDetails}`}
                         onClick={() => handleDetails(cliente)}
+                        aria-label="Ver detalles"
                       >
-                        <Info size={18} />
+                        <Info size={20} />
                       </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Eliminar cliente">
                       <IconButton
                         className={`${classes.actionButton} ${classes.btnDelete}`}
                         onClick={() => handleDelete(cliente._id)}
+                        aria-label="Eliminar"
                       >
-                        <Delete size={18} />
+                        <Delete size={20} />
                       </IconButton>
-                    </Tooltip>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-            {filteredClientes.length === 0 && (
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
               <TableRow className={classes.noDataRow}>
-                <TableCell colSpan={7} className={classes.noDataCell}>
-                  No se encontraron clientes que coincidan con la búsqueda.
+                <TableCell colSpan={6} className={classes.noDataCell}>
+                  {searchTerm
+                    ? "No se encontraron clientes que coincidan con la búsqueda."
+                    : "No hay clientes registrados."}
                 </TableCell>
               </TableRow>
             )}
@@ -1059,300 +1332,287 @@ const ClienteList = () => {
       </TableContainer>
 
       <TablePagination
-        component={Paper}
+        rowsPerPageOptions={[5, 10, 25]}
+        component="div"
         count={filteredClientes.length}
+        rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}
-        rowsPerPage={rowsPerPage}
         onRowsPerPageChange={handleChangeRowsPerPage}
         labelRowsPerPage="Filas por página:"
-        rowsPerPageOptions={[5, 10, 25, 50, 100]}
+        labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
         className={classes.pagination}
       />
 
       {/* Modal para crear/editar cliente */}
-      {/* Reemplazar el modal de crear/editar cliente con el diseño actualizado */}
-      {/* Buscar la sección del modal de crear/editar y reemplazarla con: */}
-      {/* Modificar el componente Dialog para quitar las validaciones al cerrar */}
-      {/* Reemplazar el Dialog actual con esta versión: */}
       <Dialog
         open={open}
-        onClose={(event, reason) => {
-          // Solo permitir cerrar con el botón X o el botón Cerrar
-          if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
-            handleClose()
-          }
-        }}
-        disableBackdropClick={true}
-        disableEscapeKeyDown={true}
-        fullWidth
+        onClose={handleClose}
         maxWidth="sm"
+        fullWidth
         classes={{ paper: classes.dialogPaper }}
+        aria-labelledby="form-dialog-title"
       >
-        <DialogTitle className={classes.dialogTitle}>
-          {editingId ? "Editar Cliente" : "Agregar Cliente"}
-          <IconButton onClick={handleClose} className={classes.closeButton}>
+        <DialogTitle id="form-dialog-title" className={classes.dialogTitle}>
+          {editingId ? "Editar Cliente" : "Nuevo Cliente"}
+          <IconButton aria-label="close" className={classes.closeButton} onClick={handleClose}>
             <X size={20} />
           </IconButton>
         </DialogTitle>
         <DialogContent className={classes.dialogContent}>
-          {/* Sección de Información Personal */}
-          <Box className={classes.formSection}>
+          <div className={classes.formSection}>
             <Typography className={classes.sectionTitle}>
-              <Person />
+              <User size={20} />
               Información Personal
             </Typography>
             <TextField
-              className={classes.formField}
+              autoFocus
               margin="dense"
-              label="Documento"
+              id="documento"
               name="documento"
+              label="Documento"
+              type="text"
+              fullWidth
+              variant="outlined"
               value={formData.documento}
               onChange={handleChange}
               onBlur={handleFieldBlur}
               onKeyDown={(e) => handleKeyDown(e, "nombre")}
-              fullWidth
-              variant="outlined"
               error={!!formErrors.documento}
-              helperText={formErrors.documento}
-              required
-              inputProps={{ maxLength: 17 }}
+              helperText={formErrors.documento || MENSAJES_INSTRUCTIVOS.DOCUMENTO}
+              inputRef={documentoRef}
+              className={classes.formField}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <AssignmentInd className={classes.fieldIcon} />
+                    <FileText size={20} className={classes.fieldIcon} />
                   </InputAdornment>
                 ),
               }}
+              inputProps={{ maxLength: VALIDACION.DOCUMENTO.MAX_LENGTH }}
             />
             <TextField
-              className={classes.formField}
               margin="dense"
-              label="Nombre"
+              id="nombre"
               name="nombre"
+              label="Nombre Completo"
+              type="text"
+              fullWidth
+              variant="outlined"
               value={formData.nombre}
               onChange={handleChange}
               onBlur={handleFieldBlur}
-              onKeyDown={(e) => handleKeyDown(e, "email")}
-              fullWidth
-              variant="outlined"
+              onKeyDown={(e) => handleKeyDown(e, "telefono")}
               error={!!formErrors.nombre}
-              helperText={formErrors.nombre}
-              required
-              inputProps={{ maxLength: 50 }}
+              helperText={formErrors.nombre || MENSAJES_INSTRUCTIVOS.NOMBRE}
+              inputRef={nombreRef}
+              className={classes.formField}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Person className={classes.fieldIcon} />
+                    <User size={20} className={classes.fieldIcon} />
                   </InputAdornment>
                 ),
               }}
+              inputProps={{ maxLength: VALIDACION.NOMBRE.MAX_LENGTH }}
             />
-          </Box>
+          </div>
 
-          {/* Sección de Contacto */}
-          <Box className={classes.formSection}>
+          <div className={classes.formSection}>
             <Typography className={classes.sectionTitle}>
-              <Email />
-              Contacto
+              <Phone size={20} />
+              Información de Contacto
             </Typography>
             <TextField
-              className={classes.formField}
               margin="dense"
-              label="Email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              onBlur={handleFieldBlur}
-              onKeyDown={(e) => handleKeyDown(e, "telefono")}
+              id="telefono"
+              name="telefono"
+              label="Teléfono"
+              type="tel"
               fullWidth
               variant="outlined"
-              error={!!formErrors.email}
-              helperText={formErrors.email}
-              required
-              type="email"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Email className={classes.fieldIcon} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <TextField
-              className={classes.formField}
-              margin="dense"
-              label="Teléfono"
-              name="telefono"
               value={formData.telefono}
               onChange={handleChange}
               onBlur={handleFieldBlur}
-              onKeyDown={(e) => handleKeyDown(e, "password")}
-              fullWidth
-              variant="outlined"
+              onKeyDown={(e) => handleKeyDown(e, "email")}
               error={!!formErrors.telefono}
-              helperText={formErrors.telefono}
-              required
-              inputProps={{ inputMode: "numeric", pattern: "[0-9]*", maxLength: 15 }}
+              helperText={formErrors.telefono || MENSAJES_INSTRUCTIVOS.TELEFONO}
+              inputRef={telefonoRef}
+              className={classes.formField}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Phone className={classes.fieldIcon} />
+                    <Phone size={20} className={classes.fieldIcon} />
                   </InputAdornment>
                 ),
               }}
+              inputProps={{ maxLength: VALIDACION.TELEFONO.MAX_LENGTH }}
             />
-          </Box>
+            <TextField
+              margin="dense"
+              id="email"
+              name="email"
+              label="Email"
+              type="email"
+              fullWidth
+              variant="outlined"
+              value={formData.email}
+              onChange={handleChange}
+              onBlur={handleFieldBlur}
+              onKeyDown={(e) => handleKeyDown(e, "password")}
+              error={!!formErrors.email}
+              helperText={formErrors.email || MENSAJES_INSTRUCTIVOS.EMAIL}
+              inputRef={emailRef}
+              className={classes.formField}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Mail size={20} className={classes.fieldIcon} />
+                  </InputAdornment>
+                ),
+              }}
+              inputProps={{ maxLength: 50 }}
+            />
+          </div>
 
-          {/* Sección de Seguridad y Acceso */}
-          <Box className={classes.formSection}>
+          <div className={classes.formSection}>
             <Typography className={classes.sectionTitle}>
-              <Security />
-              Seguridad y Acceso
+              <Key size={20} />
+              Seguridad y Estado
             </Typography>
             <TextField
-              className={classes.formField}
               margin="dense"
-              label="Contraseña"
+              id="password"
               name="password"
+              label={editingId ? "Contraseña (dejar en blanco para no cambiar)" : "Contraseña"}
+              type="password"
+              fullWidth
+              variant="outlined"
               value={formData.password}
               onChange={handleChange}
               onBlur={handleFieldBlur}
               onKeyDown={(e) => handleKeyDown(e, "estado")}
-              type="password"
-              fullWidth
-              variant="outlined"
               error={!!formErrors.password}
-              helperText={
-                formErrors.password ||
-                (editingId
-                  ? "Dejar en blanco para no cambiar la contraseña"
-                  : "Debe contener al menos una mayúscula, un número y un carácter especial")
-              }
-              required={!editingId}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <VpnKey className={classes.fieldIcon} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <TextField
+              helperText={formErrors.password || MENSAJES_INSTRUCTIVOS.PASSWORD}
+              inputRef={passwordRef}
               className={classes.formField}
-              select
-              margin="dense"
-              label="Estado"
-              name="estado"
-              value={formData.estado}
-              onChange={(e) => setFormData({ ...formData, estado: e.target.value === "true" })}
-              fullWidth
-              variant="outlined"
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <VerifiedUser className={classes.fieldIcon} />
+                    <Key size={20} className={classes.fieldIcon} />
                   </InputAdornment>
                 ),
               }}
-            >
-              <MenuItem value={true}>Activo</MenuItem>
-              <MenuItem value={false}>Inactivo</MenuItem>
-            </TextField>
-          </Box>
+              inputProps={{ maxLength: VALIDACION.CONTRASENA.MAX_LENGTH }}
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.estado}
+                  onChange={(e) => setFormData({ ...formData, estado: e.target.checked })}
+                  name="estado"
+                  color="primary"
+                  inputRef={estadoRef}
+                />
+              }
+              label="Cliente Activo"
+            />
+          </div>
         </DialogContent>
-        {/* Modificar los botones de acción para asegurar que Cancelar siempre cierre */}
         <DialogActions className={classes.dialogActions}>
           <Button onClick={handleClose} className={classes.cancelButton}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} className={classes.submitButton}>
-            {editingId ? "Actualizar" : "Crear"}
+          <Button onClick={handleSubmit} className={classes.submitButton} startIcon={<Check size={18} />}>
+            {editingId ? "Actualizar" : "Guardar"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Modal de detalles (solo lectura) */}
-      {/* Reemplazar la sección del modal de detalles */}
-      {/* Modificar también el Dialog de detalles para asegurar que se pueda cerrar sin problemas: */}
+      {/* Modal para ver detalles del cliente */}
       <Dialog
         open={detailsOpen}
-        onClose={(event, reason) => {
-          // Solo permitir cerrar con el botón X o el botón Cerrar
-          if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
-            handleCloseDetails()
-          }
-        }}
-        disableBackdropClick={true}
-        disableEscapeKeyDown={true}
-        fullWidth
+        onClose={handleCloseDetails}
         maxWidth="sm"
+        fullWidth
         classes={{ paper: classes.dialogPaper }}
+        aria-labelledby="details-dialog-title"
       >
-        <DialogTitle className={classes.dialogTitle}>
+        <DialogTitle id="details-dialog-title" className={classes.dialogTitle}>
           Detalles del Cliente
-          <IconButton onClick={handleCloseDetails} className={classes.closeButton}>
+          <IconButton aria-label="close" className={classes.closeButton} onClick={handleCloseDetails}>
             <X size={20} />
           </IconButton>
         </DialogTitle>
         <DialogContent className={classes.dialogContent}>
-          {selectedCliente ? (
+          {selectedCliente && (
             <>
-              <Box display="flex" alignItems="center" justifyContent="center" mb={3}>
-                <Avatar style={{ width: 80, height: 80, fontSize: 32, backgroundColor: "#2563eb" }}>
-                  {getInitials(selectedCliente.nombre)}
-                </Avatar>
-              </Box>
-              <Box className={classes.detailsRow}>
-                <Typography variant="body1">
-                  <span className={classes.detailsLabel}>Nombre:</span>
-                  <span className={classes.detailsValue}>{selectedCliente.nombre}</span>
+              <div className={classes.detailsHeader}>
+                <Avatar className={classes.detailsAvatar}>{getInitials(selectedCliente.nombre)}</Avatar>
+                <Typography className={classes.detailsName}>{selectedCliente.nombre}</Typography>
+                <Typography className={classes.detailsDescription}>
+                  Cliente {selectedCliente.estado ? "activo" : "inactivo"} desde{" "}
+                  {new Date(selectedCliente.createdAt).toLocaleDateString()}
                 </Typography>
-              </Box>
-              <Box className={classes.detailsRow}>
-                <Typography variant="body1">
-                  <span className={classes.detailsLabel}>Documento:</span>
-                  <span className={classes.detailsValue}>{selectedCliente.documento}</span>
-                </Typography>
-              </Box>
-              <Box className={classes.detailsRow}>
-                <Typography variant="body1">
-                  <span className={classes.detailsLabel}>Email:</span>
-                  <span className={classes.detailsValue}>{selectedCliente.email}</span>
-                </Typography>
-              </Box>
-              <Box className={classes.detailsRow}>
-                <Typography variant="body1">
-                  <span className={classes.detailsLabel}>Teléfono:</span>
-                  <span className={classes.detailsValue}>{selectedCliente.telefono}</span>
-                </Typography>
-              </Box>
-              <Box className={classes.detailsRow}>
-                <Typography variant="body1">
-                  <span className={classes.detailsLabel}>Estado:</span>
-                  <span className={classes.detailsValue}>{selectedCliente.estado ? "Activo" : "Inactivo"}</span>
-                </Typography>
-              </Box>
+              </div>
+
+              <Grid container spacing={2} className={classes.detailsGrid}>
+                <Grid item xs={12} sm={6}>
+                  <div className={classes.detailsCard}>
+                    <Typography className={classes.detailsCardTitle}>
+                      <FileText size={18} />
+                      Documento
+                    </Typography>
+                    <Typography className={classes.detailsCardContent}>{selectedCliente.documento}</Typography>
+                  </div>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <div className={classes.detailsCard}>
+                    <Typography className={classes.detailsCardTitle}>
+                      <Phone size={18} />
+                      Teléfono
+                    </Typography>
+                    <Typography className={classes.detailsCardContent}>{selectedCliente.telefono}</Typography>
+                  </div>
+                </Grid>
+                <Grid item xs={12}>
+                  <div className={classes.detailsCard}>
+                    <Typography className={classes.detailsCardTitle}>
+                      <Mail size={18} />
+                      Email
+                    </Typography>
+                    <Typography className={classes.detailsCardContent}>{selectedCliente.email}</Typography>
+                  </div>
+                </Grid>
+                <Grid item xs={12}>
+                  <div className={classes.detailsCard}>
+                    <Typography className={classes.detailsCardTitle}>
+                      <User size={18} />
+                      Estado
+                    </Typography>
+                    <Typography className={classes.detailsCardContent}>
+                      {selectedCliente.estado ? "Activo" : "Inactivo"}
+                    </Typography>
+                  </div>
+                </Grid>
+              </Grid>
             </>
-          ) : (
-            <Typography variant="body1">Cargando detalles...</Typography>
           )}
         </DialogContent>
         <DialogActions className={classes.dialogActions}>
           <Button onClick={handleCloseDetails} className={classes.cancelButton}>
             Cerrar
           </Button>
-          {selectedCliente && (
-            <Button
-              onClick={() => {
-                handleCloseDetails()
-                handleOpen(selectedCliente)
-              }}
-              className={classes.submitButton}
-            >
-              Editar
-            </Button>
-          )}
+          <Button
+            onClick={() => {
+              handleCloseDetails()
+              handleOpen(selectedCliente)
+            }}
+            className={classes.submitButton}
+            startIcon={<Edit size={18} />}
+          >
+            Editar
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -28,7 +28,7 @@ import {
   Select,
   MenuItem,
 } from "@material-ui/core"
-import { Edit, Delete, Eye, X, Search, Plus, Home, FileText } from "lucide-react"
+import { Edit, Delete, Eye, X, Search, Plus, Home, FileText } from 'lucide-react'
 import { useHistory } from "react-router-dom"
 import Swal from "sweetalert2"
 import tipoApartamentoService from "./tipoApartamento.service"
@@ -809,8 +809,11 @@ const TipoApartamentoList = ({ onModuleChange }) => {
               variant="outlined"
               multiline
               minRows={3}
+<<<<<<< HEAD
               error={!!formErrors.descripcion}
               helperText={formErrors.descripcion}
+=======
+>>>>>>> 17b97daaf765740b1bc28ca02a637f634529d523
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">

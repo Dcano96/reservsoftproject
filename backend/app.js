@@ -28,7 +28,19 @@ const app = express()
 connectDB()
 
 // Middlewares
-app.use(cors())
+// Reemplazar la configuración simple de CORS con una más específica
+app.use(cors({
+  origin: '*', // Permite solicitudes desde cualquier origen
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  credentials: true, // Permite cookies en solicitudes cross-origin
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+}))
+
+// Middleware adicional para asegurar que las respuestas OPTIONS funcionen correctamente
+app.options('*', cors()) // Habilita preflight para todas las rutas
+
 app.use(express.json())
 app.use(morgan("dev"))
 // Otros middlewares...
@@ -60,4 +72,3 @@ app.use((err, req, res, next) => {
 })
 
 module.exports = app
-

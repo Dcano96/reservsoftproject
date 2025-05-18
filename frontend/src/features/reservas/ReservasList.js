@@ -705,11 +705,20 @@ const ReservasList = () => {
           ? updatedReserva.apartamentos.map((apt) => (typeof apt === "object" ? apt._id : apt))
           : []
 
+          // Asegúrate que los acompañantes tengan la estructura correcta
+const formattedAcompanantes = updatedReserva.acompanantes ? 
+updatedReserva.acompanantes.map(acomp => ({
+  nombre: acomp.nombre || "",
+  apellido: acomp.apellido || "",
+  documento: acomp.documento || acomp.documento_acompanante || ""
+})) : [];
+
         setFormData({
           ...updatedReserva,
           apartamentos: apartamentosIds,
           fecha_inicio: updatedReserva.fecha_inicio ? updatedReserva.fecha_inicio.substring(0, 10) : "",
           fecha_fin: updatedReserva.fecha_fin ? updatedReserva.fecha_fin.substring(0, 10) : "",
+          acompanantes: formattedAcompanantes
         })
         setEditingId(updatedReserva._id)
       } catch (error) {
@@ -987,16 +996,27 @@ const ReservasList = () => {
   }
 
   const handleAcompananteChange = (index, e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData((prev) => {
-      const nuevosAcompanantes = [...prev.acompanantes]
-      nuevosAcompanantes[index] = { ...nuevosAcompanantes[index], [name]: value }
-      return { ...prev, acompanantes: nuevosAcompanantes }
-    })
-
+      const nuevosAcompanantes = [...prev.acompanantes];
+      
+      // Si el campo es documento_acompanante, guardarlo también como documento
+      if (name === "documento_acompanante") {
+        nuevosAcompanantes[index] = { 
+          ...nuevosAcompanantes[index], 
+          [name]: value,
+          documento: value // Guardar en ambos campos para consistencia
+        };
+      } else {
+        nuevosAcompanantes[index] = { ...nuevosAcompanantes[index], [name]: value };
+      }
+      
+      return { ...prev, acompanantes: nuevosAcompanantes };
+    });
+  
     // Validar el campo del acompañante en tiempo real
-    validateField(name, value, index)
-  }
+    validateField(name, value, index);
+  };
 
   // ====== Validar todo el formulario ======
   const validateForm = () => {
@@ -1135,12 +1155,21 @@ const ReservasList = () => {
 
     try {
       // Convertir campos numéricos antes de enviar
-      const dataToSend = {
-        ...formData,
-        pagos_parciales: Number(formData.pagos_parciales),
-        noches_estadia: Number(formData.noches_estadia),
-        total: Number(formData.total),
-      }
+const dataToSend = {
+  ...formData,
+  pagos_parciales: Number(formData.pagos_parciales),
+  noches_estadia: Number(formData.noches_estadia),
+  total: Number(formData.total),
+  // Asegúrate que los acompañantes tengan el formato correcto
+  acompanantes: formData.acompanantes.map(acomp => ({
+    _id: acomp._id,
+    nombre: acomp.nombre,
+    apellido: acomp.apellido,
+    documento: acomp.documento || acomp.documento_acompanante || ""
+  }))
+};
+
+console.log("Datos a enviar:", dataToSend);
 
       if (editingId) {
         await updateReserva(editingId, dataToSend, getTokenHeader())
@@ -1744,8 +1773,8 @@ const ReservasList = () => {
                   />
                   <TextField
                     label="Documento"
-                    name="documento_acompanante"
-                    value={acomp.documento_acompanante}
+                    name="documento"  // ← CAMBIADO A "documento"
+  value={acomp.documento || acomp.documento_acompanante || ""}
                     onChange={(e) => handleAcompananteChange(index, e)}
                     style={{ flex: "1 1 30%" }}
                     variant="outlined"

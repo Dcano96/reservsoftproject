@@ -2218,7 +2218,7 @@ function Landing() {
         acompanantes: reservationForm.acompanantes.map((acompanante) => ({
           nombre: acompanante.nombre,
           apellido: acompanante.apellido,
-          numero_documento: acompanante.documento_acompanante,
+          documento: acompanante.documento_acompanante,
         })),
       }
 

@@ -6,9 +6,118 @@ const jwt = require("jsonwebtoken")
 const nodemailer = require("nodemailer")
 const crypto = require("crypto")
 
+// Expresiones regulares para validaciones
+const REGEX = {
+  SOLO_NUMEROS: /^\d+$/,
+  SOLO_LETRAS_ESPACIOS: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/,
+  EMAIL: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  EMAIL_INVALIDO: /@\.com|@com\.|@\.|\.@|@-|-@|@.*@|\.\.|,,|@@/,
+  CONTRASENA_FUERTE: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,15}$/,
+  SECUENCIAS_COMUNES: /123456|654321|password|qwerty|abc123|admin123|123abc|contraseña|usuario|admin/i,
+  CARACTERES_REPETIDOS: /(.)\1{3,}/,
+  SECUENCIAS_NUMERICAS: /123456|654321|111111|222222|333333|444444|555555|666666|777777|888888|999999|000000/,
+}
+
+// Validación exhaustiva de email
+const validarEmail = (em) => {
+  // Validaciones básicas
+  if (!em) return "El correo electrónico es obligatorio"
+  if (em.trim() === "") return "El correo electrónico no puede estar vacío"
+
+  // Validación de formato básico
+  if (!REGEX.EMAIL.test(em)) return "Formato de correo electrónico inválido"
+
+  // Validación de patrones inválidos específicos
+  if (REGEX.EMAIL_INVALIDO.test(em)) return "El correo contiene patrones inválidos (como @.com, @., etc.)"
+
+  // Validación de longitud
+  if (em.length < 6) return "El correo debe tener al menos 6 caracteres"
+  if (em.length > 50) return "El correo no puede tener más de 50 caracteres"
+
+  // Validación de partes del email
+  const [localPart, domainPart] = em.split("@")
+
+  // Validación de la parte local
+  if (!localPart || localPart.length < 1) return "La parte local del correo no puede estar vacía"
+  if (localPart.length > 64) return "La parte local del correo es demasiado larga"
+  if (/^[.-]|[.-]$/.test(localPart)) return "La parte local no puede comenzar ni terminar con puntos o guiones"
+
+  // Validación del dominio
+  if (!domainPart || !domainPart.includes("."))
+    return "El dominio del correo debe incluir una extensión (ej: .com, .net)"
+
+  // Verificar que el dominio tenga un formato válido y que no haya caracteres después del TLD
+  // Dividir el dominio en partes separadas por puntos
+  const domainParts = domainPart.split(".")
+
+  // Verificar que todas las partes del dominio sean válidas
+  for (let i = 0; i < domainParts.length; i++) {
+    const part = domainParts[i]
+    // Cada parte debe contener al menos un carácter y solo caracteres alfanuméricos o guiones
+    if (part.length === 0 || !/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(part)) {
+      return "El dominio del correo contiene partes inválidas"
+    }
+  }
+
+  // Verificar que el TLD sea válido (2-6 caracteres, solo letras)
+  const tld = domainParts[domainParts.length - 1]
+  if (!tld || tld.length < 2 || tld.length > 6 || !/^[a-zA-Z]+$/.test(tld)) {
+    return "La extensión del dominio no es válida o contiene caracteres no permitidos"
+  }
+
+  // Validación de dominios temporales o no recomendados
+  const dominiosNoRecomendados = ["tempmail", "mailinator", "guerrillamail", "10minutemail", "yopmail"]
+  for (const dominio of dominiosNoRecomendados) {
+    if (domainPart.toLowerCase().includes(dominio)) return "No se permiten correos de servicios temporales"
+  }
+
+  return ""
+}
+
+// Validación exhaustiva de contraseña
+const validarPassword = (pass) => {
+  // Validaciones básicas
+  if (!pass) return "La contraseña es obligatoria"
+  if (pass.length < 8) return "La contraseña debe tener al menos 8 caracteres"
+  if (pass.length > 15) return "La contraseña no puede tener más de 15 caracteres"
+
+  // Validación de complejidad
+  if (!/[a-z]/.test(pass)) return "La contraseña debe contener al menos una letra minúscula"
+  if (!/[A-Z]/.test(pass)) return "La contraseña debe contener al menos una letra mayúscula"
+  if (!/[0-9]/.test(pass)) return "La contraseña debe contener al menos un número"
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(pass))
+    return "La contraseña debe contener al menos un carácter especial"
+
+  // Validación de secuencias comunes
+  if (REGEX.SECUENCIAS_COMUNES.test(pass))
+    return "La contraseña no puede contener secuencias comunes o palabras fáciles de adivinar"
+
+  // Validación de caracteres repetidos
+  if (REGEX.CARACTERES_REPETIDOS.test(pass))
+    return "La contraseña no puede contener más de 3 caracteres repetidos consecutivos"
+
+  // Validación de secuencias de teclado
+  if (/qwert|asdfg|zxcvb|12345|09876/.test(pass.toLowerCase()))
+    return "La contraseña no puede contener secuencias de teclado"
+
+  return ""
+}
+
 // Registro de usuario: se fuerza el rol "cliente"
 exports.register = async (req, res) => {
   const { nombre, documento, email, telefono, password } = req.body
+  
+  // Validar email y contraseña
+  const emailError = validarEmail(email)
+  if (emailError) {
+    return res.status(400).json({ msg: emailError })
+  }
+  
+  const passwordError = validarPassword(password)
+  if (passwordError) {
+    return res.status(400).json({ msg: passwordError })
+  }
+  
   try {
     let usuario = await Usuario.findOne({ email })
     if (usuario) {
@@ -44,6 +153,19 @@ exports.login = async (req, res) => {
     // Eliminar caracteres de control como \t (tab), \n (nueva línea), etc.
     password = password.replace(/[\x00-\x1F\x7F-\x9F]/g, "")
     console.log("[LOGIN] Contraseña limpiada:", password)
+  }
+
+  // Validar email y contraseña
+  const emailError = validarEmail(email)
+  if (emailError) {
+    console.log("[LOGIN] Error de validación de email:", emailError)
+    return res.status(400).json({ msg: emailError })
+  }
+  
+  const passwordError = validarPassword(password)
+  if (passwordError) {
+    console.log("[LOGIN] Error de validación de contraseña:", passwordError)
+    return res.status(400).json({ msg: passwordError })
   }
 
   if (!email || !password) {
@@ -187,6 +309,12 @@ exports.login = async (req, res) => {
 // Solicitud de recuperación de contraseña - SOLUCIÓN CORREGIDA
 exports.forgotPassword = async (req, res) => {
   const { email } = req.body
+
+  // Validar email
+  const emailError = validarEmail(email)
+  if (emailError) {
+    return res.status(400).json({ msg: emailError })
+  }
 
   if (!email) {
     return res.status(400).json({ msg: "El correo electrónico es obligatorio" })
@@ -350,6 +478,13 @@ exports.forgotPassword = async (req, res) => {
 // Reseteo de contraseña
 exports.resetPassword = async (req, res) => {
   const { token, newPassword } = req.body
+  
+  // Validar contraseña
+  const passwordError = validarPassword(newPassword)
+  if (passwordError) {
+    return res.status(400).json({ msg: passwordError })
+  }
+  
   try {
     const usuario = await Usuario.findOne({
       resetPasswordToken: token,
@@ -418,6 +553,17 @@ exports.getUsuario = async (req, res) => {
 // Endpoint para cambiar contraseña directamente (para administradores)
 exports.adminResetPassword = async (req, res) => {
   const { email, newPassword } = req.body
+
+  // Validar email y contraseña
+  const emailError = validarEmail(email)
+  if (emailError) {
+    return res.status(400).json({ msg: emailError })
+  }
+  
+  const passwordError = validarPassword(newPassword)
+  if (passwordError) {
+    return res.status(400).json({ msg: passwordError })
+  }
 
   if (!email || !newPassword) {
     return res.status(400).json({ msg: "Se requieren email y nueva contraseña" })
