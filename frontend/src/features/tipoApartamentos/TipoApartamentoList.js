@@ -390,6 +390,11 @@ const TipoApartamentoList = ({ onModuleChange }) => {
     tamaño: "",
     estado: true,
   })
+  const [formErrors, setFormErrors] = useState({
+    nombre: "",
+    descripcion: "",
+    tamaño: "",
+  })
   const [searchTerm, setSearchTerm] = useState("")
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(5)
@@ -443,6 +448,12 @@ const TipoApartamentoList = ({ onModuleChange }) => {
       })
       setEditingId(null)
     }
+    // Reset form errors
+    setFormErrors({
+      nombre: "",
+      descripcion: "",
+      tamaño: "",
+    })
     setOpen(true)
   }
 
@@ -456,17 +467,81 @@ const TipoApartamentoList = ({ onModuleChange }) => {
     setViewOpen(true)
   }
 
-  // Manejar cambios en el formulario (sin validaciones custom)
+  // Manejar cambios en el formulario con validaciones
   const handleChange = (e) => {
     const { name, value } = e.target
+
+    // Actualizar el valor del campo
     setFormData((prev) => ({
       ...prev,
       [name]: name === "tamaño" ? Number(value) : value,
+    }))
+
+    // Validar el campo según su nombre
+    let error = ""
+
+    if (name === "nombre") {
+      if (!value.trim()) {
+        error = "El nombre no puede estar vacío"
+      } else if (value.trim().length < 3) {
+        error = "El nombre debe tener al menos 3 caracteres"
+      } else if (value.trim().length > 30) {
+        error = "El nombre no puede tener más de 30 caracteres"
+      }
+    } else if (name === "descripcion") {
+      if (!value.trim()) {
+        error = "La descripción no puede estar vacía"
+      } else if (value.trim().length < 3) {
+        error = "La descripción debe tener al menos 3 caracteres"
+      } else if (/[^\w\s.,áéíóúÁÉÍÓÚñÑ¿?¡!()-]/.test(value)) {
+        error = "La descripción no debe contener caracteres especiales sin sentido"
+      }
+    } else if (name === "tamaño") {
+      if (!value) {
+        error = "El tamaño no puede estar vacío"
+      }
+    }
+
+    // Actualizar el estado de errores
+    setFormErrors((prev) => ({
+      ...prev,
+      [name]: error,
     }))
   }
 
   // Enviar formulario para crear o actualizar
   const handleSubmit = async () => {
+    // Validar todos los campos antes de enviar
+    const nombreError = !formData.nombre.trim()
+      ? "El nombre no puede estar vacío"
+      : formData.nombre.trim().length < 3
+        ? "El nombre debe tener al menos 3 caracteres"
+        : formData.nombre.trim().length > 30
+          ? "El nombre no puede tener más de 30 caracteres"
+          : ""
+
+    const descripcionError = !formData.descripcion.trim()
+      ? "La descripción no puede estar vacía"
+      : formData.descripcion.trim().length < 3
+        ? "La descripción debe tener al menos 3 caracteres"
+        : /[^\w\s.,áéíóúÁÉÍÓÚñÑ¿?¡!()-]/.test(formData.descripcion)
+          ? "La descripción no debe contener caracteres especiales sin sentido"
+          : ""
+
+    const tamañoError = !formData.tamaño ? "El tamaño no puede estar vacío" : ""
+
+    // Actualizar todos los errores
+    setFormErrors({
+      nombre: nombreError,
+      descripcion: descripcionError,
+      tamaño: tamañoError,
+    })
+
+    // Si hay algún error, no continuar con el envío
+    if (nombreError || descripcionError || tamañoError) {
+      return
+    }
+
     try {
       if (editingId) {
         await tipoApartamentoService.updateTipoApartamento(editingId, formData)
@@ -543,14 +618,11 @@ const TipoApartamentoList = ({ onModuleChange }) => {
   const filteredTipoApartamentos = tipoApartamentos.filter(
     (t) =>
       t.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
+      t.descripcion.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   // Paginación
-  const paginatedTipoApartamentos = filteredTipoApartamentos.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  )
+  const paginatedTipoApartamentos = filteredTipoApartamentos.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage)
@@ -612,9 +684,7 @@ const TipoApartamentoList = ({ onModuleChange }) => {
         <Table style={{ borderCollapse: "collapse" }}>
           <TableHead>
             <TableRow style={{ backgroundColor: "#2563eb" }}>
-              <StyledTableCell style={{ textAlign: "left", paddingLeft: "24px" }}>
-                Nombre
-              </StyledTableCell>
+              <StyledTableCell style={{ textAlign: "left", paddingLeft: "24px" }}>Nombre</StyledTableCell>
               <StyledTableCell>Descripción</StyledTableCell>
               <StyledTableCell>Tamaño</StyledTableCell>
               <StyledTableCell>Acciones</StyledTableCell>
@@ -631,12 +701,8 @@ const TipoApartamentoList = ({ onModuleChange }) => {
                     <Typography variant="body2">{tipoApartamento.nombre}</Typography>
                   </Box>
                 </TipoTableCell>
-                <TableCell className={classes.tableCell}>
-                  {tipoApartamento.descripcion}
-                </TableCell>
-                <TableCell className={classes.tableCell}>
-                  {tipoApartamento.tamaño} m²
-                </TableCell>
+                <TableCell className={classes.tableCell}>{tipoApartamento.descripcion}</TableCell>
+                <TableCell className={classes.tableCell}>{tipoApartamento.tamaño} m²</TableCell>
                 <TableCell className={`${classes.tableCell} ${classes.actionsCell}`}>
                   <Box display="flex" justifyContent="center" gap={1}>
                     <Tooltip title="Editar tipo">
@@ -658,9 +724,7 @@ const TipoApartamentoList = ({ onModuleChange }) => {
                     <Tooltip title="Eliminar tipo">
                       <IconButton
                         className={`${classes.actionButton} ${classes.btnDelete}`}
-                        onClick={() =>
-                          handleDelete(tipoApartamento._id, tipoApartamento.estado)
-                        }
+                        onClick={() => handleDelete(tipoApartamento._id, tipoApartamento.estado)}
                       >
                         <Delete size={18} />
                       </IconButton>
@@ -693,13 +757,7 @@ const TipoApartamentoList = ({ onModuleChange }) => {
       />
 
       {/* Modal para crear/editar tipo de apartamento */}
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        fullWidth
-        maxWidth="md"
-        classes={{ paper: classes.dialogPaper }}
-      >
+      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md" classes={{ paper: classes.dialogPaper }}>
         <DialogTitle className={classes.dialogTitle}>
           {editingId ? "Editar Tipo de Apartamento" : "Nuevo Tipo de Apartamento"}
           <IconButton onClick={handleClose} className={classes.closeButton}>
@@ -722,6 +780,8 @@ const TipoApartamentoList = ({ onModuleChange }) => {
               onChange={handleChange}
               fullWidth
               variant="outlined"
+              error={!!formErrors.nombre}
+              helperText={formErrors.nombre}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -748,7 +808,9 @@ const TipoApartamentoList = ({ onModuleChange }) => {
               fullWidth
               variant="outlined"
               multiline
-              rows={3}
+              minRows={3}
+              error={!!formErrors.descripcion}
+              helperText={formErrors.descripcion}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -768,6 +830,8 @@ const TipoApartamentoList = ({ onModuleChange }) => {
               type="number"
               variant="outlined"
               required
+              error={!!formErrors.tamaño}
+              helperText={formErrors.tamaño}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -784,7 +848,7 @@ const TipoApartamentoList = ({ onModuleChange }) => {
                   labelId="estado-label"
                   value={formData.estado ? "Activo" : "Inactivo"}
                   onChange={(e) => {
-                    const value = e.target.value;
+                    const value = e.target.value
                     setFormData((prev) => ({
                       ...prev,
                       estado: value === "Activo",
