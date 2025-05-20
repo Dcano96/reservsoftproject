@@ -576,6 +576,38 @@ const MobiliarioList = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target
+
+    // Validaciones en tiempo real
+    if (name === "nombre") {
+      // Solo permitir letras, números y espacios (sin caracteres especiales)
+      if (/[^a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑ]/.test(value) && value.length > 0) {
+        setErrors((prev) => ({ ...prev, [name]: "No se permiten caracteres especiales" }))
+        return
+      }
+      // Validar longitud
+      if (value.length > 50) {
+        setErrors((prev) => ({ ...prev, [name]: "El nombre debe tener máximo 50 caracteres" }))
+        return
+      }
+    }
+
+    if (name === "identMobiliario") {
+      // Contar caracteres especiales
+      const specialChars = value.replace(/[a-zA-Z0-9\s]/g, "")
+      if (specialChars.length > 2) {
+        setErrors((prev) => ({ ...prev, [name]: "No se permiten más de 2 caracteres especiales" }))
+        return
+      }
+    }
+
+    if (name === "observacion") {
+      // Validar longitud
+      if (value.length > 500) {
+        setErrors((prev) => ({ ...prev, [name]: "La observación debe tener máximo 500 caracteres" }))
+        return
+      }
+    }
+
     setFormData((prev) => ({ ...prev, [name]: value }))
     if (errors[name]) {
       setErrors({ ...errors, [name]: "" })
@@ -584,19 +616,43 @@ const MobiliarioList = () => {
 
   const handleSubmit = async () => {
     const newErrors = {}
+
+    // Validación del nombre
     if (!formData.nombre.trim()) {
       newErrors.nombre = "El nombre es requerido."
+    } else if (formData.nombre.trim().length < 3) {
+      newErrors.nombre = "El nombre debe tener al menos 3 caracteres."
+    } else if (formData.nombre.trim().length > 50) {
+      newErrors.nombre = "El nombre debe tener máximo 50 caracteres."
+    } else if (/[^a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑ]/.test(formData.nombre)) {
+      newErrors.nombre = "No se permiten caracteres especiales en el nombre."
     }
+
+    // Validación de identificación de mobiliario
     if (!formData.identMobiliario.trim()) {
       newErrors.identMobiliario = "La identificación es requerida."
+    } else {
+      // Contar caracteres especiales
+      const specialChars = formData.identMobiliario.replace(/[a-zA-Z0-9\s]/g, "")
+      if (specialChars.length > 2) {
+        newErrors.identMobiliario = "No se permiten más de 2 caracteres especiales."
+      }
     }
+
     // Solo validar estado en modo edición
     if (editingId && !formData.estado.trim()) {
       newErrors.estado = "El estado es requerido."
     }
+
+    // Validación de observaciones
     if (!formData.observacion.trim()) {
       newErrors.observacion = "La observación es requerida."
+    } else if (formData.observacion.trim().length < 3) {
+      newErrors.observacion = "La observación debe tener al menos 3 caracteres."
+    } else if (formData.observacion.trim().length > 500) {
+      newErrors.observacion = "La observación debe tener máximo 500 caracteres."
     }
+
     if (!formData.apartamento.trim()) {
       newErrors.apartamento = "El apartamento es requerido."
     }
@@ -957,7 +1013,7 @@ const MobiliarioList = () => {
               fullWidth
               variant="outlined"
               error={!!errors.nombre}
-              helperText={errors.nombre}
+              helperText={errors.nombre || `${formData.nombre.length}/50 caracteres`}
               required
               InputProps={{
                 startAdornment: (
@@ -1034,7 +1090,7 @@ const MobiliarioList = () => {
               multiline
               rows={4}
               error={!!errors.observacion}
-              helperText={errors.observacion}
+              helperText={errors.observacion || `${formData.observacion.length}/500 caracteres`}
               required
               InputProps={{
                 startAdornment: (
