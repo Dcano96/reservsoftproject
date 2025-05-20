@@ -787,44 +787,50 @@ const ClienteList = () => {
     return ""
   }
 
-  const validarPassword = (value, isEditing) => {
-    // Si estamos editando y el campo está vacío, no validamos
-    if (isEditing && !value) {
-      return ""
-    }
+  // Actualizar la función validarPassword para que sea exactamente igual a la del componente register
+  const validarPassword = (password, nombre = "", documento = "", email = "") => {
+    // Validaciones básicas
+    if (!password) return "La contraseña es obligatoria"
+    if (password.length < 8) return "La contraseña debe tener al menos 8 caracteres"
+    if (password.length > 15) return "La contraseña no puede tener más de 15 caracteres"
 
-    if (!value) {
-      return "La contraseña es obligatoria"
-    }
-    if (value.length < VALIDACION.CONTRASENA.MIN_LENGTH) {
-      return `La contraseña debe tener al menos ${VALIDACION.CONTRASENA.MIN_LENGTH} caracteres`
-    }
-    if (value.length > VALIDACION.CONTRASENA.MAX_LENGTH) {
-      return `La contraseña no puede tener más de ${VALIDACION.CONTRASENA.MAX_LENGTH} caracteres`
-    }
-    if (!/[a-z]/.test(value)) {
-      return "La contraseña debe contener al menos una letra minúscula"
-    }
-    if (!/[A-Z]/.test(value)) {
-      return "La contraseña debe contener al menos una letra mayúscula"
-    }
-    if (!/[0-9]/.test(value)) {
-      return "La contraseña debe contener al menos un número"
-    }
-    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value)) {
+    // Validación de complejidad
+    if (!/[a-z]/.test(password)) return "La contraseña debe contener al menos una letra minúscula"
+    if (!/[A-Z]/.test(password)) return "La contraseña debe contener al menos una letra mayúscula"
+    if (!/[0-9]/.test(password)) return "La contraseña debe contener al menos un número"
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password))
       return "La contraseña debe contener al menos un carácter especial"
-    }
-    if (REGEX.SECUENCIAS_COMUNES.test(value)) {
+
+    // Validación de secuencias comunes
+    if (REGEX.SECUENCIAS_COMUNES.test(password))
       return "La contraseña no puede contener secuencias comunes o palabras fáciles de adivinar"
-    }
-    if (REGEX.CARACTERES_REPETIDOS.test(value)) {
+
+    // Validación de caracteres repetidos
+    if (REGEX.CARACTERES_REPETIDOS.test(password))
       return "La contraseña no puede contener más de 3 caracteres repetidos consecutivos"
-    }
-    if (/qwert|asdfg|zxcvb|12345|09876/.test(value.toLowerCase())) {
+
+    // Validación de secuencias de teclado
+    if (/qwert|asdfg|zxcvb|12345|09876/.test(password.toLowerCase()))
       return "La contraseña no puede contener secuencias de teclado"
+
+    // Validación de relación con otros campos
+    if (nombre) {
+      const nombreParts = nombre.toLowerCase().split(/\s+/)
+      for (const part of nombreParts) {
+        if (part.length > 2 && password.toLowerCase().includes(part))
+          return "La contraseña no puede contener partes de tu nombre"
+      }
     }
 
-    return ""
+    if (documento && password.includes(documento)) return "La contraseña no puede contener tu número de documento"
+
+    if (email) {
+      const emailPart = email.split("@")[0].toLowerCase()
+      if (emailPart.length > 2 && password.toLowerCase().includes(emailPart))
+        return "La contraseña no puede contener partes de tu correo electrónico"
+    }
+
+    return "" // Devuelve cadena vacía en lugar de null para ser exactamente igual al registro
   }
 
   // Función para validar un campo específico
@@ -846,7 +852,12 @@ const ClienteList = () => {
         error = validarEmail(value)
         break
       case "password":
-        error = validarPassword(value, isEditing)
+        // Usar la nueva función validarPassword con los datos del formulario
+        error = validarPassword(value, formData.nombre, formData.documento, formData.email)
+        // Si estamos editando y el campo está vacío, no hay error
+        if (isEditing && !value) {
+          error = ""
+        }
         break
       default:
         break
@@ -882,6 +893,16 @@ const ClienteList = () => {
       const error = validarEmail(value)
       setFormErrors((prev) => ({ ...prev, email: error }))
       setFieldValidation((prev) => ({ ...prev, email: !error }))
+    } else if (name === "password") {
+      // Si estamos editando y el campo está vacío, no validamos
+      if (editingId && !value) {
+        setFormErrors((prev) => ({ ...prev, password: "" }))
+        setFieldValidation((prev) => ({ ...prev, password: true }))
+      } else {
+        const error = validarPassword(value, formData.nombre, formData.documento, formData.email)
+        setFormErrors((prev) => ({ ...prev, password: error }))
+        setFieldValidation((prev) => ({ ...prev, password: !error }))
+      }
     } else {
       validateField(name, value)
     }
@@ -902,6 +923,18 @@ const ClienteList = () => {
         setFormErrors((prev) => ({ ...prev, email: error }))
         setFieldValidation((prev) => ({ ...prev, email: !error }))
         isValid = !error
+      } else if (name === "password") {
+        // Si estamos editando y el campo está vacío, es válido
+        if (editingId && !value) {
+          setFormErrors((prev) => ({ ...prev, password: "" }))
+          setFieldValidation((prev) => ({ ...prev, password: true }))
+          isValid = true
+        } else {
+          const error = validarPassword(value, formData.nombre, formData.documento, formData.email)
+          setFormErrors((prev) => ({ ...prev, password: error }))
+          setFieldValidation((prev) => ({ ...prev, password: !error }))
+          isValid = !error
+        }
       } else {
         isValid = validateField(name, value)
       }
@@ -1046,7 +1079,13 @@ const ClienteList = () => {
         error = validarEmail(updatedValue)
         break
       case "password":
-        error = validarPassword(updatedValue, isEditing)
+        // Si estamos editando y el campo está vacío, no hay error
+        if (isEditing && !updatedValue) {
+          error = ""
+        } else {
+          // Usar la nueva función validarPassword con los datos del formulario
+          error = validarPassword(updatedValue, formData.nombre, formData.documento, formData.email)
+        }
         break
       default:
         break
@@ -1080,7 +1119,12 @@ const ClienteList = () => {
     const nombreError = validarNombre(formData.nombre)
     const telefonoError = validarTelefono(formData.telefono)
     const emailError = validarEmail(formData.email)
-    const passwordError = validarPassword(formData.password, !!editingId)
+
+    // Para la contraseña, si estamos editando y está vacía, no hay error
+    let passwordError = ""
+    if (!(editingId && !formData.password)) {
+      passwordError = validarPassword(formData.password, formData.nombre, formData.documento, formData.email)
+    }
 
     // Actualizar todos los errores
     setFormErrors({

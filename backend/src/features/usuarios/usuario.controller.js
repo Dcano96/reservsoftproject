@@ -1,5 +1,6 @@
 const Usuario = require("./usuario.model")
 const bcrypt = require("bcryptjs")
+const Cliente = require("../clientes/cliente.model") // Importar el modelo de Cliente
 
 // Crear un nuevo usuario
 exports.createUsuario = async (req, res) => {
@@ -18,6 +19,28 @@ exports.createUsuario = async (req, res) => {
       rol: rol || "cliente",
     })
     await usuario.save()
+
+    // Si el rol es "cliente", crear también en la colección de clientes
+    if (rol === "cliente") {
+      // Verificar si ya existe un cliente con ese email o documento
+      const clienteExistente = await Cliente.findOne({
+        $or: [{ email }, { documento }],
+      })
+
+      if (!clienteExistente) {
+        const nuevoCliente = new Cliente({
+          nombre,
+          documento,
+          email,
+          telefono,
+          password: hashedPassword, // Usar la misma contraseña hasheada
+          rol: "cliente",
+        })
+        await nuevoCliente.save()
+        console.log(`Cliente creado automáticamente con ID: ${nuevoCliente._id}`)
+      }
+    }
+
     res.status(201).json({ msg: "Usuario creado correctamente", usuario })
   } catch (error) {
     console.error(error)
@@ -119,6 +142,25 @@ exports.updateUsuario = async (req, res) => {
     }
 
     const usuarioActualizado = await Usuario.findByIdAndUpdate(id, updatedData, { new: true })
+
+    // Si el usuario tiene rol "cliente", actualizar también en la colección de clientes
+    if (usuarioActualizado.rol === "cliente") {
+      // Buscar cliente por email
+      const cliente = await Cliente.findOne({ email: usuarioActualizado.email })
+      if (cliente) {
+        // Actualizar los datos del cliente
+        cliente.nombre = usuarioActualizado.nombre
+        cliente.documento = usuarioActualizado.documento
+        cliente.telefono = usuarioActualizado.telefono
+        // Actualizar contraseña solo si se cambió
+        if (updatedData.password) {
+          cliente.password = usuarioActualizado.password
+        }
+        await cliente.save()
+        console.log(`Cliente actualizado automáticamente con ID: ${cliente._id}`)
+      }
+    }
+
     res.json({ msg: "Usuario actualizado", usuario: usuarioActualizado })
   } catch (error) {
     console.error(error)
@@ -143,6 +185,20 @@ exports.deleteUsuario = async (req, res) => {
     }
 
     await Usuario.findByIdAndDelete(req.params.id)
+
+    // Si el usuario tenía rol "cliente", intentar eliminar también de la colección de clientes
+    if (usuario.rol === "cliente") {
+      try {
+        const clienteEliminado = await Cliente.findOneAndDelete({ email: usuario.email })
+        if (clienteEliminado) {
+          console.log(`Cliente eliminado automáticamente con ID: ${clienteEliminado._id}`)
+        }
+      } catch (error) {
+        console.error("Error al eliminar cliente asociado:", error)
+        // No fallamos si no se puede eliminar el cliente
+      }
+    }
+
     res.json({ msg: "Usuario eliminado" })
   } catch (error) {
     console.error(error)
@@ -164,9 +220,28 @@ exports.removeRol = async (req, res) => {
       return res.status(403).json({ msg: "No se puede quitar el rol al usuario administrador" })
     }
 
+    // Guardar el rol anterior para verificar si era cliente
+    const rolAnterior = usuario.rol
+
     // Quitar el rol
     usuario.rol = ""
     await usuario.save()
+
+    // Si el rol anterior era "cliente", actualizar el cliente correspondiente
+    if (rolAnterior === "cliente") {
+      try {
+        // No eliminamos el cliente, solo actualizamos su estado
+        const cliente = await Cliente.findOne({ email: usuario.email })
+        if (cliente) {
+          cliente.estado = false // Desactivar el cliente
+          await cliente.save()
+          console.log(`Cliente desactivado automáticamente con ID: ${cliente._id}`)
+        }
+      } catch (error) {
+        console.error("Error al desactivar cliente asociado:", error)
+        // No fallamos si no se puede actualizar el cliente
+      }
+    }
 
     res.json({ msg: "Rol eliminado correctamente", usuario })
   } catch (error) {
@@ -208,6 +283,21 @@ exports.cambiarPassword = async (req, res) => {
     usuario.password = nuevoPasswordEncriptado
     await usuario.save()
     console.log("[CAMBIAR PASSWORD] Contraseña de usuario actualizada correctamente")
+
+    // Si el usuario tiene rol "cliente", actualizar también la contraseña en la colección de clientes
+    if (usuario.rol === "cliente") {
+      try {
+        const cliente = await Cliente.findOne({ email: usuario.email })
+        if (cliente) {
+          cliente.password = nuevoPasswordEncriptado
+          await cliente.save()
+          console.log("[CAMBIAR PASSWORD] Contraseña de cliente actualizada automáticamente")
+        }
+      } catch (error) {
+        console.error("[CAMBIAR PASSWORD] Error al actualizar contraseña del cliente:", error)
+        // No fallamos si no se puede actualizar la contraseña del cliente
+      }
+    }
 
     res.json({
       ok: true,

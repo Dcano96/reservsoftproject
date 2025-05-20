@@ -77,6 +77,9 @@ const Dashboard = () => {
     return localStorage.getItem("moduloDashboard") || "dashboard"
   })
 
+  // Añadir un nuevo estado para el filtro de tiempo justo después de los otros estados
+  const [timeFilter, setTimeFilter] = useState("month") // Opciones: "day", "month", "year"
+
   // Estado para módulo seleccionado, datos, y controles UI
   const [data, setData] = useState(null)
   const [showProfileModal, setShowProfileModal] = useState(false)
@@ -255,274 +258,394 @@ const Dashboard = () => {
   // }, [userRole, selectedModule, allModules])
 
   // Inicializar y actualizar gráficos cuando cambian los datos
+  // Añadir la función para cambiar el filtro de tiempo after the function toggleMobileMenu
+  const changeTimeFilter = (event) => {
+    const filter = event.target.value
+    setTimeFilter(filter)
+
+    // Actualizar los gráficos con los nuevos datos filtrados
+    Object.values(chartInstances.current).forEach((chart) => {
+      if (chart) chart.destroy()
+    })
+
+    // Volver a cargar los gráficos con el nuevo filtro
+    if (selectedModule === "dashboard" && hasModulePermission("dashboard", "leer")) {
+      renderCharts(filter)
+    }
+  }
+
+  // Modificar la función renderDashboard para incluir los botones de filtro
+  // Reemplazar la función renderDashboard completa con esta versión:
+  const renderDashboard = () => {
+    return (
+      <div className="dashboard-charts-container">
+        <div className="dashboard-welcome">
+          <h2>Panel de Control</h2>
+          <p>Visualiza los datos más importantes de tu negocio</p>
+        </div>
+
+        <div className="time-filter-controls">
+          <div className="filter-select-container">
+            <label htmlFor="time-filter">Ver por:</label>
+            <select id="time-filter" className="filter-select" value={timeFilter} onChange={changeTimeFilter}>
+              <option value="day">Día</option>
+              <option value="month">Mes</option>
+              <option value="year">Año</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="charts-grid">
+          <div className="chart-card reservas">
+            <div className="chart-header">
+              <h3>Reservas y Descuentos</h3>
+              <span className="chart-badge">
+                {timeFilter === "day" ? "Hoy" : timeFilter === "month" ? "Últimos 12 meses" : "Últimos 5 años"}
+              </span>
+            </div>
+            <div className="chart-body">
+              <canvas ref={reservasChartRef}></canvas>
+            </div>
+          </div>
+          <div className="chart-card apartamentos">
+            <div className="chart-header">
+              <h3>Estado de Apartamentos</h3>
+              <span className="chart-badge">Actual</span>
+            </div>
+            <div className="chart-body">
+              <canvas ref={apartamentosChartRef}></canvas>
+            </div>
+          </div>
+          <div className="chart-card pagos">
+            <div className="chart-header">
+              <h3>Ingresos</h3>
+              <span className="chart-badge">
+                {timeFilter === "day" ? "Hoy" : timeFilter === "month" ? "Últimos 6 meses" : "Últimos 5 años"}
+              </span>
+            </div>
+            <div className="chart-body">
+              <canvas ref={pagosChartRef}></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Añadir una nueva función renderCharts para manejar los diferentes filtros de tiempo
+  // Añadir esta función después de la función renderDashboard:
+  const renderCharts = (filter) => {
+    if (reservasChartRef.current) {
+      const reservasCtx = reservasChartRef.current.getContext("2d")
+
+      // Datos según el filtro seleccionado
+      let labels, reservasData, descuentosData
+
+      if (filter === "day") {
+        labels = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "23:59"]
+        reservasData = [2, 1, 5, 8, 6, 9, 3]
+        descuentosData = [5, 5, 10, 15, 10, 20, 5]
+      } else if (filter === "month") {
+        labels = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+        reservasData = [12, 19, 15, 25, 22, 30, 35, 38, 28, 25, 30, 35]
+        descuentosData = [5, 10, 15, 5, 10, 20, 15, 10, 5, 15, 10, 5]
+      } else {
+        // year
+        labels = ["2020", "2021", "2022", "2023", "2024"]
+        reservasData = [150, 220, 280, 310, 350]
+        descuentosData = [8, 12, 10, 15, 18]
+      }
+
+      const reservasChartData = {
+        labels: labels,
+        datasets: [
+          {
+            label: "Reservas",
+            data: reservasData,
+            backgroundColor: "rgba(56, 189, 248, 0.3)",
+            borderColor: "rgba(56, 189, 248, 1)",
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: "#ffffff",
+            pointBorderColor: "rgba(56, 189, 248, 1)",
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            yAxisID: "y",
+          },
+          {
+            label: "Descuentos (%)",
+            data: descuentosData,
+            backgroundColor: "rgba(251, 146, 60, 0.3)",
+            borderColor: "rgba(251, 146, 60, 1)",
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: "#ffffff",
+            pointBorderColor: "rgba(251, 146, 60, 1)",
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            yAxisID: "y1",
+          },
+        ],
+      }
+
+      chartInstances.current.reservas = new Chart(reservasCtx, {
+        type: "line",
+        data: reservasChartData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: {
+              display: true,
+              position: "top",
+              labels: {
+                font: { size: 14, weight: "bold", family: "'Poppins', sans-serif" },
+                padding: 20,
+                usePointStyle: true,
+                pointStyle: "circle",
+              },
+            },
+            tooltip: {
+              backgroundColor: "rgba(255, 255, 255, 0.95)",
+              titleColor: "#0284c7",
+              bodyColor: "#0c4a6e",
+              borderColor: "rgba(56, 189, 248, 0.3)",
+              borderWidth: 1,
+              cornerRadius: 8,
+              boxPadding: 8,
+              usePointStyle: true,
+              callbacks: {
+                label: (context) => {
+                  let label = context.dataset.label || ""
+                  if (label) label += ": "
+                  return context.dataset.label === "Descuentos (%)"
+                    ? `${label}${context.parsed.y}%`
+                    : `${label}${context.parsed.y}`
+                },
+              },
+            },
+          },
+          scales: {
+            y: {
+              type: "linear",
+              display: true,
+              position: "left",
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: "Número de Reservas",
+                color: "rgba(56, 189, 248, 1)",
+                font: { weight: "bold", size: 13, family: "'Poppins', sans-serif" },
+                padding: { top: 10, bottom: 10 },
+              },
+              grid: { color: "rgba(0, 0, 0, 0.04)", drawBorder: false },
+              ticks: { font: { size: 12, family: "'Poppins', sans-serif" }, padding: 8 },
+            },
+            y1: {
+              type: "linear",
+              display: true,
+              position: "right",
+              beginAtZero: true,
+              max: filter === "year" ? 30 : 30,
+              title: {
+                display: true,
+                text: "Porcentaje de Descuento",
+                color: "rgba(251, 146, 60, 1)",
+                font: { weight: "bold", size: 13, family: "'Poppins', sans-serif" },
+                padding: { top: 10, bottom: 10 },
+              },
+              grid: { drawOnChartArea: false },
+              ticks: {
+                callback: (value) => value + "%",
+                font: { size: 12, family: "'Poppins', sans-serif" },
+                padding: 8,
+              },
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 12, family: "'Poppins', sans-serif" }, padding: 8 },
+            },
+          },
+          animation: { duration: 2000, easing: "easeOutQuart" },
+        },
+      })
+    }
+
+    if (apartamentosChartRef.current) {
+      const apartamentosCtx = apartamentosChartRef.current.getContext("2d")
+      const apartamentosData = {
+        labels: ["Disponibles", "Ocupados", "En Mantenimiento"],
+        datasets: [
+          {
+            data: [15, 8, 3],
+            backgroundColor: ["rgba(34, 197, 94, 0.85)", "rgba(56, 189, 248, 0.85)", "rgba(251, 146, 60, 0.85)"],
+            borderColor: ["rgba(34, 197, 94, 1)", "rgba(56, 189, 248, 1)", "rgba(251, 146, 60, 1)"],
+            borderWidth: 2,
+            hoverOffset: 15,
+          },
+        ],
+      }
+      chartInstances.current.apartamentos = new Chart(apartamentosCtx, {
+        type: "doughnut",
+        data: apartamentosData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: "65%",
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: {
+                padding: 20,
+                font: { size: 14, family: "'Poppins', sans-serif" },
+                usePointStyle: true,
+                pointStyle: "circle",
+              },
+            },
+            tooltip: {
+              backgroundColor: "rgba(255, 255, 255, 0.95)",
+              titleColor: "#0284c7",
+              bodyColor: "#0c4a6e",
+              borderColor: "rgba(56, 189, 248, 0.3)",
+              borderWidth: 1,
+              cornerRadius: 8,
+              boxPadding: 8,
+              usePointStyle: true,
+              callbacks: {
+                label: (context) => {
+                  const label = context.label || ""
+                  const value = context.parsed || 0
+                  const total = context.dataset.data.reduce((acc, data) => acc + data, 0)
+                  const percentage = Math.round((value / total) * 100)
+                  return `${label}: ${value} (${percentage}%)`
+                },
+              },
+            },
+          },
+          animation: {
+            animateRotate: true,
+            animateScale: true,
+            duration: 2000,
+            easing: "easeOutQuart",
+          },
+        },
+      })
+    }
+
+    if (pagosChartRef.current) {
+      const pagosCtx = pagosChartRef.current.getContext("2d")
+
+      // Datos según el filtro seleccionado
+      let labels, pagosData
+
+      if (filter === "day") {
+        labels = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "23:59"]
+        pagosData = [500, 800, 2500, 3800, 2200, 4500, 1800]
+      } else if (filter === "month") {
+        labels = ["Ene", "Feb", "Mar", "Abr", "May", "Jun"]
+        pagosData = [12500, 15000, 18000, 16500, 21000, 22500]
+      } else {
+        // year
+        labels = ["2020", "2021", "2022", "2023", "2024"]
+        pagosData = [120000, 150000, 180000, 210000, 250000]
+      }
+
+      const pagosChartData = {
+        labels: labels,
+        datasets: [
+          {
+            label: "Ingresos",
+            data: pagosData,
+            backgroundColor: [
+              "rgba(56, 189, 248, 0.8)",
+              "rgba(34, 211, 238, 0.8)",
+              "rgba(125, 211, 252, 0.8)",
+              "rgba(186, 230, 253, 0.8)",
+              "rgba(14, 165, 233, 0.8)",
+              "rgba(2, 132, 199, 0.8)",
+              "rgba(3, 105, 161, 0.8)",
+            ].slice(0, labels.length),
+            borderRadius: 10,
+            borderSkipped: false,
+            barThickness: 25,
+            maxBarThickness: 35,
+          },
+        ],
+      }
+
+      chartInstances.current.pagos = new Chart(pagosCtx, {
+        type: "bar",
+        data: pagosChartData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: "top",
+              labels: {
+                font: { size: 14, weight: "bold", family: "'Poppins', sans-serif" },
+                padding: 20,
+                usePointStyle: true,
+                pointStyle: "circle",
+              },
+            },
+            tooltip: {
+              backgroundColor: "rgba(255, 255, 255, 0.95)",
+              titleColor: "#0284c7",
+              bodyColor: "#0c4a6e",
+              borderColor: "rgba(56, 189, 248, 0.3)",
+              borderWidth: 1,
+              cornerRadius: 8,
+              boxPadding: 8,
+              usePointStyle: true,
+              callbacks: {
+                label: (context) => `${context.parsed.y.toLocaleString()}`,
+              },
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: "rgba(0, 0, 0, 0.04)", drawBorder: false },
+              ticks: {
+                callback: (value) => "$" + value.toLocaleString(),
+                font: { size: 12, family: "'Poppins', sans-serif" },
+                padding: 8,
+              },
+              title: {
+                display: true,
+                text: "Monto en Pesos",
+                color: "rgba(56, 189, 248, 1)",
+                font: { weight: "bold", size: 13, family: "'Poppins', sans-serif" },
+                padding: { top: 10, bottom: 10 },
+              },
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 12, family: "'Poppins', sans-serif" }, padding: 8 },
+            },
+          },
+          animation: { duration: 2000, easing: "easeOutQuart" },
+        },
+      })
+    }
+  }
+
+  // Modificar el useEffect que inicializa los gráficos para usar la nueva función renderCharts
+  // Reemplazar el useEffect que contiene la inicialización de gráficos con esta versión:
   useEffect(() => {
     Object.values(chartInstances.current).forEach((chart) => {
       if (chart) chart.destroy()
     })
 
     if (selectedModule === "dashboard" && hasModulePermission("dashboard", "leer")) {
-      if (reservasChartRef.current) {
-        const reservasCtx = reservasChartRef.current.getContext("2d")
-        const reservasData = {
-          labels: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
-          datasets: [
-            {
-              label: "Reservas",
-              data: [12, 19, 15, 25, 22, 30, 35, 38, 28, 25, 30, 35],
-              backgroundColor: "rgba(56, 189, 248, 0.3)",
-              borderColor: "rgba(56, 189, 248, 1)",
-              borderWidth: 3,
-              tension: 0.4,
-              fill: true,
-              pointBackgroundColor: "#ffffff",
-              pointBorderColor: "rgba(56, 189, 248, 1)",
-              pointBorderWidth: 2,
-              pointRadius: 5,
-              pointHoverRadius: 7,
-              yAxisID: "y",
-            },
-            {
-              label: "Descuentos (%)",
-              data: [5, 10, 15, 5, 10, 20, 15, 10, 5, 15, 10, 5],
-              backgroundColor: "rgba(251, 146, 60, 0.3)",
-              borderColor: "rgba(251, 146, 60, 1)",
-              borderWidth: 3,
-              tension: 0.4,
-              fill: true,
-              pointBackgroundColor: "#ffffff",
-              pointBorderColor: "rgba(251, 146, 60, 1)",
-              pointBorderWidth: 2,
-              pointRadius: 5,
-              pointHoverRadius: 7,
-              yAxisID: "y1",
-            },
-          ],
-        }
-        chartInstances.current.reservas = new Chart(reservasCtx, {
-          type: "line",
-          data: reservasData,
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: "index", intersect: false },
-            plugins: {
-              legend: {
-                display: true,
-                position: "top",
-                labels: {
-                  font: { size: 14, weight: "bold", family: "'Poppins', sans-serif" },
-                  padding: 20,
-                  usePointStyle: true,
-                  pointStyle: "circle",
-                },
-              },
-              tooltip: {
-                backgroundColor: "rgba(255, 255, 255, 0.95)",
-                titleColor: "#0284c7",
-                bodyColor: "#0c4a6e",
-                borderColor: "rgba(56, 189, 248, 0.3)",
-                borderWidth: 1,
-                cornerRadius: 8,
-                boxPadding: 8,
-                usePointStyle: true,
-                callbacks: {
-                  label: (context) => {
-                    let label = context.dataset.label || ""
-                    if (label) label += ": "
-                    return context.dataset.label === "Descuentos (%)"
-                      ? `${label}${context.parsed.y}%`
-                      : `${label}${context.parsed.y}`
-                  },
-                },
-              },
-            },
-            scales: {
-              y: {
-                type: "linear",
-                display: true,
-                position: "left",
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: "Número de Reservas",
-                  color: "rgba(56, 189, 248, 1)",
-                  font: { weight: "bold", size: 13, family: "'Poppins', sans-serif" },
-                  padding: { top: 10, bottom: 10 },
-                },
-                grid: { color: "rgba(0, 0, 0, 0.04)", drawBorder: false },
-                ticks: { font: { size: 12, family: "'Poppins', sans-serif" }, padding: 8 },
-              },
-              y1: {
-                type: "linear",
-                display: true,
-                position: "right",
-                beginAtZero: true,
-                max: 30,
-                title: {
-                  display: true,
-                  text: "Porcentaje de Descuento",
-                  color: "rgba(251, 146, 60, 1)",
-                  font: { weight: "bold", size: 13, family: "'Poppins', sans-serif" },
-                  padding: { top: 10, bottom: 10 },
-                },
-                grid: { drawOnChartArea: false },
-                ticks: {
-                  callback: (value) => value + "%",
-                  font: { size: 12, family: "'Poppins', sans-serif" },
-                  padding: 8,
-                },
-              },
-              x: {
-                grid: { display: false },
-                ticks: { font: { size: 12, family: "'Poppins', sans-serif" }, padding: 8 },
-              },
-            },
-            animation: { duration: 2000, easing: "easeOutQuart" },
-          },
-        })
-      }
-
-      if (apartamentosChartRef.current) {
-        const apartamentosCtx = apartamentosChartRef.current.getContext("2d")
-        const apartamentosData = {
-          labels: ["Disponibles", "Ocupados", "En Mantenimiento"],
-          datasets: [
-            {
-              data: [15, 8, 3],
-              backgroundColor: ["rgba(34, 197, 94, 0.85)", "rgba(56, 189, 248, 0.85)", "rgba(251, 146, 60, 0.85)"],
-              borderColor: ["rgba(34, 197, 94, 1)", "rgba(56, 189, 248, 1)", "rgba(251, 146, 60, 1)"],
-              borderWidth: 2,
-              hoverOffset: 15,
-            },
-          ],
-        }
-        chartInstances.current.apartamentos = new Chart(apartamentosCtx, {
-          type: "doughnut",
-          data: apartamentosData,
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: "65%",
-            plugins: {
-              legend: {
-                position: "bottom",
-                labels: {
-                  padding: 20,
-                  font: { size: 14, family: "'Poppins', sans-serif" },
-                  usePointStyle: true,
-                  pointStyle: "circle",
-                },
-              },
-              tooltip: {
-                backgroundColor: "rgba(255, 255, 255, 0.95)",
-                titleColor: "#0284c7",
-                bodyColor: "#0c4a6e",
-                borderColor: "rgba(56, 189, 248, 0.3)",
-                borderWidth: 1,
-                cornerRadius: 8,
-                boxPadding: 8,
-                usePointStyle: true,
-                callbacks: {
-                  label: (context) => {
-                    const label = context.label || ""
-                    const value = context.parsed || 0
-                    const total = context.dataset.data.reduce((acc, data) => acc + data, 0)
-                    const percentage = Math.round((value / total) * 100)
-                    return `${label}: ${value} (${percentage}%)`
-                  },
-                },
-              },
-            },
-            animation: {
-              animateRotate: true,
-              animateScale: true,
-              duration: 2000,
-              easing: "easeOutQuart",
-            },
-          },
-        })
-      }
-
-      if (pagosChartRef.current) {
-        const pagosCtx = pagosChartRef.current.getContext("2d")
-        const pagosData = {
-          labels: ["Ene", "Feb", "Mar", "Abr", "May", "Jun"],
-          datasets: [
-            {
-              label: "Ingresos",
-              data: [12500, 15000, 18000, 16500, 21000, 22500],
-              backgroundColor: [
-                "rgba(56, 189, 248, 0.8)",
-                "rgba(34, 211, 238, 0.8)",
-                "rgba(125, 211, 252, 0.8)",
-                "rgba(186, 230, 253, 0.8)",
-                "rgba(14, 165, 233, 0.8)",
-                "rgba(2, 132, 199, 0.8)",
-              ],
-              borderRadius: 10,
-              borderSkipped: false,
-              barThickness: 25,
-              maxBarThickness: 35,
-            },
-          ],
-        }
-        chartInstances.current.pagos = new Chart(pagosCtx, {
-          type: "bar",
-          data: pagosData,
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                display: true,
-                position: "top",
-                labels: {
-                  font: { size: 14, weight: "bold", family: "'Poppins', sans-serif" },
-                  padding: 20,
-                  usePointStyle: true,
-                  pointStyle: "circle",
-                },
-              },
-              tooltip: {
-                backgroundColor: "rgba(255, 255, 255, 0.95)",
-                titleColor: "#0284c7",
-                bodyColor: "#0c4a6e",
-                borderColor: "rgba(56, 189, 248, 0.3)",
-                borderWidth: 1,
-                cornerRadius: 8,
-                boxPadding: 8,
-                usePointStyle: true,
-                callbacks: {
-                  label: (context) => `${context.parsed.y.toLocaleString()}`,
-                },
-              },
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                grid: { color: "rgba(0, 0, 0, 0.04)", drawBorder: false },
-                ticks: {
-                  callback: (value) => "$" + value.toLocaleString(),
-                  font: { size: 12, family: "'Poppins', sans-serif" },
-                  padding: 8,
-                },
-                title: {
-                  display: true,
-                  text: "Monto en Pesos",
-                  color: "rgba(56, 189, 248, 1)",
-                  font: { weight: "bold", size: 13, family: "'Poppins', sans-serif" },
-                  padding: { top: 10, bottom: 10 },
-                },
-              },
-              x: {
-                grid: { display: false },
-                ticks: { font: { size: 12, family: "'Poppins', sans-serif" }, padding: 8 },
-              },
-            },
-            animation: { duration: 2000, easing: "easeOutQuart" },
-          },
-        })
-      }
+      renderCharts(timeFilter)
     }
 
     return () => {
@@ -530,7 +653,7 @@ const Dashboard = () => {
         if (chart) chart.destroy()
       })
     }
-  }, [selectedModule, isAdmin, data])
+  }, [selectedModule, isAdmin, data, timeFilter])
 
   const fetchModuleData = async (moduleName) => {
     if (!hasModulePermission(moduleName, "leer")) {
@@ -725,45 +848,8 @@ const Dashboard = () => {
     profile: "Mi Perfil",
   }
 
-  const renderDashboard = () => {
-    return (
-      <div className="dashboard-charts-container">
-        <div className="dashboard-welcome">
-          <h2>Panel de Control</h2>
-          <p>Visualiza los datos más importantes de tu negocio</p>
-        </div>
-        <div className="charts-grid">
-          <div className="chart-card reservas">
-            <div className="chart-header">
-              <h3>Reservas y Descuentos</h3>
-              <span className="chart-badge">Últimos 12 meses</span>
-            </div>
-            <div className="chart-body">
-              <canvas ref={reservasChartRef}></canvas>
-            </div>
-          </div>
-          <div className="chart-card apartamentos">
-            <div className="chart-header">
-              <h3>Estado de Apartamentos</h3>
-              <span className="chart-badge">Actual</span>
-            </div>
-            <div className="chart-body">
-              <canvas ref={apartamentosChartRef}></canvas>
-            </div>
-          </div>
-          <div className="chart-card pagos">
-            <div className="chart-header">
-              <h3>Ingresos</h3>
-              <span className="chart-badge">Últimos 6 meses</span>
-            </div>
-            <div className="chart-body">
-              <canvas ref={pagosChartRef}></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // Modificar la función renderDashboard para incluir los botones de filtro
+  // Reemplazar la función renderDashboard completa con esta versión:
 
   const toggleDrawer = () => {
     setOpen(!open)
@@ -1080,6 +1166,79 @@ const Dashboard = () => {
       </div>
     </div>
   )
+
+  // Añadir estilos CSS para los botones de filtro al final del archivo
+  // Añadir estos estilos CSS justo antes del return final:
+  // Estilos CSS para los botones de filtro
+  const timeFilterStyles = `
+.time-filter-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.filter-select-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-select-container label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background-color: white;
+  font-size: 14px;
+  font-weight: 500;
+  color: #0284c7;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  min-width: 100px;
+}
+
+.filter-select:hover {
+  border-color: #cbd5e1;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+}
+
+@media (max-width: 768px) {
+  .time-filter-controls {
+    justify-content: center;
+  }
+  
+  .filter-select-container label {
+    font-size: 13px;
+  }
+  
+  .filter-select {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+}
+`
+
+  // Agregar los estilos al documento
+  useEffect(() => {
+    const styleElement = document.createElement("style")
+    styleElement.textContent = timeFilterStyles
+    document.head.appendChild(styleElement)
+
+    return () => {
+      document.head.removeChild(styleElement)
+    }
+  }, [])
 }
 
 export default Dashboard

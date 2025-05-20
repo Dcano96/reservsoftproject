@@ -106,18 +106,18 @@ const validarPassword = (pass) => {
 // Registro de usuario: se fuerza el rol "cliente"
 exports.register = async (req, res) => {
   const { nombre, documento, email, telefono, password } = req.body
-  
+
   // Validar email y contraseña
   const emailError = validarEmail(email)
   if (emailError) {
     return res.status(400).json({ msg: emailError })
   }
-  
+
   const passwordError = validarPassword(password)
   if (passwordError) {
     return res.status(400).json({ msg: passwordError })
   }
-  
+
   try {
     let usuario = await Usuario.findOne({ email })
     if (usuario) {
@@ -155,19 +155,7 @@ exports.login = async (req, res) => {
     console.log("[LOGIN] Contraseña limpiada:", password)
   }
 
-  // Validar email y contraseña
-  const emailError = validarEmail(email)
-  if (emailError) {
-    console.log("[LOGIN] Error de validación de email:", emailError)
-    return res.status(400).json({ msg: emailError })
-  }
-  
-  const passwordError = validarPassword(password)
-  if (passwordError) {
-    console.log("[LOGIN] Error de validación de contraseña:", passwordError)
-    return res.status(400).json({ msg: passwordError })
-  }
-
+  // Validaciones básicas para evitar errores
   if (!email || !password) {
     console.log("[LOGIN] Faltan credenciales:", { email: !!email, password: !!password })
     return res.status(400).json({
@@ -180,6 +168,7 @@ exports.login = async (req, res) => {
     // Primero buscamos en la tabla de usuarios
     let usuario = await Usuario.findOne({ email })
     let isCliente = false
+    let fromClienteCollection = false
 
     // Si no se encuentra en usuarios, buscamos en clientes
     if (!usuario) {
@@ -190,6 +179,7 @@ exports.login = async (req, res) => {
         console.log(`[LOGIN] Cliente encontrado: ${cliente._id}`)
         usuario = cliente
         isCliente = true
+        fromClienteCollection = true
       } else {
         console.log(`[LOGIN] No se encontró ni usuario ni cliente con email: ${email}`)
         return res.status(400).json({ msg: "Credenciales inválidas" })
@@ -197,7 +187,7 @@ exports.login = async (req, res) => {
     }
 
     // Verificar si el usuario está activo
-    if (!usuario.estado) {
+    if (usuario.estado === false) {
       console.log(`[LOGIN] Usuario/cliente inactivo: ${email}`)
       return res.status(403).json({ msg: "Usuario inactivo. Contacte al administrador." })
     }
@@ -234,27 +224,76 @@ exports.login = async (req, res) => {
 
     // Intentar comparar con bcrypt
     let isMatch = false
+
     try {
-      isMatch = await bcrypt.compare(password, usuario.password)
-      console.log(`[LOGIN] Resultado de comparación bcrypt: ${isMatch}`)
+      // Verificar si la contraseña está hasheada correctamente
+      if (usuario.password && usuario.password.startsWith("$2")) {
+        // Es un hash de bcrypt válido, podemos usar bcrypt.compare
+        isMatch = await bcrypt.compare(password, usuario.password)
+        console.log(`[LOGIN] Resultado de comparación bcrypt: ${isMatch}`)
+      } else {
+        console.log(`[LOGIN] La contraseña no parece ser un hash bcrypt válido`)
+        // Si no es un hash válido, no podemos comparar
+        isMatch = false
+      }
     } catch (bcryptError) {
       console.error(`[LOGIN] Error en bcrypt.compare:`, bcryptError)
-      // Si hay error en bcrypt, intentamos una comparación directa (solo para depuración)
-      console.log(`[LOGIN] Intentando comparación alternativa...`)
+      isMatch = false
     }
 
-    // Si la comparación normal falla, intentar con la contraseña temporal sin procesar
-    if (!isMatch && req.body.password) {
-      try {
-        isMatch = await bcrypt.compare(req.body.password, usuario.password)
-        console.log(`[LOGIN] Resultado de comparación con contraseña original: ${isMatch}`)
-      } catch (altError) {
-        console.error(`[LOGIN] Error en comparación alternativa:`, altError)
+    // Si la autenticación falla y el usuario viene de la colección de clientes,
+    // intentar buscar en la colección de usuarios para ver si hay credenciales válidas allí
+    if (!isMatch && fromClienteCollection) {
+      console.log(`[LOGIN] Autenticación fallida para cliente, buscando en usuarios`)
+      const usuarioAlternativo = await Usuario.findOne({ email })
+
+      if (usuarioAlternativo) {
+        console.log(`[LOGIN] Usuario alternativo encontrado: ${usuarioAlternativo._id}`)
+
+        try {
+          isMatch = await bcrypt.compare(password, usuarioAlternativo.password)
+          console.log(`[LOGIN] Resultado de comparación con usuario alternativo: ${isMatch}`)
+
+          if (isMatch) {
+            // Si la autenticación es exitosa con el usuario alternativo, usamos ese
+            usuario = usuarioAlternativo
+            fromClienteCollection = false
+            isCliente = usuarioAlternativo.rol === "cliente"
+          }
+        } catch (altError) {
+          console.error(`[LOGIN] Error en comparación con usuario alternativo:`, altError)
+        }
       }
     }
 
+    // Si la autenticación falla y el usuario viene de la colección de usuarios,
+    // intentar buscar en la colección de clientes para ver si hay credenciales válidas allí
+    if (!isMatch && !fromClienteCollection) {
+      console.log(`[LOGIN] Autenticación fallida para usuario, buscando en clientes`)
+      const clienteAlternativo = await Cliente.findOne({ email })
+
+      if (clienteAlternativo) {
+        console.log(`[LOGIN] Cliente alternativo encontrado: ${clienteAlternativo._id}`)
+
+        try {
+          isMatch = await bcrypt.compare(password, clienteAlternativo.password)
+          console.log(`[LOGIN] Resultado de comparación con cliente alternativo: ${isMatch}`)
+
+          if (isMatch) {
+            // Si la autenticación es exitosa con el cliente alternativo, usamos ese
+            usuario = clienteAlternativo
+            fromClienteCollection = true
+            isCliente = true
+          }
+        } catch (altError) {
+          console.error(`[LOGIN] Error en comparación con cliente alternativo:`, altError)
+        }
+      }
+    }
+
+    // Si después de todos los intentos la autenticación sigue fallando
     if (!isMatch) {
-      console.log(`[LOGIN] Contraseña incorrecta para: ${email}`)
+      console.log(`[LOGIN] Contraseña incorrecta para: ${email} después de todos los intentos`)
       return res.status(400).json({
         msg: "Credenciales inválidas. Por favor, verifica tu correo y contraseña.",
       })
@@ -285,6 +324,7 @@ exports.login = async (req, res) => {
         rol: rolNombre,
         permisos: permisos,
         isCliente: isCliente,
+        fromClienteCollection: fromClienteCollection,
         // Añadir información sobre el estado del rol
         rolEliminado: rolEliminado,
         rolInactivo: rolInactivo,
@@ -396,6 +436,24 @@ exports.forgotPassword = async (req, res) => {
 
     await usuario.save()
 
+    // Si el usuario es un cliente, actualizar también la contraseña en la otra colección
+    if (isCliente) {
+      const usuarioCorrespondiente = await Usuario.findOne({ email: usuario.email })
+      if (usuarioCorrespondiente) {
+        usuarioCorrespondiente.password = hashedPassword
+        await usuarioCorrespondiente.save()
+        console.log(`[FORGOT PASSWORD] Contraseña actualizada también en la colección de usuarios`)
+      }
+    } else {
+      // Si es un usuario, actualizar también en clientes si existe
+      const clienteCorrespondiente = await Cliente.findOne({ email: usuario.email })
+      if (clienteCorrespondiente) {
+        clienteCorrespondiente.password = hashedPassword
+        await clienteCorrespondiente.save()
+        console.log(`[FORGOT PASSWORD] Contraseña actualizada también en la colección de clientes`)
+      }
+    }
+
     console.log(`[FORGOT PASSWORD] Contraseña temporal generada para ${email}: ${tempPassword}`)
 
     // Intentar enviar correo
@@ -478,13 +536,13 @@ exports.forgotPassword = async (req, res) => {
 // Reseteo de contraseña
 exports.resetPassword = async (req, res) => {
   const { token, newPassword } = req.body
-  
+
   // Validar contraseña
   const passwordError = validarPassword(newPassword)
   if (passwordError) {
     return res.status(400).json({ msg: passwordError })
   }
-  
+
   try {
     const usuario = await Usuario.findOne({
       resetPasswordToken: token,
@@ -510,10 +568,29 @@ exports.resetPassword = async (req, res) => {
     }
 
     const salt = await bcrypt.genSalt(10)
-    usuario.password = await bcrypt.hash(newPassword, salt)
+    const hashedPassword = await bcrypt.hash(newPassword, salt)
+    usuario.password = hashedPassword
     usuario.resetPasswordToken = undefined
     usuario.resetPasswordExpires = undefined
     await usuario.save()
+
+    // Actualizar también la contraseña en la otra colección si existe
+    if (usuario.rol === "cliente") {
+      const cliente = await Cliente.findOne({ email: usuario.email })
+      if (cliente) {
+        cliente.password = hashedPassword
+        await cliente.save()
+        console.log(`[RESET PASSWORD] Contraseña actualizada también en la colección de clientes`)
+      }
+    } else {
+      const usuarioCorrespondiente = await Usuario.findOne({ email: usuario.email })
+      if (usuarioCorrespondiente) {
+        usuarioCorrespondiente.password = hashedPassword
+        await usuarioCorrespondiente.save()
+        console.log(`[RESET PASSWORD] Contraseña actualizada también en la colección de usuarios`)
+      }
+    }
+
     res.json({ msg: "Contraseña actualizada correctamente" })
   } catch (error) {
     console.error(error)
@@ -559,7 +636,7 @@ exports.adminResetPassword = async (req, res) => {
   if (emailError) {
     return res.status(400).json({ msg: emailError })
   }
-  
+
   const passwordError = validarPassword(newPassword)
   if (passwordError) {
     return res.status(400).json({ msg: passwordError })
@@ -590,11 +667,29 @@ exports.adminResetPassword = async (req, res) => {
     }
 
     const salt = await bcrypt.genSalt(10)
-    usuario.password = await bcrypt.hash(newPassword, salt)
+    const hashedPassword = await bcrypt.hash(newPassword, salt)
+    usuario.password = hashedPassword
     usuario.resetPasswordToken = undefined
     usuario.resetPasswordExpires = undefined
 
     await usuario.save()
+
+    // Actualizar también la contraseña en la otra colección si existe
+    if (isCliente) {
+      const usuarioCorrespondiente = await Usuario.findOne({ email })
+      if (usuarioCorrespondiente) {
+        usuarioCorrespondiente.password = hashedPassword
+        await usuarioCorrespondiente.save()
+        console.log(`[ADMIN RESET] Contraseña actualizada también en la colección de usuarios`)
+      }
+    } else {
+      const clienteCorrespondiente = await Cliente.findOne({ email })
+      if (clienteCorrespondiente) {
+        clienteCorrespondiente.password = hashedPassword
+        await clienteCorrespondiente.save()
+        console.log(`[ADMIN RESET] Contraseña actualizada también en la colección de clientes`)
+      }
+    }
 
     console.log(`Contraseña cambiada para ${email} por un administrador`)
 

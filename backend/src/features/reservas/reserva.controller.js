@@ -8,6 +8,31 @@ const mailer = require("../../../config/mailer")
 // Función para validar ObjectId
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id)
 
+// Función para generar contraseñas temporales seguras que cumplan con los requisitos
+const generateSecurePassword = () => {
+  // Prefijo "Temp" seguido de un número aleatorio entre 1-9
+  const prefix = "Temp" + Math.floor(Math.random() * 9 + 1)
+  
+  // Generar letras minúsculas aleatorias (3-4 caracteres)
+  const lowercaseChars = 'abcdefghijkmnopqrstuvwxyz'
+  let lowercase = ''
+  const lowercaseLength = Math.floor(Math.random() * 2) + 3 // 3-4 caracteres
+  for (let i = 0; i < lowercaseLength; i++) {
+    lowercase += lowercaseChars.charAt(Math.floor(Math.random() * lowercaseChars.length))
+  }
+  
+  // Añadir 1-2 números aleatorios
+  const numbers = Math.floor(Math.random() * 90 + 10).toString()
+  
+  // Añadir un carácter especial
+  const specialChars = '!@#$%^&*-_=+?'
+  const specialChar = specialChars.charAt(Math.floor(Math.random() * specialChars.length))
+  
+  // Combinar todo para formar la contraseña
+  // Formato: Temp + número + letras minúsculas + números + carácter especial
+  return prefix + lowercase + numbers + specialChar
+}
+
 // Crea una nueva reserva
 exports.crearReserva = async (req, res) => {
   try {
@@ -677,9 +702,10 @@ exports.crearReservaPublica = async (req, res) => {
     } else {
       // Si no existe, crear un nuevo cliente
       try {
-        // Generar una contraseña aleatoria
-        const crypto = require("crypto")
-        randomPassword = crypto.randomBytes(4).toString("hex")
+        // Generar una contraseña segura con el formato requerido
+        randomPassword = generateSecurePassword()
+        console.log("Contraseña temporal generada:", randomPassword)
+        
         const bcrypt = require("bcryptjs")
         const salt = await bcrypt.genSalt(10)
         const hashedPassword = await bcrypt.hash(randomPassword, salt)
@@ -921,4 +947,19 @@ exports.obtenerFechasReservadas = async (req, res) => {
       details: error.message,
     })
   }
+}
+
+// Exportar la función de generación de contraseñas para uso en otros módulos
+module.exports = {
+  crearReserva: exports.crearReserva,
+  obtenerReservas: exports.obtenerReservas,
+  obtenerReserva: exports.obtenerReserva,
+  actualizarReserva: exports.actualizarReserva,
+  eliminarReserva: exports.eliminarReserva,
+  agregarAcompanante: exports.agregarAcompanante,
+  actualizarAcompanante: exports.actualizarAcompanante,
+  eliminarAcompanante: exports.eliminarAcompanante,
+  crearReservaPublica: exports.crearReservaPublica,
+  obtenerFechasReservadas: exports.obtenerFechasReservadas,
+  generateSecurePassword
 }

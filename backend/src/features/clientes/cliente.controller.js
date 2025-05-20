@@ -215,9 +215,9 @@ const generateRandomPassword = () => {
   return password
 }
 
-// Crear un nuevo cliente (usado por el administrador)
+// Modificar la función createCliente para permitir contraseñas personalizadas
 exports.createCliente = async (req, res) => {
-  const { nombre, documento, email, telefono } = req.body
+  const { nombre, documento, email, telefono, password } = req.body
   try {
     // Validar los campos
     const errorDocumento = validarDocumento(documento)
@@ -238,22 +238,80 @@ exports.createCliente = async (req, res) => {
       return res.status(400).json({ msg: "El cliente ya existe" })
     }
 
-    // Generar una contraseña aleatoria para el cliente
-    const randomPassword = generateRandomPassword()
-    const salt = await bcrypt.genSalt(10)
-    const hashedPassword = await bcrypt.hash(randomPassword, salt)
+    let hashedPassword;
+    let randomPassword = null;
+
+    // Verificar si se proporcionó una contraseña o si debemos generar una temporal
+    if (password) {
+      // Si se proporcionó una contraseña, validarla
+      const errorPassword = validarPassword(password)
+      if (errorPassword) return res.status(400).json({ msg: errorPassword })
+      
+      // Hashear la contraseña proporcionada
+      const salt = await bcrypt.genSalt(10)
+      hashedPassword = await bcrypt.hash(password, salt)
+    } else {
+      // Si no se proporcionó contraseña, generar una temporal
+      randomPassword = generateRandomPassword()
+      const salt = await bcrypt.genSalt(10)
+      hashedPassword = await bcrypt.hash(randomPassword, salt)
+    }
 
     cliente = new Cliente({
       nombre,
       documento,
       email,
       telefono,
-      password: hashedPassword, // Añadir la contraseña hasheada
+      password: hashedPassword,
       rol: "cliente",
+      estado: true, // Asegurarse de que el estado esté activo
     })
 
     await cliente.save()
-    res.status(201).json(cliente)
+
+    // Crear también un usuario con rol "cliente"
+    // Verificar si ya existe un usuario con ese email
+    let usuario = await Usuario.findOne({ email })
+
+    if (!usuario) {
+      // Si no existe, crear el usuario
+      usuario = new Usuario({
+        nombre,
+        documento,
+        email,
+        telefono,
+        password: hashedPassword, // Usar la misma contraseña hasheada
+        rol: "cliente",
+        estado: true, // Asegurarse de que el estado esté activo
+      })
+
+      await usuario.save()
+      console.log(`Usuario creado automáticamente con ID: ${usuario._id}`)
+    } else {
+      // Si el usuario existe, actualizar su contraseña y datos
+      usuario.nombre = nombre;
+      usuario.documento = documento;
+      usuario.telefono = telefono;
+      usuario.password = hashedPassword;
+      usuario.rol = "cliente";
+      usuario.estado = true;
+      await usuario.save();
+      console.log(`Usuario existente actualizado con rol "cliente", ID: ${usuario._id}`)
+    }
+
+    // Preparar la respuesta
+    const respuesta = {
+      cliente,
+      msg: "Cliente creado correctamente."
+    }
+
+    // Si se generó una contraseña temporal, incluirla en la respuesta
+    if (randomPassword) {
+      respuesta.passwordTemporal = randomPassword;
+      respuesta.msg = "Cliente creado correctamente. Guarde la contraseña temporal para compartirla con el cliente.";
+    }
+
+    res.status(201).json(respuesta)
   } catch (error) {
     console.error(error)
     res.status(500).send("Error en el servidor")
@@ -1144,6 +1202,18 @@ exports.updateCliente = async (req, res) => {
     cliente.telefono = telefono
 
     await cliente.save()
+
+    // Actualizar también el usuario correspondiente si existe
+    const usuario = await Usuario.findOne({ email: cliente.email })
+    if (usuario) {
+      usuario.nombre = nombre
+      usuario.documento = documento
+      usuario.telefono = telefono
+      // No actualizamos el email del usuario para mantener la coherencia con el login
+      await usuario.save()
+      console.log(`[UPDATE CLIENTE] Usuario con email ${cliente.email} también actualizado`)
+    }
+
     res.json(cliente)
   } catch (error) {
     console.error(error)
@@ -1210,6 +1280,27 @@ exports.deleteCliente = async (req, res) => {
         msg: "No se pudo eliminar el cliente",
         error: true,
       })
+    }
+
+    // Intentar eliminar también el usuario correspondiente si existe
+    try {
+      // Buscar usuario por email
+      const usuario = await Usuario.findOne({ email: cliente.email })
+      if (usuario && usuario.rol === "cliente") {
+        // Si el usuario solo tiene rol de cliente, eliminarlo
+        await Usuario.deleteOne({ _id: usuario._id })
+        console.log(`[DELETE CLIENTE FORZADO] Usuario asociado eliminado: ${usuario._id}`)
+      } else if (usuario) {
+        // Si el usuario tiene otros roles, solo quitar el rol de cliente
+        if (usuario.rol === "cliente") {
+          usuario.rol = ""
+          await usuario.save()
+          console.log(`[DELETE CLIENTE FORZADO] Se quitó el rol de cliente al usuario: ${usuario._id}`)
+        }
+      }
+    } catch (userError) {
+      console.error("[DELETE CLIENTE FORZADO] Error al eliminar usuario asociado:", userError)
+      // No fallamos si no se puede eliminar el usuario
     }
 
     // Devolver respuesta exitosa con información adicional
