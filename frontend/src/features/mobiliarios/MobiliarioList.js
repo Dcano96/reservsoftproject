@@ -576,42 +576,62 @@ const MobiliarioList = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target
+    let errorMessage = ""
 
     // Validaciones en tiempo real
     if (name === "nombre") {
-      // Solo permitir letras, números y espacios (sin caracteres especiales)
-      if (/[^a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑ]/.test(value) && value.length > 0) {
-        setErrors((prev) => ({ ...prev, [name]: "No se permiten caracteres especiales" }))
-        return
-      }
-      // Validar longitud
-      if (value.length > 50) {
-        setErrors((prev) => ({ ...prev, [name]: "El nombre debe tener máximo 50 caracteres" }))
-        return
+      if (!value.trim()) {
+        errorMessage = "El nombre es requerido"
+      } else if (value.trim().length < 3) {
+        errorMessage = "El nombre debe tener al menos 3 caracteres"
+      } else if (value.trim().length > 50) {
+        errorMessage = "El nombre debe tener máximo 50 caracteres"
+      } else if (/[^a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑ]/.test(value)) {
+        errorMessage = "No se permiten caracteres especiales"
       }
     }
 
     if (name === "identMobiliario") {
-      // Contar caracteres especiales
-      const specialChars = value.replace(/[a-zA-Z0-9\s]/g, "")
-      if (specialChars.length > 2) {
-        setErrors((prev) => ({ ...prev, [name]: "No se permiten más de 2 caracteres especiales" }))
-        return
+      if (!value.trim()) {
+        errorMessage = "La identificación es requerida"
+      } else if (value.trim().length < 3) {
+        errorMessage = "La identificación debe tener al menos 3 caracteres"
+      } else if (value.trim().length > 20) {
+        errorMessage = "La identificación debe tener máximo 20 caracteres"
+      } else {
+        // Verificar si ya existe un mobiliario con esta identificación
+        const duplicate = mobiliarios.find((m) => m.identMobiliario === value && m._id !== editingId)
+        if (duplicate) {
+          errorMessage = "Ya existe un mobiliario con esta identificación"
+        }
+
+        // Contar caracteres especiales
+        const specialChars = value.replace(/[a-zA-Z0-9\s]/g, "")
+        if (specialChars.length > 2) {
+          errorMessage = "No se permiten más de 2 caracteres especiales"
+        }
       }
     }
 
     if (name === "observacion") {
-      // Validar longitud
-      if (value.length > 500) {
-        setErrors((prev) => ({ ...prev, [name]: "La observación debe tener máximo 500 caracteres" }))
-        return
+      if (!value.trim()) {
+        errorMessage = "La observación es requerida"
+      } else if (value.trim().length < 3) {
+        errorMessage = "La observación debe tener al menos 3 caracteres"
+      } else if (value.trim().length > 500) {
+        errorMessage = "La observación debe tener máximo 500 caracteres"
       }
     }
 
-    setFormData((prev) => ({ ...prev, [name]: value }))
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: "" })
+    if (name === "apartamento" && !value) {
+      errorMessage = "El apartamento es requerido"
     }
+
+    // Actualizar el estado de errores
+    setErrors((prev) => ({ ...prev, [name]: errorMessage }))
+
+    // Actualizar el estado del formulario
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleSubmit = async () => {
@@ -1010,10 +1030,11 @@ const MobiliarioList = () => {
               name="nombre"
               value={formData.nombre}
               onChange={handleChange}
+              onBlur={handleChange}
               fullWidth
               variant="outlined"
               error={!!errors.nombre}
-              helperText={errors.nombre || `${formData.nombre.length}/50 caracteres`}
+              helperText={errors.nombre}
               required
               InputProps={{
                 startAdornment: (
@@ -1030,6 +1051,7 @@ const MobiliarioList = () => {
               name="identMobiliario"
               value={formData.identMobiliario}
               onChange={handleChange}
+              onBlur={handleChange}
               fullWidth
               variant="outlined"
               error={!!errors.identMobiliario}
@@ -1060,6 +1082,7 @@ const MobiliarioList = () => {
                 name="estado"
                 value={formData.estado}
                 onChange={handleChange}
+                onBlur={handleChange}
                 fullWidth
                 variant="outlined"
                 error={!!errors.estado}
@@ -1085,12 +1108,13 @@ const MobiliarioList = () => {
               name="observacion"
               value={formData.observacion}
               onChange={handleChange}
+              onBlur={handleChange}
               fullWidth
               variant="outlined"
               multiline
               rows={4}
               error={!!errors.observacion}
-              helperText={errors.observacion || `${formData.observacion.length}/500 caracteres`}
+              helperText={errors.observacion}
               required
               InputProps={{
                 startAdornment: (
@@ -1115,6 +1139,7 @@ const MobiliarioList = () => {
               name="apartamento"
               value={formData.apartamento}
               onChange={handleChange}
+              onBlur={handleChange}
               fullWidth
               variant="outlined"
               error={!!errors.apartamento}
@@ -1144,7 +1169,11 @@ const MobiliarioList = () => {
           <Button onClick={handleClose} className={classes.cancelButton}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} className={classes.submitButton}>
+          <Button
+            onClick={handleSubmit}
+            className={classes.submitButton}
+            disabled={Object.values(errors).some((error) => error !== "")}
+          >
             {editingId ? "Actualizar" : "Crear"}
           </Button>
         </DialogActions>
