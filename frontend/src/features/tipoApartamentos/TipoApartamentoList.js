@@ -28,7 +28,7 @@ import {
   Select,
   MenuItem,
 } from "@material-ui/core"
-import { Edit, Delete, Eye, X, Search, Plus, Home, FileText } from 'lucide-react'
+import { Edit, Delete, Eye, X, Search, Plus, Home, FileText } from "lucide-react"
 import { useHistory } from "react-router-dom"
 import Swal from "sweetalert2"
 import tipoApartamentoService from "./tipoApartamento.service"
