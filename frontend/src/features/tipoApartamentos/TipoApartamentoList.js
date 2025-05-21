@@ -809,11 +809,9 @@ const TipoApartamentoList = ({ onModuleChange }) => {
               variant="outlined"
               multiline
               minRows={3}
-<<<<<<< HEAD
+
               error={!!formErrors.descripcion}
               helperText={formErrors.descripcion}
-=======
->>>>>>> 17b97daaf765740b1bc28ca02a637f634529d523
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">

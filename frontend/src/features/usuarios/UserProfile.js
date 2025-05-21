@@ -44,12 +44,151 @@ import MisReservas from "../clientes/mis-reservas"
 // Añadir estas constantes después de las importaciones y antes del componente UserProfile
 // Expresiones regulares para validaciones
 const REGEX = {
+  SOLO_NUMEROS: /^\d+$/,
+  SOLO_LETRAS_ESPACIOS: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/,
   EMAIL: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   EMAIL_INVALIDO: /@\.com|@com\.|@\.|\.@|@-|-@|@.*@|\.\.|,,|@@/,
   CONTRASENA_FUERTE: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,15}$/,
   SECUENCIAS_COMUNES: /123456|654321|password|qwerty|abc123|admin123|123abc|contraseña|usuario|admin/i,
   CARACTERES_REPETIDOS: /(.)\1{3,}/,
   SECUENCIAS_NUMERICAS: /123456|654321|111111|222222|333333|444444|555555|666666|777777|888888|999999|000000/,
+}
+
+// Validación exhaustiva de documento
+const validarDocumento = (doc) => {
+  // Validaciones básicas
+  if (!doc) return "El documento es obligatorio"
+  if (doc.trim() === "") return "El documento no puede estar vacío"
+  if (!REGEX.SOLO_NUMEROS.test(doc)) return "El documento debe contener solo números"
+  if (doc.length < 6) return "El documento debe tener al menos 6 dígitos"
+  if (doc.length > 15) return "El documento no puede tener más de 15 dígitos"
+
+  // Validaciones de seguridad
+  if (REGEX.CARACTERES_REPETIDOS.test(doc))
+    return "El documento no puede contener más de 3 dígitos repetidos consecutivos"
+
+  if (REGEX.SECUENCIAS_NUMERICAS.test(doc)) return "El documento no puede contener secuencias numéricas obvias"
+
+  // Validación de documento con todos ceros
+  if (/^0+$/.test(doc)) return "El documento no puede contener solo ceros"
+
+  // Validación de documento con valor muy bajo
+  if (Number.parseInt(doc) < 1000) return "El documento no parece válido (valor muy bajo)"
+
+  return ""
+}
+
+// Validación exhaustiva de nombre
+const validarNombre = (nom) => {
+  // Validaciones básicas
+  if (!nom) return "El nombre es obligatorio"
+  if (nom.trim() === "") return "El nombre no puede estar vacío"
+  if (nom.length < 6) return "El nombre debe tener al menos 6 caracteres"
+  if (nom.length > 30) return "El nombre no puede tener más de 30 caracteres"
+
+  // Validación de solo letras y espacios (sin caracteres especiales ni números)
+  if (!REGEX.SOLO_LETRAS_ESPACIOS.test(nom)) return "El nombre solo debe contener letras y espacios"
+
+  // Validación de espacios múltiples
+  if (/\s{2,}/.test(nom)) return "El nombre no puede contener espacios múltiples consecutivos"
+
+  // Validación de al menos dos palabras (nombre y apellido)
+  const palabras = nom.trim().split(/\s+/)
+  if (palabras.length < 2) return "Debe ingresar al menos nombre y apellido"
+
+  // Validación de longitud mínima para cada palabra
+  for (const palabra of palabras) {
+    if (palabra.length < 2) return "Cada palabra del nombre debe tener al menos 2 caracteres"
+  }
+
+  // Validación de palabras inapropiadas o nombres genéricos
+  const palabrasProhibidas = ["admin", "usuario", "test", "prueba", "administrador"]
+  for (const prohibida of palabrasProhibidas) {
+    if (nom.toLowerCase().includes(prohibida)) return "El nombre contiene palabras no permitidas"
+  }
+
+  return ""
+}
+
+// Validación exhaustiva de teléfono
+const validarTelefono = (tel) => {
+  // Validaciones básicas
+  if (!tel) return "El teléfono es obligatorio"
+  if (tel.trim() === "") return "El teléfono no puede estar vacío"
+  if (!REGEX.SOLO_NUMEROS.test(tel)) return "El teléfono debe contener solo números"
+  if (tel.length < 7) return "El teléfono debe tener al menos 7 dígitos"
+  if (tel.length > 10) return "El teléfono no puede tener más de 10 dígitos"
+
+  // Validaciones de seguridad
+  if (REGEX.CARACTERES_REPETIDOS.test(tel))
+    return "El teléfono no puede contener más de 3 dígitos repetidos consecutivos"
+
+  if (REGEX.SECUENCIAS_NUMERICAS.test(tel)) return "El teléfono no puede contener secuencias numéricas obvias"
+
+  // Validación de teléfono con todos ceros
+  if (/^0+$/.test(tel)) return "El teléfono no puede contener solo ceros"
+
+  // Validación de teléfonos de emergencia o servicios
+  const numerosEspeciales = ["123", "911", "112", "119"]
+  if (numerosEspeciales.includes(tel)) return "No se permite el uso de números de emergencia"
+
+  return ""
+}
+
+// Validación exhaustiva de email
+const validarEmail = (em) => {
+  // Validaciones básicas
+  if (!em) return "El correo electrónico es obligatorio"
+  if (em.trim() === "") return "El correo electrónico no puede estar vacío"
+
+  // Validación de formato básico
+  if (!REGEX.EMAIL.test(em)) return "Formato de correo electrónico inválido"
+
+  // Validación de patrones inválidos específicos
+  if (REGEX.EMAIL_INVALIDO.test(em)) return "El correo contiene patrones inválidos (como @.com, @., etc.)"
+
+  // Validación de longitud
+  if (em.length < 6) return "El correo debe tener al menos 6 caracteres"
+  if (em.length > 50) return "El correo no puede tener más de 50 caracteres"
+
+  // Validación de partes del email
+  const [localPart, domainPart] = em.split("@")
+
+  // Validación de la parte local
+  if (!localPart || localPart.length < 1) return "La parte local del correo no puede estar vacía"
+  if (localPart.length > 64) return "La parte local del correo es demasiado larga"
+  if (/^[.-]|[.-]$/.test(localPart)) return "La parte local no puede comenzar ni terminar con puntos o guiones"
+
+  // Validación del dominio
+  if (!domainPart || !domainPart.includes("."))
+    return "El dominio del correo debe incluir una extensión (ej: .com, .net)"
+
+  // Verificar que el dominio tenga un formato válido y que no haya caracteres después del TLD
+  // Dividir el dominio en partes separadas por puntos
+  const domainParts = domainPart.split(".")
+
+  // Verificar que todas las partes del dominio sean válidas
+  for (let i = 0; i < domainParts.length; i++) {
+    const part = domainParts[i]
+    // Cada parte debe contener al menos un carácter y solo caracteres alfanuméricos o guiones
+    if (part.length === 0 || !/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(part)) {
+      return "El dominio del correo contiene partes inválidas"
+    }
+  }
+
+  // Verificar que el TLD sea válido (2-6 caracteres, solo letras)
+  const tld = domainParts[domainParts.length - 1]
+  if (!tld || tld.length < 2 || tld.length > 6 || !/^[a-zA-Z]+$/.test(tld)) {
+    return "La extensión del dominio no es válida o contiene caracteres no permitidos"
+  }
+
+  // Validación de dominios temporales o no recomendados
+  const dominiosNoRecomendados = ["tempmail", "mailinator", "guerrillamail", "10minutemail", "yopmail"]
+  for (const dominio of dominiosNoRecomendados) {
+    if (domainPart.toLowerCase().includes(dominio)) return "No se permiten correos de servicios temporales"
+  }
+
+  return ""
 }
 
 // Validación exhaustiva de contraseña
@@ -114,6 +253,15 @@ const UserProfile = () => {
     severity: "success",
   })
   const [activeTab, setActiveTab] = useState("personal")
+  const [errores, setErrores] = useState({
+    nombre: "",
+    email: "",
+    telefono: "",
+    documento: "",
+    passwordActual: "",
+    nuevoPassword: "",
+    confirmarPassword: "",
+  })
 
   useEffect(() => {
     // Bandera para controlar si el componente está montado
@@ -230,35 +378,175 @@ const UserProfile = () => {
     }
   }, [])
 
+  // Modificar la función handleChange para hacer las validaciones más estrictas
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
+
+    // Aplicar validaciones específicas según el campo
+    if (name === "nombre") {
+      // No permitir más de 30 caracteres
+      if (value.length > 30) return
+
+      // Filtrar caracteres no permitidos en tiempo real (solo letras y espacios)
+      if (value && !REGEX.SOLO_LETRAS_ESPACIOS.test(value.slice(-1))) {
+        return // No actualizar el estado si el último carácter no es una letra o espacio
+      }
+
+      // No permitir espacios múltiples consecutivos
+      if (/\s{2,}/.test(value)) return
+
+      // Actualizar el estado y validar
+      setFormData((prev) => ({ ...prev, [name]: value }))
+      setErrores((prev) => ({ ...prev, [name]: validarNombre(value) }))
+    } else if (name === "documento") {
+      // No permitir más de 15 caracteres
+      if (value.length > 15) return
+
+      // Filtrar caracteres no permitidos en tiempo real (solo números)
+      if (value && !REGEX.SOLO_NUMEROS.test(value)) {
+        return // No actualizar el estado si hay caracteres que no son números
+      }
+
+      // Actualizar el estado y validar
+      setFormData((prev) => ({ ...prev, [name]: value }))
+      setErrores((prev) => ({ ...prev, [name]: validarDocumento(value) }))
+    } else if (name === "telefono") {
+      // No permitir más de 10 caracteres
+      if (value.length > 10) return
+
+      // Filtrar caracteres no permitidos en tiempo real (solo números)
+      if (value && !REGEX.SOLO_NUMEROS.test(value)) {
+        return // No actualizar el estado si hay caracteres que no son números
+      }
+
+      // Actualizar el estado y validar
+      setFormData((prev) => ({ ...prev, [name]: value }))
+      setErrores((prev) => ({ ...prev, [name]: validarTelefono(value) }))
+    } else if (name === "email") {
+      // No permitir más de 50 caracteres
+      if (value.length > 50) return
+
+      // Validación básica para caracteres permitidos en un email
+      const emailRegex = /^[a-zA-Z0-9._%+-]*@?[a-zA-Z0-9.-]*\.?[a-zA-Z]*$/
+      if (!emailRegex.test(value)) {
+        return // No actualizar si hay caracteres inválidos
+      }
+
+      // No permitir múltiples @ o puntos consecutivos
+      if (value.includes("@@") || value.includes("..") || value.includes(".@") || value.includes("@.")) {
+        return
+      }
+
+      // No permitir más de un @
+      const atCount = (value.match(/@/g) || []).length
+      if (atCount > 1) {
+        return
+      }
+
+      // Verificar si ya tiene un TLD válido completo (.com, .net, etc.)
+      const completeTLDs = [".com", ".net", ".org", ".edu", ".gov", ".co", ".io", ".info", ".biz", ".app"]
+
+      // Si el email actual ya tiene un @ y un punto
+      if (formData.email.includes("@") && formData.email.includes(".")) {
+        const currentParts = formData.email.split("@")
+        const newParts = value.split("@")
+
+        // Si ambos tienen la parte del dominio
+        if (currentParts.length > 1 && newParts.length > 1) {
+          const currentDomain = currentParts[1]
+          const newDomain = newParts[1]
+
+          // Verificar si el dominio actual termina con alguno de los TLDs completos
+          const hasTLDComplete = completeTLDs.some((tld) => {
+            // Verificar si el dominio actual termina con el TLD
+            if (currentDomain.endsWith(tld)) {
+              // Si el nuevo dominio es más largo que el actual, significa que están intentando
+              // añadir caracteres después del TLD, lo cual no debe permitirse
+              const tldIndex = currentDomain.lastIndexOf(tld)
+              const currentDomainWithoutTLD = currentDomain.substring(0, tldIndex)
+
+              // Si el nuevo dominio es más largo que el dominio actual sin el TLD + la longitud del TLD,
+              // significa que están intentando añadir caracteres después del TLD
+              if (newDomain.length > currentDomainWithoutTLD.length + tld.length) {
+                return true // No permitir más caracteres después del TLD
+              }
+            }
+            return false
+          })
+
+          if (hasTLDComplete) {
+            return // No permitir más caracteres después del TLD
+          }
+        }
+      }
+
+      // Actualizar el estado y validar
+      setFormData((prev) => ({ ...prev, [name]: value }))
+      setErrores((prev) => ({ ...prev, [name]: validarEmail(value) }))
+    }
   }
 
-  // Reemplazar la función handlePasswordChange con esta versión mejorada
+  // Modificar la función handlePasswordChange para hacer las validaciones más estrictas
   const handlePasswordChange = (e) => {
     const { name, value } = e.target
 
-    // Limitar a 15 caracteres máximo
+    // Limitar a 15 caracteres máximo para todos los campos de contraseña
     if (value.length > 15) {
       return
     }
 
-    setPasswordData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
-
-    // Validar en tiempo real
     if (name === "passwordActual") {
+      setPasswordData((prev) => ({ ...prev, [name]: value }))
       setPasswordErrors((prev) => ({
         ...prev,
         passwordActual: value ? "" : "La contraseña actual es obligatoria",
       }))
     } else if (name === "nuevoPassword") {
+      // Validar complejidad en tiempo real
+      if (value.length > 0) {
+        // Verificar que tenga al menos una minúscula
+        if (!/[a-z]/.test(value) && value.length > 0) {
+          setPasswordErrors((prev) => ({
+            ...prev,
+            nuevoPassword: "La contraseña debe contener al menos una letra minúscula",
+          }))
+          setPasswordData((prev) => ({ ...prev, [name]: value }))
+          return
+        }
+
+        // Verificar que tenga al menos una mayúscula
+        if (!/[A-Z]/.test(value) && value.length > 0) {
+          setPasswordErrors((prev) => ({
+            ...prev,
+            nuevoPassword: "La contraseña debe contener al menos una letra mayúscula",
+          }))
+          setPasswordData((prev) => ({ ...prev, [name]: value }))
+          return
+        }
+
+        // Verificar que tenga al menos un número
+        if (!/[0-9]/.test(value) && value.length > 0) {
+          setPasswordErrors((prev) => ({
+            ...prev,
+            nuevoPassword: "La contraseña debe contener al menos un número",
+          }))
+          setPasswordData((prev) => ({ ...prev, [name]: value }))
+          return
+        }
+
+        // Verificar que tenga al menos un carácter especial
+        if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value) && value.length > 0) {
+          setPasswordErrors((prev) => ({
+            ...prev,
+            nuevoPassword: "La contraseña debe contener al menos un carácter especial",
+          }))
+          setPasswordData((prev) => ({ ...prev, [name]: value }))
+          return
+        }
+      }
+
+      // Actualizar el estado y validar
+      setPasswordData((prev) => ({ ...prev, [name]: value }))
       const error = validarPassword(value)
       setPasswordErrors((prev) => ({
         ...prev,
@@ -269,6 +557,8 @@ const UserProfile = () => {
             : "",
       }))
     } else if (name === "confirmarPassword") {
+      // Actualizar el estado y validar
+      setPasswordData((prev) => ({ ...prev, [name]: value }))
       setPasswordErrors((prev) => ({
         ...prev,
         confirmarPassword: value !== passwordData.nuevoPassword ? "Las contraseñas no coinciden" : "",
@@ -332,9 +622,84 @@ const UserProfile = () => {
     }
   }
 
-  // Modificar la función handleSubmit para manejar el caso en que la API falla
+  // Modificar la función handleSubmit para asegurar que todas las validaciones se cumplan
   const handleSubmit = async () => {
     try {
+      // Validar todos los campos antes de enviar
+      const errNombre = validarNombre(formData.nombre)
+      const errDocumento = validarDocumento(formData.documento)
+      const errTelefono = validarTelefono(formData.telefono)
+      const errEmail = validarEmail(formData.email)
+
+      // Actualizar todos los errores
+      setErrores({
+        ...errores,
+        nombre: errNombre,
+        documento: errDocumento,
+        telefono: errTelefono,
+        email: errEmail,
+      })
+
+      // Verificar si hay algún error o campo vacío
+      if (
+        errNombre ||
+        errDocumento ||
+        errTelefono ||
+        errEmail ||
+        !formData.nombre ||
+        !formData.documento ||
+        !formData.telefono ||
+        !formData.email
+      ) {
+        setNotification({
+          open: true,
+          message: "Por favor, corrige los errores en el formulario antes de continuar.",
+          severity: "error",
+        })
+        return
+      }
+
+      // Verificar longitudes mínimas
+      if (formData.nombre.length < 6) {
+        setErrores((prev) => ({ ...prev, nombre: "El nombre debe tener al menos 6 caracteres" }))
+        setNotification({
+          open: true,
+          message: "El nombre debe tener al menos 6 caracteres",
+          severity: "error",
+        })
+        return
+      }
+
+      if (formData.documento.length < 6) {
+        setErrores((prev) => ({ ...prev, documento: "El documento debe tener al menos 6 dígitos" }))
+        setNotification({
+          open: true,
+          message: "El documento debe tener al menos 6 dígitos",
+          severity: "error",
+        })
+        return
+      }
+
+      if (formData.telefono.length < 7) {
+        setErrores((prev) => ({ ...prev, telefono: "El teléfono debe tener al menos 7 dígitos" }))
+        setNotification({
+          open: true,
+          message: "El teléfono debe tener al menos 7 dígitos",
+          severity: "error",
+        })
+        return
+      }
+
+      if (formData.email.length < 6) {
+        setErrores((prev) => ({ ...prev, email: "El correo debe tener al menos 6 caracteres" }))
+        setNotification({
+          open: true,
+          message: "El correo debe tener al menos 6 caracteres",
+          severity: "error",
+        })
+        return
+      }
+
       setLoading(true)
       const token = localStorage.getItem("token")
 
@@ -407,7 +772,7 @@ const UserProfile = () => {
     }
   }
 
-  // Reemplazar la función handlePasswordSubmit con esta versión mejorada
+  // Modificar la función handlePasswordSubmit para asegurar que todas las validaciones se cumplan
   const handlePasswordSubmit = async (e) => {
     e.preventDefault()
 
@@ -436,6 +801,20 @@ const UserProfile = () => {
       setNotification({
         open: true,
         message: "Por favor, corrige los errores en el formulario antes de continuar.",
+        severity: "error",
+      })
+      return
+    }
+
+    // Verificar longitud mínima de la nueva contraseña
+    if (passwordData.nuevoPassword.length < 8) {
+      setPasswordErrors((prev) => ({
+        ...prev,
+        nuevoPassword: "La contraseña debe tener al menos 8 caracteres",
+      }))
+      setNotification({
+        open: true,
+        message: "La contraseña debe tener al menos 8 caracteres",
         severity: "error",
       })
       return
@@ -746,15 +1125,25 @@ const UserProfile = () => {
                   </div>
                   <div className="profile-info-value">
                     {editing ? (
-                      <TextField
-                        fullWidth
-                        name="nombre"
-                        value={formData.nombre}
-                        onChange={handleChange}
-                        variant="outlined"
-                        placeholder="Ingrese su nombre completo"
-                        className="profile-text-field"
-                      />
+                      <div>
+                        <TextField
+                          fullWidth
+                          name="nombre"
+                          value={formData.nombre}
+                          onChange={handleChange}
+                          variant="outlined"
+                          placeholder="Ingrese su nombre completo (6-30 caracteres)"
+                          className="profile-text-field"
+                          error={!!errores.nombre}
+                          helperText={errores.nombre}
+                          inputProps={{
+                            minLength: 6,
+                            maxLength: 30,
+                            pattern: "[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+",
+                          }}
+                          required
+                        />
+                      </div>
                     ) : (
                       <Typography variant="body1">{profile?.nombre || "No disponible"}</Typography>
                     )}
@@ -768,15 +1157,25 @@ const UserProfile = () => {
                   </div>
                   <div className="profile-info-value">
                     {editing ? (
-                      <TextField
-                        fullWidth
-                        name="documento"
-                        value={formData.documento}
-                        onChange={handleChange}
-                        variant="outlined"
-                        placeholder="Ingrese su número de documento"
-                        className="profile-text-field"
-                      />
+                      <div>
+                        <TextField
+                          fullWidth
+                          name="documento"
+                          value={formData.documento}
+                          onChange={handleChange}
+                          variant="outlined"
+                          placeholder="Ingrese su número de documento (6-15 dígitos)"
+                          className="profile-text-field"
+                          error={!!errores.documento}
+                          helperText={errores.documento}
+                          inputProps={{
+                            minLength: 6,
+                            maxLength: 15,
+                            pattern: "[0-9]+",
+                          }}
+                          required
+                        />
+                      </div>
                     ) : (
                       <Typography variant="body1">{profile?.documento || "No disponible"}</Typography>
                     )}
@@ -790,16 +1189,25 @@ const UserProfile = () => {
                   </div>
                   <div className="profile-info-value">
                     {editing ? (
-                      <TextField
-                        fullWidth
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        variant="outlined"
-                        type="email"
-                        placeholder="Ingrese su correo electrónico"
-                        className="profile-text-field"
-                      />
+                      <div>
+                        <TextField
+                          fullWidth
+                          name="email"
+                          value={formData.email}
+                          onChange={handleChange}
+                          variant="outlined"
+                          type="email"
+                          placeholder="Ingrese su correo electrónico (6-50 caracteres)"
+                          className="profile-text-field"
+                          error={!!errores.email}
+                          helperText={errores.email}
+                          inputProps={{
+                            minLength: 6,
+                            maxLength: 50,
+                          }}
+                          required
+                        />
+                      </div>
                     ) : (
                       <Typography variant="body1">{profile?.email || "No disponible"}</Typography>
                     )}
@@ -813,15 +1221,25 @@ const UserProfile = () => {
                   </div>
                   <div className="profile-info-value">
                     {editing ? (
-                      <TextField
-                        fullWidth
-                        name="telefono"
-                        value={formData.telefono}
-                        onChange={handleChange}
-                        variant="outlined"
-                        placeholder="Ingrese su número de teléfono"
-                        className="profile-text-field"
-                      />
+                      <div>
+                        <TextField
+                          fullWidth
+                          name="telefono"
+                          value={formData.telefono}
+                          onChange={handleChange}
+                          variant="outlined"
+                          placeholder="Ingrese su número de teléfono (7-10 dígitos)"
+                          className="profile-text-field"
+                          error={!!errores.telefono}
+                          helperText={errores.telefono}
+                          inputProps={{
+                            minLength: 7,
+                            maxLength: 10,
+                            pattern: "[0-9]+",
+                          }}
+                          required
+                        />
+                      </div>
                     ) : (
                       <Typography variant="body1">{profile?.telefono || "No disponible"}</Typography>
                     )}
@@ -954,7 +1372,7 @@ const UserProfile = () => {
                           </button>
                         ),
                       }}
-                      inputProps={{ maxLength: 15 }}
+                      inputProps={{ minLength: 8, maxLength: 15 }}
                     />
                   </div>
 
@@ -986,7 +1404,7 @@ const UserProfile = () => {
                           </button>
                         ),
                       }}
-                      inputProps={{ maxLength: 15 }}
+                      inputProps={{ minLength: 8, maxLength: 15 }}
                     />
                   </div>
 
