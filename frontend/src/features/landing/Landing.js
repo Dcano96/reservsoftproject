@@ -2000,31 +2000,65 @@ function Landing() {
     let error = ""
 
     switch (name) {
+      // Titular de reserva 
       case "titular_reserva":
         if (!value) {
+          //Nombre vació
           error = "El nombre es obligatorio"
+        } else if (value.trim() === "") {
+          //Nombre solo con espacios
+          error = "El nombre No puede contener solo espacios"
+        } else if (value.length < 3) {
+          //Nombre muy corto
+          error = "El nombre debe tener al menos 3 caracteres"
+        } else if (value.length > 50) {
+          //Nombre muy largo 
+          error = "El nombre no puede tener más de 50 caracteres"
         } else if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(value)) {
-          error = "El nombre solo debe contener letras"
-        } else if (value.length > 60) {
-          error = "El nombre no puede exceder los 60 caracteres"
+          //Solo letras, tildes y espacios
+          error = "El nombre solo puede contener letras y espacios"
         }
         break
 
+        //Email 
       case "email":
         if (!value) {
+          //Email vació
           error = "El correo electrónico es obligatorio"
+        } else if (value.includes(" ")) {
+          //Email con espacios
+          error = "El correo electrónico no puede contener espacios"
+        } else if (!value.includes("@")) {
+          //Email sin arroba
+          error = "El correo electrónico debe contener un '@'"
+        } else if ((value.match(/@/g) || []).length > 1) {
+          // Multiple @
+          error = "El correo electrónico no puede contener múltiples @"
+        } else if (!/\.[a-z]{2,}$/i.test(value)) {
+          // Sin extensión (.com)
+          error = "El correo electrónico debe tener una extensión válida (.com, .net, etc.)"
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+          // Formato general inválido
           error = "Ingrese un correo electrónico válido"
         }
         break
 
+      //Teléfono
       case "telefono":
         if (!value) {
-          error = "El teléfono es obligatorio"
-        } else if (!/^\+?[0-9]{8,15}$/.test(value)) {
-          error = "Ingrese un número de teléfono válido (8-15 dígitos)"
-        }
-        break
+        // Teléfono vacío
+        error = "El teléfono es obligatorio"
+      } else if (value.length < 8) {
+        // Menos de 8 dígitos
+        error = "El teléfono debe tener al menos 8 dígitos"
+      } else if (value.length > 15) {
+        // Más de 15 dígitos
+        error = "El teléfono no puede exceder los 15 dígitos"
+      } else if (!/^\+?[0-9]{8,15}$/.test(value)) {
+        // Formato inválido (puede incluir + al inicio)
+        error = "Ingrese un número de teléfono válido (solo números, puede incluir + al inicio)"
+      }
+      break
 
       case "fecha_inicio":
         const today = new Date()
@@ -2047,25 +2081,35 @@ function Landing() {
         break
 
       case "monto_pago":
-        const total = calcularPrecioTotal()
-        const minPago = total * 0.5 // 50% del total
+       const total = calcularPrecioTotal()
+      const minPago = total * 0.5 // 50% del total
 
-        if (!value) {
-          error = "El monto de pago es obligatorio"
-        } else if (Number(value) < minPago) {
-          error = `El pago mínimo debe ser del 50% (${minPago})`
-        } else if (Number(value) > total) {
-          error = "El pago no puede superar el total de la reserva"
-        }
-        break
-
+      if (!value) {
+        // Monto vacío
+        error = "El monto de pago es obligatorio"
+      } else if (Number(value) < minPago) {
+        // Valor menor al límite permitido (50%)
+        error = `El pago mínimo debe ser del 50% (${minPago})`
+      } else if (Number(value) > total) {
+        // Valor mayor al límite permitido
+        error = "El pago no puede superar el total de la reserva"
+      }
+      break
+      
+      // Documento
       case "documento":
         if (!value) {
-          error = "El documento es obligatorio"
-        } else if (!/^\d{6,12}$/.test(value)) {
-          error = "Ingrese un número de documento válido (6-12 dígitos)"
-        }
-        break
+        error = "El documento es obligatorio"
+      } else if (value === "0") {
+        error = "El documento no puede ser 0"
+      } else if (!/^\d{6,12}$/.test(value)) {
+        // Numérico de long 6 a 12
+        error = "El documento debe tener entre 6 y 12 dígitos numéricos"
+      } else if (value.startsWith("0")) {
+        // No puede empezar con 0
+        error = "El documento no puede empezar con 0"
+      }
+      break
 
       default:
         break
