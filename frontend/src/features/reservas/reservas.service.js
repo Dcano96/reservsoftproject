@@ -1,11 +1,9 @@
 import api from "../../services/api.js"
 
-// ✅ Usar la variable de entorno
-const API_URL = process.env.REACT_APP_API_URL 
-  ? `${process.env.REACT_APP_API_URL}/reservas`
-  : "/reservas"; // fallback para desarrollo local
+// ✅ Usar la variable de entorno con /api
+const API_URL = process.env.REACT_APP_API_URL ? `${process.env.REACT_APP_API_URL}/api/reservas` : "/api/reservas" // fallback para desarrollo local
 
-console.log("API_URL reservas configurada:", API_URL); // Para debug
+console.log("API_URL reservas configurada:", API_URL) // Para debug
 
 // Obtener todas las reservas
 export const getReservas = async () => {

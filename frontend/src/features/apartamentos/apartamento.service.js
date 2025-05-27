@@ -1,8 +1,15 @@
 import api from "../../services/api.js"
 
+// ✅ Usar la variable de entorno con /api
+const API_URL = process.env.REACT_APP_API_URL
+  ? `${process.env.REACT_APP_API_URL}/api/apartamentos`
+  : "/api/apartamentos" // fallback para desarrollo local
+
+console.log("API_URL apartamentos configurada:", API_URL) // Para debug
+
 const getApartamentos = async () => {
   try {
-    const response = await api.get("/apartamentos")
+    const response = await api.get(API_URL)
     console.log("Datos recibidos del servidor (GET):", response.data) // Depuración
     return response.data
   } catch (error) {
@@ -13,7 +20,7 @@ const getApartamentos = async () => {
 
 const getApartamento = async (id) => {
   try {
-    const response = await api.get(`/apartamentos/${id}`)
+    const response = await api.get(`${API_URL}/${id}`)
     return response.data
   } catch (error) {
     console.error("Error fetching apartamento:", error)
@@ -33,7 +40,7 @@ const createApartamento = async (apartamentoData) => {
     }
 
     console.log("Enviando datos al servidor (CREATE):", dataToSend)
-    const response = await api.post("/apartamentos", dataToSend)
+    const response = await api.post(API_URL, dataToSend)
     console.log("Respuesta del servidor (CREATE):", response.data) // Depuración
     return response.data
   } catch (error) {
@@ -53,7 +60,7 @@ const updateApartamento = async (id, apartamentoData) => {
     }
     console.log("Actualizando apartamento:", id)
     console.log("Datos enviados al servidor (UPDATE):", dataToSend)
-    const response = await api.put(`/apartamentos/${id}`, dataToSend)
+    const response = await api.put(`${API_URL}/${id}`, dataToSend)
     console.log("Respuesta del servidor (UPDATE):", response.data) // Depuración
     return response.data
   } catch (error) {
@@ -64,7 +71,7 @@ const updateApartamento = async (id, apartamentoData) => {
 
 const deleteApartamento = async (id) => {
   try {
-    await api.delete(`/apartamentos/${id}`)
+    await api.delete(`${API_URL}/${id}`)
     return // No content on successful deletion
   } catch (error) {
     console.error("Error deleting apartamento:", error)

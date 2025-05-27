@@ -1,7 +1,11 @@
 import axios from "axios"
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000/api",
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000",
+  timeout: 10000, // Timeout opcional para evitar solicitudes colgadas
+  headers: {
+    "Content-Type": "application/json",
+  },
 })
 
 // Interceptor para agregar el token a cada petición
@@ -27,11 +31,23 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       console.error("Error de autenticación:", error.response.data)
       // Puedes agregar lógica adicional aquí, como redirigir al login
+      // localStorage.removeItem("token");
+      // window.location.href = "/login";
     }
 
     // Manejar errores de permisos (403)
     if (error.response && error.response.status === 403) {
       console.error("Error de permisos:", error.response.data)
+    }
+
+    // Manejar errores de conexión (500, 502, 503, etc.)
+    if (error.response && error.response.status >= 500) {
+      console.error("Error del servidor:", error.response.data)
+    }
+
+    // Manejar errores de red (sin respuesta del servidor)
+    if (error.request && !error.response) {
+      console.error("Error de red - No se recibió respuesta del servidor:", error.request)
     }
 
     return Promise.reject(error)

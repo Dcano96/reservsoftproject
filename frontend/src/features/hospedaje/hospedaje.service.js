@@ -1,6 +1,9 @@
 import api from "../../services/api.js"
 
-const API_URL = "/hospedaje" // Ruta base
+// ✅ Usar la variable de entorno con /api
+const API_URL = process.env.REACT_APP_API_URL ? `${process.env.REACT_APP_API_URL}/api/hospedaje` : "/api/hospedaje" // fallback para desarrollo local
+
+console.log("API_URL hospedaje configurada:", API_URL) // Para debug
 
 // Obtener todos los hospedajes
 const getHospedajes = async () => {
