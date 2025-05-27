@@ -1,12 +1,17 @@
 import axios from "axios"
 
-// Usar URL relativa para aprovechar el proxy de desarrollo
-const API_URL = "/api/auth"
+// ✅ Usar la variable de entorno
+const API_URL = process.env.REACT_APP_API_URL 
+  ? `${process.env.REACT_APP_API_URL}/api/auth`
+  : "/api/auth" // fallback para desarrollo local
+
+console.log("API_URL configurada:", API_URL) // Para debug
 
 // Mejorar el servicio de login con mejor manejo de errores y logs
 const login = async (email, password) => {
   try {
     console.log("Intentando login con:", { email, password: "***" })
+    console.log("URL de login:", `${API_URL}/login`) // Para debug
 
     // Validar que email y password no estén vacíos
     if (!email || !password) {
