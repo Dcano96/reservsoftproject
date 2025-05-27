@@ -1,8 +1,12 @@
 // pago.service.js
 import axios from 'axios';
 
-// URL base para las peticiones a la API
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// ✅ Usar la variable de entorno
+const API_URL = process.env.REACT_APP_API_URL 
+  ? `${process.env.REACT_APP_API_URL}/api`
+  : 'http://localhost:5000/api';
+
+console.log("API_URL pagos configurada:", API_URL); // Para debug
 
 // Función auxiliar para obtener el token de autenticación
 const getAuthHeader = () => {

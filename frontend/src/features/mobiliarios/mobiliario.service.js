@@ -1,7 +1,12 @@
 // services/mobiliario.service.js
 import api from "../../services/api.js";
 
-const API_URL = "/mobiliarios"; // Debe coincidir con la ruta montada en el backend
+// ✅ Usar la variable de entorno
+const API_URL = process.env.REACT_APP_API_URL 
+  ? `${process.env.REACT_APP_API_URL}/mobiliarios`
+  : "/mobiliarios"; // fallback para desarrollo local
+
+console.log("API_URL mobiliarios configurada:", API_URL); // Para debug
 
 const getMobiliarios = async () => {
   try {

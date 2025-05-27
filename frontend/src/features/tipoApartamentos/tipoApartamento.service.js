@@ -1,6 +1,11 @@
 import api from "../../services/api.js"
 
-const API_URL = "/tipoApartamento" // Debe coincidir con la ruta montada en el back
+// ✅ Usar la variable de entorno
+const API_URL = process.env.REACT_APP_API_URL 
+  ? `${process.env.REACT_APP_API_URL}/tipoApartamento`
+  : "/tipoApartamento"; // fallback para desarrollo local
+
+console.log("API_URL tipoApartamento configurada:", API_URL); // Para debug
 
 const getTipoApartamentos = async () => {
   try {

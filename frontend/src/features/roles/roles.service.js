@@ -1,6 +1,11 @@
 import api from "../../services/api.js"
 
-const API_URL = "/roles"
+// ✅ Usar la variable de entorno
+const API_URL = process.env.REACT_APP_API_URL 
+  ? `${process.env.REACT_APP_API_URL}/roles`
+  : "/roles"; // fallback para desarrollo local
+
+console.log("API_URL roles configurada:", API_URL); // Para debug
 
 const getRoles = async () => {
   const res = await api.get(API_URL)

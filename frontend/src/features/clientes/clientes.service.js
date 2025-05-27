@@ -1,6 +1,11 @@
 import api from "../../services/api" // Ruta correcta a services/api.js
 
-const API_URL = "/clientes" // Debe coincidir con la ruta montada en el back
+// ✅ Usar la variable de entorno
+const API_URL = process.env.REACT_APP_API_URL 
+  ? `${process.env.REACT_APP_API_URL}/clientes`
+  : "/clientes"; // fallback para desarrollo local
+
+console.log("API_URL clientes configurada:", API_URL); // Para debug
 
 const getClientes = async () => {
   const res = await api.get(API_URL)
