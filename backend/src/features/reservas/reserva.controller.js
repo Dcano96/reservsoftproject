@@ -3,7 +3,7 @@ const Reserva = require("./reserva.model")
 const Apartamento = require("../apartamento/apartamento.model")
 const mongoose = require("mongoose")
 // Importar el mailer
-const mailer = require('../../../config/mailer')
+const mailer = require("../../../config/mailer")
 
 // Función para validar ObjectId
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id)

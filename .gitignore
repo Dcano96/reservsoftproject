@@ -63,6 +63,3 @@ credentials.json
 *password*
 *token*
 
-# Archivos específicos de backend
-backend/config/mailer.js
-backend/config/mailer.js.bak
