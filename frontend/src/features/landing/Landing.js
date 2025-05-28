@@ -7,7 +7,6 @@ import {
   Grid,
   Card,
   CardContent,
-  CardMedia,
   Box,
   Paper,
   TextField,
@@ -1707,6 +1706,13 @@ function Landing() {
           const response = await axios.get("/api/apartamentos")
           console.log("Respuesta de la API general:", response.data)
 
+          // Agregar logging adicional para debugging
+          response.data.forEach((apt) => {
+            console.log(
+              `📸 Apartamento ${apt.NumeroApto} (${apt.Tipo}) -> Imagen asignada: ${apt.Tipo === "Penthouse" ? "/imagen-3.png" : apt.Tipo === "Tipo 2" ? "/imagen-2.png" : "/imagen-1.png"}`,
+            )
+          })
+
           if (response.data && response.data.length > 0) {
             // Transformar los datos para que coincidan con el formato esperado
             const apartamentosFormateados = response.data.map((apt) => {
@@ -2000,7 +2006,7 @@ function Landing() {
     let error = ""
 
     switch (name) {
-      // Titular de reserva 
+      // Titular de reserva
       case "titular_reserva":
         if (!value) {
           //Nombre vació
@@ -2012,7 +2018,7 @@ function Landing() {
           //Nombre muy corto
           error = "El nombre debe tener al menos 3 caracteres"
         } else if (value.length > 50) {
-          //Nombre muy largo 
+          //Nombre muy largo
           error = "El nombre no puede tener más de 50 caracteres"
         } else if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(value)) {
           //Solo letras, tildes y espacios
@@ -2020,7 +2026,7 @@ function Landing() {
         }
         break
 
-        //Email 
+      //Email
       case "email":
         if (!value) {
           //Email vació
@@ -2046,19 +2052,19 @@ function Landing() {
       //Teléfono
       case "telefono":
         if (!value) {
-        // Teléfono vacío
-        error = "El teléfono es obligatorio"
-      } else if (value.length < 8) {
-        // Menos de 8 dígitos
-        error = "El teléfono debe tener al menos 8 dígitos"
-      } else if (value.length > 15) {
-        // Más de 15 dígitos
-        error = "El teléfono no puede exceder los 15 dígitos"
-      } else if (!/^\+?[0-9]{8,15}$/.test(value)) {
-        // Formato inválido (puede incluir + al inicio)
-        error = "Ingrese un número de teléfono válido (solo números, puede incluir + al inicio)"
-      }
-      break
+          // Teléfono vacío
+          error = "El teléfono es obligatorio"
+        } else if (value.length < 8) {
+          // Menos de 8 dígitos
+          error = "El teléfono debe tener al menos 8 dígitos"
+        } else if (value.length > 15) {
+          // Más de 15 dígitos
+          error = "El teléfono no puede exceder los 15 dígitos"
+        } else if (!/^\+?[0-9]{8,15}$/.test(value)) {
+          // Formato inválido (puede incluir + al inicio)
+          error = "Ingrese un número de teléfono válido (solo números, puede incluir + al inicio)"
+        }
+        break
 
       case "fecha_inicio":
         const today = new Date()
@@ -2081,35 +2087,35 @@ function Landing() {
         break
 
       case "monto_pago":
-       const total = calcularPrecioTotal()
-      const minPago = total * 0.5 // 50% del total
+        const total = calcularPrecioTotal()
+        const minPago = total * 0.5 // 50% del total
 
-      if (!value) {
-        // Monto vacío
-        error = "El monto de pago es obligatorio"
-      } else if (Number(value) < minPago) {
-        // Valor menor al límite permitido (50%)
-        error = `El pago mínimo debe ser del 50% (${minPago})`
-      } else if (Number(value) > total) {
-        // Valor mayor al límite permitido
-        error = "El pago no puede superar el total de la reserva"
-      }
-      break
-      
+        if (!value) {
+          // Monto vacío
+          error = "El monto de pago es obligatorio"
+        } else if (Number(value) < minPago) {
+          // Valor menor al límite permitido (50%)
+          error = `El pago mínimo debe ser del 50% (${minPago})`
+        } else if (Number(value) > total) {
+          // Valor mayor al límite permitido
+          error = "El pago no puede superar el total de la reserva"
+        }
+        break
+
       // Documento
       case "documento":
         if (!value) {
-        error = "El documento es obligatorio"
-      } else if (value === "0") {
-        error = "El documento no puede ser 0"
-      } else if (!/^\d{6,12}$/.test(value)) {
-        // Numérico de long 6 a 12
-        error = "El documento debe tener entre 6 y 12 dígitos numéricos"
-      } else if (value.startsWith("0")) {
-        // No puede empezar con 0
-        error = "El documento no puede empezar con 0"
-      }
-      break
+          error = "El documento es obligatorio"
+        } else if (value === "0") {
+          error = "El documento no puede ser 0"
+        } else if (!/^\d{6,12}$/.test(value)) {
+          // Numérico de long 6 a 12
+          error = "El documento debe tener entre 6 y 12 dígitos numéricos"
+        } else if (value.startsWith("0")) {
+          // No puede empezar con 0
+          error = "El documento no puede empezar con 0"
+        }
+        break
 
       default:
         break
@@ -2394,20 +2400,38 @@ function Landing() {
   // Modificar la función handleImageError para dar prioridad a los penthouses
   const handleImageError = (e) => {
     e.target.onerror = null // Prevenir bucles infinitos
-    console.error("Error al cargar imagen:", e.target.src)
+    console.error("❌ Error al cargar imagen:", e.target.src)
 
-    // Determinar qué imagen de respaldo usar basado en el nombre del apartamento o tipo
+    // Obtener información del apartamento desde los data attributes
+    const apartmentType = e.target.getAttribute("data-apartment-type") || ""
+    const apartmentTag = e.target.getAttribute("data-apartment-tag") || ""
+
+    // También buscar en el DOM como respaldo
     const apartmentElement = e.target.closest(".MuiCard-root")
     const apartmentTitle = apartmentElement?.querySelector(".MuiTypography-h5")?.textContent || ""
-    const apartmentTag = apartmentElement?.querySelector(".MuiChip-label")?.textContent || ""
+    const apartmentTagFromDOM = apartmentElement?.querySelector(".MuiChip-label")?.textContent || ""
 
-    // Verificar si es un penthouse por el título o etiqueta
-    if (apartmentTitle.includes("Penthouse") || apartmentTag.includes("Lujo") || apartmentTag.includes("Penthouse")) {
-      console.log("Cargando imagen de respaldo para Penthouse")
+    console.log("🔍 Debugging - Tipo:", apartmentType, "Tag:", apartmentTag, "Título:", apartmentTitle)
+
+    // Determinar imagen de respaldo con prioridad a Penthouse
+    if (
+      apartmentType === "Penthouse" ||
+      apartmentTag === "Lujo" ||
+      apartmentTitle.includes("Penthouse") ||
+      apartmentTagFromDOM.includes("Lujo")
+    ) {
+      console.log("🏢 Cargando imagen de respaldo para Penthouse")
       e.target.src = "/imagen-3.png"
-    } else if (apartmentTitle.includes("Tipo 2") || apartmentTag.includes("Familiar")) {
+    } else if (
+      apartmentType === "Tipo 2" ||
+      apartmentTag === "Familiar" ||
+      apartmentTitle.includes("Tipo 2") ||
+      apartmentTagFromDOM.includes("Familiar")
+    ) {
+      console.log("🏠 Cargando imagen de respaldo para Tipo 2")
       e.target.src = "/imagen-2.png"
     } else {
+      console.log("🏡 Cargando imagen de respaldo por defecto")
       e.target.src = "/imagen-1.png"
     }
   }
@@ -2757,16 +2781,24 @@ function Landing() {
                 <Grid item key={apartamento.id} xs={12} sm={6} md={4} lg={4}>
                   <Zoom in={true} style={{ transitionDelay: "100ms" }}>
                     <Card className={classes.apartmentCard}>
-                      <CardMedia
-                        className={classes.apartmentCardMedia}
-                        image={apartamento.imagen}
-                        title={apartamento.nombre}
-                        onError={handleImageError}
-                      >
+                      <div className={classes.apartmentCardMedia}>
+                        <img
+                          src={apartamento.imagen || "/imagen-1.png"}
+                          alt={apartamento.nombre}
+                          onError={handleImageError}
+                          data-apartment-type={apartamento.tipo}
+                          data-apartment-tag={apartamento.tag}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            display: "block",
+                          }}
+                          onLoad={() => console.log("✅ Imagen cargada:", apartamento.imagen)}
+                        />
                         <div
                           className={`${classes.apartmentTag} ${apartamento.tipo === "Penthouse" ? classes.luxuryTag : ""}`}
                         >
-                          {" "}
                           {apartamento.tag || apartamento.tipo}
                         </div>
                         <div className={classes.apartmentCardPrice}>${apartamento.precio} / noche</div>
@@ -2776,7 +2808,8 @@ function Landing() {
                         <Button className={classes.viewButton} startIcon={<Visibility />}>
                           Ver tour 360°
                         </Button>
-                      </CardMedia>
+                      </div>
+
                       <CardContent className={classes.apartmentCardContent}>
                         <Typography variant="h5" className={classes.apartmentCardTitle}>
                           {apartamento.nombre}
