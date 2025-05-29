@@ -55,11 +55,10 @@ import {
   Instagram,
   Twitter,
   Room,
-  Phone,
-  Email,
-  AccessTime,
   ArrowForward,
   CheckCircle,
+  Phone,
+  Email,
   CloudUpload,
   Add,
   InfoOutlined,
@@ -70,9 +69,40 @@ import { useHistory } from "react-router-dom"
 import Swal from "sweetalert2"
 import "./landing.styles.css" // Importar estilos CSS
 import { Fade } from "@material-ui/core"
-import { MuiPickersUtilsProvider as LocalizationProvider, DatePicker } from "@material-ui/pickers"
-import DateFnsUtils from "@date-io/date-fns"
-import { es } from "date-fns/locale"
+
+// ✅ Configuración de API con variables de entorno
+const API_BASE_URL = process.env.REACT_APP_API_URL || ""
+
+// ✅ Configurar las rutas específicas
+const API_ENDPOINTS = {
+  apartamentos: API_BASE_URL ? `${API_BASE_URL}/api/apartamentos` : "/api/apartamentos",
+  apartamentosDestacados: API_BASE_URL
+    ? `${API_BASE_URL}/api/landing/apartamentos-destacados`
+    : "/api/landing/apartamentos-destacados",
+  reservasPublica: API_BASE_URL ? `${API_BASE_URL}/api/reservas/publica` : "/api/reservas/publica",
+  fechasReservadas: (apartamentoId) =>
+    API_BASE_URL
+      ? `${API_BASE_URL}/api/reservas/fechas-reservadas/${apartamentoId}`
+      : `/api/reservas/fechas-reservadas/${apartamentoId}`,
+}
+
+console.log("🔧 API Configuration Landing:", {
+  baseUrl: API_BASE_URL,
+  endpoints: API_ENDPOINTS,
+})
+
+// ✅ Función para hacer llamadas a la API con manejo de errores
+const apiCall = async (url, options = {}) => {
+  try {
+    console.log(`📡 API Call: ${url}`)
+    const response = await axios.get(url, options)
+    console.log(`✅ API Success: ${url}`, response.data)
+    return response
+  } catch (error) {
+    console.error(`❌ API Error: ${url}`, error.response?.data || error.message)
+    throw error
+  }
+}
 
 // Paleta de colores moderna y elegante
 const theme = {
@@ -1587,11 +1617,11 @@ function Landing() {
   const featuresRef = useRef(null)
   const contactRef = useRef(null)
 
-  // Añadir esta función dentro del componente Landing
+  // ✅ Actualizar fetchReservedDates con configuración de API
   const fetchReservedDates = async (apartamentoId) => {
     try {
       console.log("Obteniendo fechas reservadas para el apartamento:", apartamentoId)
-      const response = await axios.get(`/api/reservas/fechas-reservadas/${apartamentoId}`)
+      const response = await apiCall(API_ENDPOINTS.fechasReservadas(apartamentoId))
 
       if (response.data && response.data.fechasReservadas) {
         // Actualizar el estado con las fechas reservadas para este apartamento
@@ -1674,17 +1704,17 @@ function Landing() {
 
     return [...pastDates, ...disabledDates]
   }
-  // Efectos
+
+  // ✅ Actualizar useEffect con configuración de API
   useEffect(() => {
-    // Cargar apartamentos desde la API o usar datos de ejemplo
+    // ✅ Actualizar fetchApartamentos con configuración de API
     const fetchApartamentos = async () => {
       try {
         console.log("Intentando cargar apartamentos desde la API...")
 
-        // Intentar cargar desde la API de apartamentos destacados para la landing page
+        // ✅ Usar la configuración de endpoints
         try {
-          const response = await axios.get("/api/landing/apartamentos-destacados")
-          console.log("Respuesta de la API de landing:", response.data)
+          const response = await apiCall(API_ENDPOINTS.apartamentosDestacados)
 
           if (response.data && response.data.length > 0) {
             // Guardar todos los apartamentos
@@ -1700,10 +1730,9 @@ function Landing() {
           // Si falla, intentar con la API general de apartamentos
         }
 
-        // Si no hay apartamentos destacados, intentar con todos los apartamentos
-        // Modificar la parte donde se asignan las imágenes en fetchApartamentos
+        // ✅ Si no hay apartamentos destacados, intentar con todos los apartamentos
         try {
-          const response = await axios.get("/api/apartamentos")
+          const response = await apiCall(API_ENDPOINTS.apartamentos)
           console.log("Respuesta de la API general:", response.data)
 
           // Agregar logging adicional para debugging
@@ -1758,7 +1787,7 @@ function Landing() {
           // Continuar con los datos de ejemplo
         }
 
-        // Si llegamos aquí, usar datos de ejemplo
+        // ✅ Si llegamos aquí, usar datos de ejemplo
         console.log("Usando datos de ejemplo para apartamentos")
         setAllApartamentos(apartamentosEjemplo)
         setApartamentos(apartamentosEjemplo.slice(0, 6))
@@ -2193,7 +2222,7 @@ function Landing() {
     window.location.href = "/login"
   }
 
-  // Reemplazar la función handleReservationSubmit with this versión actualizada
+  // ✅ Actualizar handleReservationSubmit con configuración de API
   const handleReservationSubmit = async () => {
     // Validar el email ahora
     const emailError = validateField("email", reservationForm.email)
@@ -2274,8 +2303,8 @@ function Landing() {
 
       console.log("Datos a enviar:", reservaData)
 
-      // Usar la ruta pública para crear reservas sin autenticación
-      const response = await axios.post("/api/reservas/publica", reservaData)
+      // ✅ Usar la configuración de endpoints
+      const response = await axios.post(API_ENDPOINTS.reservasPublica, reservaData)
 
       console.log("Respuesta del servidor:", response.data)
 
@@ -3159,20 +3188,17 @@ function Landing() {
                 </IconButton>
               </div>
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <Typography variant="h6" className={classes.footerTitle}>
-                Contacto
-              </Typography>
+            <Grid item xs={12} md={4}>
               <div className={classes.footerContact}>
                 <Room />
                 <Typography variant="body2" className={classes.footerContactText}>
-                  Calle 10 #43E-25, El Poblado, Medellín, Colombia
+                  Calle 10 #43E-25, El Poblado, Medellín
                 </Typography>
               </div>
               <div className={classes.footerContact}>
                 <Phone />
                 <Typography variant="body2" className={classes.footerContactText}>
-                  +57 300 123 4567
+                  +57 (4) 444-5555
                 </Typography>
               </div>
               <div className={classes.footerContact}>
@@ -3181,59 +3207,64 @@ function Landing() {
                   info@nidosky.com
                 </Typography>
               </div>
-              <div className={classes.footerContact}>
-                <AccessTime />
-                <Typography variant="body2" className={classes.footerContactText}>
-                  Recepción: 24/7
-                  <br />
-                  Check-in: 3:00 PM | Check-out: 12:00 PM
-                </Typography>
+            </Grid>
+            <Grid item xs={12} sm={6} md={2}>
+              <Typography variant="h6" className={classes.footerTitle}>
+                Enlaces
+              </Typography>
+              <div className={classes.footerLink} onClick={() => scrollToSection(apartamentosRef)}>
+                <ArrowForward />
+                Apartamentos
+              </div>
+              <div className={classes.footerLink} onClick={() => scrollToSection(aboutRef)}>
+                <ArrowForward />
+                Nosotros
+              </div>
+              <div className={classes.footerLink} onClick={() => scrollToSection(featuresRef)}>
+                <ArrowForward />
+                Servicios
+              </div>
+              <div className={classes.footerLink} onClick={() => scrollToSection(contactRef)}>
+                <ArrowForward />
+                Contacto
               </div>
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={2}>
               <Typography variant="h6" className={classes.footerTitle}>
-                Enlaces Rápidos
+                Servicios
               </Typography>
-              <a href="#" className={classes.footerLink}>
-                <ArrowForward /> Inicio
-              </a>
-              <a href="#" className={classes.footerLink}>
-                <ArrowForward /> Apartamentos
-              </a>
-              <a href="#" className={classes.footerLink}>
-                <ArrowForward /> Servicios
-              </a>
-              <a href="#" className={classes.footerLink}>
-                <ArrowForward /> Galería
-              </a>
-              <a href="#" className={classes.footerLink}>
-                <ArrowForward /> Contacto
-              </a>
-              <a href="#" className={classes.footerLink}>
-                <ArrowForward /> Términos y Condiciones
-              </a>
-              <a href="#" className={classes.footerLink}>
-                <ArrowForward /> Política de Privacidad
-              </a>
-              <span className={classes.footerLink} onClick={handleLogin} style={{ cursor: "pointer" }}>
-                <ArrowForward /> Iniciar Sesión
-              </span>
+              <div className={classes.footerLink}>
+                <ArrowForward />
+                Reservas
+              </div>
+              <div className={classes.footerLink}>
+                <ArrowForward />
+                Concierge
+              </div>
+              <div className={classes.footerLink}>
+                <ArrowForward />
+                Spa & Wellness
+              </div>
+              <div className={classes.footerLink}>
+                <ArrowForward />
+                Restaurante
+              </div>
             </Grid>
           </Grid>
           <div className={classes.footerBottom}>
             <Typography variant="body2" className={classes.footerCopyright}>
-              © {new Date().getFullYear()} Nido Sky. Todos los derechos reservados.
+              © 2024 Nido Sky. Todos los derechos reservados.
             </Typography>
             <div className={classes.footerBottomLinks}>
-              <a href="#" className={classes.footerBottomLink}>
-                Términos
-              </a>
-              <a href="#" className={classes.footerBottomLink}>
-                Privacidad
-              </a>
-              <a href="#" className={classes.footerBottomLink}>
+              <Typography variant="body2" className={classes.footerBottomLink}>
+                Política de Privacidad
+              </Typography>
+              <Typography variant="body2" className={classes.footerBottomLink}>
+                Términos y Condiciones
+              </Typography>
+              <Typography variant="body2" className={classes.footerBottomLink}>
                 Cookies
-              </a>
+              </Typography>
             </div>
           </div>
         </div>
@@ -3258,7 +3289,7 @@ function Landing() {
         <DialogContent className={classes.reservationDialogContent}>
           <div className={classes.reservationForm}>
             {/* Datos del titular */}
-            <Typography variant="h6" style={{ marginBottom: 16, color: "#0A2463" }}>
+            <Typography variant="h6" style={{ marginBottom: theme.spacing(2), color: "#0A2463" }}>
               Datos del titular
             </Typography>
 
@@ -3347,98 +3378,51 @@ function Landing() {
             />
 
             {/* Datos de la reserva */}
-            <Typography variant="h6" style={{ marginTop: 24, marginBottom: 16, color: "#0A2463" }}>
+            <Typography
+              variant="h6"
+              style={{ marginTop: theme.spacing(3), marginBottom: theme.spacing(2), color: "#0A2463" }}
+            >
               Datos de la reserva
             </Typography>
 
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <LocalizationProvider utils={DateFnsUtils} locale={es}>
-                  <DatePicker
-                    label="Fecha de inicio"
-                    value={reservationForm.fecha_inicio ? new Date(reservationForm.fecha_inicio) : null}
-                    onChange={(newValue) => {
-                      if (newValue) {
-                        const formattedDate = newValue.toISOString().split("T")[0]
-                        // Usar el mismo manejador de eventos que ya tienes
-                        const event = {
-                          target: {
-                            name: "fecha_inicio",
-                            value: formattedDate,
-                          },
-                        }
-                        handleReservationFormChange(event)
-                      }
-                    }}
-                    className={classes.reservationField}
-                    slotProps={{
-                      textField: {
-                        variant: "outlined",
-                        fullWidth: true,
-                        required: true,
-                        error: !!formErrors.fecha_inicio,
-                        helperText: formErrors.fecha_inicio || "Seleccione una fecha disponible",
-                      },
-                    }}
-                    shouldDisableDate={(date) => {
-                      // Deshabilitar fechas anteriores a hoy
-                      const today = new Date()
-                      today.setHours(0, 0, 0, 0)
-                      if (date < today) return true
-
-                      // Deshabilitar fechas reservadas
-                      return isDateReserved(date)
-                    }}
-                    disablePast
-                  />
-                </LocalizationProvider>
+                <TextField
+                  label="Fecha de inicio"
+                  name="fecha_inicio"
+                  type="date"
+                  value={reservationForm.fecha_inicio}
+                  onChange={handleReservationFormChange}
+                  className={classes.reservationField}
+                  variant="outlined"
+                  fullWidth
+                  required
+                  InputLabelProps={{ shrink: true }}
+                  inputProps={{ min: new Date().toISOString().split("T")[0] }}
+                  helperText={formErrors.fecha_inicio || "Seleccione una fecha disponible"}
+                  error={!!formErrors.fecha_inicio}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <LocalizationProvider utils={DateFnsUtils} locale={es}>
-                  <DatePicker
-                    label="Fecha de fin"
-                    value={reservationForm.fecha_fin ? new Date(reservationForm.fecha_fin) : null}
-                    onChange={(newValue) => {
-                      if (newValue) {
-                        const formattedDate = newValue.toISOString().split("T")[0]
-                        // Usar el mismo manejador de eventos que ya tienes
-                        const event = {
-                          target: {
-                            name: "fecha_fin",
-                            value: formattedDate,
-                          },
-                        }
-                        handleReservationFormChange(event)
-                      }
-                    }}
-                    className={classes.reservationField}
-                    slotProps={{
-                      textField: {
-                        variant: "outlined",
-                        fullWidth: true,
-                        required: true,
-                        error: !!formErrors.fecha_fin,
-                        helperText: formErrors.fecha_fin || "Seleccione una fecha de salida",
-                      },
-                    }}
-                    shouldDisableDate={(date) => {
-                      // Deshabilitar fechas anteriores a la fecha de inicio
-                      const startDate = reservationForm.fecha_inicio
-                        ? new Date(reservationForm.fecha_inicio)
-                        : new Date()
-                      startDate.setHours(0, 0, 0, 0)
-                      if (date < startDate) return true
-
-                      // Deshabilitar fechas reservadas
-                      return isDateReserved(date)
-                    }}
-                    minDate={reservationForm.fecha_inicio ? new Date(reservationForm.fecha_inicio) : new Date()}
-                  />
-                </LocalizationProvider>
+                <TextField
+                  label="Fecha de fin"
+                  name="fecha_fin"
+                  type="date"
+                  value={reservationForm.fecha_fin}
+                  onChange={handleReservationFormChange}
+                  className={classes.reservationField}
+                  variant="outlined"
+                  fullWidth
+                  required
+                  InputLabelProps={{ shrink: true }}
+                  inputProps={{ min: reservationForm.fecha_inicio || new Date().toISOString().split("T")[0] }}
+                  helperText={formErrors.fecha_fin || "Seleccione una fecha de salida"}
+                  error={!!formErrors.fecha_fin}
+                />
               </Grid>
             </Grid>
 
-            <Grid container spacing={2} style={{ marginTop: 8 }}>
+            <Grid container spacing={2} style={{ marginTop: theme.spacing(1) }}>
               <Grid item xs={12} sm={6}>
                 <TextField
                   label="Noches de estadía"
@@ -3460,12 +3444,15 @@ function Landing() {
                   className={classes.reservationField}
                   variant="outlined"
                   fullWidth
-                  InputProps={{ readOnly: true, startAdornment: <span style={{ marginRight: 8 }}>$</span> }}
+                  InputProps={{
+                    readOnly: true,
+                    startAdornment: <span style={{ marginRight: theme.spacing(1) }}>$</span>,
+                  }}
                 />
               </Grid>
             </Grid>
 
-            <Grid container spacing={2} style={{ marginTop: 8 }}>
+            <Grid container spacing={2} style={{ marginTop: theme.spacing(1) }}>
               <Grid item xs={12}>
                 <TextField
                   label="Monto a pagar (50% mínimo)"
@@ -3479,7 +3466,7 @@ function Landing() {
                   required
                   InputProps={{
                     inputProps: { min: calcularPrecioTotal() * 0.5, max: calcularPrecioTotal() },
-                    startAdornment: <span style={{ marginRight: 8 }}>$</span>,
+                    startAdornment: <span style={{ marginRight: theme.spacing(1) }}>$</span>,
                   }}
                   helperText={formErrors.monto_pago || `Mínimo 50%: $${(calcularPrecioTotal() * 0.5).toFixed(2)}`}
                   error={!!formErrors.monto_pago}
@@ -3487,18 +3474,18 @@ function Landing() {
               </Grid>
             </Grid>
 
-            {/* Sección para subir comprobante de pago - MODIFICAR ESTA PARTE */}
+            {/* Sección para subir comprobante de pago */}
             <div className={classes.uploadSection}>
               <Typography variant="h6" className={classes.uploadTitle}>
-                <CloudUpload /> Comprobante de Pago
+                <CloudUpload style={{ marginRight: theme.spacing(1) }} /> Comprobante de Pago
               </Typography>
 
               {/* Contenedor flex horizontal para poner la info y el botón lado a lado */}
-              <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: theme.spacing(2) }}>
                 {/* Información de pago a la izquierda */}
                 <div className={classes.paymentInfo} style={{ flex: 1 }}>
                   <Typography variant="subtitle1" className={classes.paymentInfoTitle}>
-                    <InfoOutlined /> Información de Pago
+                    <InfoOutlined style={{ marginRight: theme.spacing(1) }} /> Información de Pago
                   </Typography>
                   <Typography variant="body2" className={classes.paymentInfoText}>
                     Para confirmar su reserva, debe realizar un pago del 50% del valor total.
@@ -3564,11 +3551,11 @@ function Landing() {
             {/* Sección de acompañantes */}
             <div className={classes.acompanantesSection}>
               <Typography variant="h6" className={classes.acompanantesTitle}>
-                <Person /> Acompañantes
+                <Person style={{ marginRight: theme.spacing(1) }} /> Acompañantes
               </Typography>
 
               {/* Añadir mensaje informativo sobre capacidad */}
-              <Typography variant="body2" style={{ marginBottom: 16, color: "#8D99AE" }}>
+              <Typography variant="body2" style={{ marginBottom: theme.spacing(2), color: "#8D99AE" }}>
                 Este apartamento tiene capacidad para {selectedApartamento?.capacidad || 0} personas en total (incluido
                 el titular). Puede agregar hasta {selectedApartamento ? selectedApartamento.capacidad - 1 : 0}{" "}
                 acompañantes.
@@ -3584,7 +3571,7 @@ function Landing() {
                     <Close />
                   </IconButton>
 
-                  <Typography variant="subtitle2" style={{ marginBottom: 12 }}>
+                  <Typography variant="subtitle2" style={{ marginBottom: theme.spacing(1.5) }}>
                     Acompañante {index + 1}
                   </Typography>
 
