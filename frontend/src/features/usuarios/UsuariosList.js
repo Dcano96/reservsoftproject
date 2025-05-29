@@ -42,6 +42,48 @@ import rolesService from "../roles/roles.service" // Importamos el servicio de R
 import "./usuarios.styles.css"
 import { makeStyles, withStyles } from "@material-ui/core/styles"
 
+// Expresiones regulares para validaciones
+const REGEX = {
+  SOLO_NUMEROS: /^\d+$/,
+  SOLO_LETRAS_ESPACIOS: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/,
+  EMAIL: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  EMAIL_INVALIDO: /@\.com|@com\.|@\.|\.@|@-|-@|@.*@|\.\.|,,|@@/,
+  CONTRASENA_FUERTE: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,15}$/,
+  SECUENCIAS_COMUNES: /123456|654321|password|qwerty|abc123|admin123|123abc|contraseña|usuario|admin/i,
+  CARACTERES_REPETIDOS: /(.)\1{3,}/,
+  SECUENCIAS_NUMERICAS: /123456|654321|111111|222222|333333|444444|555555|666666|777777|888888|999999|000000/,
+}
+
+// Actualizar las constantes de validación para que coincidan con el controlador
+const VALIDACION = {
+  DOCUMENTO: {
+    MIN_LENGTH: 6,
+    MAX_LENGTH: 15,
+  },
+  NOMBRE: {
+    MIN_LENGTH: 6,
+    MAX_LENGTH: 30,
+  },
+  TELEFONO: {
+    MIN_LENGTH: 7,
+    MAX_LENGTH: 10,
+  },
+  CONTRASENA: {
+    MIN_LENGTH: 8,
+    MAX_LENGTH: 15,
+  },
+}
+
+// Añadir mensajes instructivos para cada campo
+const MENSAJES_INSTRUCTIVOS = {
+  DOCUMENTO: "Ingrese un número de documento entre 6 y 15 dígitos, solo números.",
+  NOMBRE: "Ingrese nombre completo entre 6 y 30 caracteres, solo letras y espacios.",
+  TELEFONO: "Ingrese un número telefónico entre 7 y 10 dígitos, solo números.",
+  EMAIL: "Ingresa tu email (formato: usuario@dominio.com)",
+  PASSWORD:
+    "La contraseña debe tener entre 8 y 15 caracteres, incluir mayúsculas, minúsculas, números y caracteres especiales.",
+}
+
 // Personalización de las celdas del encabezado
 const StyledTableCell = withStyles((theme) => ({
   head: {
@@ -428,16 +470,15 @@ const useStyles = makeStyles((theme) => ({
   // Estilos para los estados
   estadoChip: {
     fontWeight: 600,
-    padding: theme.spacing(0.5, 1.5),
-    borderRadius: theme.spacing(1),
+    padding: theme.spacing(0.5, 0),
+    borderRadius: 0,
+    backgroundColor: "transparent",
   },
   estadoActivo: {
-    backgroundColor: "#dcfce7",
-    color: "#166534",
+    color: "#10b981",
   },
   estadoInactivo: {
-    backgroundColor: "#fee2e2",
-    color: "#991b1b",
+    color: "#ef4444",
   },
   // Estilo para botones deshabilitados
   disabledButton: {
@@ -476,7 +517,7 @@ const UsuarioList = () => {
     email: "",
     telefono: "",
     password: "",
-    rol: "cliente", // Valor por defecto
+    rol: "", // Cambiado de "cliente" a cadena vacía para que no asuma ningún rol por defecto
   })
   const [searchTerm, setSearchTerm] = useState("")
   const [page, setPage] = useState(0)
@@ -512,10 +553,23 @@ const UsuarioList = () => {
   // Cargar lista de roles desde rolesService
   const fetchAvailableRoles = async () => {
     try {
+      console.log("Cargando roles disponibles...")
       const rolesData = await rolesService.getRoles()
-      setAvailableRoles(rolesData)
+      console.log("Respuesta del servicio de roles:", rolesData)
+
+      // Verificar si rolesData es un array válido
+      if (Array.isArray(rolesData) && rolesData.length > 0) {
+        console.log("Roles válidos encontrados:", rolesData)
+        setAvailableRoles(rolesData)
+      } else {
+        console.warn("No se encontraron roles válidos en la respuesta:", rolesData)
+        setAvailableRoles([])
+      }
     } catch (error) {
-      console.error("Error fetching roles", error)
+      console.error("Error fetching roles:", error)
+      console.error("Detalles del error:", error.response?.data || error.message)
+      // En caso de error, establecer array vacío en lugar de roles hardcodeados
+      setAvailableRoles([])
     }
   }
 
@@ -523,6 +577,11 @@ const UsuarioList = () => {
     fetchUsuarios()
     fetchAvailableRoles()
   }, [])
+
+  // Agregar este useEffect después del existente
+  useEffect(() => {
+    console.log("Available roles updated:", availableRoles)
+  }, [availableRoles])
 
   // Verificar si el usuario es el administrador (David Andres Goez Cano)
   const isAdminUser = (usuario) => {
@@ -603,36 +662,43 @@ const UsuarioList = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    const prevValue = formData[name]
     let newValue = value
 
     // Aplicar restricciones según el tipo de campo
     switch (name) {
       case "nombre":
-        // Solo letras y espacios, máximo 55 caracteres
-        if (value.length > 55) {
-          newValue = value.slice(0, 55)
+        // Solo letras y espacios
+        const letrasRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/
+        if (!letrasRegex.test(value)) {
+          // No actualizar el estado si el último carácter no es una letra o espacio
+          return
         }
-        // Filtrar caracteres no permitidos (solo letras y espacios)
-        newValue = newValue.replace(/[^A-Za-zÁáÉéÍíÓóÚúÑñ\s]/g, "")
         break
 
       case "documento":
-        // Letras y números, máximo 17 caracteres
-        if (value.length > 17) {
-          newValue = value.slice(0, 17)
+        // Solo números
+        const numerosRegex = /^[0-9]*$/
+        if (!numerosRegex.test(value)) {
+          // No actualizar el estado si hay caracteres que no son números
+          return
         }
-        // Filtrar caracteres no permitidos (solo letras y números)
-        newValue = newValue.replace(/[^A-Za-z0-9]/g, "")
+
+        if (value.length > VALIDACION.DOCUMENTO.MAX_LENGTH) {
+          newValue = value.substring(0, VALIDACION.DOCUMENTO.MAX_LENGTH)
+        }
         break
 
       case "telefono":
-        // Solo números, máximo 15 caracteres
-        if (value.length > 15) {
-          newValue = value.slice(0, 15)
+        // Solo números
+        const telefonoRegex = /^[0-9]*$/
+        if (!telefonoRegex.test(value)) {
+          // No actualizar el estado si hay caracteres que no son números
+          return
         }
-        // Filtrar caracteres no permitidos (solo números)
-        newValue = newValue.replace(/[^0-9]/g, "")
+
+        if (value.length > VALIDACION.TELEFONO.MAX_LENGTH) {
+          newValue = value.substring(0, VALIDACION.TELEFONO.MAX_LENGTH)
+        }
         break
 
       default:
@@ -661,82 +727,38 @@ const UsuarioList = () => {
       return
     }
 
-    // Actualizar el estado con el valor filtrado
+    // Actualizar el estado con el valor filtrado (SIN VALIDAR)
     setFormData({ ...formData, [name]: newValue })
-
-    // Determinar si estamos borrando texto (la longitud del valor está disminuyendo)
-    const isDeletingText = prevValue && newValue.length < prevValue.length
-
-    // Validar el campo que cambió, pero no mostrar alertas si:
-    // 1. Es email o password, o
-    // 2. Estamos borrando texto
-    validateField(name, newValue, !isDeletingText && name !== "email" && name !== "password")
   }
 
   // Función para validar campos individuales
-  const validateField = (name, value, showAlert = true) => {
+  const validateField = (name, value, showAlert = false) => {
     // Si no se debe validar, retornar true sin hacer nada
     if (!shouldValidate) return true
 
     let errorMessage = ""
 
     switch (name) {
-      case "nombre":
-        // Solo letras y espacios, máximo 55 caracteres
-        if (!value.trim()) {
-          errorMessage = "El nombre es obligatorio"
-        } else if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(value)) {
-          errorMessage = "El nombre solo debe contener letras"
-        } else if (value.length > 55) {
-          errorMessage = "El nombre no puede exceder los 55 caracteres"
-        }
-        break
-
       case "documento":
-        // Letras y números, máximo 17 caracteres
-        if (!value.trim()) {
-          errorMessage = "El documento es obligatorio"
-        } else if (!/^[A-Za-z0-9]+$/.test(value)) {
-          errorMessage = "El documento solo debe contener letras y números"
-        } else if (value.length > 17) {
-          errorMessage = "El documento no puede exceder los 17 caracteres"
-        }
+        errorMessage = validarDocumento(value)
         break
-
-      case "email":
-        // Formato de email
-        if (!value.trim()) {
-          errorMessage = "El email es obligatorio"
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          errorMessage = "Formato de email inválido"
-        }
+      case "nombre":
+        errorMessage = validarNombre(value)
         break
-
       case "telefono":
-        // Solo números, máximo 15 caracteres
-        if (!value.trim()) {
-          errorMessage = "El teléfono es obligatorio"
-        } else if (!/^\d+$/.test(value)) {
-          errorMessage = "El teléfono solo debe contener números"
-        } else if (value.length > 15) {
-          errorMessage = "El teléfono no puede exceder los 15 caracteres"
-        }
+        errorMessage = validarTelefono(value)
         break
-
+      case "email":
+        errorMessage = validarEmail(value)
+        break
       case "password":
         // Si estamos editando y el campo está vacío, no validamos
         if (editingId && !value) {
-          break
-        }
-
-        if (!editingId && !value) {
-          errorMessage = "La contraseña es obligatoria"
-        } else if (value && !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(value)) {
-          errorMessage =
-            "La contraseña debe contener al menos una mayúscula, una minúscula, un número y un carácter especial"
+          errorMessage = ""
+        } else {
+          errorMessage = validarPassword(value, formData.nombre, formData.documento, formData.email)
         }
         break
-
       default:
         break
     }
@@ -747,29 +769,6 @@ const UsuarioList = () => {
       [name]: errorMessage,
     }))
 
-    // Mostrar SweetAlert2 solo si hay error y se debe mostrar la alerta
-    if (errorMessage && showAlert) {
-      Swal.fire({
-        icon: "warning",
-        title: "Validación",
-        text: errorMessage || `El campo ${name} es obligatorio o contiene errores.`,
-        confirmButtonColor: "#2563eb",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-      })
-    }
-
-    // Validar todo el formulario después de actualizar este campo
-    setTimeout(() => {
-      validateForm({
-        ...formData,
-        [name]: value,
-      })
-    }, 0)
-
     return !errorMessage // Retorna true si no hay error
   }
 
@@ -779,22 +778,44 @@ const UsuarioList = () => {
     if (!shouldValidate) return
 
     const { name, value } = e.target
-    validateField(name, value, true)
 
-    // Si no es válido, mostrar alerta
-    if (formErrors[name]) {
-      Swal.fire({
-        icon: "warning",
-        title: "Validación",
-        text: formErrors[name] || `El campo ${name} es obligatorio o contiene errores.`,
-        confirmButtonColor: "#2563eb",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-      })
+    let errorMessage = ""
+    switch (name) {
+      case "documento":
+        errorMessage = validarDocumento(value)
+        break
+      case "nombre":
+        errorMessage = validarNombre(value)
+        break
+      case "telefono":
+        errorMessage = validarTelefono(value)
+        break
+      case "email":
+        errorMessage = validarEmail(value)
+        break
+      case "password":
+        // Si estamos editando y el campo está vacío, no hay error
+        if (editingId && !value) {
+          errorMessage = ""
+        } else {
+          errorMessage = validarPassword(value, formData.nombre, formData.documento, formData.email)
+        }
+        break
+      default:
+        break
     }
+
+    // Actualizar el estado de errores SOLO para este campo
+    setFormErrors((prev) => ({
+      ...prev,
+      [name]: errorMessage,
+    }))
+
+    // Actualizar el estado de validación del formulario
+    validateForm({
+      ...formData,
+      [name]: value,
+    })
   }
 
   // Agregar función para manejar la tecla Tab
@@ -804,115 +825,95 @@ const UsuarioList = () => {
 
     if (e.key === "Tab") {
       const { name, value } = e.target
-      const isValidField = validateField(name, value, true)
 
-      // No prevenimos el comportamiento por defecto, permitiendo que el Tab funcione normalmente
-      // Solo mostramos la alerta si hay un error
-      if (!isValidField) {
-        Swal.fire({
-          icon: "warning",
-          title: "Campo con errores",
-          text:
-            formErrors[name] || `El campo ${name} contiene errores. Deberá corregirlo antes de enviar el formulario.`,
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true,
-        })
+      let errorMessage = ""
+      switch (name) {
+        case "documento":
+          errorMessage = validarDocumento(value)
+          break
+        case "nombre":
+          errorMessage = validarNombre(value)
+          break
+        case "telefono":
+          errorMessage = validarTelefono(value)
+          break
+        case "email":
+          errorMessage = validarEmail(value)
+          break
+        case "password":
+          // Si estamos editando y el campo está vacío, no hay error
+          if (editingId && !value) {
+            errorMessage = ""
+          } else {
+            errorMessage = validarPassword(value, formData.nombre, formData.documento, formData.email)
+          }
+          break
+        default:
+          break
+      }
+
+      // Actualizar el estado de errores
+      setFormErrors((prev) => ({
+        ...prev,
+        [name]: errorMessage,
+      }))
+
+      // Si hay error, prevenir el Tab (pero sin mostrar SweetAlert)
+      if (errorMessage) {
+        e.preventDefault()
       }
     }
   }
 
   // Validar todo el formulario
   const validateForm = (data) => {
-    // Si estamos editando, la contraseña puede estar vacía
-    const isPasswordValid = editingId
-      ? true
-      : data.password && !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(data.password)
-        ? false
-        : true
+    const documentoError = validarDocumento(data.documento)
+    const nombreError = validarNombre(data.nombre)
+    const telefonoError = validarTelefono(data.telefono)
+    const emailError = validarEmail(data.email)
 
+    // Para la contraseña, si estamos editando y está vacía, no hay error
+    let passwordError = ""
+    if (!(editingId && !data.password)) {
+      passwordError = validarPassword(data.password, data.nombre, data.documento, data.email)
+    }
+
+    // El formulario es válido si no hay errores
     const isValid =
-      data.nombre.trim() !== "" &&
-      /^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(data.nombre) &&
-      data.nombre.length <= 55 &&
-      data.documento.trim() !== "" &&
-      /^[A-Za-z0-9]+$/.test(data.documento) &&
-      data.documento.length <= 17 &&
-      data.email.trim() !== "" &&
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email) &&
-      data.telefono.trim() !== "" &&
-      /^\d+$/.test(data.telefono) &&
-      data.telefono.length <= 15 &&
-      isPasswordValid
-
+      !documentoError && !nombreError && !telefonoError && !emailError && (editingId ? true : !passwordError)
     setIsFormValid(isValid)
+
+    return isValid
   }
 
   // Guardar cambios (crear o actualizar)
   const handleSubmit = async () => {
-    // Validar todos los campos antes de enviar
-    const tempErrors = {}
+    // Validar todos los campos antes de enviar y mostrar errores
+    const documentoError = validarDocumento(formData.documento)
+    const nombreError = validarNombre(formData.nombre)
+    const telefonoError = validarTelefono(formData.telefono)
+    const emailError = validarEmail(formData.email)
 
-    // Validar nombre
-    if (!formData.nombre.trim()) {
-      tempErrors.nombre = "El nombre es obligatorio"
-    } else if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(formData.nombre)) {
-      tempErrors.nombre = "El nombre solo debe contener letras"
-    } else if (formData.nombre.length > 55) {
-      tempErrors.nombre = "El nombre no puede exceder los 55 caracteres"
+    // Para la contraseña, si estamos editando y está vacía, no hay error
+    let passwordError = ""
+    if (!(editingId && !formData.password)) {
+      passwordError = validarPassword(formData.password, formData.nombre, formData.documento, formData.email)
     }
 
-    // Validar documento
-    if (!formData.documento.trim()) {
-      tempErrors.documento = "El documento es obligatorio"
-    } else if (!/^[A-Za-z0-9]+$/.test(formData.documento)) {
-      tempErrors.documento = "El documento solo debe contener letras y números"
-    } else if (formData.documento.length > 17) {
-      tempErrors.documento = "El documento no puede exceder los 17 caracteres"
-    }
+    // Actualizar todos los errores
+    setFormErrors({
+      documento: documentoError,
+      nombre: nombreError,
+      telefono: telefonoError,
+      email: emailError,
+      password: passwordError,
+    })
 
-    // Validar email
-    if (!formData.email.trim()) {
-      tempErrors.email = "El email es obligatorio"
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      tempErrors.email = "Formato de email inválido"
-    }
+    // Si hay errores, no continuar
+    const isValid =
+      !documentoError && !nombreError && !telefonoError && !emailError && (editingId ? true : !passwordError)
 
-    // Validar teléfono
-    if (!formData.telefono.trim()) {
-      tempErrors.telefono = "El teléfono es obligatorio"
-    } else if (!/^\d+$/.test(formData.telefono)) {
-      tempErrors.telefono = "El teléfono solo debe contener números"
-    } else if (formData.telefono.length > 15) {
-      tempErrors.telefono = "El teléfono no puede exceder los 15 caracteres"
-    }
-
-    // Validar contraseña (solo si es nuevo usuario o si se está cambiando)
-    if (!editingId && !formData.password) {
-      tempErrors.password = "La contraseña es obligatoria"
-    } else if (
-      formData.password &&
-      !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(formData.password)
-    ) {
-      tempErrors.password =
-        "La contraseña debe contener al menos una mayúscula, una minúscula, un número y un carácter especial"
-    }
-
-    // Si hay errores, mostrarlos y detener el envío
-    if (Object.keys(tempErrors).length > 0) {
-      setFormErrors(tempErrors)
-
-      // Mostrar alerta con el primer error encontrado
-      const firstError = Object.values(tempErrors)[0]
-      Swal.fire({
-        icon: "error",
-        title: "Error de validación",
-        text: firstError || "Por favor, complete todos los campos obligatorios correctamente.",
-        confirmButtonColor: "#2563eb",
-      })
-
+    if (!isValid) {
       return
     }
 
@@ -1099,6 +1100,210 @@ const UsuarioList = () => {
       .substring(0, 2)
   }
 
+  // Funciones de validación mejoradas
+  const validarDocumento = (value) => {
+    if (!value) {
+      return "El documento es obligatorio"
+    }
+    if (value.trim() === "") {
+      return "El documento no puede estar vacío"
+    }
+    if (!REGEX.SOLO_NUMEROS.test(value)) {
+      return "El documento debe contener solo números"
+    }
+    if (value.length < VALIDACION.DOCUMENTO.MIN_LENGTH) {
+      return `El documento debe tener al menos ${VALIDACION.DOCUMENTO.MIN_LENGTH} dígitos`
+    }
+    if (value.length > VALIDACION.DOCUMENTO.MAX_LENGTH) {
+      return `El documento no puede tener más de ${VALIDACION.DOCUMENTO.MAX_LENGTH} dígitos`
+    }
+    if (REGEX.CARACTERES_REPETIDOS.test(value)) {
+      return "El documento no puede contener más de 3 dígitos repetidos consecutivos"
+    }
+    if (REGEX.SECUENCIAS_NUMERICAS.test(value)) {
+      return "El documento no puede contener secuencias numéricas obvias"
+    }
+    if (/^0+$/.test(value)) {
+      return "El documento no puede contener solo ceros"
+    }
+    if (Number.parseInt(value) < 1000) {
+      return "El documento no parece válido (valor muy bajo)"
+    }
+    return ""
+  }
+
+  const validarNombre = (value) => {
+    if (!value) {
+      return "El nombre es obligatorio"
+    }
+    if (value.trim() === "") {
+      return "El nombre no puede estar vacío"
+    }
+    if (!REGEX.SOLO_LETRAS_ESPACIOS.test(value)) {
+      return "El nombre solo debe contener letras y espacios"
+    }
+    if (value.length < VALIDACION.NOMBRE.MIN_LENGTH) {
+      return `El nombre debe tener al menos ${VALIDACION.NOMBRE.MIN_LENGTH} caracteres`
+    }
+    if (value.length > VALIDACION.NOMBRE.MAX_LENGTH) {
+      return `El nombre no puede tener más de ${VALIDACION.NOMBRE.MAX_LENGTH} caracteres`
+    }
+    if (/\s{2,}/.test(value)) {
+      return "El nombre no puede contener espacios múltiples consecutivos"
+    }
+
+    const palabras = value.trim().split(/\s+/)
+    if (palabras.length < 2) {
+      return "Debe ingresar al menos nombre y apellido"
+    }
+
+    for (const palabra of palabras) {
+      if (palabra.length < 2) {
+        return "Cada palabra del nombre debe tener al menos 2 caracteres"
+      }
+    }
+
+    const palabrasProhibidas = ["admin", "usuario", "test", "prueba", "administrador"]
+    for (const prohibida of palabrasProhibidas) {
+      if (value.toLowerCase().includes(prohibida)) {
+        return "El nombre contiene palabras no permitidas"
+      }
+    }
+
+    return ""
+  }
+
+  const validarTelefono = (value) => {
+    if (!value) {
+      return "El teléfono es obligatorio"
+    }
+    if (value.trim() === "") {
+      return "El teléfono no puede estar vacío"
+    }
+    if (!REGEX.SOLO_NUMEROS.test(value)) {
+      return "El teléfono debe contener solo números"
+    }
+    if (value.length < VALIDACION.TELEFONO.MIN_LENGTH) {
+      return `El teléfono debe tener al menos ${VALIDACION.TELEFONO.MIN_LENGTH} dígitos`
+    }
+    if (value.length > VALIDACION.TELEFONO.MAX_LENGTH) {
+      return `El teléfono no puede tener más de ${VALIDACION.TELEFONO.MAX_LENGTH} dígitos`
+    }
+    if (REGEX.SECUENCIAS_NUMERICAS.test(value)) {
+      return "El teléfono no puede contener secuencias numéricas obvias"
+    }
+    if (/^0+$/.test(value)) {
+      return "El teléfono no puede contener solo ceros"
+    }
+
+    const numerosEspeciales = ["123", "911", "112", "119"]
+    if (numerosEspeciales.includes(value)) {
+      return "No se permite el uso de números de emergencia"
+    }
+
+    return ""
+  }
+
+  const validarEmail = (em) => {
+    // Validaciones básicas
+    if (!em) return "El correo electrónico es obligatorio"
+    if (em.trim() === "") return "El correo electrónico no puede estar vacío"
+
+    // Validación de formato básico
+    if (!REGEX.EMAIL.test(em)) return "Formato de correo electrónico inválido"
+
+    // Validación de patrones inválidos específicos
+    if (REGEX.EMAIL_INVALIDO.test(em)) return "El correo contiene patrones inválidos (como @.com, @., etc.)"
+
+    // Validación de longitud
+    if (em.length < 6) return "El correo debe tener al menos 6 caracteres"
+    if (em.length > 50) return "El correo no puede tener más de 50 caracteres"
+
+    // Validación de partes del email
+    const [localPart, domainPart] = em.split("@")
+
+    // Validación de la parte local
+    if (!localPart || localPart.length < 1) return "La parte local del correo no puede estar vacía"
+    if (localPart.length > 64) return "La parte local del correo es demasiado larga"
+    if (/^[.-]|[.-]$/.test(localPart)) return "La parte local no puede comenzar ni terminar con puntos o guiones"
+
+    // Validación del dominio
+    if (!domainPart || !domainPart.includes("."))
+      return "El dominio del correo debe incluir una extensión (ej: .com, .net)"
+
+    // Verificar que el dominio tenga un formato válido y que no haya caracteres después del TLD
+    // Dividir el dominio en partes separadas por puntos
+    const domainParts = domainPart.split(".")
+
+    // Verificar que todas las partes del dominio sean válidas
+    for (let i = 0; i < domainParts.length; i++) {
+      const part = domainParts[i]
+      // Cada parte debe contener al menos un carácter y solo caracteres alfanuméricos o guiones
+      if (part.length === 0 || !/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(part)) {
+        return "El dominio del correo contiene partes inválidas"
+      }
+    }
+
+    // Verificar que el TLD sea válido (2-6 caracteres, solo letras)
+    const tld = domainParts[domainParts.length - 1]
+    if (!tld || tld.length < 2 || tld.length > 6 || !/^[a-zA-Z]+$/.test(tld)) {
+      return "La extensión del dominio no es válida o contiene caracteres no permitidos"
+    }
+
+    // Validación de dominios temporales o no recomendados
+    const dominiosNoRecomendados = ["tempmail", "mailinator", "guerrillamail", "10minutemail", "yopmail"]
+    for (const dominio of dominiosNoRecomendados) {
+      if (domainPart.toLowerCase().includes(dominio)) return "No se permiten correos de servicios temporales"
+    }
+
+    return ""
+  }
+
+  const validarPassword = (password, nombre = "", documento = "", email = "") => {
+    // Validaciones básicas
+    if (!password) return "La contraseña es obligatoria"
+    if (password.length < 8) return "La contraseña debe tener al menos 8 caracteres"
+    if (password.length > 15) return "La contraseña no puede tener más de 15 caracteres"
+
+    // Validación de complejidad
+    if (!/[a-z]/.test(password)) return "La contraseña debe contener al menos una letra minúscula"
+    if (!/[A-Z]/.test(password)) return "La contraseña debe contener al menos una letra mayúscula"
+    if (!/[0-9]/.test(password)) return "La contraseña debe contener al menos un número"
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password))
+      return "La contraseña debe contener al menos un carácter especial"
+
+    // Validación de secuencias comunes
+    if (REGEX.SECUENCIAS_COMUNES.test(password))
+      return "La contraseña no puede contener secuencias comunes o palabras fáciles de adivinar"
+
+    // Validación de caracteres repetidos
+    if (REGEX.CARACTERES_REPETIDOS.test(password))
+      return "La contraseña no puede contener más de 3 caracteres repetidos consecutivos"
+
+    // Validación de secuencias de teclado
+    if (/qwert|asdfg|zxcvb|12345|09876/.test(password.toLowerCase()))
+      return "La contraseña no puede contener secuencias de teclado"
+
+    // Validación de relación con otros campos
+    if (nombre) {
+      const nombreParts = nombre.toLowerCase().split(/\s+/)
+      for (const part of nombreParts) {
+        if (part.length > 2 && password.toLowerCase().includes(part))
+          return "La contraseña no puede contener partes de tu nombre"
+      }
+    }
+
+    if (documento && password.includes(documento)) return "La contraseña no puede contener tu número de documento"
+
+    if (email) {
+      const emailPart = email.split("@")[0].toLowerCase()
+      if (emailPart.length > 2 && password.toLowerCase().includes(emailPart))
+        return "La contraseña no puede contener partes de tu correo electrónico"
+    }
+
+    return ""
+  }
+
   return (
     <Box
       className={classes.container}
@@ -1170,14 +1375,7 @@ const UsuarioList = () => {
                 <TableCell className={classes.tableCell}>{usuario.email}</TableCell>
                 <TableCell className={classes.tableCell}>{usuario.telefono}</TableCell>
                 <TableCell className={classes.tableCell}>{usuario.rol || "Sin rol"}</TableCell>
-                <TableCell className={classes.tableCell}>
-                  <Chip
-                    label={usuario.estado ? "Activo" : "Inactivo"}
-                    className={`${classes.estadoChip} ${
-                      usuario.estado ? classes.estadoActivo : classes.estadoInactivo
-                    }`}
-                  />
-                </TableCell>
+                <TableCell className={classes.tableCell}>{usuario.estado ? "Activo" : "Inactivo"}</TableCell>
 
                 <TableCell className={`${classes.tableCell} ${classes.actionsCell}`}>
                   <Box className={classes.actionsContainer}>
@@ -1300,7 +1498,7 @@ const UsuarioList = () => {
               fullWidth
               variant="outlined"
               error={!!formErrors.documento}
-              helperText={formErrors.documento}
+              helperText={formErrors.documento || MENSAJES_INSTRUCTIVOS.DOCUMENTO}
               required
               InputProps={{
                 startAdornment: (
@@ -1323,7 +1521,7 @@ const UsuarioList = () => {
               fullWidth
               variant="outlined"
               error={!!formErrors.nombre}
-              helperText={formErrors.nombre}
+              helperText={formErrors.nombre || MENSAJES_INSTRUCTIVOS.NOMBRE}
               required
               InputProps={{
                 startAdornment: (
@@ -1355,6 +1553,7 @@ const UsuarioList = () => {
               error={!!formErrors.email}
               helperText={
                 formErrors.email ||
+                MENSAJES_INSTRUCTIVOS.EMAIL ||
                 (editingId && isAdminUser(formData) ? "El email del administrador no se puede modificar" : "")
               }
               required
@@ -1380,7 +1579,7 @@ const UsuarioList = () => {
               fullWidth
               variant="outlined"
               error={!!formErrors.telefono}
-              helperText={formErrors.telefono}
+              helperText={formErrors.telefono || MENSAJES_INSTRUCTIVOS.TELEFONO}
               required
               InputProps={{
                 startAdornment: (
@@ -1410,7 +1609,7 @@ const UsuarioList = () => {
               fullWidth
               variant="outlined"
               error={!!formErrors.password}
-              helperText={formErrors.password}
+              helperText={formErrors.password || MENSAJES_INSTRUCTIVOS.PASSWORD}
               required={!editingId}
               type="password"
               InputProps={{
@@ -1439,7 +1638,12 @@ const UsuarioList = () => {
               onChange={handleChange}
               fullWidth
               variant="outlined"
-              disabled={editingId && isAdminUser(formData)} // Deshabilitar el campo si es el administrador
+              disabled={editingId && isAdminUser(formData)}
+              helperText={
+                availableRoles.length > 0
+                  ? `${availableRoles.length} roles disponibles: ${availableRoles.map((r) => r.nombre).join(", ")}`
+                  : "Cargando roles..."
+              }
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -1448,12 +1652,19 @@ const UsuarioList = () => {
                 ),
               }}
             >
-              <MenuItem value="">Sin rol</MenuItem>
+              {/* Solo mostrar "Sin rol" si hay roles disponibles */}
+              {availableRoles.length > 0 && <MenuItem value="">Sin rol</MenuItem>}
               {availableRoles.map((rol) => (
                 <MenuItem key={rol._id} value={rol.nombre}>
                   {rol.nombre}
                 </MenuItem>
               ))}
+              {/* Mostrar mensaje si no hay roles */}
+              {availableRoles.length === 0 && (
+                <MenuItem value="" disabled>
+                  No hay roles disponibles
+                </MenuItem>
+              )}
             </TextField>
 
             {/* Campo de estado (activo/inactivo) */}

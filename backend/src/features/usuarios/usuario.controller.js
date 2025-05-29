@@ -16,7 +16,7 @@ exports.createUsuario = async (req, res) => {
       email,
       telefono,
       password: hashedPassword,
-      rol: rol || "cliente",
+      rol: rol || "", // Cambiado de "cliente" a cadena vacía para que no asuma ningún rol por defecto
     })
     await usuario.save()
 
@@ -55,7 +55,7 @@ exports.createUsuarioInterno = async (userData) => {
       nombre: userData.nombre,
       documento: userData.documento,
       email: userData.email,
-      rol: userData.rol || "cliente",
+      rol: userData.rol || "", // Cambiado de "cliente" a cadena vacía
     })
 
     // Verificar si ya existe un usuario con el mismo email
@@ -77,7 +77,7 @@ exports.createUsuarioInterno = async (userData) => {
       email: userData.email,
       telefono: userData.telefono,
       password: hashedPassword,
-      rol: userData.rol || "cliente",
+      rol: userData.rol || "", // Cambiado de "cliente" a cadena vacía
     })
 
     // Guardar el usuario
