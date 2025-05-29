@@ -238,15 +238,15 @@ exports.createCliente = async (req, res) => {
       return res.status(400).json({ msg: "El cliente ya existe" })
     }
 
-    let hashedPassword;
-    let randomPassword = null;
+    let hashedPassword
+    let randomPassword = null
 
     // Verificar si se proporcionó una contraseña o si debemos generar una temporal
     if (password) {
       // Si se proporcionó una contraseña, validarla
       const errorPassword = validarPassword(password)
       if (errorPassword) return res.status(400).json({ msg: errorPassword })
-      
+
       // Hashear la contraseña proporcionada
       const salt = await bcrypt.genSalt(10)
       hashedPassword = await bcrypt.hash(password, salt)
@@ -289,26 +289,26 @@ exports.createCliente = async (req, res) => {
       console.log(`Usuario creado automáticamente con ID: ${usuario._id}`)
     } else {
       // Si el usuario existe, actualizar su contraseña y datos
-      usuario.nombre = nombre;
-      usuario.documento = documento;
-      usuario.telefono = telefono;
-      usuario.password = hashedPassword;
-      usuario.rol = "cliente";
-      usuario.estado = true;
-      await usuario.save();
+      usuario.nombre = nombre
+      usuario.documento = documento
+      usuario.telefono = telefono
+      usuario.password = hashedPassword
+      usuario.rol = "cliente"
+      usuario.estado = true
+      await usuario.save()
       console.log(`Usuario existente actualizado con rol "cliente", ID: ${usuario._id}`)
     }
 
     // Preparar la respuesta
     const respuesta = {
       cliente,
-      msg: "Cliente creado correctamente."
+      msg: "Cliente creado correctamente.",
     }
 
     // Si se generó una contraseña temporal, incluirla en la respuesta
     if (randomPassword) {
-      respuesta.passwordTemporal = randomPassword;
-      respuesta.msg = "Cliente creado correctamente. Guarde la contraseña temporal para compartirla con el cliente.";
+      respuesta.passwordTemporal = randomPassword
+      respuesta.msg = "Cliente creado correctamente. Guarde la contraseña temporal para compartirla con el cliente."
     }
 
     res.status(201).json(respuesta)
@@ -435,7 +435,7 @@ exports.publicRegister = async (req, res) => {
 
     // Enviar correo de confirmación
     try {
-      const transporter = nodemailer.createTransport({
+      const transporter = nodemailer.createTransporter({
         service: "gmail",
         auth: {
           user: process.env.EMAIL_USER,
@@ -1224,58 +1224,125 @@ exports.updateCliente = async (req, res) => {
   }
 }
 
-// Eliminar un cliente - VERSIÓN FORZADA
+// Eliminar un cliente - VERSIÓN CON VALIDACIÓN DE ESTADO
 exports.deleteCliente = async (req, res) => {
-  console.log(`[DELETE CLIENTE FORZADO] Iniciando eliminación del cliente con ID: ${req.params.id}`)
+  console.log(`[DELETE CLIENTE] Iniciando eliminación del cliente con ID: ${req.params.id}`)
 
   try {
     // Verificar si el cliente existe
     const cliente = await Cliente.findById(req.params.id)
     if (!cliente) {
-      console.log(`[DELETE CLIENTE FORZADO] Cliente con ID ${req.params.id} no encontrado`)
+      console.log(`[DELETE CLIENTE] Cliente con ID ${req.params.id} no encontrado`)
       return res.status(404).json({ msg: "Cliente no encontrado" })
     }
 
-    console.log(`[DELETE CLIENTE FORZADO] Cliente encontrado: ${cliente.nombre} (${cliente.email})`)
-    console.log(`[DELETE CLIENTE FORZADO] Documento: ${cliente.documento || "No disponible"}`)
+    console.log(`[DELETE CLIENTE] Cliente encontrado: ${cliente.nombre} (${cliente.email})`)
+    console.log(`[DELETE CLIENTE] Documento: ${cliente.documento || "No disponible"}`)
 
     // Importar el modelo Reserva
     const Reserva = require("../reservas/reserva.model")
 
-    // Buscar todas las reservas asociadas al cliente (solo para logging)
+    // Buscar SOLO las reservas asociadas al cliente específico
     const todasLasReservas = await Reserva.find({
       $or: [{ email: cliente.email }, { titular_documento: cliente.documento }, { documento: cliente.documento }],
     })
 
-    console.log(`[DELETE CLIENTE FORZADO] Se encontraron ${todasLasReservas.length} reservas en total`)
+    console.log(`[DELETE CLIENTE] Consulta ejecutada: email="${cliente.email}" OR documento="${cliente.documento}"`)
+    console.log(`[DELETE CLIENTE] Se encontraron ${todasLasReservas.length} reservas para este cliente específico`)
 
-    // Mostrar detalles de cada reserva para depuración
-    if (todasLasReservas.length > 0) {
-      console.log("[DELETE CLIENTE FORZADO] Detalles de las reservas encontradas:")
-      todasLasReservas.forEach((reserva, index) => {
-        console.log(`[DELETE CLIENTE FORZADO] Reserva #${index + 1}:`)
+    // Verificar que las reservas encontradas realmente pertenecen al cliente
+    const reservasDelCliente = todasLasReservas.filter((reserva) => {
+      const perteneceAlCliente =
+        reserva.email === cliente.email ||
+        reserva.titular_documento === cliente.documento ||
+        reserva.documento === cliente.documento
+
+      if (!perteneceAlCliente) {
+        console.log(`[DELETE CLIENTE] ADVERTENCIA: Reserva ${reserva._id} no pertenece al cliente:`)
+        console.log(`  - Reserva email: "${reserva.email}" vs Cliente email: "${cliente.email}"`)
+        console.log(
+          `  - Reserva documento: "${reserva.titular_documento || reserva.documento}" vs Cliente documento: "${cliente.documento}"`,
+        )
+      }
+
+      return perteneceAlCliente
+    })
+
+    console.log(`[DELETE CLIENTE] Después del filtro: ${reservasDelCliente.length} reservas realmente del cliente`)
+
+    // Mostrar detalles de todas las reservas para debugging
+    if (reservasDelCliente.length > 0) {
+      console.log("[DELETE CLIENTE] Detalles de todas las reservas encontradas:")
+      reservasDelCliente.forEach((reserva, index) => {
+        console.log(`[DELETE CLIENTE] Reserva #${index + 1}:`)
         console.log(`  - ID: ${reserva._id}`)
         console.log(`  - Email: ${reserva.email}`)
         console.log(`  - Titular: ${reserva.titular_reserva}`)
         console.log(`  - Documento: ${reserva.titular_documento || reserva.documento}`)
-        console.log(`  - Estado: ${reserva.estado || "No definido"}`)
+        console.log(`  - Estado: "${reserva.estado || "sin estado definido"}"`)
       })
     }
 
-    // Contar reservas confirmadas (solo para logging)
-    const reservasConfirmadas = todasLasReservas.filter((r) => r.estado === "confirmada")
-    console.log(`[DELETE CLIENTE FORZADO] De las cuales ${reservasConfirmadas.length} están confirmadas`)
+    // VALIDACIÓN CORREGIDA: Solo verificar reservas confirmadas del cliente específico
+    const reservasConfirmadas = reservasDelCliente.filter((reserva) => {
+      const estado = reserva.estado
+      console.log(`[DELETE CLIENTE] Verificando reserva ${reserva._id} del cliente: estado="${estado}"`)
+      return estado === "confirmada"
+    })
 
-    // IMPORTANTE: Procedemos con la eliminación SIN IMPORTAR si tiene reservas confirmadas
-    console.log(`[DELETE CLIENTE FORZADO] Procediendo a eliminar el cliente ${cliente._id} de forma forzada`)
+    console.log(`[DELETE CLIENTE] Reservas con estado "confirmada": ${reservasConfirmadas.length}`)
 
-    // Usar deleteOne para eliminar directamente
+    // SOLO bloquear eliminación si hay reservas confirmadas
+    if (reservasConfirmadas.length > 0) {
+      console.log(
+        `[DELETE CLIENTE] BLOQUEANDO eliminación: cliente tiene ${reservasConfirmadas.length} reservas confirmadas`,
+      )
+
+      // Mostrar detalles de las reservas confirmadas
+      console.log("[DELETE CLIENTE] Reservas confirmadas que impiden la eliminación:")
+      reservasConfirmadas.forEach((reserva, index) => {
+        console.log(`  Reserva confirmada ${index + 1}:`)
+        console.log(`    - ID: ${reserva._id}`)
+        console.log(`    - Número: ${reserva.numero_reserva}`)
+        console.log(`    - Fechas: ${reserva.fecha_inicio} - ${reserva.fecha_fin}`)
+        console.log(`    - Estado: "${reserva.estado}"`)
+      })
+
+      return res.status(400).json({
+        msg: `No se puede eliminar el cliente porque tiene ${reservasConfirmadas.length} reserva(s) confirmada(s)`,
+        error: true,
+        reservasConfirmadas: reservasConfirmadas.length,
+        detallesReservas: reservasConfirmadas.map((r) => ({
+          id: r._id,
+          numero_reserva: r.numero_reserva,
+          fecha_inicio: r.fecha_inicio,
+          fecha_fin: r.fecha_fin,
+          estado: r.estado,
+          titular: r.titular_reserva,
+        })),
+      })
+    }
+
+    // Si llegamos aquí, NO hay reservas confirmadas, proceder con la eliminación
+    const reservasNoConfirmadas = reservasDelCliente.filter((r) => r.estado !== "confirmada")
+    console.log(
+      `[DELETE CLIENTE] PERMITIENDO eliminación: cliente tiene ${reservasNoConfirmadas.length} reservas no confirmadas`,
+    )
+
+    if (reservasNoConfirmadas.length > 0) {
+      console.log(`[DELETE CLIENTE] Reservas en otros estados que SÍ permiten eliminación:`)
+      reservasNoConfirmadas.forEach((reserva, index) => {
+        console.log(`  Reserva ${index + 1}: Estado "${reserva.estado || "sin estado"}" - ID: ${reserva._id}`)
+      })
+    }
+
+    // Eliminar el cliente
     const resultado = await Cliente.deleteOne({ _id: req.params.id })
 
-    console.log(`[DELETE CLIENTE FORZADO] Resultado de la eliminación:`, resultado)
+    console.log(`[DELETE CLIENTE] Resultado de la eliminación:`, resultado)
 
     if (resultado.deletedCount === 0) {
-      console.log(`[DELETE CLIENTE FORZADO] No se pudo eliminar el cliente ${cliente._id}`)
+      console.log(`[DELETE CLIENTE] No se pudo eliminar el cliente ${cliente._id}`)
       return res.status(500).json({
         msg: "No se pudo eliminar el cliente",
         error: true,
@@ -1284,35 +1351,33 @@ exports.deleteCliente = async (req, res) => {
 
     // Intentar eliminar también el usuario correspondiente si existe
     try {
-      // Buscar usuario por email
       const usuario = await Usuario.findOne({ email: cliente.email })
       if (usuario && usuario.rol === "cliente") {
-        // Si el usuario solo tiene rol de cliente, eliminarlo
         await Usuario.deleteOne({ _id: usuario._id })
-        console.log(`[DELETE CLIENTE FORZADO] Usuario asociado eliminado: ${usuario._id}`)
+        console.log(`[DELETE CLIENTE] Usuario asociado eliminado: ${usuario._id}`)
       } else if (usuario) {
-        // Si el usuario tiene otros roles, solo quitar el rol de cliente
         if (usuario.rol === "cliente") {
           usuario.rol = ""
           await usuario.save()
-          console.log(`[DELETE CLIENTE FORZADO] Se quitó el rol de cliente al usuario: ${usuario._id}`)
+          console.log(`[DELETE CLIENTE] Se quitó el rol de cliente al usuario: ${usuario._id}`)
         }
       }
     } catch (userError) {
-      console.error("[DELETE CLIENTE FORZADO] Error al eliminar usuario asociado:", userError)
+      console.error("[DELETE CLIENTE] Error al eliminar usuario asociado:", userError)
       // No fallamos si no se puede eliminar el usuario
     }
 
-    // Devolver respuesta exitosa con información adicional
+    // Devolver respuesta exitosa
     res.json({
       msg: "Cliente eliminado correctamente",
-      eliminacionForzada: reservasConfirmadas.length > 0,
-      reservasEncontradas: todasLasReservas.length,
+      reservasEncontradas: reservasDelCliente.length,
       reservasConfirmadas: reservasConfirmadas.length,
+      reservasNoConfirmadas: reservasNoConfirmadas.length,
+      estadosEncontrados: reservasDelCliente.map((r) => r.estado || "sin estado"),
       resultado,
     })
   } catch (error) {
-    console.error("[DELETE CLIENTE FORZADO] Error al eliminar cliente:", error)
+    console.error("[DELETE CLIENTE] Error al eliminar cliente:", error)
 
     // Verificar si es un error de ID inválido
     if (error.name === "CastError" || error.kind === "ObjectId") {
@@ -1437,10 +1502,10 @@ exports.obtenerReservasCliente = async (req, res) => {
   }
 }
 
-// Nueva función para obtener las reservas del cliente autenticado
+// Nueva función para obtener las reservas del cliente autenticado - CORREGIDA
 exports.getMisReservas = async (req, res) => {
   try {
-    console.log("Obteniendo reservas del cliente autenticado")
+    console.log("=== INICIANDO getMisReservas ===")
 
     // Obtener el token del encabezado de autorización
     const token = req.header("Authorization")?.replace("Bearer ", "")
@@ -1450,38 +1515,33 @@ exports.getMisReservas = async (req, res) => {
 
     // Decodificar el token para obtener la información del usuario
     const decoded = jwt.verify(token, process.env.JWT_SECRET || "palabrasecreta")
+    console.log("Token decodificado:", JSON.stringify(decoded, null, 2))
+
     const usuarioId = decoded.usuario?._id || decoded.usuario?.id || decoded.uid
     const usuarioEmail = decoded.usuario?.email
     const usuarioDocumento = decoded.usuario?.documento
 
-    if (!usuarioId && !usuarioEmail && !usuarioDocumento) {
-      return res.status(401).json({ msg: "Token inválido" })
-    }
-
-    console.log("Información del usuario del token:", {
+    console.log("Datos extraídos del token:", {
       id: usuarioId,
       email: usuarioEmail,
       documento: usuarioDocumento,
     })
 
-    // Buscar el cliente por el ID de usuario, email o documento
-    let cliente
+    if (!usuarioEmail && !usuarioDocumento) {
+      return res.status(401).json({ msg: "Token no contiene información suficiente del usuario" })
+    }
+
+    // Buscar el cliente por email o documento
+    let cliente = null
 
     if (usuarioEmail) {
       console.log("Buscando cliente por email:", usuarioEmail)
       cliente = await Cliente.findOne({ email: usuarioEmail })
     }
 
-    // Si no se encontró por email, buscar por documento
     if (!cliente && usuarioDocumento) {
       console.log("Buscando cliente por documento:", usuarioDocumento)
       cliente = await Cliente.findOne({ documento: usuarioDocumento })
-    }
-
-    // Si aún no se encuentra, intentar buscar por ID
-    if (!cliente && usuarioId) {
-      console.log("Buscando cliente por ID de usuario:", usuarioId)
-      cliente = await Cliente.findOne({ _id: usuarioId })
     }
 
     if (!cliente) {
@@ -1489,26 +1549,27 @@ exports.getMisReservas = async (req, res) => {
       return res.status(404).json({ msg: "No se encontró el cliente asociado a este usuario" })
     }
 
-    console.log("Cliente encontrado:", cliente._id)
+    console.log("Cliente encontrado:", {
+      id: cliente._id,
+      nombre: cliente.nombre,
+      email: cliente.email,
+      documento: cliente.documento,
+    })
 
     // Importar el modelo Reserva
     const Reserva = require("../reservas/reserva.model")
     const Apartamento = require("../apartamento/apartamento.model")
 
-    // Buscar las reservas del cliente por documento, email o nombre
-    const query = {
-      $or: [{ email: cliente.email }, { titular_reserva: cliente.nombre }],
-    }
+    // CONSULTA SIMPLIFICADA: Buscar reservas que coincidan exactamente con el email del cliente
+    const query = { email: cliente.email }
 
-    // Si el cliente tiene documento, agregarlo a la consulta
-    if (cliente.documento) {
-      query.$or.push({ titular_documento: cliente.documento })
-      query.$or.push({ documento: cliente.documento })
-    }
+    console.log("Consulta a ejecutar:", JSON.stringify(query))
 
-    console.log("Consultando reservas con:", JSON.stringify(query))
+    // Primero, verificar cuántas reservas hay en total
+    const totalReservas = await Reserva.countDocuments()
+    console.log(`Total de reservas en la base de datos: ${totalReservas}`)
 
-    // Obtener las reservas y poblar los datos de apartamentos
+    // Obtener las reservas del cliente específico
     const reservas = await Reserva.find(query)
       .populate({
         path: "apartamentos",
@@ -1516,23 +1577,33 @@ exports.getMisReservas = async (req, res) => {
       })
       .sort({ fecha_inicio: -1 })
 
-    console.log(`Se encontraron ${reservas.length} reservas para el cliente`)
+    console.log(`Reservas encontradas para el cliente ${cliente.email}: ${reservas.length}`)
 
-    // Procesar las reservas para mostrar exactamente los mismos datos que en el correo
+    // Si encontramos reservas, mostrar detalles para debugging
+    if (reservas.length > 0) {
+      console.log("Detalles de las reservas encontradas:")
+      reservas.forEach((reserva, index) => {
+        console.log(`Reserva ${index + 1}:`, {
+          id: reserva._id,
+          email: reserva.email,
+          titular: reserva.titular_reserva,
+          documento: reserva.titular_documento || reserva.documento,
+          fechas: `${reserva.fecha_inicio} - ${reserva.fecha_fin}`,
+        })
+      })
+    }
+
+    // Procesar las reservas para el frontend
     const reservasFormateadas = reservas.map((reserva) => {
-      // Convertir el documento Mongoose a un objeto plano
       const reservaObj = reserva.toObject()
 
       // Información del apartamento
       let apartamentoInfo = "Apartamento"
       let precioPorNoche = 0
 
-      // Verificar si hay apartamentos en la reserva
       if (reservaObj.apartamentos && reservaObj.apartamentos.length > 0) {
         const apartamento = reservaObj.apartamentos[0]
-        console.log("Datos del apartamento:", JSON.stringify(apartamento, null, 2))
 
-        // Obtener el número y tipo del apartamento (si existen)
         if (apartamento.NumeroApto !== undefined && apartamento.Tipo) {
           apartamentoInfo = `${apartamento.NumeroApto} - ${apartamento.Tipo}`
         } else if (apartamento.NumeroApto !== undefined) {
@@ -1541,7 +1612,6 @@ exports.getMisReservas = async (req, res) => {
           apartamentoInfo = apartamento.Tipo
         }
 
-        // Obtener el precio por noche
         precioPorNoche = apartamento.Tarifa || 0
       }
 
@@ -1563,18 +1633,16 @@ exports.getMisReservas = async (req, res) => {
       // Formatear fechas en español
       const formatearFecha = (fecha) => {
         if (!fecha) return "Fecha no disponible"
-
         const opciones = { weekday: "long", year: "numeric", month: "long", day: "numeric" }
         return new Date(fecha).toLocaleDateString("es-ES", opciones)
       }
 
-      // Crear objeto con los datos exactos que se muestran en el correo
       const detallesReserva = {
         apartamento: apartamentoInfo,
         fechaEntrada: formatearFecha(reservaObj.fecha_inicio),
         fechaSalida: formatearFecha(reservaObj.fecha_fin),
         numeroNoches: nochesEstadia || 0,
-        huespedes: reservaObj.acompanantes?.length + 1 || 1, // +1 por el titular
+        huespedes: reservaObj.acompanantes?.length + 1 || 1,
         precioPorNoche: precioPorNoche,
         precioTotal: precioTotal || 0,
       }
@@ -1582,7 +1650,6 @@ exports.getMisReservas = async (req, res) => {
       return {
         ...reservaObj,
         detallesReserva,
-        // Mantener estos campos para compatibilidad con el frontend
         apartamentoInfo,
         precioPorNoche,
         nochesEstadia,
@@ -1590,7 +1657,7 @@ exports.getMisReservas = async (req, res) => {
       }
     })
 
-    console.log("Reservas formateadas con los datos reales del apartamento")
+    console.log(`=== FINALIZANDO getMisReservas: ${reservasFormateadas.length} reservas devueltas ===`)
     return res.json(reservasFormateadas)
   } catch (error) {
     console.error("Error al obtener las reservas del cliente:", error)
