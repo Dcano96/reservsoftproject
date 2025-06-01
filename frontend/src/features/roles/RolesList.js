@@ -702,6 +702,7 @@ const RolesList = () => {
   const [formErrors, setFormErrors] = useState({
     nombre: "",
     nombrePersonalizado: "",
+    permisos: "",
   })
   const [isFormValid, setIsFormValid] = useState(false)
 
@@ -732,6 +733,11 @@ const RolesList = () => {
     fetchRoles()
   }, [])
 
+  // Función para verificar si un rol ya existe
+  const checkRoleExists = (roleName, excludeId = null) => {
+    return roles.some((role) => role.nombre.toLowerCase() === roleName.toLowerCase() && role._id !== excludeId)
+  }
+
   // Inicializar permisos para un nuevo rol (incluye todos los módulos disponibles)
   const initializePermissions = () => {
     return availableModules.map((modulo) => ({
@@ -751,6 +757,7 @@ const RolesList = () => {
     setFormErrors({
       nombre: "",
       nombrePersonalizado: "",
+      permisos: "",
     })
 
     if (role) {
@@ -796,16 +803,15 @@ const RolesList = () => {
       // Al editar, el formulario es válido inicialmente
       setIsFormValid(true)
     } else {
-      // Modo creación - Inicializar con "otro" seleccionado y campo para nombre personalizado
+      // Modo creación - Solo usar nombre personalizado y estado siempre activo
       setFormData({
-        nombre: "otro", // Siempre inicializar con "otro" en modo creación
-        estado: true,
+        nombre: "", // Vacío porque solo usaremos nombrePersonalizado
+        estado: true, // Siempre activo para nuevos roles
         permisos: initializePermissions(),
-        nombrePersonalizado: "", // Campo para el nombre personalizado
-        isAdminRole: false, // No es rol de administrador en creación
+        nombrePersonalizado: "",
+        isAdminRole: false,
       })
       setEditingId(null)
-      // Al crear, el formulario no es válido inicialmente hasta que se ingrese un nombre personalizado
       setIsFormValid(false)
     }
     setOpen(true)
@@ -818,6 +824,7 @@ const RolesList = () => {
     setFormErrors({
       nombre: "",
       nombrePersonalizado: "",
+      permisos: "",
     })
   }
 
@@ -860,9 +867,16 @@ const RolesList = () => {
         return true
       }
     } else if (name === "nombrePersonalizado") {
-      // Validar el nombre personalizado cuando se está creando un rol o cuando se selecciona "otro"
-      if (formData.nombre === "otro" && !value.trim()) {
-        errorMessage = "El nombre personalizado es obligatorio"
+      if (!editingId && (!value || !value.trim())) {
+        errorMessage = "El nombre del rol es obligatorio"
+      } else if (value && value.length < 6) {
+        errorMessage = "El nombre debe tener al menos 6 caracteres"
+      } else if (value && value.length > 30) {
+        errorMessage = "El nombre no puede exceder 30 caracteres"
+      } else if (value && !/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value)) {
+        errorMessage = "El nombre solo puede contener letras y espacios"
+      } else if (value && checkRoleExists(value.trim(), editingId)) {
+        errorMessage = "Ya existe un rol con este nombre"
       }
     }
 
@@ -885,14 +899,26 @@ const RolesList = () => {
 
   // Validar todo el formulario
   const validateForm = (data) => {
-    // En modo creación, validar que se haya ingresado un nombre personalizado
+    // Verificar si hay al menos un permiso seleccionado
+    const hasPermissions = data.permisos.some(
+      (permiso) =>
+        permiso.acciones.crear || permiso.acciones.leer || permiso.acciones.actualizar || permiso.acciones.eliminar,
+    )
+
     if (!editingId) {
-      // Si estamos creando un nuevo rol, siempre requerimos un nombre personalizado
-      const isValid = data.nombrePersonalizado && data.nombrePersonalizado.trim() !== ""
+      // En modo creación, validar el nombre personalizado y los permisos
+      const isValid =
+        data.nombrePersonalizado &&
+        data.nombrePersonalizado.trim() !== "" &&
+        data.nombrePersonalizado.length >= 6 &&
+        data.nombrePersonalizado.length <= 30 &&
+        /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(data.nombrePersonalizado) &&
+        !checkRoleExists(data.nombrePersonalizado.trim(), editingId) &&
+        hasPermissions
       setIsFormValid(isValid)
     } else {
-      // En modo edición, el formulario siempre es válido
-      setIsFormValid(true)
+      // En modo edición, validar que haya al menos un permiso
+      setIsFormValid(hasPermissions)
     }
   }
 
@@ -996,9 +1022,11 @@ const RolesList = () => {
   const prepareFormData = () => {
     const form = { ...formData }
 
-    // Si estamos en modo creación o el rol es "otro", usar el nombre personalizado
-    if (!editingId || form.nombre === "otro") {
+    // Si estamos en modo creación, usar el nombre personalizado
+    if (!editingId) {
       form.nombre = form.nombrePersonalizado || ""
+      // En modo creación, el estado siempre es true (activo)
+      form.estado = true
     }
 
     // Si el rol es administrador, forzar estado activo
@@ -1019,22 +1047,46 @@ const RolesList = () => {
     const tempErrors = {}
 
     // En modo creación, validar el nombre personalizado
-    if (!editingId || formData.nombre === "otro") {
+    if (!editingId) {
       if (!formData.nombrePersonalizado || !formData.nombrePersonalizado.trim()) {
-        tempErrors.nombrePersonalizado = "El nombre personalizado es obligatorio"
+        tempErrors.nombrePersonalizado = "El nombre del rol es obligatorio"
+      } else if (checkRoleExists(formData.nombrePersonalizado.trim(), editingId)) {
+        tempErrors.nombrePersonalizado = "Ya existe un rol con este nombre"
       }
+    }
+
+    // Verificar si hay al menos un permiso seleccionado
+    const hasPermissions = formData.permisos.some(
+      (permiso) =>
+        permiso.acciones.crear || permiso.acciones.leer || permiso.acciones.actualizar || permiso.acciones.eliminar,
+    )
+
+    if (!hasPermissions) {
+      tempErrors.permisos = "Debe seleccionar al menos un permiso"
     }
 
     // Si hay errores, mostrarlos y detener el envío
     if (Object.keys(tempErrors).length > 0) {
       setFormErrors(tempErrors)
 
-      // Mostrar alerta con el primer error encontrado
-      const firstError = Object.values(tempErrors)[0]
+      // Mostrar alerta específica según el tipo de error
+      let alertTitle = "Error de validación"
+      let alertText = ""
+
+      if (tempErrors.nombrePersonalizado && tempErrors.nombrePersonalizado.includes("Ya existe un rol")) {
+        alertTitle = "Rol duplicado"
+        alertText = `No se puede crear el rol "${formData.nombrePersonalizado}" porque ya existe un rol con este nombre. Por favor, elige un nombre diferente.`
+      } else if (tempErrors.permisos) {
+        alertTitle = "Permisos requeridos"
+        alertText = "Debe seleccionar al menos un permiso para el rol."
+      } else {
+        alertText = Object.values(tempErrors)[0]
+      }
+
       Swal.fire({
         icon: "error",
-        title: "Error de validación",
-        text: firstError,
+        title: alertTitle,
+        text: alertText,
         confirmButtonColor: "#2563eb",
       })
 
@@ -1068,10 +1120,24 @@ const RolesList = () => {
       handleClose()
     } catch (error) {
       console.error("Error saving role", error)
+
+      // Manejar errores específicos del servidor
+      let errorMessage = "Ocurrió un error al guardar el rol."
+
+      if (error.response?.data?.msg) {
+        const serverMessage = error.response.data.msg
+        if (serverMessage.includes("ya existe") || serverMessage.includes("duplicate")) {
+          errorMessage = `No se puede crear el rol "${formData.nombrePersonalizado || formData.nombre}" porque ya existe un rol con este nombre.`
+        } else {
+          errorMessage = serverMessage
+        }
+      }
+
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "Ocurrió un error al guardar el rol.",
+        text: errorMessage,
+        confirmButtonColor: "#2563eb",
       })
     }
   }
@@ -1357,53 +1423,79 @@ const RolesList = () => {
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={6}>
-              {/* Campo de rol: select con opciones predefinidas y opción "otro" */}
-              <TextField
-                select
-                margin="dense"
-                label="Rol"
-                name="nombre"
-                value={formData.nombre}
-                onChange={handleChange}
-                onBlur={handleFieldBlur}
-                onKeyDown={(e) => handleKeyDown(e, "estado")}
-                fullWidth
-                variant="outlined"
-                error={!!formErrors.nombre}
-                required
-                className={classes.formField}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Shield size={20} className={classes.fieldIcon} />
-                    </InputAdornment>
-                  ),
-                }}
-                disabled={!editingId} // Deshabilitar en modo creación
-              >
-                {/* Modificación: Solo mostrar el rol actual en edición o solo "otro" en creación */}
-                {editingId ? (
-                  <MenuItem value={formData.nombre}>{formData.nombre}</MenuItem>
-                ) : (
-                  <MenuItem value="otro">Otro</MenuItem>
-                )}
-              </TextField>
-              {/* Siempre mostrar el campo de nombre personalizado en modo creación */}
-              {(!editingId || formData.nombre === "otro") && (
+            {editingId ? (
+              // En modo edición, mostrar ambos campos
+              <>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    margin="dense"
+                    label="Rol"
+                    value={formData.nombre}
+                    fullWidth
+                    variant="outlined"
+                    className={classes.formField}
+                    InputProps={{
+                      readOnly: true,
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Shield size={20} className={classes.fieldIcon} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    select
+                    margin="dense"
+                    label="Estado"
+                    name="estado"
+                    value={formData.estado}
+                    onChange={handleChange}
+                    fullWidth
+                    variant="outlined"
+                    className={classes.formField}
+                    disabled={formData.isAdminRole} // Deshabilitar si es rol de administrador
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Key size={20} className={classes.fieldIcon} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    helperText={formData.isAdminRole ? "El rol de administrador siempre debe estar activo" : ""}
+                  >
+                    <MenuItem value={true}>Activo</MenuItem>
+                    <MenuItem value={false}>Inactivo</MenuItem>
+                  </TextField>
+                </Grid>
+              </>
+            ) : (
+              // En modo creación, solo mostrar el campo de nombre (sin estado)
+              <Grid item xs={12}>
                 <TextField
                   margin="dense"
-                  label="Nombre personalizado"
+                  label="Nombre del rol"
                   name="nombrePersonalizado"
                   value={formData.nombrePersonalizado || ""}
                   onChange={handleChange}
                   onBlur={handleFieldBlur}
+                  onKeyPress={(e) => {
+                    // Solo permitir letras y espacios
+                    const regex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/
+                    if (!regex.test(e.key)) {
+                      e.preventDefault()
+                    }
+                  }}
                   fullWidth
                   variant="outlined"
                   error={!!formErrors.nombrePersonalizado}
-                  helperText={formErrors.nombrePersonalizado}
+                  helperText={formErrors.nombrePersonalizado || "El rol se creará como activo por defecto"}
                   required
                   className={classes.formField}
+                  inputProps={{
+                    maxLength: 30,
+                  }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -1411,36 +1503,9 @@ const RolesList = () => {
                       </InputAdornment>
                     ),
                   }}
-                  autoFocus // Enfocar automáticamente este campo
                 />
-              )}
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField
-                select
-                margin="dense"
-                label="Estado"
-                name="estado"
-                value={formData.estado}
-                onChange={handleChange}
-                fullWidth
-                variant="outlined"
-                className={classes.formField}
-                disabled={formData.isAdminRole} // Deshabilitar si es rol de administrador
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Key size={20} className={classes.fieldIcon} />
-                    </InputAdornment>
-                  ),
-                }}
-                helperText={formData.isAdminRole ? "El rol de administrador siempre debe estar activo" : ""}
-              >
-                <MenuItem value={true}>Activo</MenuItem>
-                <MenuItem value={false}>Inactivo</MenuItem>
-              </TextField>
-            </Grid>
+              </Grid>
+            )}
           </Grid>
 
           <Box mt={4}>

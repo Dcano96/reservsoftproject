@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   Typography,
   TextField,
@@ -25,7 +25,7 @@ import {
   Chip,
   MenuItem,
 } from "@material-ui/core"
-import { Edit, Delete, Info, X, Search, UserPlus } from "lucide-react"
+import { Edit, Delete, Info, X, Search, UserPlus, Check } from "lucide-react"
 import {
   Person,
   Email,
@@ -38,11 +38,11 @@ import {
 } from "@material-ui/icons"
 import Swal from "sweetalert2"
 import usuarioService from "./usuarios.service"
-import rolesService from "../roles/roles.service" // Importamos el servicio de Roles
+import rolesService from "../roles/roles.service"
 import "./usuarios.styles.css"
 import { makeStyles, withStyles } from "@material-ui/core/styles"
 
-// Expresiones regulares para validaciones
+// Expresiones regulares para validaciones (IDÉNTICAS A CLIENTES)
 const REGEX = {
   SOLO_NUMEROS: /^\d+$/,
   SOLO_LETRAS_ESPACIOS: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/,
@@ -54,7 +54,7 @@ const REGEX = {
   SECUENCIAS_NUMERICAS: /123456|654321|111111|222222|333333|444444|555555|666666|777777|888888|999999|000000/,
 }
 
-// Actualizar las constantes de validación para que coincidan con el controlador
+// Constantes de validación (IDÉNTICAS A CLIENTES)
 const VALIDACION = {
   DOCUMENTO: {
     MIN_LENGTH: 6,
@@ -74,7 +74,7 @@ const VALIDACION = {
   },
 }
 
-// Añadir mensajes instructivos para cada campo
+// Mensajes instructivos (IDÉNTICAS A CLIENTES)
 const MENSAJES_INSTRUCTIVOS = {
   DOCUMENTO: "Ingrese un número de documento entre 6 y 15 dígitos, solo números.",
   NOMBRE: "Ingrese nombre completo entre 6 y 30 caracteres, solo letras y espacios.",
@@ -87,7 +87,7 @@ const MENSAJES_INSTRUCTIVOS = {
 // Personalización de las celdas del encabezado
 const StyledTableCell = withStyles((theme) => ({
   head: {
-    background: "#2563eb", // Cambio a un azul sólido como en la imagen
+    background: "#2563eb",
     color: "#fff",
     fontWeight: 600,
     textTransform: "uppercase",
@@ -127,7 +127,7 @@ const useStyles = makeStyles((theme) => ({
     position: "relative",
     overflow: "hidden",
     width: "100%",
-    maxWidth: "100%", // Changed from 1200px to 100%
+    maxWidth: "100%",
   },
   pageHeader: {
     display: "flex",
@@ -274,7 +274,7 @@ const useStyles = makeStyles((theme) => ({
   userContainer: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "flex-start", // Alineación a la izquierda
+    justifyContent: "flex-start",
     width: "100%",
   },
   pagination: {
@@ -297,16 +297,15 @@ const useStyles = makeStyles((theme) => ({
     color: "#64748b",
     fontSize: "1.1rem",
   },
-  // Estilos actualizados para el modal
   dialogPaper: {
     borderRadius: theme.spacing(1.5),
     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
     overflow: "hidden",
-    width: "600px", // Haciendo el modal más grande
+    width: "600px",
     maxWidth: "90vw",
   },
   dialogTitle: {
-    background: "linear-gradient(135deg, #2563eb, #1d4ed8)", // Mantener el azul como solicitado
+    background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
     color: "#fff",
     padding: theme.spacing(2.5, 3),
     fontSize: "1.4rem",
@@ -371,12 +370,11 @@ const useStyles = makeStyles((theme) => ({
     border: "1px solid #e2e8f0",
   },
   errorMessage: {
-    fontSize: "0.95rem", // Tamaño más grande para los mensajes de error
+    fontSize: "0.95rem",
     color: "#ef4444",
     fontWeight: "500",
     marginTop: "4px",
   },
-  // Nuevos estilos para el diseño del modal
   formSection: {
     marginBottom: theme.spacing(3),
   },
@@ -414,7 +412,6 @@ const useStyles = makeStyles((theme) => ({
   fieldIcon: {
     color: "#64748b",
   },
-  // Estilos para el modal de detalles
   detailsHeader: {
     display: "flex",
     flexDirection: "column",
@@ -467,7 +464,6 @@ const useStyles = makeStyles((theme) => ({
     fontSize: "0.95rem",
     color: "#334155",
   },
-  // Estilos para los estados
   estadoChip: {
     fontWeight: 600,
     padding: theme.spacing(0.5, 0),
@@ -480,7 +476,6 @@ const useStyles = makeStyles((theme) => ({
   estadoInactivo: {
     color: "#ef4444",
   },
-  // Estilo para botones deshabilitados
   disabledButton: {
     opacity: 0.6,
     backgroundColor: "#94a3b8",
@@ -490,15 +485,14 @@ const useStyles = makeStyles((theme) => ({
       boxShadow: "none",
     },
   },
-  // Nuevo estilo para alinear las acciones
   actionsContainer: {
     display: "flex",
     justifyContent: "center",
     gap: theme.spacing(1),
   },
   actionButtonPlaceholder: {
-    width: "40px", // Ancho aproximado de un botón
-    height: "40px", // Alto aproximado de un botón
+    width: "40px",
+    height: "40px",
     visibility: "hidden",
   },
 }))
@@ -510,30 +504,52 @@ const UsuarioList = () => {
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [selectedUsuario, setSelectedUsuario] = useState(null)
   const [editingId, setEditingId] = useState(null)
-  // Campos: nombre, documento, email, teléfono, password y rol
   const [formData, setFormData] = useState({
     nombre: "",
     documento: "",
     email: "",
     telefono: "",
     password: "",
-    rol: "", // Cambiado de "cliente" a cadena vacía para que no asuma ningún rol por defecto
+    rol: "",
+    estado: true,
   })
-  const [searchTerm, setSearchTerm] = useState("")
-  const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(5)
-  const [availableRoles, setAvailableRoles] = useState([])
-  // Estados para validación de formulario
   const [formErrors, setFormErrors] = useState({
     nombre: "",
     documento: "",
     email: "",
     telefono: "",
     password: "",
+    rol: "",
   })
-  const [isFormValid, setIsFormValid] = useState(false)
-  // Estado para controlar si se debe validar el formulario
-  const [shouldValidate, setShouldValidate] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(5)
+  const [availableRoles, setAvailableRoles] = useState([])
+  const [fieldValidation, setFieldValidation] = useState({
+    documento: false,
+    nombre: false,
+    telefono: false,
+    email: false,
+    password: false,
+    rol: false,
+  })
+  const [touched, setTouched] = useState({
+    documento: false,
+    nombre: false,
+    telefono: false,
+    email: false,
+    password: false,
+    rol: false,
+  })
+
+  // Referencias para los campos del formulario (IGUAL QUE CLIENTES)
+  const documentoRef = useRef(null)
+  const nombreRef = useRef(null)
+  const telefonoRef = useRef(null)
+  const emailRef = useRef(null)
+  const passwordRef = useRef(null)
+  const rolRef = useRef(null)
+  const estadoRef = useRef(null)
 
   // Cargar usuarios
   const fetchUsuarios = async () => {
@@ -557,7 +573,6 @@ const UsuarioList = () => {
       const rolesData = await rolesService.getRoles()
       console.log("Respuesta del servicio de roles:", rolesData)
 
-      // Verificar si rolesData es un array válido
       if (Array.isArray(rolesData) && rolesData.length > 0) {
         console.log("Roles válidos encontrados:", rolesData)
         setAvailableRoles(rolesData)
@@ -568,7 +583,6 @@ const UsuarioList = () => {
     } catch (error) {
       console.error("Error fetching roles:", error)
       console.error("Detalles del error:", error.response?.data || error.message)
-      // En caso de error, establecer array vacío en lugar de roles hardcodeados
       setAvailableRoles([])
     }
   }
@@ -578,529 +592,16 @@ const UsuarioList = () => {
     fetchAvailableRoles()
   }, [])
 
-  // Agregar este useEffect después del existente
   useEffect(() => {
     console.log("Available roles updated:", availableRoles)
   }, [availableRoles])
 
-  // Verificar si el usuario es el administrador (David Andres Goez Cano)
+  // Verificar si el usuario es el administrador
   const isAdminUser = (usuario) => {
     return usuario.documento === "1152458310" && usuario.nombre === "David Andres Goez Cano"
   }
 
-  // Abrir modal para crear o editar usuario
-  const handleOpen = (usuario) => {
-    // Activar validación cuando se abre el formulario para crear/editar
-    setShouldValidate(true)
-
-    // Limpiar errores previos
-    setFormErrors({
-      nombre: "",
-      documento: "",
-      email: "",
-      telefono: "",
-      password: "",
-    })
-
-    if (usuario) {
-      const userData = {
-        nombre: usuario.nombre,
-        documento: usuario.documento,
-        email: usuario.email,
-        telefono: usuario.telefono,
-        password: "", // Dejar en blanco para no cambiar la contraseña
-        rol: usuario.rol,
-        estado: usuario.estado,
-      }
-      setFormData(userData)
-      setEditingId(usuario._id)
-      // Al editar, el formulario es válido inicialmente
-      setIsFormValid(true)
-    } else {
-      const newUserData = {
-        nombre: "",
-        documento: "",
-        email: "",
-        telefono: "",
-        password: "",
-        rol: "", // Cambiado a cadena vacía para que no asuma ningún rol por defecto
-        estado: true,
-      }
-      setFormData(newUserData)
-      setEditingId(null)
-      // Al crear, el formulario no es válido inicialmente
-      setIsFormValid(false)
-    }
-    setOpen(true)
-  }
-
-  const handleClose = () => {
-    // Desactivar validación al cerrar el formulario
-    setShouldValidate(false)
-
-    setOpen(false)
-    // Limpiar errores al cerrar
-    setFormErrors({
-      nombre: "",
-      documento: "",
-      email: "",
-      telefono: "",
-      password: "",
-    })
-  }
-
-  // Abrir modal de detalles
-  const handleDetails = (usuario) => {
-    setSelectedUsuario(usuario)
-    setDetailsOpen(true)
-  }
-
-  const handleCloseDetails = () => setDetailsOpen(false)
-
-  // Modificar la función handleChange para que no permita escribir más caracteres de los permitidos
-  // y solo permita los caracteres válidos según el tipo de campo
-
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    let newValue = value
-
-    // Aplicar restricciones según el tipo de campo
-    switch (name) {
-      case "nombre":
-        // Solo letras y espacios
-        const letrasRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/
-        if (!letrasRegex.test(value)) {
-          // No actualizar el estado si el último carácter no es una letra o espacio
-          return
-        }
-        break
-
-      case "documento":
-        // Solo números
-        const numerosRegex = /^[0-9]*$/
-        if (!numerosRegex.test(value)) {
-          // No actualizar el estado si hay caracteres que no son números
-          return
-        }
-
-        if (value.length > VALIDACION.DOCUMENTO.MAX_LENGTH) {
-          newValue = value.substring(0, VALIDACION.DOCUMENTO.MAX_LENGTH)
-        }
-        break
-
-      case "telefono":
-        // Solo números
-        const telefonoRegex = /^[0-9]*$/
-        if (!telefonoRegex.test(value)) {
-          // No actualizar el estado si hay caracteres que no son números
-          return
-        }
-
-        if (value.length > VALIDACION.TELEFONO.MAX_LENGTH) {
-          newValue = value.substring(0, VALIDACION.TELEFONO.MAX_LENGTH)
-        }
-        break
-
-      default:
-        break
-    }
-
-    // Si estamos editando al administrador y se intenta cambiar el email, no permitirlo
-    if (editingId && isAdminUser(formData) && name === "email" && newValue !== formData.email) {
-      Swal.fire({
-        icon: "error",
-        title: "Acción no permitida",
-        text: "No se puede modificar el correo electrónico del usuario administrador",
-        confirmButtonColor: "#2563eb",
-      })
-      return
-    }
-
-    // Si estamos editando al administrador, no permitir cambiar el estado a inactivo
-    if (editingId && isAdminUser(formData) && name === "estado" && newValue === false) {
-      Swal.fire({
-        icon: "error",
-        title: "Acción no permitida",
-        text: "No se puede desactivar al usuario administrador",
-        confirmButtonColor: "#2563eb",
-      })
-      return
-    }
-
-    // Actualizar el estado con el valor filtrado (SIN VALIDAR)
-    setFormData({ ...formData, [name]: newValue })
-  }
-
-  // Función para validar campos individuales
-  const validateField = (name, value, showAlert = false) => {
-    // Si no se debe validar, retornar true sin hacer nada
-    if (!shouldValidate) return true
-
-    let errorMessage = ""
-
-    switch (name) {
-      case "documento":
-        errorMessage = validarDocumento(value)
-        break
-      case "nombre":
-        errorMessage = validarNombre(value)
-        break
-      case "telefono":
-        errorMessage = validarTelefono(value)
-        break
-      case "email":
-        errorMessage = validarEmail(value)
-        break
-      case "password":
-        // Si estamos editando y el campo está vacío, no validamos
-        if (editingId && !value) {
-          errorMessage = ""
-        } else {
-          errorMessage = validarPassword(value, formData.nombre, formData.documento, formData.email)
-        }
-        break
-      default:
-        break
-    }
-
-    // Actualizar el estado de errores
-    setFormErrors((prev) => ({
-      ...prev,
-      [name]: errorMessage,
-    }))
-
-    return !errorMessage // Retorna true si no hay error
-  }
-
-  // Agregar función para manejar el cambio de foco entre campos
-  const handleFieldBlur = (e) => {
-    // Si no se debe validar, no hacer nada
-    if (!shouldValidate) return
-
-    const { name, value } = e.target
-
-    let errorMessage = ""
-    switch (name) {
-      case "documento":
-        errorMessage = validarDocumento(value)
-        break
-      case "nombre":
-        errorMessage = validarNombre(value)
-        break
-      case "telefono":
-        errorMessage = validarTelefono(value)
-        break
-      case "email":
-        errorMessage = validarEmail(value)
-        break
-      case "password":
-        // Si estamos editando y el campo está vacío, no hay error
-        if (editingId && !value) {
-          errorMessage = ""
-        } else {
-          errorMessage = validarPassword(value, formData.nombre, formData.documento, formData.email)
-        }
-        break
-      default:
-        break
-    }
-
-    // Actualizar el estado de errores SOLO para este campo
-    setFormErrors((prev) => ({
-      ...prev,
-      [name]: errorMessage,
-    }))
-
-    // Actualizar el estado de validación del formulario
-    validateForm({
-      ...formData,
-      [name]: value,
-    })
-  }
-
-  // Agregar función para manejar la tecla Tab
-  const handleKeyDown = (e, nextFieldName) => {
-    // Si no se debe validar, no hacer nada
-    if (!shouldValidate) return
-
-    if (e.key === "Tab") {
-      const { name, value } = e.target
-
-      let errorMessage = ""
-      switch (name) {
-        case "documento":
-          errorMessage = validarDocumento(value)
-          break
-        case "nombre":
-          errorMessage = validarNombre(value)
-          break
-        case "telefono":
-          errorMessage = validarTelefono(value)
-          break
-        case "email":
-          errorMessage = validarEmail(value)
-          break
-        case "password":
-          // Si estamos editando y el campo está vacío, no hay error
-          if (editingId && !value) {
-            errorMessage = ""
-          } else {
-            errorMessage = validarPassword(value, formData.nombre, formData.documento, formData.email)
-          }
-          break
-        default:
-          break
-      }
-
-      // Actualizar el estado de errores
-      setFormErrors((prev) => ({
-        ...prev,
-        [name]: errorMessage,
-      }))
-
-      // Si hay error, prevenir el Tab (pero sin mostrar SweetAlert)
-      if (errorMessage) {
-        e.preventDefault()
-      }
-    }
-  }
-
-  // Validar todo el formulario
-  const validateForm = (data) => {
-    const documentoError = validarDocumento(data.documento)
-    const nombreError = validarNombre(data.nombre)
-    const telefonoError = validarTelefono(data.telefono)
-    const emailError = validarEmail(data.email)
-
-    // Para la contraseña, si estamos editando y está vacía, no hay error
-    let passwordError = ""
-    if (!(editingId && !data.password)) {
-      passwordError = validarPassword(data.password, data.nombre, data.documento, data.email)
-    }
-
-    // El formulario es válido si no hay errores
-    const isValid =
-      !documentoError && !nombreError && !telefonoError && !emailError && (editingId ? true : !passwordError)
-    setIsFormValid(isValid)
-
-    return isValid
-  }
-
-  // Guardar cambios (crear o actualizar)
-  const handleSubmit = async () => {
-    // Validar todos los campos antes de enviar y mostrar errores
-    const documentoError = validarDocumento(formData.documento)
-    const nombreError = validarNombre(formData.nombre)
-    const telefonoError = validarTelefono(formData.telefono)
-    const emailError = validarEmail(formData.email)
-
-    // Para la contraseña, si estamos editando y está vacía, no hay error
-    let passwordError = ""
-    if (!(editingId && !formData.password)) {
-      passwordError = validarPassword(formData.password, formData.nombre, formData.documento, formData.email)
-    }
-
-    // Actualizar todos los errores
-    setFormErrors({
-      documento: documentoError,
-      nombre: nombreError,
-      telefono: telefonoError,
-      email: emailError,
-      password: passwordError,
-    })
-
-    // Si hay errores, no continuar
-    const isValid =
-      !documentoError && !nombreError && !telefonoError && !emailError && (editingId ? true : !passwordError)
-
-    if (!isValid) {
-      return
-    }
-
-    // Si estamos editando al administrador, verificar que no se esté desactivando
-    if (editingId && isAdminUser(formData) && formData.estado === false) {
-      Swal.fire({
-        icon: "error",
-        title: "Acción no permitida",
-        text: "No se puede desactivar al usuario administrador",
-        confirmButtonColor: "#2563eb",
-      })
-      return
-    }
-
-    // Si estamos editando al administrador, verificar que no se esté cambiando el email
-    const originalUsuario = usuarios.find((u) => u._id === editingId)
-    if (editingId && isAdminUser(formData) && originalUsuario && formData.email !== originalUsuario.email) {
-      Swal.fire({
-        icon: "error",
-        title: "Acción no permitida",
-        text: "No se puede modificar el correo electrónico del usuario administrador",
-        confirmButtonColor: "#2563eb",
-      })
-      return
-    }
-
-    // Si no hay errores, continuar con el envío
-    try {
-      if (editingId) {
-        // Si la contraseña está vacía, eliminarla del objeto para no actualizarla
-        const dataToSend = { ...formData }
-        if (!dataToSend.password) {
-          delete dataToSend.password
-        }
-
-        await usuarioService.updateUsuario(editingId, dataToSend)
-        Swal.fire({
-          icon: "success",
-          title: "Actualizado",
-          text: "El usuario se actualizó correctamente.",
-          confirmButtonColor: "#2563eb",
-        })
-      } else {
-        await usuarioService.createUsuario(formData)
-        Swal.fire({
-          icon: "success",
-          title: "Creado",
-          text: "El usuario se creó correctamente.",
-          confirmButtonColor: "#2563eb",
-        })
-      }
-      fetchUsuarios()
-      handleClose()
-    } catch (error) {
-      console.error("Error saving usuario", error)
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.response?.data?.msg || "Ocurrió un error al guardar el usuario.",
-      })
-    }
-  }
-
-  // Eliminar usuario
-  const handleDelete = async (id) => {
-    // Verificar si es el usuario administrador
-    const usuarioToDelete = usuarios.find((u) => u._id === id)
-    if (usuarioToDelete && isAdminUser(usuarioToDelete)) {
-      Swal.fire({
-        icon: "error",
-        title: "Acción no permitida",
-        text: "No se puede eliminar al usuario administrador",
-        confirmButtonColor: "#2563eb",
-      })
-      return
-    }
-
-    // Verificar si el usuario tiene un rol asignado
-    if (usuarioToDelete && usuarioToDelete.rol && usuarioToDelete.rol !== "") {
-      Swal.fire({
-        icon: "error",
-        title: "Acción no permitida",
-        text: "Debe quitar el rol del usuario antes de eliminarlo",
-        confirmButtonColor: "#2563eb",
-      })
-      return
-    }
-
-    const confirmDelete = await Swal.fire({
-      title: "¿Eliminar usuario?",
-      text: "Esta acción no se puede deshacer",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Sí, eliminar",
-      cancelButtonText: "Cancelar",
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#64748b",
-    })
-
-    if (confirmDelete.isConfirmed) {
-      try {
-        await usuarioService.deleteUsuario(id)
-        Swal.fire({
-          icon: "success",
-          title: "Eliminado",
-          text: "El usuario se eliminó correctamente.",
-          confirmButtonColor: "#2563eb",
-        })
-        fetchUsuarios()
-      } catch (error) {
-        console.error("Error deleting usuario", error)
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: error.response?.data?.msg || "Ocurrió un error al eliminar el usuario.",
-        })
-      }
-    }
-  }
-
-  // Añadir una nueva función para quitar el rol de un usuario
-  const handleRemoveRole = async (id) => {
-    // Verificar si es el usuario administrador
-    const usuarioToUpdate = usuarios.find((u) => u._id === id)
-    if (usuarioToUpdate && isAdminUser(usuarioToUpdate)) {
-      Swal.fire({
-        icon: "error",
-        title: "Acción no permitida",
-        text: "No se puede quitar el rol al usuario administrador",
-        confirmButtonColor: "#2563eb",
-      })
-      return
-    }
-
-    const confirmRemove = await Swal.fire({
-      title: "¿Quitar rol?",
-      text: "¿Está seguro que desea quitar el rol asignado a este usuario?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Sí, quitar rol",
-      cancelButtonText: "Cancelar",
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#64748b",
-    })
-
-    if (confirmRemove.isConfirmed) {
-      try {
-        // Actualizar el usuario quitando el rol
-        await usuarioService.updateUsuario(id, { rol: "" })
-        Swal.fire({
-          icon: "success",
-          title: "Rol eliminado",
-          text: "El rol del usuario ha sido eliminado correctamente.",
-          confirmButtonColor: "#2563eb",
-        })
-        fetchUsuarios()
-      } catch (error) {
-        console.error("Error removing role", error)
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: error.response?.data?.msg || "Ocurrió un error al quitar el rol del usuario.",
-        })
-      }
-    }
-  }
-
-  // Filtro de búsqueda
-  const filteredUsuarios = usuarios.filter(
-    (usuario) =>
-      usuario.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      usuario.documento.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      usuario.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      usuario.telefono.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
-
-  // Iniciales para el avatar
-  const getInitials = (name) => {
-    return name
-      .split(" ")
-      .map((word) => word[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2)
-  }
-
-  // Funciones de validación mejoradas
+  // FUNCIONES DE VALIDACIÓN IDÉNTICAS A CLIENTES
   const validarDocumento = (value) => {
     if (!value) {
       return "El documento es obligatorio"
@@ -1205,52 +706,39 @@ const UsuarioList = () => {
   }
 
   const validarEmail = (em) => {
-    // Validaciones básicas
     if (!em) return "El correo electrónico es obligatorio"
     if (em.trim() === "") return "El correo electrónico no puede estar vacío"
 
-    // Validación de formato básico
     if (!REGEX.EMAIL.test(em)) return "Formato de correo electrónico inválido"
 
-    // Validación de patrones inválidos específicos
     if (REGEX.EMAIL_INVALIDO.test(em)) return "El correo contiene patrones inválidos (como @.com, @., etc.)"
 
-    // Validación de longitud
     if (em.length < 6) return "El correo debe tener al menos 6 caracteres"
     if (em.length > 50) return "El correo no puede tener más de 50 caracteres"
 
-    // Validación de partes del email
     const [localPart, domainPart] = em.split("@")
 
-    // Validación de la parte local
     if (!localPart || localPart.length < 1) return "La parte local del correo no puede estar vacía"
     if (localPart.length > 64) return "La parte local del correo es demasiado larga"
     if (/^[.-]|[.-]$/.test(localPart)) return "La parte local no puede comenzar ni terminar con puntos o guiones"
 
-    // Validación del dominio
     if (!domainPart || !domainPart.includes("."))
       return "El dominio del correo debe incluir una extensión (ej: .com, .net)"
 
-    // Verificar que el dominio tenga un formato válido y que no haya caracteres después del TLD
-    // Dividir el dominio en partes separadas por puntos
     const domainParts = domainPart.split(".")
 
-    // Verificar que todas las partes del dominio sean válidas
     for (let i = 0; i < domainParts.length; i++) {
       const part = domainParts[i]
-      // Cada parte debe contener al menos un carácter y solo caracteres alfanuméricos o guiones
       if (part.length === 0 || !/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(part)) {
         return "El dominio del correo contiene partes inválidas"
       }
     }
 
-    // Verificar que el TLD sea válido (2-6 caracteres, solo letras)
     const tld = domainParts[domainParts.length - 1]
     if (!tld || tld.length < 2 || tld.length > 6 || !/^[a-zA-Z]+$/.test(tld)) {
       return "La extensión del dominio no es válida o contiene caracteres no permitidos"
     }
 
-    // Validación de dominios temporales o no recomendados
     const dominiosNoRecomendados = ["tempmail", "mailinator", "guerrillamail", "10minutemail", "yopmail"]
     for (const dominio of dominiosNoRecomendados) {
       if (domainPart.toLowerCase().includes(dominio)) return "No se permiten correos de servicios temporales"
@@ -1260,31 +748,25 @@ const UsuarioList = () => {
   }
 
   const validarPassword = (password, nombre = "", documento = "", email = "") => {
-    // Validaciones básicas
     if (!password) return "La contraseña es obligatoria"
     if (password.length < 8) return "La contraseña debe tener al menos 8 caracteres"
     if (password.length > 15) return "La contraseña no puede tener más de 15 caracteres"
 
-    // Validación de complejidad
     if (!/[a-z]/.test(password)) return "La contraseña debe contener al menos una letra minúscula"
     if (!/[A-Z]/.test(password)) return "La contraseña debe contener al menos una letra mayúscula"
     if (!/[0-9]/.test(password)) return "La contraseña debe contener al menos un número"
     if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password))
       return "La contraseña debe contener al menos un carácter especial"
 
-    // Validación de secuencias comunes
     if (REGEX.SECUENCIAS_COMUNES.test(password))
       return "La contraseña no puede contener secuencias comunes o palabras fáciles de adivinar"
 
-    // Validación de caracteres repetidos
     if (REGEX.CARACTERES_REPETIDOS.test(password))
       return "La contraseña no puede contener más de 3 caracteres repetidos consecutivos"
 
-    // Validación de secuencias de teclado
     if (/qwert|asdfg|zxcvb|12345|09876/.test(password.toLowerCase()))
       return "La contraseña no puede contener secuencias de teclado"
 
-    // Validación de relación con otros campos
     if (nombre) {
       const nombreParts = nombre.toLowerCase().split(/\s+/)
       for (const part of nombreParts) {
@@ -1302,6 +784,619 @@ const UsuarioList = () => {
     }
 
     return ""
+  }
+
+  const validarRol = (value) => {
+    if (!value || value.trim() === "") {
+      return "Debe seleccionar un rol para el usuario"
+    }
+    return ""
+  }
+
+  // Función para validar un campo específico (IGUAL QUE CLIENTES)
+  const validateField = (name, value) => {
+    let error = ""
+    const isEditing = !!editingId
+
+    switch (name) {
+      case "documento":
+        error = validarDocumento(value)
+        break
+      case "nombre":
+        error = validarNombre(value)
+        break
+      case "telefono":
+        error = validarTelefono(value)
+        break
+      case "email":
+        error = validarEmail(value)
+        break
+      case "password":
+        error = validarPassword(value, formData.nombre, formData.documento, formData.email)
+        if (isEditing && !value) {
+          error = ""
+        }
+        break
+      case "rol":
+        error = validarRol(value)
+        break
+      default:
+        break
+    }
+
+    setFormErrors((prev) => ({
+      ...prev,
+      [name]: error,
+    }))
+
+    setFieldValidation((prev) => ({
+      ...prev,
+      [name]: !error,
+    }))
+
+    return !error
+  }
+
+  // Manejar el cambio de foco entre campos (IGUAL QUE CLIENTES)
+  const handleFieldBlur = (e) => {
+    const { name, value } = e.target
+
+    setTouched((prev) => ({
+      ...prev,
+      [name]: true,
+    }))
+
+    if (name === "email") {
+      const error = validarEmail(value)
+      setFormErrors((prev) => ({ ...prev, email: error }))
+      setFieldValidation((prev) => ({ ...prev, email: !error }))
+    } else if (name === "password") {
+      if (editingId && !value) {
+        setFormErrors((prev) => ({ ...prev, password: "" }))
+        setFieldValidation((prev) => ({ ...prev, password: true }))
+      } else {
+        const error = validarPassword(value, formData.nombre, formData.documento, formData.email)
+        setFormErrors((prev) => ({ ...prev, password: error }))
+        setFieldValidation((prev) => ({ ...prev, password: !error }))
+      }
+    } else {
+      validateField(name, value)
+    }
+  }
+
+  // Manejar la tecla Enter/Tab para navegar entre campos (IGUAL QUE CLIENTES)
+  const handleKeyDown = (e, nextFieldName) => {
+    const { name, value } = e.target
+
+    if (e.key === "Enter" || e.key === "Tab") {
+      e.preventDefault()
+
+      let isValid = false
+
+      if (name === "email") {
+        const error = validarEmail(value)
+        setFormErrors((prev) => ({ ...prev, email: error }))
+        setFieldValidation((prev) => ({ ...prev, email: !error }))
+        isValid = !error
+      } else if (name === "password") {
+        if (editingId && !value) {
+          setFormErrors((prev) => ({ ...prev, password: "" }))
+          setFieldValidation((prev) => ({ ...prev, password: true }))
+          isValid = true
+        } else {
+          const error = validarPassword(value, formData.nombre, formData.documento, formData.email)
+          setFormErrors((prev) => ({ ...prev, password: error }))
+          setFieldValidation((prev) => ({ ...prev, password: !error }))
+          isValid = !error
+        }
+      } else {
+        isValid = validateField(name, value)
+      }
+
+      if (isValid && nextFieldName) {
+        switch (nextFieldName) {
+          case "nombre":
+            nombreRef.current?.focus()
+            break
+          case "telefono":
+            telefonoRef.current?.focus()
+            break
+          case "email":
+            emailRef.current?.focus()
+            break
+          case "password":
+            passwordRef.current?.focus()
+            break
+          case "rol":
+            rolRef.current?.focus()
+            break
+          case "estado":
+            estadoRef.current?.focus()
+            break
+          default:
+            break
+        }
+      }
+    }
+  }
+
+  // Función handleChange con validaciones en tiempo real (IGUAL QUE CLIENTES)
+  const handleChange = (e) => {
+    const { name, value } = e.target
+
+    setTouched((prev) => ({
+      ...prev,
+      [name]: true,
+    }))
+
+    let updatedValue = value
+
+    if (name === "nombre") {
+      const letrasRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/
+      if (!letrasRegex.test(value)) {
+        return
+      }
+    } else if (name === "documento") {
+      const numerosRegex = /^[0-9]*$/
+      if (!numerosRegex.test(value)) {
+        return
+      }
+
+      if (value.length > VALIDACION.DOCUMENTO.MAX_LENGTH) {
+        updatedValue = value.substring(0, VALIDACION.DOCUMENTO.MAX_LENGTH)
+      }
+    } else if (name === "telefono") {
+      const numerosRegex = /^[0-9]*$/
+      if (!numerosRegex.test(value)) {
+        return
+      }
+
+      if (value.length > VALIDACION.TELEFONO.MAX_LENGTH) {
+        updatedValue = value.substring(0, VALIDACION.TELEFONO.MAX_LENGTH)
+      }
+    } else if (name === "email") {
+      const emailRegex = /^[a-zA-Z0-9._%+-]*@?[a-zA-Z0-9.-]*\.?[a-zA-Z]*$/
+      if (!emailRegex.test(value)) {
+        return
+      }
+
+      if (value.includes("@@") || value.includes("..") || value.includes(".@") || value.includes("@.")) {
+        return
+      }
+
+      const atCount = (value.match(/@/g) || []).length
+      if (atCount > 1) {
+        return
+      }
+
+      if (formData.email.includes("@") && formData.email.includes(".")) {
+        const currentParts = formData.email.split("@")
+        const newParts = value.split("@")
+
+        if (currentParts.length > 1 && newParts.length > 1) {
+          const currentDomain = currentParts[1]
+          const newDomain = newParts[1]
+
+          const completeTLDs = [".com", ".net", ".org", ".edu", ".gov", ".mil", ".int"]
+
+          const hasTLDComplete = completeTLDs.some((tld) => currentDomain.endsWith(tld))
+
+          if (hasTLDComplete && newDomain.length > currentDomain.length) {
+            return
+          }
+        }
+      }
+    } else if (name === "password" && value.length > VALIDACION.CONTRASENA.MAX_LENGTH) {
+      updatedValue = value.substring(0, VALIDACION.CONTRASENA.MAX_LENGTH)
+    }
+
+    // Si estamos editando al administrador y se intenta cambiar el email, no permitirlo
+    if (editingId && isAdminUser(formData) && name === "email" && updatedValue !== formData.email) {
+      Swal.fire({
+        icon: "error",
+        title: "Acción no permitida",
+        text: "No se puede modificar el correo electrónico del usuario administrador",
+        confirmButtonColor: "#2563eb",
+      })
+      return
+    }
+
+    // Si estamos editando al administrador, no permitir cambiar el estado a inactivo
+    if (editingId && isAdminUser(formData) && name === "estado" && updatedValue === false) {
+      Swal.fire({
+        icon: "error",
+        title: "Acción no permitida",
+        text: "No se puede desactivar al usuario administrador",
+        confirmButtonColor: "#2563eb",
+      })
+      return
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: updatedValue,
+    }))
+
+    // Validar todos los campos en tiempo real
+    let error = ""
+    const isEditing = !!editingId
+
+    switch (name) {
+      case "documento":
+        error = validarDocumento(updatedValue)
+        break
+      case "nombre":
+        error = validarNombre(updatedValue)
+        break
+      case "telefono":
+        error = validarTelefono(updatedValue)
+        break
+      case "email":
+        error = validarEmail(updatedValue)
+        break
+      case "password":
+        if (isEditing && !updatedValue) {
+          error = ""
+        } else {
+          error = validarPassword(updatedValue, formData.nombre, formData.documento, formData.email)
+        }
+        break
+      case "rol":
+        error = validarRol(updatedValue)
+        break
+      default:
+        break
+    }
+
+    setFormErrors((prev) => ({
+      ...prev,
+      [name]: error,
+    }))
+
+    setFieldValidation((prev) => ({
+      ...prev,
+      [name]: !error,
+    }))
+  }
+
+  // Validar todo el formulario (IGUAL QUE CLIENTES)
+  const validateForm = () => {
+    setTouched({
+      documento: true,
+      nombre: true,
+      telefono: true,
+      email: true,
+      password: true,
+      rol: true,
+    })
+
+    const documentoError = validarDocumento(formData.documento)
+    const nombreError = validarNombre(formData.nombre)
+    const telefonoError = validarTelefono(formData.telefono)
+    const emailError = validarEmail(formData.email)
+
+    let passwordError = ""
+    if (!(editingId && !formData.password)) {
+      passwordError = validarPassword(formData.password, formData.nombre, formData.documento, formData.email)
+    }
+
+    const rolError = validarRol(formData.rol)
+
+    setFormErrors({
+      documento: documentoError,
+      nombre: nombreError,
+      telefono: telefonoError,
+      email: emailError,
+      password: passwordError,
+      rol: rolError,
+    })
+
+    setFieldValidation({
+      documento: !documentoError,
+      nombre: !nombreError,
+      telefono: !telefonoError,
+      email: !emailError,
+      password: editingId ? true : !passwordError,
+      rol: !rolError,
+    })
+
+    return (
+      !documentoError &&
+      !nombreError &&
+      !telefonoError &&
+      !emailError &&
+      (editingId ? true : !passwordError) &&
+      !rolError
+    )
+  }
+
+  // Abrir modal para crear o editar usuario (ACTUALIZADO CON VALIDACIONES)
+  const handleOpen = (usuario) => {
+    // Reset form errors and validation states (IGUAL QUE CLIENTES)
+    setFormErrors({
+      nombre: "",
+      documento: "",
+      email: "",
+      telefono: "",
+      password: "",
+      rol: "",
+    })
+    setFieldValidation({
+      documento: false,
+      nombre: false,
+      telefono: false,
+      email: false,
+      password: false,
+      rol: false,
+    })
+    setTouched({
+      documento: false,
+      nombre: false,
+      telefono: false,
+      email: false,
+      password: false,
+      rol: false,
+    })
+
+    if (usuario) {
+      setFormData({
+        nombre: usuario.nombre,
+        documento: usuario.documento,
+        email: usuario.email,
+        telefono: usuario.telefono,
+        password: "",
+        rol: usuario.rol,
+        estado: usuario.estado,
+      })
+      setEditingId(usuario._id)
+      // Si estamos editando, consideramos los campos existentes como válidos
+      setFieldValidation({
+        documento: true,
+        nombre: true,
+        telefono: true,
+        email: true,
+        password: true,
+        rol: true,
+      })
+    } else {
+      setFormData({
+        nombre: "",
+        documento: "",
+        email: "",
+        telefono: "",
+        password: "",
+        rol: "",
+        estado: true,
+      })
+      setEditingId(null)
+    }
+    setOpen(true)
+
+    // Enfocar el primer campo después de que el modal se abra
+    setTimeout(() => {
+      if (documentoRef.current) {
+        documentoRef.current.focus()
+      }
+    }, 100)
+  }
+
+  const handleClose = () => {
+    setOpen(false)
+    setFormErrors({
+      nombre: "",
+      documento: "",
+      email: "",
+      telefono: "",
+      password: "",
+      rol: "",
+    })
+  }
+
+  const handleDetails = (usuario) => {
+    setSelectedUsuario(usuario)
+    setDetailsOpen(true)
+  }
+
+  const handleCloseDetails = () => setDetailsOpen(false)
+
+  // Guardar cambios (ACTUALIZADO CON VALIDACIONES)
+  const handleSubmit = async () => {
+    const isValid = validateForm()
+
+    if (!isValid) {
+      if (!fieldValidation.documento) {
+        documentoRef.current?.focus()
+      } else if (!fieldValidation.nombre) {
+        nombreRef.current?.focus()
+      } else if (!fieldValidation.telefono) {
+        telefonoRef.current?.focus()
+      } else if (!fieldValidation.email) {
+        emailRef.current?.focus()
+      } else if (!fieldValidation.password && !editingId) {
+        passwordRef.current?.focus()
+      } else if (!fieldValidation.rol) {
+        rolRef.current?.focus()
+      }
+      return
+    }
+
+    // Si estamos editando al administrador, verificar que no se esté desactivando
+    if (editingId && isAdminUser(formData) && formData.estado === false) {
+      Swal.fire({
+        icon: "error",
+        title: "Acción no permitida",
+        text: "No se puede desactivar al usuario administrador",
+        confirmButtonColor: "#2563eb",
+      })
+      return
+    }
+
+    // Si estamos editando al administrador, verificar que no se esté cambiando el email
+    const originalUsuario = usuarios.find((u) => u._id === editingId)
+    if (editingId && isAdminUser(formData) && originalUsuario && formData.email !== originalUsuario.email) {
+      Swal.fire({
+        icon: "error",
+        title: "Acción no permitida",
+        text: "No se puede modificar el correo electrónico del usuario administrador",
+        confirmButtonColor: "#2563eb",
+      })
+      return
+    }
+
+    try {
+      if (editingId) {
+        const dataToSend = { ...formData }
+        if (!dataToSend.password) {
+          delete dataToSend.password
+        }
+
+        await usuarioService.updateUsuario(editingId, dataToSend)
+        Swal.fire({
+          icon: "success",
+          title: "Actualizado",
+          text: "El usuario se actualizó correctamente.",
+          confirmButtonColor: "#2563eb",
+        })
+      } else {
+        const dataToSend = { ...formData, estado: true }
+        await usuarioService.createUsuario(dataToSend)
+        Swal.fire({
+          icon: "success",
+          title: "Creado",
+          text: "El usuario se creó correctamente.",
+          confirmButtonColor: "#2563eb",
+        })
+      }
+      fetchUsuarios()
+      handleClose()
+    } catch (error) {
+      console.error("Error saving usuario", error)
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.msg || "Ocurrió un error al guardar el usuario.",
+      })
+    }
+  }
+
+  // Eliminar usuario
+  const handleDelete = async (id) => {
+    const usuarioToDelete = usuarios.find((u) => u._id === id)
+    if (usuarioToDelete && isAdminUser(usuarioToDelete)) {
+      Swal.fire({
+        icon: "error",
+        title: "Acción no permitida",
+        text: "No se puede eliminar al usuario administrador",
+        confirmButtonColor: "#2563eb",
+      })
+      return
+    }
+
+    if (usuarioToDelete && usuarioToDelete.rol && usuarioToDelete.rol !== "") {
+      Swal.fire({
+        icon: "error",
+        title: "Acción no permitida",
+        text: "Debe quitar el rol del usuario antes de eliminarlo",
+        confirmButtonColor: "#2563eb",
+      })
+      return
+    }
+
+    const confirmDelete = await Swal.fire({
+      title: "¿Eliminar usuario?",
+      text: "Esta acción no se puede deshacer",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#64748b",
+    })
+
+    if (confirmDelete.isConfirmed) {
+      try {
+        await usuarioService.deleteUsuario(id)
+        Swal.fire({
+          icon: "success",
+          title: "Eliminado",
+          text: "El usuario se eliminó correctamente.",
+          confirmButtonColor: "#2563eb",
+        })
+        fetchUsuarios()
+      } catch (error) {
+        console.error("Error deleting usuario", error)
+        Swal.fire({
+          icon: "error",
+          title: "No se puede eliminar",
+          text: error.response?.data?.msg || "Ocurrió un error al eliminar el usuario.",
+          confirmButtonColor: "#2563eb",
+        })
+      }
+    }
+  }
+
+  // Quitar el rol de un usuario
+  const handleRemoveRole = async (id) => {
+    const usuarioToUpdate = usuarios.find((u) => u._id === id)
+    if (usuarioToUpdate && isAdminUser(usuarioToUpdate)) {
+      Swal.fire({
+        icon: "error",
+        title: "Acción no permitida",
+        text: "No se puede quitar el rol al usuario administrador",
+        confirmButtonColor: "#2563eb",
+      })
+      return
+    }
+
+    const confirmRemove = await Swal.fire({
+      title: "¿Quitar rol?",
+      text: "¿Está seguro que desea quitar el rol asignado a este usuario?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Sí, quitar rol",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#64748b",
+    })
+
+    if (confirmRemove.isConfirmed) {
+      try {
+        await usuarioService.updateUsuario(id, { rol: "" })
+        Swal.fire({
+          icon: "success",
+          title: "Rol eliminado",
+          text: "El rol del usuario ha sido eliminado correctamente.",
+          confirmButtonColor: "#2563eb",
+        })
+        fetchUsuarios()
+      } catch (error) {
+        console.error("Error removing role", error)
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.response?.data?.msg || "Ocurrió un error al quitar el rol del usuario.",
+        })
+      }
+    }
+  }
+
+  // Filtro de búsqueda
+  const filteredUsuarios = usuarios.filter(
+    (usuario) =>
+      usuario.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      usuario.documento.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      usuario.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      usuario.telefono.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+
+  // Iniciales para el avatar
+  const getInitials = (name) => {
+    return name
+      .split(" ")
+      .map((word) => word[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2)
   }
 
   return (
@@ -1374,12 +1469,11 @@ const UsuarioList = () => {
                 <TableCell className={classes.tableCell}>{usuario.documento}</TableCell>
                 <TableCell className={classes.tableCell}>{usuario.email}</TableCell>
                 <TableCell className={classes.tableCell}>{usuario.telefono}</TableCell>
-                <TableCell className={classes.tableCell}>{usuario.rol || "Sin rol"}</TableCell>
+                <TableCell className={classes.tableCell}>{usuario.rol || "No asignado"}</TableCell>
                 <TableCell className={classes.tableCell}>{usuario.estado ? "Activo" : "Inactivo"}</TableCell>
 
                 <TableCell className={`${classes.tableCell} ${classes.actionsCell}`}>
                   <Box className={classes.actionsContainer}>
-                    {/* Botón de editar - siempre visible */}
                     <Tooltip title="Editar usuario">
                       <IconButton
                         className={`${classes.actionButton} ${classes.btnEdit}`}
@@ -1389,7 +1483,6 @@ const UsuarioList = () => {
                       </IconButton>
                     </Tooltip>
 
-                    {/* Botón de detalles - siempre visible */}
                     <Tooltip title="Ver detalles">
                       <IconButton
                         className={`${classes.actionButton} ${classes.btnDetails}`}
@@ -1399,7 +1492,6 @@ const UsuarioList = () => {
                       </IconButton>
                     </Tooltip>
 
-                    {/* Botón de quitar rol - visible solo para usuarios con rol que NO sean administrador */}
                     {usuario.rol && !isAdminUser(usuario) ? (
                       <Tooltip title="Quitar rol">
                         <IconButton
@@ -1413,7 +1505,6 @@ const UsuarioList = () => {
                       <div className={classes.actionButtonPlaceholder}></div>
                     )}
 
-                    {/* Botón de eliminar - visible solo si no tiene rol y no es administrador */}
                     {!isAdminUser(usuario) && (!usuario.rol || usuario.rol === "") ? (
                       <Tooltip title="Eliminar usuario">
                         <IconButton
@@ -1456,50 +1547,44 @@ const UsuarioList = () => {
         className={classes.pagination}
       />
 
-      {/* Modal para crear/editar usuario - Diseño actualizado */}
+      {/* Modal para crear/editar usuario - CON VALIDACIONES COMPLETAS */}
       <Dialog
         open={open}
-        onClose={(event, reason) => {
-          // Solo permitir cerrar con el botón X o el botón Cerrar
-          if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
-            handleClose()
-          }
-        }}
-        disableBackdropClick={true}
-        disableEscapeKeyDown={true}
-        fullWidth
+        onClose={handleClose}
         maxWidth="sm"
+        fullWidth
         classes={{ paper: classes.dialogPaper }}
+        aria-labelledby="form-dialog-title"
       >
-        <DialogTitle className={classes.dialogTitle}>
-          {editingId ? "Editar Usuario" : "Agregar Usuario"}
-          <IconButton onClick={handleClose} className={classes.closeButton}>
+        <DialogTitle id="form-dialog-title" className={classes.dialogTitle}>
+          {editingId ? "Editar Usuario" : "Nuevo Usuario"}
+          <IconButton aria-label="close" className={classes.closeButton} onClick={handleClose}>
             <X size={20} />
           </IconButton>
         </DialogTitle>
         <DialogContent className={classes.dialogContent}>
-          {/* Sección de Información Personal */}
-          <Box className={classes.formSection}>
+          <div className={classes.formSection}>
             <Typography className={classes.sectionTitle}>
               <AccountCircle />
               Información Personal
             </Typography>
-
-            {/* Documento como primer campo */}
             <TextField
-              className={classes.formField}
+              autoFocus
               margin="dense"
-              label="Documento"
+              id="documento"
               name="documento"
+              label="Documento"
+              type="text"
+              fullWidth
+              variant="outlined"
               value={formData.documento}
               onChange={handleChange}
               onBlur={handleFieldBlur}
               onKeyDown={(e) => handleKeyDown(e, "nombre")}
-              fullWidth
-              variant="outlined"
               error={!!formErrors.documento}
               helperText={formErrors.documento || MENSAJES_INSTRUCTIVOS.DOCUMENTO}
-              required
+              inputRef={documentoRef}
+              className={classes.formField}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -1507,22 +1592,24 @@ const UsuarioList = () => {
                   </InputAdornment>
                 ),
               }}
+              inputProps={{ maxLength: VALIDACION.DOCUMENTO.MAX_LENGTH }}
             />
-
             <TextField
-              className={classes.formField}
               margin="dense"
-              label="Nombre"
+              id="nombre"
               name="nombre"
+              label="Nombre Completo"
+              type="text"
+              fullWidth
+              variant="outlined"
               value={formData.nombre}
               onChange={handleChange}
               onBlur={handleFieldBlur}
-              onKeyDown={(e) => handleKeyDown(e, "email")}
-              fullWidth
-              variant="outlined"
+              onKeyDown={(e) => handleKeyDown(e, "telefono")}
               error={!!formErrors.nombre}
               helperText={formErrors.nombre || MENSAJES_INSTRUCTIVOS.NOMBRE}
-              required
+              inputRef={nombreRef}
+              className={classes.formField}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -1530,57 +1617,31 @@ const UsuarioList = () => {
                   </InputAdornment>
                 ),
               }}
+              inputProps={{ maxLength: VALIDACION.NOMBRE.MAX_LENGTH }}
             />
-          </Box>
+          </div>
 
-          {/* Sección de Contacto */}
-          <Box className={classes.formSection}>
+          <div className={classes.formSection}>
             <Typography className={classes.sectionTitle}>
               <ContactMail />
-              Contacto
+              Información de Contacto
             </Typography>
             <TextField
-              className={classes.formField}
               margin="dense"
-              label="Email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              onBlur={handleFieldBlur}
-              onKeyDown={(e) => handleKeyDown(e, "telefono")}
+              id="telefono"
+              name="telefono"
+              label="Teléfono"
+              type="tel"
               fullWidth
               variant="outlined"
-              error={!!formErrors.email}
-              helperText={
-                formErrors.email ||
-                MENSAJES_INSTRUCTIVOS.EMAIL ||
-                (editingId && isAdminUser(formData) ? "El email del administrador no se puede modificar" : "")
-              }
-              required
-              type="email"
-              disabled={editingId && isAdminUser(formData)} // Deshabilitar el campo si es el administrador
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Email className={classes.fieldIcon} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <TextField
-              className={classes.formField}
-              margin="dense"
-              label="Teléfono"
-              name="telefono"
               value={formData.telefono}
               onChange={handleChange}
               onBlur={handleFieldBlur}
-              onKeyDown={(e) => handleKeyDown(e, "password")}
-              fullWidth
-              variant="outlined"
+              onKeyDown={(e) => handleKeyDown(e, "email")}
               error={!!formErrors.telefono}
               helperText={formErrors.telefono || MENSAJES_INSTRUCTIVOS.TELEFONO}
-              required
+              inputRef={telefonoRef}
+              className={classes.formField}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -1588,30 +1649,61 @@ const UsuarioList = () => {
                   </InputAdornment>
                 ),
               }}
+              inputProps={{ maxLength: VALIDACION.TELEFONO.MAX_LENGTH }}
             />
-          </Box>
+            <TextField
+              margin="dense"
+              id="email"
+              name="email"
+              label="Email"
+              type="email"
+              fullWidth
+              variant="outlined"
+              value={formData.email}
+              onChange={handleChange}
+              onBlur={handleFieldBlur}
+              onKeyDown={(e) => handleKeyDown(e, "password")}
+              error={!!formErrors.email}
+              helperText={
+                formErrors.email ||
+                MENSAJES_INSTRUCTIVOS.EMAIL ||
+                (editingId && isAdminUser(formData) ? "El email del administrador no se puede modificar" : "")
+              }
+              inputRef={emailRef}
+              className={classes.formField}
+              disabled={editingId && isAdminUser(formData)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Email className={classes.fieldIcon} />
+                  </InputAdornment>
+                ),
+              }}
+              inputProps={{ maxLength: 50 }}
+            />
+          </div>
 
-          {/* Sección de Seguridad */}
-          <Box className={classes.formSection}>
+          <div className={classes.formSection}>
             <Typography className={classes.sectionTitle}>
               <VpnKey />
-              Seguridad
+              Seguridad y Rol
             </Typography>
             <TextField
-              className={classes.formField}
               margin="dense"
-              label={editingId ? "Contraseña (dejar en blanco para no cambiar)" : "Contraseña"}
+              id="password"
               name="password"
+              label={editingId ? "Contraseña (dejar en blanco para no cambiar)" : "Contraseña"}
+              type="password"
+              fullWidth
+              variant="outlined"
               value={formData.password}
               onChange={handleChange}
               onBlur={handleFieldBlur}
               onKeyDown={(e) => handleKeyDown(e, "rol")}
-              fullWidth
-              variant="outlined"
               error={!!formErrors.password}
               helperText={formErrors.password || MENSAJES_INSTRUCTIVOS.PASSWORD}
-              required={!editingId}
-              type="password"
+              inputRef={passwordRef}
+              className={classes.formField}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -1619,15 +1711,8 @@ const UsuarioList = () => {
                   </InputAdornment>
                 ),
               }}
+              inputProps={{ maxLength: VALIDACION.CONTRASENA.MAX_LENGTH }}
             />
-          </Box>
-
-          {/* Sección de Rol */}
-          <Box className={classes.formSection}>
-            <Typography className={classes.sectionTitle}>
-              <AssignmentInd />
-              Rol y Estado
-            </Typography>
             <TextField
               className={classes.formField}
               select
@@ -1636,13 +1721,20 @@ const UsuarioList = () => {
               name="rol"
               value={formData.rol}
               onChange={handleChange}
+              onBlur={handleFieldBlur}
+              onKeyDown={(e) => handleKeyDown(e, "estado")}
               fullWidth
               variant="outlined"
               disabled={editingId && isAdminUser(formData)}
+              inputRef={rolRef}
+              error={!!formErrors.rol}
               helperText={
-                availableRoles.length > 0
-                  ? `${availableRoles.length} roles disponibles: ${availableRoles.map((r) => r.nombre).join(", ")}`
-                  : "Cargando roles..."
+                formErrors.rol ||
+                (availableRoles.length > 0
+                  ? editingId
+                    ? `Rol obligatorio. ${availableRoles.length} roles disponibles: ${availableRoles.map((r) => r.nombre).join(", ")}`
+                    : `Rol obligatorio. El usuario se creará como activo por defecto. ${availableRoles.length} roles disponibles: ${availableRoles.map((r) => r.nombre).join(", ")}`
+                  : "Cargando roles...")
               }
               InputProps={{
                 startAdornment: (
@@ -1652,49 +1744,49 @@ const UsuarioList = () => {
                 ),
               }}
             >
-              {/* Solo mostrar "Sin rol" si hay roles disponibles */}
-              {availableRoles.length > 0 && <MenuItem value="">Sin rol</MenuItem>}
-              {availableRoles.map((rol) => (
-                <MenuItem key={rol._id} value={rol.nombre}>
-                  {rol.nombre}
-                </MenuItem>
-              ))}
-              {/* Mostrar mensaje si no hay roles */}
-              {availableRoles.length === 0 && (
+              {availableRoles.length > 0 ? (
+                availableRoles.map((rol) => (
+                  <MenuItem key={rol._id} value={rol.nombre}>
+                    {rol.nombre}
+                  </MenuItem>
+                ))
+              ) : (
                 <MenuItem value="" disabled>
                   No hay roles disponibles
                 </MenuItem>
               )}
             </TextField>
 
-            {/* Campo de estado (activo/inactivo) */}
-            <TextField
-              className={classes.formField}
-              select
-              margin="dense"
-              label="Estado"
-              name="estado"
-              value={formData.estado}
-              onChange={handleChange}
-              fullWidth
-              variant="outlined"
-              disabled={editingId && isAdminUser(formData)} // Deshabilitar el campo si es el administrador
-            >
-              <MenuItem value={true}>Activo</MenuItem>
-              <MenuItem value={false}>Inactivo</MenuItem>
-            </TextField>
-          </Box>
+            {/* Campo de estado (activo/inactivo) - SOLO EN MODO EDICIÓN */}
+            {editingId && (
+              <TextField
+                className={classes.formField}
+                select
+                margin="dense"
+                label="Estado"
+                name="estado"
+                value={formData.estado}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+                disabled={editingId && isAdminUser(formData)}
+                inputRef={estadoRef}
+                helperText={
+                  editingId && isAdminUser(formData) ? "El estado del administrador no se puede modificar" : ""
+                }
+              >
+                <MenuItem value={true}>Activo</MenuItem>
+                <MenuItem value={false}>Inactivo</MenuItem>
+              </TextField>
+            )}
+          </div>
         </DialogContent>
         <DialogActions className={classes.dialogActions}>
           <Button onClick={handleClose} className={classes.cancelButton}>
             Cancelar
           </Button>
-          <Button
-            onClick={handleSubmit}
-            className={classes.submitButton}
-            disabled={shouldValidate && (!isFormValid || Object.values(formErrors).some((error) => error !== ""))}
-          >
-            {editingId ? "Actualizar" : "Crear"}
+          <Button onClick={handleSubmit} className={classes.submitButton} startIcon={<Check size={18} />}>
+            {editingId ? "Actualizar" : "Guardar"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1779,6 +1871,7 @@ const UsuarioList = () => {
               handleOpen(selectedUsuario)
             }}
             className={classes.submitButton}
+            startIcon={<Edit size={18} />}
           >
             Editar
           </Button>

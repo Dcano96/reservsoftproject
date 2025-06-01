@@ -21,8 +21,7 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-  FormControlLabel,
-  Switch,
+  MenuItem,
   Grid,
 } from "@material-ui/core"
 // Cambiar la importación de iconos para usar Delete en lugar de Trash2
@@ -587,7 +586,7 @@ const ClienteList = () => {
         email: "",
         telefono: "",
         password: "",
-        estado: true,
+        estado: true, // Se mantiene para el backend, pero no se muestra en el formulario
       })
       setEditingId(null)
     }
@@ -1185,7 +1184,9 @@ const ClienteList = () => {
           confirmButtonColor: "#2563eb",
         })
       } else {
-        await clienteService.createCliente(formData)
+        // Al crear un nuevo cliente, asegurar que el estado sea true (activo por defecto)
+        const dataToSend = { ...formData, estado: true }
+        await clienteService.createCliente(dataToSend)
         Swal.fire({
           icon: "success",
           title: "Creado",
@@ -1522,7 +1523,7 @@ const ClienteList = () => {
           <div className={classes.formSection}>
             <Typography className={classes.sectionTitle}>
               <Key size={20} />
-              Seguridad y Estado
+              Seguridad{editingId ? " y Estado" : ""}
             </Typography>
             <TextField
               margin="dense"
@@ -1535,7 +1536,7 @@ const ClienteList = () => {
               value={formData.password}
               onChange={handleChange}
               onBlur={handleFieldBlur}
-              onKeyDown={(e) => handleKeyDown(e, "estado")}
+              onKeyDown={(e) => handleKeyDown(e, editingId ? "estado" : null)}
               error={!!formErrors.password}
               helperText={formErrors.password || MENSAJES_INSTRUCTIVOS.PASSWORD}
               inputRef={passwordRef}
@@ -1549,18 +1550,28 @@ const ClienteList = () => {
               }}
               inputProps={{ maxLength: VALIDACION.CONTRASENA.MAX_LENGTH }}
             />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.estado}
-                  onChange={(e) => setFormData({ ...formData, estado: e.target.checked })}
-                  name="estado"
-                  color="primary"
-                  inputRef={estadoRef}
-                />
-              }
-              label="Cliente Activo"
-            />
+
+            {/* Campo de estado - SOLO EN MODO EDICIÓN (igual que usuarios) */}
+            {editingId && (
+              <TextField
+                className={classes.formField}
+                select
+                margin="dense"
+                label="Estado"
+                name="estado"
+                value={formData.estado}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+                inputRef={estadoRef}
+                helperText={
+                  editingId ? "Cambiar el estado del cliente" : "El cliente se creará como activo por defecto"
+                }
+              >
+                <MenuItem value={true}>Activo</MenuItem>
+                <MenuItem value={false}>Inactivo</MenuItem>
+              </TextField>
+            )}
           </div>
         </DialogContent>
         <DialogActions className={classes.dialogActions}>
