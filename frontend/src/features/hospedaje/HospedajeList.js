@@ -46,6 +46,7 @@ import {
   ArrowUpIcon as ArrowBack,
   ArrowUpIcon as ArrowForward,
   Check,
+  Trash2,
 } from "lucide-react"
 import {
   Person,
@@ -75,7 +76,7 @@ import { makeStyles, withStyles } from "@material-ui/core/styles"
 // Personalización de las celdas del encabezado
 const StyledTableCell = withStyles((theme) => ({
   head: {
-    background: "#2563eb", // Cambio a un azul sólido como en la imagen
+    background: "#2563eb",
     color: "#fff",
     fontWeight: 600,
     textTransform: "uppercase",
@@ -115,7 +116,7 @@ const useStyles = makeStyles((theme) => ({
     position: "relative",
     overflow: "hidden",
     width: "100%",
-    maxWidth: "100%", // Changed from 1200px to 100%
+    maxWidth: "100%",
   },
   pageHeader: {
     display: "flex",
@@ -160,7 +161,7 @@ const useStyles = makeStyles((theme) => ({
     background: "#fff",
     borderRadius: theme.spacing(1),
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-    minWidth: "280px", // Ancho mínimo para evitar que el texto se corte
+    minWidth: "280px",
     "& .MuiOutlinedInput-root": {
       borderRadius: theme.spacing(1),
       "&:hover .MuiOutlinedInput-notchedOutline": {
@@ -172,16 +173,16 @@ const useStyles = makeStyles((theme) => ({
       },
     },
     "& .MuiInputLabel-outlined": {
-      transform: "translate(14px, 14px) scale(1)", // Ajustar posición de la etiqueta
+      transform: "translate(14px, 14px) scale(1)",
       "&.MuiInputLabel-shrink": {
-        transform: "translate(14px, -6px) scale(0.75)", // Ajustar posición cuando está reducida
+        transform: "translate(14px, -6px) scale(0.75)",
       },
     },
     "& .MuiOutlinedInput-input": {
-      padding: "12px 14px 12px 0", // Ajustar padding del input
+      padding: "12px 14px 12px 0",
     },
     [theme.breakpoints.down("xs")]: {
-      width: "100%", // En móviles, ocupar todo el ancho
+      width: "100%",
     },
   },
   addButton: {
@@ -246,9 +247,9 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   checkedInRow: {
-    backgroundColor: "rgba(220, 252, 231, 0.7) !important", // Verde claro para filas con check-in
+    backgroundColor: "rgba(220, 252, 231, 0.7) !important", // Changed back to green
     "&:hover": {
-      backgroundColor: "rgba(220, 252, 231, 0.9) !important",
+      backgroundColor: "rgba(220, 252, 231, 0.9) !important", // Changed back to green
     },
   },
   tableCell: {
@@ -308,18 +309,18 @@ const useStyles = makeStyles((theme) => ({
     marginRight: theme.spacing(1),
   },
   checkedInAvatar: {
-    backgroundColor: "#10b981", // Avatar verde para clientes con check-in
+    backgroundColor: "#10b981", // Changed back to green
   },
   hospedajeContainer: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "flex-start", // Alineación a la izquierda
+    justifyContent: "flex-start",
     width: "100%",
   },
   checkInIndicator: {
     display: "flex",
     alignItems: "center",
-    color: "#10b981",
+    color: "#10b981", // Changed back to green
     fontWeight: 600,
     "& svg": {
       marginRight: theme.spacing(0.5),
@@ -346,24 +347,31 @@ const useStyles = makeStyles((theme) => ({
     color: "#64748b",
     fontSize: "1.1rem",
   },
-  // Estilos actualizados para el modal
+  // Estilos optimizados para modales más pequeños y manejables
   dialogPaper: {
     borderRadius: theme.spacing(1.5),
     boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
     overflow: "hidden",
+    width: "90vw",
+    maxWidth: "900px",
+    height: "85vh", // Increased height
+    maxHeight: "800px", // Increased max height
+    margin: "auto",
   },
   dialogTitle: {
-    background: "linear-gradient(135deg, #2563eb, #1d4ed8)", // Mantener el azul como solicitado
+    background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
     color: "#fff",
-    padding: theme.spacing(2.5, 3),
-    fontSize: "1.4rem",
+    padding: theme.spacing(2, 3),
+    fontSize: "1.3rem",
     fontWeight: 600,
     position: "relative",
+    minHeight: "50px",
+    flexShrink: 0, // Prevent title from shrinking
   },
   closeButton: {
     position: "absolute",
-    right: theme.spacing(2),
-    top: theme.spacing(2),
+    right: theme.spacing(1.5),
+    top: theme.spacing(1.5),
     color: "#fff",
     backgroundColor: "rgba(255, 255, 255, 0.15)",
     "&:hover": {
@@ -371,24 +379,29 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   dialogContent: {
-    padding: theme.spacing(3),
+    padding: theme.spacing(2, 3),
     backgroundColor: "#fff",
+    flex: 1,
+    overflow: "auto", // Enable scroll
     "& .MuiTextField-root": {
       marginBottom: theme.spacing(2),
     },
   },
   dialogActions: {
-    padding: theme.spacing(2, 3, 3),
+    padding: theme.spacing(2, 3),
     backgroundColor: "#fff",
     display: "flex",
     justifyContent: "flex-end",
     gap: theme.spacing(1.5),
     borderTop: "1px solid #e2e8f0",
+    minHeight: "70px", // Increased height for better visibility
+    flexShrink: 0, // Prevent actions from shrinking
   },
   cancelButton: {
     color: "#64748b",
     fontWeight: 500,
-    padding: "8px 24px",
+    padding: "10px 24px",
+    fontSize: "0.95rem",
     "&:hover": {
       backgroundColor: "rgba(0, 0, 0, 0.05)",
     },
@@ -397,9 +410,20 @@ const useStyles = makeStyles((theme) => ({
     background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
     color: "#fff",
     fontWeight: 500,
-    padding: "8px 24px",
+    padding: "10px 24px",
+    fontSize: "0.95rem",
     "&:hover": {
       background: "linear-gradient(135deg, #1d4ed8, #1e40af)",
+    },
+  },
+  deleteCheckInButton: {
+    background: "linear-gradient(135deg, #ef4444, #dc2626)",
+    color: "#fff",
+    fontWeight: 500,
+    padding: "10px 24px",
+    fontSize: "0.95rem",
+    "&:hover": {
+      background: "linear-gradient(135deg, #dc2626, #b91c1c)",
     },
   },
   detailsLabel: {
@@ -412,18 +436,17 @@ const useStyles = makeStyles((theme) => ({
   },
   detailsRow: {
     marginBottom: theme.spacing(2),
-    padding: theme.spacing(1.5),
+    padding: theme.spacing(2),
     borderRadius: theme.spacing(1),
     backgroundColor: "#f8fafc",
     border: "1px solid #e2e8f0",
   },
   errorMessage: {
-    fontSize: "0.95rem", // Tamaño más grande para los mensajes de error
+    fontSize: "0.95rem",
     color: "#ef4444",
     fontWeight: "500",
     marginTop: "4px",
   },
-  // Nuevos estilos para el diseño del modal
   formSection: {
     marginBottom: theme.spacing(3),
   },
@@ -461,17 +484,20 @@ const useStyles = makeStyles((theme) => ({
   fieldIcon: {
     color: "#64748b",
   },
-  // Estilos para el modal de detalles
+  // Estilos para el modal de detalles optimizado
   detailsHeader: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     marginBottom: theme.spacing(3),
+    padding: theme.spacing(2),
+    backgroundColor: "#f8fafc",
+    borderRadius: theme.spacing(1),
   },
   detailsAvatar: {
     width: 80,
     height: 80,
-    fontSize: 32,
+    fontSize: 28,
     backgroundColor: "#2563eb",
     marginBottom: theme.spacing(2),
   },
@@ -479,17 +505,18 @@ const useStyles = makeStyles((theme) => ({
     fontSize: "1.5rem",
     fontWeight: 600,
     color: "#1e293b",
-    marginBottom: theme.spacing(0.5),
+    marginBottom: theme.spacing(1),
   },
   detailsDescription: {
     fontSize: "1rem",
     color: "#64748b",
     textAlign: "center",
-    maxWidth: "80%",
+    maxWidth: "90%",
     margin: "0 auto",
+    lineHeight: 1.5,
   },
   detailsGrid: {
-    marginTop: theme.spacing(3),
+    marginTop: theme.spacing(2),
   },
   detailsCard: {
     padding: theme.spacing(2),
@@ -497,12 +524,13 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: "#f8fafc",
     border: "1px solid #e2e8f0",
     marginBottom: theme.spacing(2),
+    minHeight: "100px",
   },
   detailsCardTitle: {
     fontSize: "1rem",
     fontWeight: 600,
     color: "#1e293b",
-    marginBottom: theme.spacing(1),
+    marginBottom: theme.spacing(1.5),
     display: "flex",
     alignItems: "center",
     "& svg": {
@@ -513,12 +541,14 @@ const useStyles = makeStyles((theme) => ({
   detailsCardContent: {
     fontSize: "0.95rem",
     color: "#334155",
+    lineHeight: 1.4,
   },
   // Estilos para los estados
   estadoChip: {
     fontWeight: 600,
     padding: theme.spacing(0.5, 1.5),
     borderRadius: theme.spacing(1),
+    fontSize: "0.85rem",
   },
   estadoPendiente: {
     backgroundColor: "#fff7ed",
@@ -536,12 +566,13 @@ const useStyles = makeStyles((theme) => ({
   acompananteContainer: {
     display: "flex",
     flexWrap: "wrap",
-    gap: theme.spacing(2),
+    gap: theme.spacing(1.5),
     marginBottom: theme.spacing(2),
+    alignItems: "flex-end",
   },
   acompananteField: {
-    flex: "1 1 30%",
-    minWidth: "150px",
+    flex: "1 1 200px",
+    minWidth: "180px",
   },
   acompananteDeleteBtn: {
     marginLeft: theme.spacing(1),
@@ -552,23 +583,26 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   addAcompananteBtn: {
-    marginTop: theme.spacing(1),
+    marginTop: theme.spacing(1.5),
     color: "#2563eb",
     borderColor: "#2563eb",
+    padding: "10px 20px",
     "&:hover": {
       backgroundColor: "rgba(37, 99, 235, 0.05)",
     },
   },
-  // Estilos para el modal de habitaciones
+  // Estilos para el modal de habitaciones CON PAGINACIÓN
   roomsTableContainer: {
-    marginBottom: theme.spacing(2),
     borderRadius: theme.spacing(1),
     overflow: "hidden",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+    height: "auto",
   },
   roomAvailableBtn: {
     backgroundColor: "#4caf50",
     color: "#fff",
+    padding: "6px 12px",
+    fontSize: "0.85rem",
     "&:hover": {
       backgroundColor: "#388e3c",
     },
@@ -576,14 +610,16 @@ const useStyles = makeStyles((theme) => ({
   roomUnavailableBtn: {
     backgroundColor: "#ef4444",
     color: "#fff",
+    padding: "6px 12px",
+    fontSize: "0.85rem",
     "&:hover": {
       backgroundColor: "#dc2626",
     },
   },
-  // Añadir estilos para los iconos de Excel y Habitaciones
+  // Iconos mejorados
   iconButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderRadius: "50%",
     transition: "all 0.3s ease",
     "&:hover": {
@@ -592,7 +628,7 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   excelButton: {
-    backgroundColor: "#1D6F42", // Color verde de Excel
+    backgroundColor: "#1D6F42",
     color: "#fff",
     "&:hover": {
       backgroundColor: "#16593A",
@@ -605,9 +641,10 @@ const useStyles = makeStyles((theme) => ({
       backgroundColor: "#2563eb",
     },
   },
-  // Nuevos estilos para el wizard paso a paso
+  // Estilos optimizados para el wizard paso a paso
   stepperContainer: {
-    marginBottom: theme.spacing(3),
+    marginBottom: theme.spacing(2),
+    flexShrink: 0, // Prevent stepper from shrinking
   },
   stepContent: {
     padding: theme.spacing(2, 0),
@@ -616,7 +653,8 @@ const useStyles = makeStyles((theme) => ({
   stepperNavButtons: {
     display: "flex",
     justifyContent: "space-between",
-    marginTop: theme.spacing(3),
+    marginTop: theme.spacing(2),
+    padding: theme.spacing(1, 0),
   },
   stepIcon: {
     color: "#2563eb",
@@ -653,6 +691,7 @@ const useStyles = makeStyles((theme) => ({
   stepperMobileButton: {
     background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
     color: "#fff",
+    padding: "8px 16px",
     "&:hover": {
       background: "linear-gradient(135deg, #1d4ed8, #1e40af)",
     },
@@ -665,6 +704,7 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: "#e2e8f0",
     position: "relative",
     overflow: "hidden",
+    flexShrink: 0, // Prevent progress bar from shrinking
   },
   stepperProgressBar: {
     position: "absolute",
@@ -675,14 +715,14 @@ const useStyles = makeStyles((theme) => ({
     transition: "width 0.3s ease",
   },
   stepperTitle: {
-    fontSize: "1.1rem",
+    fontSize: "1.2rem",
     fontWeight: 600,
     color: "#1e293b",
-    marginBottom: theme.spacing(1),
+    marginBottom: theme.spacing(1.5),
     textAlign: "center",
   },
   stepperSubtitle: {
-    fontSize: "0.9rem",
+    fontSize: "0.95rem",
     color: "#64748b",
     marginBottom: theme.spacing(2),
     textAlign: "center",
@@ -691,7 +731,8 @@ const useStyles = makeStyles((theme) => ({
     background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
     color: "#fff",
     fontWeight: 500,
-    padding: "8px 24px",
+    padding: "10px 24px",
+    fontSize: "0.95rem",
     "&:hover": {
       background: "linear-gradient(135deg, #1d4ed8, #1e40af)",
     },
@@ -699,7 +740,8 @@ const useStyles = makeStyles((theme) => ({
   stepperBackButton: {
     color: "#64748b",
     fontWeight: 500,
-    padding: "8px 24px",
+    padding: "10px 24px",
+    fontSize: "0.95rem",
     "&:hover": {
       backgroundColor: "rgba(0, 0, 0, 0.05)",
     },
@@ -708,7 +750,8 @@ const useStyles = makeStyles((theme) => ({
     background: "linear-gradient(135deg, #10b981, #059669)",
     color: "#fff",
     fontWeight: 500,
-    padding: "8px 24px",
+    padding: "10px 24px",
+    fontSize: "0.95rem",
     "&:hover": {
       background: "linear-gradient(135deg, #059669, #047857)",
     },
@@ -725,9 +768,11 @@ const useStyles = makeStyles((theme) => ({
   stepperSummaryLabel: {
     fontWeight: 600,
     color: "#1e293b",
+    fontSize: "0.95rem",
   },
   stepperSummaryValue: {
     color: "#334155",
+    fontSize: "0.95rem",
   },
   stepperSummaryCard: {
     padding: theme.spacing(2),
@@ -736,35 +781,94 @@ const useStyles = makeStyles((theme) => ({
     border: "1px solid #e2e8f0",
     marginBottom: theme.spacing(2),
   },
-  // Estilos mejorados para el modal de creación
+  // Estilos optimizados para el modal de creación
   wizardDialog: {
     "& .MuiDialog-paper": {
-      width: "100%",
-      maxWidth: "700px",
+      width: "90vw",
+      maxWidth: "1000px",
       margin: "16px",
-      height: "auto",
-      maxHeight: "calc(100% - 32px)",
+      height: "85vh", // Increased height
+      maxHeight: "800px", // Increased max height
       display: "flex",
       flexDirection: "column",
     },
   },
   wizardContent: {
-    padding: theme.spacing(3),
-    overflowY: "auto",
-    height: "100%",
+    padding: theme.spacing(2, 3),
+    flex: 1,
     display: "flex",
     flexDirection: "column",
+    overflow: "auto", // Enable scroll
   },
   fieldGroup: {
     marginBottom: theme.spacing(2),
   },
   inputField: {
     marginBottom: theme.spacing(2),
+    "& .MuiInputBase-input": {
+      fontSize: "0.95rem",
+    },
+    "& .MuiInputLabel-root": {
+      fontSize: "0.95rem",
+    },
   },
   stepContentWrapper: {
     flex: 1,
-    overflowY: "auto",
     padding: theme.spacing(1, 0),
+    overflow: "auto", // Enable scroll for step content
+  },
+  // Modal de Check-in optimizado
+  checkInDialog: {
+    "& .MuiDialog-paper": {
+      width: "85vw",
+      maxWidth: "700px",
+      height: "85vh", // Increased height
+      maxHeight: "750px", // Increased max height
+    },
+  },
+  // Modal de habitaciones optimizado
+  roomsDialog: {
+    "& .MuiDialog-paper": {
+      width: "90vw",
+      maxWidth: "800px",
+      height: "85vh", // Increased height
+      maxHeight: "750px", // Increased max height
+    },
+  },
+  // Estilos para el indicador de check-in realizado
+  checkInStatusCard: {
+    padding: theme.spacing(1.5),
+    borderRadius: theme.spacing(1),
+    backgroundColor: "#dcfce7", // Changed back to green
+    border: "2px solid #10b981", // Changed back to green
+    marginBottom: theme.spacing(2),
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  checkInStatusText: {
+    color: "#166534", // Changed back to green
+    fontWeight: 600,
+    display: "flex",
+    alignItems: "center",
+    fontSize: "0.95rem",
+    "& svg": {
+      marginRight: theme.spacing(1),
+    },
+  },
+  // Paginación para habitaciones
+  roomsPagination: {
+    padding: theme.spacing(1),
+    backgroundColor: "#f8fafc",
+    borderTop: "1px solid #e2e8f0",
+  },
+  compactForm: {
+    "& .MuiGrid-container": {
+      marginBottom: 0,
+    },
+    "& .MuiFormControl-root": {
+      marginBottom: theme.spacing(1.5),
+    },
   },
 }))
 
@@ -776,12 +880,11 @@ const HospedajeList = () => {
   const [editingId, setEditingId] = useState(null)
   const [selectedHospedaje, setSelectedHospedaje] = useState(null)
   const [formData, setFormData] = useState({
-    // NOTA: El campo numeroReserva se asigna en el back y NO se mostrará en creación.
     numeroReserva: "",
     cliente: "",
     numeroIdentificacion: "",
-    email: "", // Nuevo campo para email
-    telefono: "", // Nuevo campo para teléfono
+    email: "",
+    telefono: "",
     fecha_inicio: "",
     fecha_fin: "",
     apartamentos: [],
@@ -793,7 +896,7 @@ const HospedajeList = () => {
   })
   const [searchTerm, setSearchTerm] = useState("")
   const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [rowsPerPage, setRowsPerPage] = useState(5)
   const [checkInModalOpen, setCheckInModalOpen] = useState(false)
   const [checkInData, setCheckInData] = useState({
     horaEntrada: "",
@@ -805,11 +908,11 @@ const HospedajeList = () => {
   const [editMode, setEditMode] = useState(false)
   const [rooms, setRooms] = useState([])
   const [roomsModalOpen, setRoomsModalOpen] = useState(false)
-  const [roomPage, setRoomPage] = useState(0)
-  const [roomRowsPerPage, setRoomRowsPerPage] = useState(5)
   const [apartamentosOptions, setApartamentosOptions] = useState([])
-  // Estado para el wizard paso a paso
   const [activeStep, setActiveStep] = useState(0)
+  // Estado para la paginación de habitaciones
+  const [roomsPage, setRoomsPage] = useState(0)
+  const [roomsPerPage, setRoomsPerPage] = useState(4)
 
   // Pasos del wizard
   const steps = [
@@ -819,6 +922,50 @@ const HospedajeList = () => {
     { label: "Acompañantes", description: "Agregar acompañantes (opcional)" },
     { label: "Resumen", description: "Revisar y confirmar" },
   ]
+
+  // Función MEJORADA para formatear apartamentos - SOLO muestra "Apartamento X"
+  const formatApartamentosSimple = (apartamentos) => {
+    if (!apartamentos) return "Sin apartamentos"
+
+    if (Array.isArray(apartamentos)) {
+      return apartamentos
+        .map((apt) => {
+          // Si es un objeto con NumeroApto
+          if (typeof apt === "object" && apt !== null && apt.NumeroApto) {
+            return `Apartamento ${apt.NumeroApto}`
+          }
+          // Si es un ID string, buscar en las opciones
+          if (typeof apt === "string") {
+            const option = apartamentosOptions.find((item) => item.id === apt)
+            if (option && option.numeroApto) {
+              return `Apartamento ${option.numeroApto}`
+            }
+            // Si no se encuentra, asumir que es un número de apartamento
+            return `Apartamento ${apt}`
+          }
+          // Fallback
+          return `Apartamento ${apt}`
+        })
+        .join(", ")
+    }
+
+    // Si no es array, convertir a string
+    return `Apartamento ${apartamentos}`
+  }
+
+  // Función para obtener solo el número de apartamento
+  const getApartmentNumber = (apt) => {
+    if (typeof apt === "object" && apt !== null && apt.NumeroApto) {
+      return apt.NumeroApto
+    }
+    if (typeof apt === "string") {
+      const option = apartamentosOptions.find((item) => item.id === apt)
+      if (option && option.numeroApto) {
+        return option.numeroApto
+      }
+    }
+    return apt
+  }
 
   // Cargar hospedajes
   const fetchHospedajes = async () => {
@@ -839,6 +986,7 @@ const HospedajeList = () => {
         id: apt._id,
         label: `Apartamento ${apt.NumeroApto} - Piso ${apt.Piso} - Tarifa ${apt.Tarifa}`,
         tarifa: apt.Tarifa,
+        numeroApto: apt.NumeroApto,
       }))
       setApartamentosOptions(options)
     } catch (error) {
@@ -856,7 +1004,7 @@ const HospedajeList = () => {
     setRooms(initialRooms)
   }, [])
 
-  // --- Cálculos Automáticos de Estadía y Total ---
+  // Cálculos Automáticos de Estadía y Total
   useEffect(() => {
     if (formData.fecha_inicio && formData.fecha_fin) {
       const start = new Date(formData.fecha_inicio)
@@ -895,25 +1043,32 @@ const HospedajeList = () => {
     }
   }, [formData.apartamentos, formData.estadia, apartamentosOptions])
 
-  // --- Funciones para crear/editar hospedaje ---
+  // Funciones para crear/editar hospedaje
   const handleOpen = (hospedaje) => {
     if (hospedaje) {
+      // Extraer IDs de apartamentos correctamente
+      let apartamentosIds = []
+      if (Array.isArray(hospedaje.apartamentos)) {
+        apartamentosIds = hospedaje.apartamentos.map((apt) => {
+          if (typeof apt === "object" && apt._id) {
+            return apt._id
+          }
+          return apt
+        })
+      }
+
       setFormData({
         numeroReserva: hospedaje.numeroReserva || "",
         cliente: hospedaje.cliente || "",
         numeroIdentificacion: hospedaje.numeroIdentificacion || "",
-        email: hospedaje.email || "", // Nuevo campo
-        telefono: hospedaje.telefono || "", // Nuevo campo
+        email: hospedaje.email || "",
+        telefono: hospedaje.telefono || "",
         fecha_inicio: hospedaje.fecha_inicio ? hospedaje.fecha_inicio.substring(0, 10) : "",
         fecha_fin: hospedaje.fecha_fin ? hospedaje.fecha_fin.substring(0, 10) : "",
-        apartamentos: Array.isArray(hospedaje.apartamentos)
-          ? typeof hospedaje.apartamentos[0] === "object"
-            ? hospedaje.apartamentos.map((apt) => apt._id)
-            : hospedaje.apartamentos
-          : [],
+        apartamentos: apartamentosIds,
         estadia: hospedaje.estadia || "",
         total: hospedaje.total || "",
-        estado: hospedaje.estado || "pendiente",
+        estado: hospedaje.estado || "pendiente", // Mantener el estado actual
         acompanantes: hospedaje.acompanantes || [],
         descuento: hospedaje.descuento || { porcentaje: "", precioOriginal: "", precioConDescuento: "" },
       })
@@ -923,8 +1078,8 @@ const HospedajeList = () => {
         numeroReserva: "",
         cliente: "",
         numeroIdentificacion: "",
-        email: "", // Nuevo campo
-        telefono: "", // Nuevo campo
+        email: "",
+        telefono: "",
         fecha_inicio: "",
         fecha_fin: "",
         apartamentos: [],
@@ -936,19 +1091,18 @@ const HospedajeList = () => {
       })
       setEditingId(null)
     }
-    setActiveStep(0) // Reiniciar el paso activo del wizard
+    setActiveStep(0)
     setOpen(true)
   }
 
   const handleClose = () => {
     setOpen(false)
-    setActiveStep(0) // Reiniciar el paso activo del wizard
+    setActiveStep(0)
   }
 
   const handleChange = (e) => {
     const { name, value } = e.target
 
-    // Validación para el campo cliente (solo letras)
     if (name === "cliente") {
       if (/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]*$/.test(value) || value === "") {
         setFormData((prev) => ({ ...prev, [name]: value }))
@@ -963,9 +1117,7 @@ const HospedajeList = () => {
           timer: 3000,
         })
       }
-    }
-    // Validación para el campo numeroIdentificacion (solo letras y números)
-    else if (name === "numeroIdentificacion") {
+    } else if (name === "numeroIdentificacion") {
       if (/^[A-Za-z0-9]*$/.test(value) || value === "") {
         setFormData((prev) => ({ ...prev, [name]: value }))
       } else {
@@ -979,13 +1131,9 @@ const HospedajeList = () => {
           timer: 3000,
         })
       }
-    }
-    // Validación para el campo email (formato de email)
-    else if (name === "email") {
+    } else if (name === "email") {
       setFormData((prev) => ({ ...prev, [name]: value }))
-    }
-    // Validación para el campo telefono (solo números)
-    else if (name === "telefono") {
+    } else if (name === "telefono") {
       if (/^[0-9]*$/.test(value) || value === "") {
         setFormData((prev) => ({ ...prev, [name]: value }))
       } else {
@@ -999,9 +1147,7 @@ const HospedajeList = () => {
           timer: 3000,
         })
       }
-    }
-    // Validación para fecha_inicio (no menor a la fecha actual)
-    else if (name === "fecha_inicio") {
+    } else if (name === "fecha_inicio") {
       const today = new Date().toISOString().split("T")[0]
       if (value < today) {
         Swal.fire({
@@ -1013,12 +1159,10 @@ const HospedajeList = () => {
           showConfirmButton: false,
           timer: 3000,
         })
-        // Aún así actualizamos el valor para que el usuario pueda corregirlo
         setFormData((prev) => ({ ...prev, [name]: value }))
       } else {
         setFormData((prev) => ({ ...prev, [name]: value }))
 
-        // Si ya hay una fecha fin, verificamos que siga siendo válida
         if (formData.fecha_fin && formData.fecha_fin <= value) {
           Swal.fire({
             icon: "warning",
@@ -1031,9 +1175,7 @@ const HospedajeList = () => {
           })
         }
       }
-    }
-    // Validación para fecha_fin (no menor o igual a fecha_inicio)
-    else if (name === "fecha_fin") {
+    } else if (name === "fecha_fin") {
       if (formData.fecha_inicio && value <= formData.fecha_inicio) {
         Swal.fire({
           icon: "warning",
@@ -1044,7 +1186,6 @@ const HospedajeList = () => {
           showConfirmButton: false,
           timer: 3000,
         })
-        // Aún así actualizamos el valor para que el usuario pueda corregirlo
         setFormData((prev) => ({ ...prev, [name]: value }))
       } else {
         setFormData((prev) => ({ ...prev, [name]: value }))
@@ -1069,7 +1210,6 @@ const HospedajeList = () => {
   const handleAcompananteChange = (index, e) => {
     const { name, value } = e.target
 
-    // Validación para nombre y apellido (solo letras)
     if (name === "nombre" || name === "apellido") {
       if (/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]*$/.test(value) || value === "") {
         setFormData((prev) => {
@@ -1088,9 +1228,7 @@ const HospedajeList = () => {
           timer: 3000,
         })
       }
-    }
-    // Validación para documento (letras y números)
-    else if (name === "documento") {
+    } else if (name === "documento") {
       if (/^[A-Za-z0-9]*$/.test(value) || value === "") {
         setFormData((prev) => {
           const nuevosAcompanantes = [...prev.acompanantes]
@@ -1150,28 +1288,39 @@ const HospedajeList = () => {
 
   const getTodayDate = () => new Date().toISOString().split("T")[0]
 
+  // Función mejorada para guardar hospedaje con cierre automático
   const handleSaveHospedaje = async () => {
     try {
       if (editingId) {
         const res = await hospedajeService.updateHospedaje(editingId, formData)
-        Swal.fire({
+        await Swal.fire({
           icon: "success",
-          title: "Actualizado",
+          title: "¡Actualizado!",
           text: "El hospedaje se actualizó correctamente.",
           confirmButtonColor: "#2563eb",
+          timer: 2000,
+          showConfirmButton: false,
         })
-        setHospedajes((prev) => prev.map((h) => (h._id === res.hospedaje._id ? res.hospedaje : h)))
+        // Actualizar el estado local inmediatamente con formato correcto
+        const updatedHospedaje = { ...res.hospedaje }
+        setHospedajes((prev) => prev.map((h) => (h._id === updatedHospedaje._id ? updatedHospedaje : h)))
       } else {
         const res = await hospedajeService.createHospedaje(formData)
-        Swal.fire({
+        await Swal.fire({
           icon: "success",
-          title: "Creado",
+          title: "¡Creado!",
           text: "El hospedaje se creó correctamente.",
           confirmButtonColor: "#2563eb",
+          timer: 2000,
+          showConfirmButton: false,
         })
         setHospedajes((prev) => [...prev, res.hospedaje])
       }
       handleClose()
+      // Refrescar después de un pequeño delay para asegurar consistencia
+      setTimeout(() => {
+        fetchHospedajes()
+      }, 500)
     } catch (error) {
       console.error("Error al guardar hospedaje", error)
       Swal.fire({ icon: "error", title: "Error", text: "Ocurrió un error al guardar el hospedaje." })
@@ -1211,11 +1360,13 @@ const HospedajeList = () => {
     if (result.isConfirmed) {
       try {
         await hospedajeService.deleteHospedaje(id)
-        Swal.fire({
+        await Swal.fire({
           icon: "success",
-          title: "Eliminado",
+          title: "¡Eliminado!",
           text: "El hospedaje se eliminó correctamente.",
           confirmButtonColor: "#2563eb",
+          timer: 2000,
+          showConfirmButton: false,
         })
         setHospedajes((prev) => prev.filter((h) => h._id !== id))
       } catch (error) {
@@ -1235,13 +1386,22 @@ const HospedajeList = () => {
     const newState = nextState(currentState)
     try {
       const res = await hospedajeService.updateHospedaje(id, { estado: newState })
-      Swal.fire({
+      await Swal.fire({
         icon: "success",
-        title: "Actualizado",
+        title: "¡Actualizado!",
         text: "El estado del hospedaje se actualizó correctamente.",
         confirmButtonColor: "#2563eb",
+        timer: 2000,
+        showConfirmButton: false,
       })
-      setHospedajes((prev) => prev.map((h) => (h._id === res.hospedaje._id ? res.hospedaje : h)))
+      // Actualizar inmediatamente el estado local
+      const updatedHospedaje = { ...res.hospedaje }
+      setHospedajes((prev) => prev.map((h) => (h._id === updatedHospedaje._id ? updatedHospedaje : h)))
+
+      // Refrescar después de un pequeño delay para asegurar consistencia
+      setTimeout(() => {
+        fetchHospedajes()
+      }, 500)
     } catch (error) {
       console.error("Error al actualizar estado", error)
       Swal.fire({ icon: "error", title: "Error", text: "Ocurrió un error al actualizar el estado." })
@@ -1253,7 +1413,7 @@ const HospedajeList = () => {
     let horaEntrada = ""
     let horaSalida = ""
     const total = hospedaje.total || ""
-    const acompanantes = hospedaje.acompanantes || ""
+    const acompanantes = hospedaje.acompanantes || []
     let observaciones = ""
     const checkInGeneral = (hospedaje.checkInData || []).find((d) => d.servicio === "CheckInGeneral")
     if (checkInGeneral) {
@@ -1287,6 +1447,7 @@ const HospedajeList = () => {
     setEditMode(!editMode)
   }
 
+  // Función mejorada para confirmar check-in con cierre automático
   const confirmCheckInCheckOut = async () => {
     if (!selectedHospedaje) return
     try {
@@ -1321,17 +1482,83 @@ const HospedajeList = () => {
         total: checkInData.total,
         acompanantes: checkInData.acompanantes,
       })
-      Swal.fire({
+      await Swal.fire({
         icon: "success",
-        title: "Check‑in Check‑out",
+        title: "¡Check-in Realizado!",
         text: "Datos guardados correctamente.",
         confirmButtonColor: "#2563eb",
+        timer: 2000,
+        showConfirmButton: false,
       })
       setHospedajes((prev) => prev.map((h) => (h._id === updatedData.hospedaje._id ? updatedData.hospedaje : h)))
       closeCheckInModal()
+      setTimeout(() => {
+        fetchHospedajes()
+      }, 500)
     } catch (error) {
       console.error("Error en check‑in check‑out", error)
       Swal.fire({ icon: "error", title: "Error", text: "Ocurrió un error al realizar check‑in check‑out." })
+    }
+  }
+
+  // Función mejorada para eliminar check-in con cierre automático
+  const handleDeleteCheckIn = async () => {
+    if (!selectedHospedaje) return
+
+    const result = await Swal.fire({
+      title: "¿Eliminar Check-in?",
+      text: "Esta acción eliminará todos los datos de check-in/check-out. ¿Estás seguro?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#64748b",
+    })
+
+    if (result.isConfirmed) {
+      try {
+        const serviciosToSend = [
+          {
+            servicio: "CheckInGeneral",
+            checkIn: null,
+            checkOut: null,
+            observaciones: "",
+            estado: "Disponible",
+          },
+        ]
+
+        await hospedajeService.checkInCheckOut(selectedHospedaje._id, serviciosToSend)
+
+        setCheckInData({
+          horaEntrada: "",
+          horaSalida: "",
+          total: selectedHospedaje.total || "",
+          observaciones: "",
+          acompanantes: selectedHospedaje.acompanantes || [],
+        })
+
+        await Swal.fire({
+          icon: "success",
+          title: "¡Check-in Eliminado!",
+          text: "El check-in se ha eliminado correctamente.",
+          confirmButtonColor: "#2563eb",
+          timer: 2000,
+          showConfirmButton: false,
+        })
+
+        closeCheckInModal()
+        setTimeout(() => {
+          fetchHospedajes()
+        }, 500)
+      } catch (error) {
+        console.error("Error al eliminar check-in", error)
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Ocurrió un error al eliminar el check-in.",
+        })
+      }
     }
   }
 
@@ -1342,7 +1569,6 @@ const HospedajeList = () => {
   const handleCheckInAcompananteChange = (index, e) => {
     const { name, value } = e.target
 
-    // Validación para nombre y apellido (solo letras)
     if (name === "nombre" || name === "apellido") {
       if (/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]*$/.test(value) || value === "") {
         setCheckInData((prev) => {
@@ -1361,9 +1587,7 @@ const HospedajeList = () => {
           timer: 3000,
         })
       }
-    }
-    // Validación para documento (letras y números)
-    else if (name === "documento") {
+    } else if (name === "documento") {
       if (/^[A-Za-z0-9]*$/.test(value) || value === "") {
         setCheckInData((prev) => {
           const newAcomps = [...prev.acompanantes]
@@ -1405,7 +1629,6 @@ const HospedajeList = () => {
     })
   }
 
-  // Función para abrir modal de habitaciones
   const openRoomsModal = () => {
     const updatedRooms = rooms.map((room) => {
       const updatedRoom = { ...room }
@@ -1422,20 +1645,25 @@ const HospedajeList = () => {
       return updatedRoom
     })
     setRooms(updatedRooms)
+    setRoomsPage(0) // Resetear la página al abrir el modal
     setRoomsModalOpen(true)
   }
 
   const closeRoomsModal = () => setRoomsModalOpen(false)
 
+  // Función mejorada para guardar habitaciones con cierre automático
   const handleSaveRooms = async () => {
     try {
       const response = await hospedajeService.saveHabitaciones(rooms)
-      Swal.fire({
+      await Swal.fire({
         icon: "success",
-        title: "Guardado",
+        title: "¡Guardado!",
         text: response.msg,
         confirmButtonColor: "#2563eb",
+        timer: 2000,
+        showConfirmButton: false,
       })
+      closeRoomsModal()
     } catch (error) {
       console.error("Error al guardar habitaciones", error)
       Swal.fire({ icon: "error", title: "Error", text: "No se pudieron guardar los cambios." })
@@ -1475,9 +1703,7 @@ Estado: ${hospedaje.estado}`
       Cliente: h.cliente,
       "Fecha Inicio": h.fecha_inicio ? h.fecha_inicio.substring(0, 10) : "",
       "Fecha Fin": h.fecha_fin ? h.fecha_fin.substring(0, 10) : "",
-      Apartamentos: Array.isArray(h.apartamentos)
-        ? h.apartamentos.map((apt) => (apt.NumeroApto ? `Apartamento ${apt.NumeroApto}` : apt)).join(", ")
-        : h.apartamentos,
+      Apartamentos: formatApartamentosSimple(h.apartamentos),
       Estadía: h.estadia,
       Total: Number(h.total).toLocaleString("es-CO", { style: "currency", currency: "COP" }),
       Estado: h.estado,
@@ -1503,7 +1729,16 @@ Estado: ${hospedaje.estado}`
     setPage(0)
   }
 
-  // Iniciales para el avatar
+  // Funciones para la paginación de habitaciones
+  const handleRoomsChangePage = (event, newPage) => setRoomsPage(newPage)
+  const handleRoomsChangeRowsPerPage = (event) => {
+    setRoomsPerPage(Number.parseInt(event.target.value, 10))
+    setRoomsPage(0)
+  }
+
+  // Habitaciones paginadas
+  const paginatedRooms = rooms.slice(roomsPage * roomsPerPage, roomsPage * roomsPerPage + roomsPerPage)
+
   const getInitials = (name) => {
     return name
       ? name
@@ -1515,7 +1750,6 @@ Estado: ${hospedaje.estado}`
       : "HO"
   }
 
-  // Obtener el color del estado
   const getEstadoClass = (estado) => {
     switch (estado) {
       case "pendiente":
@@ -1529,7 +1763,6 @@ Estado: ${hospedaje.estado}`
     }
   }
 
-  // Verificar si un hospedaje tiene check-in
   const hasCheckIn = (hospedaje) => {
     return (
       hospedaje.checkInData &&
@@ -1550,17 +1783,16 @@ Estado: ${hospedaje.estado}`
     setActiveStep(0)
   }
 
-  // Validar si se puede avanzar al siguiente paso
   const canAdvance = () => {
     switch (activeStep) {
-      case 0: // Información del Cliente
+      case 0:
         return (
           formData.cliente.trim() !== "" &&
           formData.numeroIdentificacion.trim() !== "" &&
           formData.email.trim() !== "" &&
           formData.telefono.trim() !== ""
         )
-      case 1: // Fechas y Apartamentos
+      case 1:
         return (
           formData.fecha_inicio !== "" &&
           formData.fecha_fin !== "" &&
@@ -1568,137 +1800,148 @@ Estado: ${hospedaje.estado}`
           formData.estadia !== "" &&
           formData.total !== ""
         )
-      case 2: // Descuentos
-        return true // Descuentos son opcionales
-      case 3: // Acompañantes
-        return true // Acompañantes son opcionales
-      case 4: // Resumen
-        return true // Siempre se puede finalizar
+      case 2:
+        return true
+      case 3:
+        return true
+      case 4:
+        return true
       default:
         return false
     }
   }
 
-  // Renderizar el contenido del paso actual
   const getStepContent = (step) => {
     switch (step) {
-      case 0: // Información del Cliente
+      case 0:
         return (
-          <Box>
+          <Box className={classes.compactForm}>
             <Typography className={classes.stepperTitle}>Información del Cliente</Typography>
             <Typography className={classes.stepperSubtitle}>
               Ingrese los datos personales del cliente para el hospedaje
             </Typography>
 
-            {editingId && (
-              <TextField
-                className={classes.inputField}
-                margin="dense"
-                label="Número de Reserva"
-                name="numeroReserva"
-                value={formData.numeroReserva}
-                onChange={handleChange}
-                fullWidth
-                variant="outlined"
-                disabled
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PermIdentity className={classes.fieldIcon} />
-                    </InputAdornment>
-                  ),
-                }}
-                size="small"
-              />
-            )}
-            <TextField
-              className={classes.inputField}
-              margin="dense"
-              label="Cliente"
-              name="cliente"
-              value={formData.cliente}
-              onChange={handleChange}
-              fullWidth
-              variant="outlined"
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Person className={classes.fieldIcon} />
-                  </InputAdornment>
-                ),
-              }}
-              size="small"
-            />
-            <TextField
-              className={classes.inputField}
-              margin="dense"
-              label="Número de Identificación"
-              name="numeroIdentificacion"
-              value={formData.numeroIdentificacion}
-              onChange={handleChange}
-              fullWidth
-              variant="outlined"
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <ContactMail className={classes.fieldIcon} />
-                  </InputAdornment>
-                ),
-              }}
-              size="small"
-            />
-            <TextField
-              className={classes.inputField}
-              margin="dense"
-              label="Email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              fullWidth
-              variant="outlined"
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Email className={classes.fieldIcon} />
-                  </InputAdornment>
-                ),
-              }}
-              size="small"
-            />
-            <TextField
-              className={classes.inputField}
-              margin="dense"
-              label="Teléfono"
-              name="telefono"
-              value={formData.telefono}
-              onChange={handleChange}
-              fullWidth
-              variant="outlined"
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <PhoneAndroid className={classes.fieldIcon} />
-                  </InputAdornment>
-                ),
-              }}
-              size="small"
-            />
+            <Grid container spacing={2}>
+              {editingId && (
+                <Grid item xs={12}>
+                  <TextField
+                    className={classes.inputField}
+                    margin="dense"
+                    label="Número de Reserva"
+                    name="numeroReserva"
+                    value={formData.numeroReserva}
+                    onChange={handleChange}
+                    fullWidth
+                    variant="outlined"
+                    disabled
+                    size="small"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PermIdentity className={classes.fieldIcon} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+              )}
+              <Grid item xs={12} md={6}>
+                <TextField
+                  className={classes.inputField}
+                  margin="dense"
+                  label="Cliente"
+                  name="cliente"
+                  value={formData.cliente}
+                  onChange={handleChange}
+                  fullWidth
+                  variant="outlined"
+                  required
+                  size="small"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Person className={classes.fieldIcon} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  className={classes.inputField}
+                  margin="dense"
+                  label="Número de Identificación"
+                  name="numeroIdentificacion"
+                  value={formData.numeroIdentificacion}
+                  onChange={handleChange}
+                  fullWidth
+                  variant="outlined"
+                  required
+                  size="small"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <ContactMail className={classes.fieldIcon} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  className={classes.inputField}
+                  margin="dense"
+                  label="Email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  fullWidth
+                  variant="outlined"
+                  required
+                  size="small"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Email className={classes.fieldIcon} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  className={classes.inputField}
+                  margin="dense"
+                  label="Teléfono"
+                  name="telefono"
+                  value={formData.telefono}
+                  onChange={handleChange}
+                  fullWidth
+                  variant="outlined"
+                  required
+                  size="small"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PhoneAndroid className={classes.fieldIcon} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+            </Grid>
           </Box>
         )
-      case 1: // Fechas y Apartamentos
+      case 1:
         return (
-          <Box>
+          <Box className={classes.compactForm}>
             <Typography className={classes.stepperTitle}>Fechas y Apartamentos</Typography>
             <Typography className={classes.stepperSubtitle}>
               Seleccione las fechas de hospedaje y los apartamentos
             </Typography>
 
-            <Grid container spacing={2} className={classes.fieldGroup}>
+            <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
                 <TextField
                   className={classes.inputField}
@@ -1712,6 +1955,7 @@ Estado: ${hospedaje.estado}`
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   required
+                  size="small"
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -1719,7 +1963,6 @@ Estado: ${hospedaje.estado}`
                       </InputAdornment>
                     ),
                   }}
-                  size="small"
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -1735,6 +1978,7 @@ Estado: ${hospedaje.estado}`
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   required
+                  size="small"
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -1742,40 +1986,44 @@ Estado: ${hospedaje.estado}`
                       </InputAdornment>
                     ),
                   }}
-                  size="small"
                 />
               </Grid>
-            </Grid>
-
-            <FormControl fullWidth margin="dense" className={classes.inputField} size="small">
-              <InputLabel id="apartamentos-label">Apartamentos</InputLabel>
-              <Select
-                labelId="apartamentos-label"
-                multiple
-                name="apartamentos"
-                value={formData.apartamentos}
-                onChange={handleApartamentosChange}
-                renderValue={(selected) => (
-                  <Box display="flex" flexWrap="wrap">
-                    {selected.map((value) => {
-                      const apt = apartamentosOptions.find((item) => item.id === value)
-                      return <Chip key={value} label={apt ? apt.label : value} style={{ margin: 2 }} />
-                    })}
-                  </Box>
-                )}
-                variant="outlined"
-                required
-              >
-                {apartamentosOptions.map((option) => (
-                  <MenuItem key={option.id} value={option.id}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <Grid container spacing={2} className={classes.fieldGroup}>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12}>
+                <FormControl fullWidth margin="dense" className={classes.inputField} size="small">
+                  <InputLabel id="apartamentos-label">Apartamentos</InputLabel>
+                  <Select
+                    labelId="apartamentos-label"
+                    multiple
+                    name="apartamentos"
+                    value={formData.apartamentos}
+                    onChange={handleApartamentosChange}
+                    renderValue={(selected) => (
+                      <Box display="flex" flexWrap="wrap">
+                        {selected.map((value) => {
+                          const apt = apartamentosOptions.find((item) => item.id === value)
+                          return (
+                            <Chip
+                              key={value}
+                              label={apt ? `Apartamento ${apt.numeroApto}` : `Apartamento ${value}`}
+                              style={{ margin: 2 }}
+                              size="small"
+                            />
+                          )
+                        })}
+                      </Box>
+                    )}
+                    variant="outlined"
+                    required
+                  >
+                    {apartamentosOptions.map((option) => (
+                      <MenuItem key={option.id} value={option.id}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={4}>
                 <TextField
                   className={classes.inputField}
                   margin="dense"
@@ -1785,6 +2033,7 @@ Estado: ${hospedaje.estado}`
                   fullWidth
                   variant="outlined"
                   disabled
+                  size="small"
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -1792,10 +2041,9 @@ Estado: ${hospedaje.estado}`
                       </InputAdornment>
                     ),
                   }}
-                  size="small"
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={4}>
                 <TextField
                   className={classes.inputField}
                   margin="dense"
@@ -1806,6 +2054,7 @@ Estado: ${hospedaje.estado}`
                   fullWidth
                   variant="outlined"
                   disabled
+                  size="small"
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -1813,43 +2062,39 @@ Estado: ${hospedaje.estado}`
                       </InputAdornment>
                     ),
                   }}
-                  size="small"
                 />
               </Grid>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth className={classes.inputField} margin="dense" size="small">
+                  <InputLabel id="estado-label">Estado</InputLabel>
+                  <Select
+                    labelId="estado-label"
+                    name="estado"
+                    value={formData.estado}
+                    onChange={handleChange}
+                    variant="outlined"
+                    startAdornment={
+                      <InputAdornment position="start">
+                        <AssignmentInd className={classes.fieldIcon} />
+                      </InputAdornment>
+                    }
+                  >
+                    <MenuItem value="pendiente">Pendiente</MenuItem>
+                    <MenuItem value="confirmada">Confirmada</MenuItem>
+                    <MenuItem value="cancelada">Cancelada</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
             </Grid>
-
-            <TextField
-              select
-              className={classes.inputField}
-              margin="dense"
-              label="Estado"
-              name="estado"
-              value={formData.estado}
-              onChange={handleChange}
-              fullWidth
-              variant="outlined"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <AssignmentInd className={classes.fieldIcon} />
-                  </InputAdornment>
-                ),
-              }}
-              size="small"
-            >
-              <MenuItem value="pendiente">Pendiente</MenuItem>
-              <MenuItem value="confirmada">Confirmada</MenuItem>
-              <MenuItem value="cancelada">Cancelada</MenuItem>
-            </TextField>
           </Box>
         )
-      case 2: // Descuentos
+      case 2:
         return (
-          <Box>
+          <Box className={classes.compactForm}>
             <Typography className={classes.stepperTitle}>Descuentos</Typography>
             <Typography className={classes.stepperSubtitle}>Aplique descuentos al hospedaje (opcional)</Typography>
 
-            <Grid container spacing={2} className={classes.fieldGroup}>
+            <Grid container spacing={2}>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth className={classes.inputField} margin="dense" size="small">
                   <InputLabel id="porcentaje-label">Porcentaje</InputLabel>
@@ -1887,6 +2132,7 @@ Estado: ${hospedaje.estado}`
                   value={formData.descuento.precioOriginal}
                   fullWidth
                   variant="outlined"
+                  size="small"
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -1895,7 +2141,6 @@ Estado: ${hospedaje.estado}`
                     ),
                     readOnly: true,
                   }}
-                  size="small"
                   disabled
                 />
               </Grid>
@@ -1909,6 +2154,7 @@ Estado: ${hospedaje.estado}`
                   value={formData.descuento.precioConDescuento}
                   fullWidth
                   variant="outlined"
+                  size="small"
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -1917,16 +2163,15 @@ Estado: ${hospedaje.estado}`
                     ),
                     readOnly: true,
                   }}
-                  size="small"
                   disabled
                 />
               </Grid>
             </Grid>
           </Box>
         )
-      case 3: // Acompañantes
+      case 3:
         return (
-          <Box>
+          <Box className={classes.compactForm}>
             <Typography className={classes.stepperTitle}>Acompañantes</Typography>
             <Typography className={classes.stepperSubtitle}>Agregue acompañantes al hospedaje (opcional)</Typography>
 
@@ -1940,6 +2185,7 @@ Estado: ${hospedaje.estado}`
                     onChange={(e) => handleAcompananteChange(index, e)}
                     className={classes.acompananteField}
                     variant="outlined"
+                    size="small"
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
@@ -1947,7 +2193,6 @@ Estado: ${hospedaje.estado}`
                         </InputAdornment>
                       ),
                     }}
-                    size="small"
                   />
                   <TextField
                     label="Apellido"
@@ -1956,6 +2201,7 @@ Estado: ${hospedaje.estado}`
                     onChange={(e) => handleAcompananteChange(index, e)}
                     className={classes.acompananteField}
                     variant="outlined"
+                    size="small"
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
@@ -1963,7 +2209,6 @@ Estado: ${hospedaje.estado}`
                         </InputAdornment>
                       ),
                     }}
-                    size="small"
                   />
                   <TextField
                     label="Documento"
@@ -1972,6 +2217,7 @@ Estado: ${hospedaje.estado}`
                     onChange={(e) => handleAcompananteChange(index, e)}
                     className={classes.acompananteField}
                     variant="outlined"
+                    size="small"
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
@@ -1979,9 +2225,12 @@ Estado: ${hospedaje.estado}`
                         </InputAdornment>
                       ),
                     }}
-                    size="small"
                   />
-                  <IconButton onClick={() => handleDeleteAcompanante(index)} className={classes.acompananteDeleteBtn}>
+                  <IconButton
+                    onClick={() => handleDeleteAcompanante(index)}
+                    className={classes.acompananteDeleteBtn}
+                    size="small"
+                  >
                     <Delete size={16} />
                   </IconButton>
                 </Box>
@@ -1991,133 +2240,144 @@ Estado: ${hospedaje.estado}`
               onClick={agregarAcompanante}
               className={classes.addAcompananteBtn}
               startIcon={<Group />}
+              size="small"
             >
               Agregar Acompañante
             </Button>
           </Box>
         )
-      case 4: // Resumen
+      case 4:
         return (
-          <Box>
+          <Box className={classes.compactForm}>
             <Typography className={classes.stepperTitle}>Resumen del Hospedaje</Typography>
             <Typography className={classes.stepperSubtitle}>Revise la información antes de finalizar</Typography>
 
-            <Box className={classes.stepperSummaryCard}>
-              <Typography className={classes.detailsCardTitle}>
-                <AccountCircle />
-                Información del Cliente
-              </Typography>
-              <Box className={classes.stepperSummaryItem}>
-                <Typography className={classes.stepperSummaryLabel}>Cliente:</Typography>
-                <Typography className={classes.stepperSummaryValue}>{formData.cliente}</Typography>
-              </Box>
-              <Box className={classes.stepperSummaryItem}>
-                <Typography className={classes.stepperSummaryLabel}>Identificación:</Typography>
-                <Typography className={classes.stepperSummaryValue}>{formData.numeroIdentificacion}</Typography>
-              </Box>
-              <Box className={classes.stepperSummaryItem}>
-                <Typography className={classes.stepperSummaryLabel}>Email:</Typography>
-                <Typography className={classes.stepperSummaryValue}>{formData.email}</Typography>
-              </Box>
-              <Box className={classes.stepperSummaryItem}>
-                <Typography className={classes.stepperSummaryLabel}>Teléfono:</Typography>
-                <Typography className={classes.stepperSummaryValue}>{formData.telefono}</Typography>
-              </Box>
-            </Box>
-
-            <Box className={classes.stepperSummaryCard}>
-              <Typography className={classes.detailsCardTitle}>
-                <EventAvailable />
-                Fechas y Apartamentos
-              </Typography>
-              <Box className={classes.stepperSummaryItem}>
-                <Typography className={classes.stepperSummaryLabel}>Fecha Inicio:</Typography>
-                <Typography className={classes.stepperSummaryValue}>{formData.fecha_inicio}</Typography>
-              </Box>
-              <Box className={classes.stepperSummaryItem}>
-                <Typography className={classes.stepperSummaryLabel}>Fecha Fin:</Typography>
-                <Typography className={classes.stepperSummaryValue}>{formData.fecha_fin}</Typography>
-              </Box>
-              <Box className={classes.stepperSummaryItem}>
-                <Typography className={classes.stepperSummaryLabel}>Apartamentos:</Typography>
-                <Typography className={classes.stepperSummaryValue}>
-                  {formData.apartamentos
-                    .map((aptId) => {
-                      const apt = apartamentosOptions.find((item) => item.id === aptId)
-                      return apt ? apt.label : aptId
-                    })
-                    .join(", ")}
-                </Typography>
-              </Box>
-              <Box className={classes.stepperSummaryItem}>
-                <Typography className={classes.stepperSummaryLabel}>Estadía:</Typography>
-                <Typography className={classes.stepperSummaryValue}>{formData.estadia} días</Typography>
-              </Box>
-              <Box className={classes.stepperSummaryItem}>
-                <Typography className={classes.stepperSummaryLabel}>Total:</Typography>
-                <Typography className={classes.stepperSummaryValue}>
-                  {Number(formData.total).toLocaleString("es-CO", { style: "currency", currency: "COP" })}
-                </Typography>
-              </Box>
-              <Box className={classes.stepperSummaryItem}>
-                <Typography className={classes.stepperSummaryLabel}>Estado:</Typography>
-                <Typography className={classes.stepperSummaryValue}>
-                  <Chip
-                    label={formData.estado.charAt(0).toUpperCase() + formData.estado.slice(1)}
-                    className={`${classes.estadoChip} ${getEstadoClass(formData.estado)}`}
-                    size="small"
-                  />
-                </Typography>
-              </Box>
-            </Box>
-
-            {formData.descuento && formData.descuento.porcentaje && (
-              <Box className={classes.stepperSummaryCard}>
-                <Typography className={classes.detailsCardTitle}>
-                  <LocalOffer />
-                  Descuento
-                </Typography>
-                <Box className={classes.stepperSummaryItem}>
-                  <Typography className={classes.stepperSummaryLabel}>Porcentaje:</Typography>
-                  <Typography className={classes.stepperSummaryValue}>{formData.descuento.porcentaje}%</Typography>
-                </Box>
-                <Box className={classes.stepperSummaryItem}>
-                  <Typography className={classes.stepperSummaryLabel}>Precio Original:</Typography>
-                  <Typography className={classes.stepperSummaryValue}>
-                    {Number(formData.descuento.precioOriginal).toLocaleString("es-CO", {
-                      style: "currency",
-                      currency: "COP",
-                    })}
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <Box className={classes.stepperSummaryCard}>
+                  <Typography className={classes.detailsCardTitle}>
+                    <AccountCircle />
+                    Información del Cliente
                   </Typography>
+                  <Box className={classes.stepperSummaryItem}>
+                    <Typography className={classes.stepperSummaryLabel}>Cliente:</Typography>
+                    <Typography className={classes.stepperSummaryValue}>{formData.cliente}</Typography>
+                  </Box>
+                  <Box className={classes.stepperSummaryItem}>
+                    <Typography className={classes.stepperSummaryLabel}>Identificación:</Typography>
+                    <Typography className={classes.stepperSummaryValue}>{formData.numeroIdentificacion}</Typography>
+                  </Box>
+                  <Box className={classes.stepperSummaryItem}>
+                    <Typography className={classes.stepperSummaryLabel}>Email:</Typography>
+                    <Typography className={classes.stepperSummaryValue}>{formData.email}</Typography>
+                  </Box>
+                  <Box className={classes.stepperSummaryItem}>
+                    <Typography className={classes.stepperSummaryLabel}>Teléfono:</Typography>
+                    <Typography className={classes.stepperSummaryValue}>{formData.telefono}</Typography>
+                  </Box>
                 </Box>
-                <Box className={classes.stepperSummaryItem}>
-                  <Typography className={classes.stepperSummaryLabel}>Precio con Descuento:</Typography>
-                  <Typography className={classes.stepperSummaryValue}>
-                    {Number(formData.descuento.precioConDescuento).toLocaleString("es-CO", {
-                      style: "currency",
-                      currency: "COP",
-                    })}
-                  </Typography>
-                </Box>
-              </Box>
-            )}
+              </Grid>
 
-            {formData.acompanantes && formData.acompanantes.length > 0 && (
-              <Box className={classes.stepperSummaryCard}>
-                <Typography className={classes.detailsCardTitle}>
-                  <Group />
-                  Acompañantes
-                </Typography>
-                {formData.acompanantes.map((acomp, index) => (
-                  <Box key={index} className={classes.stepperSummaryItem}>
-                    <Typography className={classes.stepperSummaryLabel}>Acompañante {index + 1}:</Typography>
+              <Grid item xs={12} md={6}>
+                <Box className={classes.stepperSummaryCard}>
+                  <Typography className={classes.detailsCardTitle}>
+                    <EventAvailable />
+                    Fechas y Apartamentos
+                  </Typography>
+                  <Box className={classes.stepperSummaryItem}>
+                    <Typography className={classes.stepperSummaryLabel}>Fecha Inicio:</Typography>
+                    <Typography className={classes.stepperSummaryValue}>{formData.fecha_inicio}</Typography>
+                  </Box>
+                  <Box className={classes.stepperSummaryItem}>
+                    <Typography className={classes.stepperSummaryLabel}>Fecha Fin:</Typography>
+                    <Typography className={classes.stepperSummaryValue}>{formData.fecha_fin}</Typography>
+                  </Box>
+                  <Box className={classes.stepperSummaryItem}>
+                    <Typography className={classes.stepperSummaryLabel}>Apartamentos:</Typography>
                     <Typography className={classes.stepperSummaryValue}>
-                      {acomp.nombre} {acomp.apellido} - {acomp.documento}
+                      {formData.apartamentos
+                        .map((aptId) => {
+                          const apt = apartamentosOptions.find((item) => item.id === aptId)
+                          return apt ? `Apartamento ${apt.numeroApto}` : `Apartamento ${aptId}`
+                        })
+                        .join(", ")}
                     </Typography>
                   </Box>
-                ))}
-              </Box>
-            )}
+                  <Box className={classes.stepperSummaryItem}>
+                    <Typography className={classes.stepperSummaryLabel}>Estadía:</Typography>
+                    <Typography className={classes.stepperSummaryValue}>{formData.estadia} días</Typography>
+                  </Box>
+                  <Box className={classes.stepperSummaryItem}>
+                    <Typography className={classes.stepperSummaryLabel}>Total:</Typography>
+                    <Typography className={classes.stepperSummaryValue}>
+                      {Number(formData.total).toLocaleString("es-CO", { style: "currency", currency: "COP" })}
+                    </Typography>
+                  </Box>
+                  <Box className={classes.stepperSummaryItem}>
+                    <Typography className={classes.stepperSummaryLabel}>Estado:</Typography>
+                    <Typography className={classes.stepperSummaryValue}>
+                      <Chip
+                        label={formData.estado.charAt(0).toUpperCase() + formData.estado.slice(1)}
+                        className={`${classes.estadoChip} ${getEstadoClass(formData.estado)}`}
+                        size="small"
+                      />
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+
+              {formData.descuento && formData.descuento.porcentaje && (
+                <Grid item xs={12} md={6}>
+                  <Box className={classes.stepperSummaryCard}>
+                    <Typography className={classes.detailsCardTitle}>
+                      <LocalOffer />
+                      Descuento
+                    </Typography>
+                    <Box className={classes.stepperSummaryItem}>
+                      <Typography className={classes.stepperSummaryLabel}>Porcentaje:</Typography>
+                      <Typography className={classes.stepperSummaryValue}>{formData.descuento.porcentaje}%</Typography>
+                    </Box>
+                    <Box className={classes.stepperSummaryItem}>
+                      <Typography className={classes.stepperSummaryLabel}>Precio Original:</Typography>
+                      <Typography className={classes.stepperSummaryValue}>
+                        {Number(formData.descuento.precioOriginal).toLocaleString("es-CO", {
+                          style: "currency",
+                          currency: "COP",
+                        })}
+                      </Typography>
+                    </Box>
+                    <Box className={classes.stepperSummaryItem}>
+                      <Typography className={classes.stepperSummaryLabel}>Precio con Descuento:</Typography>
+                      <Typography className={classes.stepperSummaryValue}>
+                        {Number(formData.descuento.precioConDescuento).toLocaleString("es-CO", {
+                          style: "currency",
+                          currency: "COP",
+                        })}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+              )}
+
+              {formData.acompanantes && formData.acompanantes.length > 0 && (
+                <Grid item xs={12} md={6}>
+                  <Box className={classes.stepperSummaryCard}>
+                    <Typography className={classes.detailsCardTitle}>
+                      <Group />
+                      Acompañantes
+                    </Typography>
+                    {formData.acompanantes.map((acomp, index) => (
+                      <Box key={index} className={classes.stepperSummaryItem}>
+                        <Typography className={classes.stepperSummaryLabel}>Acompañante {index + 1}:</Typography>
+                        <Typography className={classes.stepperSummaryValue}>
+                          {acomp.nombre} {acomp.apellido} - {acomp.documento}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </Grid>
+              )}
+            </Grid>
           </Box>
         )
       default:
@@ -2228,11 +2488,7 @@ Estado: ${hospedaje.estado}`
                     {h.fecha_inicio ? h.fecha_inicio.substring(0, 10) : ""}
                   </TableCell>
                   <TableCell className={classes.tableCell}>{h.fecha_fin ? h.fecha_fin.substring(0, 10) : ""}</TableCell>
-                  <TableCell className={classes.tableCell}>
-                    {Array.isArray(h.apartamentos)
-                      ? h.apartamentos.map((apt) => (apt.NumeroApto ? `Apartamento ${apt.NumeroApto}` : apt)).join(", ")
-                      : h.apartamentos}
-                  </TableCell>
+                  <TableCell className={classes.tableCell}>{formatApartamentosSimple(h.apartamentos)}</TableCell>
                   <TableCell className={classes.tableCell}>{h.estadia}</TableCell>
                   <TableCell className={classes.tableCell}>
                     {Number(h.total).toLocaleString("es-CO", { style: "currency", currency: "COP" })}
@@ -2306,12 +2562,12 @@ Estado: ${hospedaje.estado}`
         className={classes.pagination}
       />
 
-      {/* Modal para crear/editar hospedaje - Diseño actualizado como wizard paso a paso */}
+      {/* Modal para crear/editar hospedaje - Diseño optimizado CON SCROLL */}
       <Dialog
         open={open}
         onClose={handleClose}
         fullWidth
-        maxWidth="md"
+        maxWidth={false}
         classes={{ paper: classes.dialogPaper }}
         className={classes.wizardDialog}
       >
@@ -2321,7 +2577,7 @@ Estado: ${hospedaje.estado}`
             <X size={20} />
           </IconButton>
         </DialogTitle>
-        <DialogContent className={classes.dialogContent}>
+        <DialogContent className={classes.wizardContent}>
           {/* Barra de progreso */}
           <Box className={classes.stepperProgress}>
             <Box
@@ -2380,49 +2636,49 @@ Estado: ${hospedaje.estado}`
           <Box className={classes.stepContentWrapper}>
             <Box className={classes.stepContent}>{getStepContent(activeStep)}</Box>
           </Box>
-
-          {/* Botones de navegación */}
-          <Box className={classes.stepperNavButtons}>
-            <Button
-              disabled={activeStep === 0}
-              onClick={handleBack}
-              className={classes.stepperBackButton}
-              startIcon={<ArrowBack />}
-            >
-              Atrás
-            </Button>
-            <Box>
-              {activeStep === steps.length - 1 ? (
-                <Button
-                  variant="contained"
-                  onClick={handleSaveHospedaje}
-                  className={classes.stepperFinishButton}
-                  startIcon={<Check />}
-                >
-                  Finalizar
-                </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  onClick={handleNext}
-                  className={classes.stepperNextButton}
-                  disabled={!canAdvance()}
-                  endIcon={<ArrowForward />}
-                >
-                  Siguiente
-                </Button>
-              )}
-            </Box>
-          </Box>
         </DialogContent>
+
+        {/* Botones de navegación */}
+        <DialogActions className={classes.dialogActions}>
+          <Button
+            disabled={activeStep === 0}
+            onClick={handleBack}
+            className={classes.stepperBackButton}
+            startIcon={<ArrowBack />}
+          >
+            Atrás
+          </Button>
+          <Box>
+            {activeStep === steps.length - 1 ? (
+              <Button
+                variant="contained"
+                onClick={handleSaveHospedaje}
+                className={classes.stepperFinishButton}
+                startIcon={<Check />}
+              >
+                Finalizar
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                onClick={handleNext}
+                className={classes.stepperNextButton}
+                disabled={!canAdvance()}
+                endIcon={<ArrowForward />}
+              >
+                Siguiente
+              </Button>
+            )}
+          </Box>
+        </DialogActions>
       </Dialog>
 
-      {/* Modal de detalles (solo lectura) - Diseño actualizado */}
+      {/* Modal de detalles optimizado */}
       <Dialog
         open={detailsOpen}
         onClose={handleCloseDetails}
         fullWidth
-        maxWidth="sm"
+        maxWidth={false}
         classes={{ paper: classes.dialogPaper }}
       >
         <DialogTitle className={classes.dialogTitle}>
@@ -2446,9 +2702,8 @@ Estado: ${hospedaje.estado}`
 
               <Divider style={{ margin: "16px 0" }} />
 
-              {/* Ajustar el tamaño de las tarjetas en el modal de detalles para que se vean mejor en un modal más pequeño */}
               <Grid container spacing={2} className={classes.detailsGrid}>
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} md={6} lg={4}>
                   <Box className={classes.detailsCard}>
                     <Typography className={classes.detailsCardTitle}>
                       <PermIdentity />
@@ -2458,7 +2713,7 @@ Estado: ${hospedaje.estado}`
                   </Box>
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} md={6} lg={4}>
                   <Box className={classes.detailsCard}>
                     <Typography className={classes.detailsCardTitle}>
                       <ContactMail />
@@ -2470,7 +2725,7 @@ Estado: ${hospedaje.estado}`
                   </Box>
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} md={6} lg={4}>
                   <Box className={classes.detailsCard}>
                     <Typography className={classes.detailsCardTitle}>
                       <Email />
@@ -2482,7 +2737,7 @@ Estado: ${hospedaje.estado}`
                   </Box>
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} md={6} lg={4}>
                   <Box className={classes.detailsCard}>
                     <Typography className={classes.detailsCardTitle}>
                       <PhoneAndroid />
@@ -2494,7 +2749,7 @@ Estado: ${hospedaje.estado}`
                   </Box>
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} md={6} lg={4}>
                   <Box className={classes.detailsCard}>
                     <Typography className={classes.detailsCardTitle}>
                       <EventNote />
@@ -2510,23 +2765,19 @@ Estado: ${hospedaje.estado}`
                   </Box>
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} md={6} lg={4}>
                   <Box className={classes.detailsCard}>
                     <Typography className={classes.detailsCardTitle}>
                       <Home />
                       Apartamentos
                     </Typography>
                     <Typography className={classes.detailsCardContent}>
-                      {Array.isArray(selectedHospedaje.apartamentos)
-                        ? selectedHospedaje.apartamentos
-                            .map((apt) => (apt.NumeroApto ? `Apartamento ${apt.NumeroApto}` : apt))
-                            .join(", ")
-                        : selectedHospedaje.apartamentos}
+                      {formatApartamentosSimple(selectedHospedaje.apartamentos)}
                     </Typography>
                   </Box>
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} md={6} lg={4}>
                   <Box className={classes.detailsCard}>
                     <Typography className={classes.detailsCardTitle}>
                       <CalendarToday />
@@ -2536,7 +2787,7 @@ Estado: ${hospedaje.estado}`
                   </Box>
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} md={6} lg={4}>
                   <Box className={classes.detailsCard}>
                     <Typography className={classes.detailsCardTitle}>
                       <AttachMoney />
@@ -2553,148 +2804,136 @@ Estado: ${hospedaje.estado}`
               </Grid>
 
               {/* Sección de Descuento */}
-              <Box mt={3}>
-                <Typography className={classes.sectionTitle}>
-                  <LocalOffer />
-                  Descuento
-                </Typography>
-                {selectedHospedaje.descuento ? (
-                  <Box className={classes.detailsCard}>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={4}>
-                        <Typography variant="body2" className={classes.detailsCardTitle}>
-                          Porcentaje
-                        </Typography>
+              {selectedHospedaje.descuento && selectedHospedaje.descuento.porcentaje && (
+                <Box mt={2}>
+                  <Typography className={classes.sectionTitle}>
+                    <LocalOffer />
+                    Descuento
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={4}>
+                      <Box className={classes.detailsCard}>
+                        <Typography className={classes.detailsCardTitle}>Porcentaje</Typography>
                         <Typography className={classes.detailsCardContent}>
                           {selectedHospedaje.descuento.porcentaje}%
                         </Typography>
-                      </Grid>
-                      <Grid item xs={12} md={4}>
-                        <Typography variant="body2" className={classes.detailsCardTitle}>
-                          Precio Original
-                        </Typography>
-                        <Typography className={classes.detailsCardContent}>
-                          {selectedHospedaje.descuento.precioOriginal}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={12} md={4}>
-                        <Typography variant="body2" className={classes.detailsCardTitle}>
-                          Precio con Descuento
-                        </Typography>
-                        <Typography className={classes.detailsCardContent}>
-                          {selectedHospedaje.descuento.precioConDescuento}
-                        </Typography>
-                      </Grid>
+                      </Box>
                     </Grid>
-                  </Box>
-                ) : (
-                  <Typography variant="body2" style={{ color: "#64748b", fontStyle: "italic", padding: "8px 0" }}>
-                    No se ha aplicado descuento.
-                  </Typography>
-                )}
-              </Box>
+                    <Grid item xs={12} md={4}>
+                      <Box className={classes.detailsCard}>
+                        <Typography className={classes.detailsCardTitle}>Precio Original</Typography>
+                        <Typography className={classes.detailsCardContent}>
+                          {Number(selectedHospedaje.descuento.precioOriginal).toLocaleString("es-CO", {
+                            style: "currency",
+                            currency: "COP",
+                          })}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Box className={classes.detailsCard}>
+                        <Typography className={classes.detailsCardTitle}>Precio con Descuento</Typography>
+                        <Typography className={classes.detailsCardContent}>
+                          {Number(selectedHospedaje.descuento.precioConDescuento).toLocaleString("es-CO", {
+                            style: "currency",
+                            currency: "COP",
+                          })}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Box>
+              )}
 
               {/* Sección de Acompañantes */}
-              <Box mt={3}>
-                <Typography className={classes.sectionTitle}>
-                  <Group />
-                  Acompañantes
-                </Typography>
-                {selectedHospedaje.acompanantes && selectedHospedaje.acompanantes.length > 0 ? (
-                  <Box className={classes.detailsCard}>
-                    {selectedHospedaje.acompanantes.map((ac, idx) => (
-                      <Box
-                        key={idx}
-                        display="flex"
-                        alignItems="center"
-                        p={1}
-                        mb={1}
-                        borderBottom={idx < selectedHospedaje.acompanantes.length - 1 ? "1px solid #e2e8f0" : "none"}
-                      >
-                        <Avatar
-                          style={{
-                            width: 36,
-                            height: 36,
-                            backgroundColor: "#2563eb",
-                            marginRight: 16,
-                            fontSize: "0.9rem",
-                          }}
-                        >
-                          {getInitials(`${ac.nombre} ${ac.apellido}`)}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body1" style={{ fontWeight: 500 }}>
-                            {ac.nombre} {ac.apellido}
-                          </Typography>
-                          <Typography variant="body2" style={{ color: "#64748b" }}>
-                            Documento: {ac.documento}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    ))}
-                  </Box>
-                ) : (
-                  <Typography variant="body2" style={{ color: "#64748b", fontStyle: "italic", padding: "8px 0" }}>
-                    No hay acompañantes.
+              {selectedHospedaje.acompanantes && selectedHospedaje.acompanantes.length > 0 && (
+                <Box mt={2}>
+                  <Typography className={classes.sectionTitle}>
+                    <Group />
+                    Acompañantes
                   </Typography>
-                )}
-              </Box>
+                  <Grid container spacing={2}>
+                    {selectedHospedaje.acompanantes.map((ac, idx) => (
+                      <Grid item xs={12} md={6} lg={4} key={idx}>
+                        <Box className={classes.detailsCard}>
+                          <Box display="flex" alignItems="center" mb={1}>
+                            <Avatar
+                              style={{
+                                width: 40,
+                                height: 40,
+                                backgroundColor: "#2563eb",
+                                marginRight: 12,
+                                fontSize: "1rem",
+                              }}
+                            >
+                              {getInitials(`${ac.nombre} ${ac.apellido}`)}
+                            </Avatar>
+                            <Box>
+                              <Typography variant="subtitle2" style={{ fontWeight: 600, marginBottom: 2 }}>
+                                {ac.nombre} {ac.apellido}
+                              </Typography>
+                              <Typography variant="caption" style={{ color: "#64748b" }}>
+                                Documento: {ac.documento}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Box>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Box>
+              )}
 
               {/* Sección de Check-in / Check-out */}
-              <Box mt={3}>
-                <Typography className={classes.sectionTitle}>
-                  <EventAvailable />
-                  Check‑in / Check‑out
-                </Typography>
-                {selectedHospedaje.checkInData && selectedHospedaje.checkInData.length > 0 ? (
-                  <Box className={classes.detailsCard}>
-                    {selectedHospedaje.checkInData.map((item, idx) => (
-                      <Box key={idx} mb={2}>
-                        <Typography variant="subtitle2" style={{ fontWeight: 600, color: "#2563eb", marginBottom: 8 }}>
-                          {item.servicio}
-                        </Typography>
-                        <Grid container spacing={2}>
-                          <Grid item xs={12} md={6}>
-                            <Typography variant="body2" style={{ fontWeight: 500 }}>
-                              Check‑in:
-                            </Typography>
-                            <Typography variant="body2">
-                              {item.checkIn ? new Date(item.checkIn).toLocaleString() : "N/A"}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <Typography variant="body2" style={{ fontWeight: 500 }}>
-                              Check‑out:
-                            </Typography>
-                            <Typography variant="body2">
-                              {item.checkOut ? new Date(item.checkOut).toLocaleString() : "N/A"}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={12}>
-                            <Typography variant="body2" style={{ fontWeight: 500 }}>
-                              Observaciones:
-                            </Typography>
-                            <Typography variant="body2">{item.observaciones || "N/A"}</Typography>
-                          </Grid>
-                          <Grid item xs={12}>
-                            <Typography variant="body2" style={{ fontWeight: 500 }}>
-                              Estado:
-                            </Typography>
-                            <Typography variant="body2">{item.estado}</Typography>
-                          </Grid>
-                        </Grid>
-                      </Box>
-                    ))}
-                  </Box>
-                ) : (
-                  <Typography variant="body2" style={{ color: "#64748b", fontStyle: "italic", padding: "8px 0" }}>
-                    No hay datos de Check‑in.
+              {selectedHospedaje.checkInData && selectedHospedaje.checkInData.length > 0 && (
+                <Box mt={2}>
+                  <Typography className={classes.sectionTitle}>
+                    <EventAvailable />
+                    Check‑in / Check‑out
                   </Typography>
-                )}
-              </Box>
+                  <Grid container spacing={2}>
+                    {selectedHospedaje.checkInData.map((item, idx) => (
+                      <Grid item xs={12} md={6} key={idx}>
+                        <Box className={classes.detailsCard}>
+                          <Typography
+                            variant="subtitle1"
+                            style={{ fontWeight: 600, color: "#2563eb", marginBottom: 12 }}
+                          >
+                            {item.servicio}
+                          </Typography>
+                          <Grid container spacing={1}>
+                            <Grid item xs={12} sm={6}>
+                              <Typography variant="body2" style={{ fontWeight: 600, marginBottom: 4 }}>
+                                Check‑in:
+                              </Typography>
+                              <Typography variant="body2">
+                                {item.checkIn ? new Date(item.checkIn).toLocaleString() : "N/A"}
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                              <Typography variant="body2" style={{ fontWeight: 600, marginBottom: 4 }}>
+                                Check‑out:
+                              </Typography>
+                              <Typography variant="body2">
+                                {item.checkOut ? new Date(item.checkOut).toLocaleString() : "N/A"}
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={12}>
+                              <Typography variant="body2" style={{ fontWeight: 600, marginBottom: 4 }}>
+                                Observaciones:
+                              </Typography>
+                              <Typography variant="body2">{item.observaciones || "N/A"}</Typography>
+                            </Grid>
+                          </Grid>
+                        </Box>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Box>
+              )}
             </>
           ) : (
-            <Box display="flex" justifyContent="center" alignItems="center" height="300px">
+            <Box display="flex" justifyContent="center" alignItems="center" height="200px">
               <Typography variant="body1">Cargando detalles...</Typography>
             </Box>
           )}
@@ -2717,13 +2956,14 @@ Estado: ${hospedaje.estado}`
         </DialogActions>
       </Dialog>
 
-      {/* Modal de Check-in / Check-out - Diseño actualizado */}
+      {/* Modal de Check-in / Check-out optimizado */}
       <Dialog
         open={checkInModalOpen}
         onClose={closeCheckInModal}
         fullWidth
-        maxWidth="sm"
+        maxWidth={false}
         classes={{ paper: classes.dialogPaper }}
+        className={classes.checkInDialog}
       >
         <DialogTitle className={classes.dialogTitle}>
           Check‑in / Check‑out
@@ -2738,11 +2978,35 @@ Estado: ${hospedaje.estado}`
                 <Avatar className={classes.detailsAvatar}>{getInitials(selectedHospedaje.cliente)}</Avatar>
                 <Typography className={classes.detailsName}>{selectedHospedaje.cliente}</Typography>
                 <Typography className={classes.detailsDescription}>
-                  Número de Identificación: {selectedHospedaje.numeroIdentificacion}
-                  <br />
-                  Número de Reserva: {selectedHospedaje.numeroReserva}
+                  ID: {selectedHospedaje.numeroIdentificacion} | Reserva: {selectedHospedaje.numeroReserva}
                 </Typography>
               </Box>
+
+              {/* Indicador de check-in realizado */}
+              {hasCheckIn(selectedHospedaje) && (
+                <Box className={classes.checkInStatusCard}>
+                  <Typography className={classes.checkInStatusText}>
+                    <CheckCircle />
+                    Check-in realizado exitosamente
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    startIcon={<Trash2 size={16} />}
+                    onClick={handleDeleteCheckIn}
+                    size="small"
+                    style={{
+                      color: "#ef4444",
+                      borderColor: "#ef4444",
+                      "&:hover": {
+                        backgroundColor: "rgba(239, 68, 68, 0.05)",
+                      },
+                    }}
+                  >
+                    Eliminar Check-in
+                  </Button>
+                </Box>
+              )}
 
               <Divider style={{ margin: "16px 0" }} />
 
@@ -2764,6 +3028,7 @@ Estado: ${hospedaje.estado}`
                       fullWidth
                       disabled={!editMode}
                       variant="outlined"
+                      size="small"
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
@@ -2771,7 +3036,6 @@ Estado: ${hospedaje.estado}`
                           </InputAdornment>
                         ),
                       }}
-                      size="small"
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
@@ -2786,6 +3050,7 @@ Estado: ${hospedaje.estado}`
                       fullWidth
                       disabled={!editMode}
                       variant="outlined"
+                      size="small"
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
@@ -2793,49 +3058,50 @@ Estado: ${hospedaje.estado}`
                           </InputAdornment>
                         ),
                       }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      className={classes.formField}
+                      label="Total"
+                      type="number"
+                      value={checkInData.total}
+                      onChange={(e) => handleCheckInFieldChange("total", e.target.value)}
+                      fullWidth
+                      disabled={!editMode}
+                      variant="outlined"
                       size="small"
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <AttachMoney className={classes.fieldIcon} />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      className={classes.formField}
+                      label="Observaciones"
+                      value={checkInData.observaciones}
+                      onChange={(e) => handleCheckInFieldChange("observaciones", e.target.value)}
+                      fullWidth
+                      disabled={!editMode}
+                      variant="outlined"
+                      multiline
+                      rows={2}
+                      size="small"
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start" style={{ alignSelf: "flex-start", marginTop: "8px" }}>
+                            <Info className={classes.fieldIcon} />
+                          </InputAdornment>
+                        ),
+                      }}
                     />
                   </Grid>
                 </Grid>
-
-                <TextField
-                  className={classes.formField}
-                  label="Total"
-                  type="number"
-                  value={checkInData.total}
-                  onChange={(e) => handleCheckInFieldChange("total", e.target.value)}
-                  fullWidth
-                  disabled={!editMode}
-                  variant="outlined"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <AttachMoney className={classes.fieldIcon} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  size="small"
-                />
-
-                <TextField
-                  className={classes.formField}
-                  label="Observaciones"
-                  value={checkInData.observaciones}
-                  onChange={(e) => handleCheckInFieldChange("observaciones", e.target.value)}
-                  fullWidth
-                  disabled={!editMode}
-                  variant="outlined"
-                  multiline
-                  rows={3}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start" style={{ alignSelf: "flex-start", marginTop: "8px" }}>
-                        <Info className={classes.fieldIcon} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  size="small"
-                />
               </Box>
 
               <Box className={classes.formSection}>
@@ -2843,76 +3109,82 @@ Estado: ${hospedaje.estado}`
                   <Group />
                   Acompañantes
                 </Typography>
-                {checkInData.acompanantes &&
-                  checkInData.acompanantes.map((acomp, index) => (
-                    <Box key={index} className={classes.acompananteContainer}>
-                      <TextField
-                        label="Nombre"
-                        name="nombre"
-                        value={acomp.nombre}
-                        onChange={(e) => handleCheckInAcompananteChange(index, e)}
-                        className={classes.acompananteField}
-                        variant="outlined"
-                        disabled={!editMode}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Person className={classes.fieldIcon} />
-                            </InputAdornment>
-                          ),
-                        }}
-                        size="small"
-                      />
-                      <TextField
-                        label="Apellido"
-                        name="apellido"
-                        value={acomp.apellido}
-                        onChange={(e) => handleCheckInAcompananteChange(index, e)}
-                        className={classes.acompananteField}
-                        variant="outlined"
-                        disabled={!editMode}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Person className={classes.fieldIcon} />
-                            </InputAdornment>
-                          ),
-                        }}
-                        size="small"
-                      />
-                      <TextField
-                        label="Documento"
-                        name="documento"
-                        value={acomp.documento}
-                        onChange={(e) => handleCheckInAcompananteChange(index, e)}
-                        className={classes.acompananteField}
-                        variant="outlined"
-                        disabled={!editMode}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <ContactMail className={classes.fieldIcon} />
-                            </InputAdornment>
-                          ),
-                        }}
-                        size="small"
-                      />
-                      {editMode && (
-                        <IconButton
-                          onClick={() => removeCheckInAcompanante(index)}
-                          className={classes.acompananteDeleteBtn}
-                        >
-                          <Delete size={16} />
-                        </IconButton>
-                      )}
-                    </Box>
-                  ))}
+                <Grid container spacing={2}>
+                  {checkInData.acompanantes &&
+                    checkInData.acompanantes.map((acomp, index) => (
+                      <Grid item xs={12} key={index}>
+                        <Box className={classes.acompananteContainer}>
+                          <TextField
+                            label="Nombre"
+                            name="nombre"
+                            value={acomp.nombre}
+                            onChange={(e) => handleCheckInAcompananteChange(index, e)}
+                            className={classes.acompananteField}
+                            variant="outlined"
+                            disabled={!editMode}
+                            size="small"
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  <Person className={classes.fieldIcon} />
+                                </InputAdornment>
+                              ),
+                            }}
+                          />
+                          <TextField
+                            label="Apellido"
+                            name="apellido"
+                            value={acomp.apellido}
+                            onChange={(e) => handleCheckInAcompananteChange(index, e)}
+                            className={classes.acompananteField}
+                            variant="outlined"
+                            disabled={!editMode}
+                            size="small"
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  <Person className={classes.fieldIcon} />
+                                </InputAdornment>
+                              ),
+                            }}
+                          />
+                          <TextField
+                            label="Documento"
+                            name="documento"
+                            value={acomp.documento}
+                            onChange={(e) => handleCheckInAcompananteChange(index, e)}
+                            className={classes.acompananteField}
+                            variant="outlined"
+                            disabled={!editMode}
+                            size="small"
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  <ContactMail className={classes.fieldIcon} />
+                                </InputAdornment>
+                              ),
+                            }}
+                          />
+                          {editMode && (
+                            <IconButton
+                              onClick={() => removeCheckInAcompanante(index)}
+                              className={classes.acompananteDeleteBtn}
+                              size="small"
+                            >
+                              <Delete size={16} />
+                            </IconButton>
+                          )}
+                        </Box>
+                      </Grid>
+                    ))}
+                </Grid>
                 {editMode && (
                   <Button
                     variant="outlined"
                     onClick={addCheckInAcompanante}
                     className={classes.addAcompananteBtn}
                     startIcon={<Group />}
+                    size="small"
                   >
                     Agregar Acompañante
                   </Button>
@@ -2925,23 +3197,25 @@ Estado: ${hospedaje.estado}`
           <Button
             onClick={toggleEdicionRapida}
             variant="outlined"
+            size="small"
             style={{ color: editMode ? "#ef4444" : "#2563eb", borderColor: editMode ? "#ef4444" : "#2563eb" }}
           >
             {editMode ? "Desactivar Edición" : "Edición rápida"}
           </Button>
-          <Button onClick={confirmCheckInCheckOut} className={classes.submitButton}>
+          <Button onClick={confirmCheckInCheckOut} className={classes.submitButton} size="small">
             Guardar
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Modal de Habitaciones - Diseño actualizado */}
+      {/* Modal de Habitaciones optimizado - CON PAGINACIÓN */}
       <Dialog
         open={roomsModalOpen}
         onClose={closeRoomsModal}
         fullWidth
-        maxWidth="md"
+        maxWidth={false}
         classes={{ paper: classes.dialogPaper }}
+        className={classes.roomsDialog}
       >
         <DialogTitle className={classes.dialogTitle}>
           Habitaciones Disponibles
@@ -2961,7 +3235,7 @@ Estado: ${hospedaje.estado}`
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rooms.slice(roomPage * roomRowsPerPage, roomPage * roomRowsPerPage + roomRowsPerPage).map((room) => (
+                {paginatedRooms.map((room) => (
                   <TableRow key={room.number} className={classes.tableRow}>
                     <TableCell className={classes.tableCell}>{room.number}</TableCell>
                     <TableCell className={classes.tableCell}>
@@ -2987,6 +3261,7 @@ Estado: ${hospedaje.estado}`
                             prev.map((r) => (r.number === room.number ? { ...r, available: !r.available } : r)),
                           )
                         }}
+                        size="small"
                       >
                         {room.available ? "Disponible" : "No disponible"}
                       </Button>
@@ -3010,19 +3285,18 @@ Estado: ${hospedaje.estado}`
               </TableBody>
             </Table>
           </TableContainer>
+
+          {/* Paginación para habitaciones */}
           <TablePagination
             component={Paper}
             count={rooms.length}
-            page={roomPage}
-            onPageChange={(e, newPage) => setRoomPage(newPage)}
-            rowsPerPage={roomRowsPerPage}
-            onRowsPerPageChange={(e) => {
-              setRoomRowsPerPage(Number.parseInt(e.target.value, 10))
-              setRoomPage(0)
-            }}
-            labelRowsPerPage="Filas por página:"
-            rowsPerPageOptions={[5, 10, 15]}
-            className={classes.pagination}
+            page={roomsPage}
+            onPageChange={handleRoomsChangePage}
+            rowsPerPage={roomsPerPage}
+            onRowsPerPageChange={handleRoomsChangeRowsPerPage}
+            labelRowsPerPage="Habitaciones por página:"
+            rowsPerPageOptions={[4, 8, 12]}
+            className={classes.roomsPagination}
           />
         </DialogContent>
         <DialogActions className={classes.dialogActions}>

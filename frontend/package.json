@@ -35,7 +35,7 @@
     "xlsx": "^0.18.5"
   },
   "scripts": {
-    "start": "craco start",
+    "start": "set NODE_OPTIONS=--openssl-legacy-provider && craco start",
     "build": "craco build"
   },
   "browserslist": {
