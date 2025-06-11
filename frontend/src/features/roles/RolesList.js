@@ -800,7 +800,7 @@ const RolesList = () => {
         isAdminRole: isAdmin, // Añadir flag para identificar si es rol de administrador
       })
       setEditingId(role._id)
-      // Al editar, el formulario es válido inicialmente
+      // Al editar, el formulario es válido inicialmente (permitir sin permisos)
       setIsFormValid(true)
     } else {
       // Modo creación - Solo usar nombre personalizado y estado siempre activo
@@ -917,8 +917,10 @@ const RolesList = () => {
         hasPermissions
       setIsFormValid(isValid)
     } else {
-      // En modo edición, validar que haya al menos un permiso
-      setIsFormValid(hasPermissions)
+      // En modo edición, PERMITIR guardar sin permisos (cambio principal)
+      // Solo validar que no haya errores en otros campos
+      const hasErrors = Object.values(formErrors).some((error) => error !== "")
+      setIsFormValid(!hasErrors)
     }
   }
 
@@ -927,6 +929,11 @@ const RolesList = () => {
     const updatedPermisos = [...formData.permisos]
     updatedPermisos[moduloIndex].acciones[accion] = checked
     setFormData({ ...formData, permisos: updatedPermisos })
+
+    // Revalidar el formulario después del cambio
+    setTimeout(() => {
+      validateForm({ ...formData, permisos: updatedPermisos })
+    }, 0)
   }
 
   // Seleccionar todos los permisos para un módulo
@@ -953,6 +960,11 @@ const RolesList = () => {
     }
 
     setFormData({ ...formData, permisos: updatedPermisos })
+
+    // Revalidar el formulario después del cambio
+    setTimeout(() => {
+      validateForm({ ...formData, permisos: updatedPermisos })
+    }, 0)
   }
 
   // Quitar todos los permisos para un módulo
@@ -968,6 +980,11 @@ const RolesList = () => {
     }
 
     setFormData({ ...formData, permisos: updatedPermisos })
+
+    // Revalidar el formulario después del cambio
+    setTimeout(() => {
+      validateForm({ ...formData, permisos: updatedPermisos })
+    }, 0)
   }
 
   // Seleccionar todos los permisos para todos los módulos
@@ -999,6 +1016,11 @@ const RolesList = () => {
     })
 
     setFormData({ ...formData, permisos: updatedPermisos })
+
+    // Revalidar el formulario después del cambio
+    setTimeout(() => {
+      validateForm({ ...formData, permisos: updatedPermisos })
+    }, 0)
   }
 
   // Quitar todos los permisos para todos los módulos
@@ -1016,6 +1038,11 @@ const RolesList = () => {
     })
 
     setFormData({ ...formData, permisos: updatedPermisos })
+
+    // Revalidar el formulario después del cambio
+    setTimeout(() => {
+      validateForm({ ...formData, permisos: updatedPermisos })
+    }, 0)
   }
 
   // Preparar datos antes de enviar
@@ -1053,17 +1080,18 @@ const RolesList = () => {
       } else if (checkRoleExists(formData.nombrePersonalizado.trim(), editingId)) {
         tempErrors.nombrePersonalizado = "Ya existe un rol con este nombre"
       }
-    }
 
-    // Verificar si hay al menos un permiso seleccionado
-    const hasPermissions = formData.permisos.some(
-      (permiso) =>
-        permiso.acciones.crear || permiso.acciones.leer || permiso.acciones.actualizar || permiso.acciones.eliminar,
-    )
+      // En modo creación, verificar si hay al menos un permiso seleccionado
+      const hasPermissions = formData.permisos.some(
+        (permiso) =>
+          permiso.acciones.crear || permiso.acciones.leer || permiso.acciones.actualizar || permiso.acciones.eliminar,
+      )
 
-    if (!hasPermissions) {
-      tempErrors.permisos = "Debe seleccionar al menos un permiso"
+      if (!hasPermissions) {
+        tempErrors.permisos = "Debe seleccionar al menos un permiso"
+      }
     }
+    // En modo edición, NO validar permisos (permitir roles sin permisos)
 
     // Si hay errores, mostrarlos y detener el envío
     if (Object.keys(tempErrors).length > 0) {
@@ -1209,10 +1237,11 @@ const RolesList = () => {
     if (typeof permisos[0] === "string") {
       return permisos.join(", ")
     }
-    return permisos
+    const permisosActivos = permisos
       .filter((p) => p.acciones.crear || p.acciones.leer || p.acciones.actualizar || p.acciones.eliminar)
       .map((p) => p.modulo)
-      .join(", ")
+
+    return permisosActivos.length > 0 ? permisosActivos.join(", ") : "Sin permisos"
   }
 
   // Manejar cambio de pestaña
@@ -1512,6 +1541,11 @@ const RolesList = () => {
             <Typography className={classes.sectionTitle}>
               <Lock size={22} />
               Configuración de Permisos
+              {editingId && (
+                <Typography variant="caption" style={{ marginLeft: "16px", color: "#64748b", fontWeight: 400 }}>
+                  (Opcional - puede guardar sin permisos)
+                </Typography>
+              )}
             </Typography>
 
             <Box className={classes.buttonGroup}>
