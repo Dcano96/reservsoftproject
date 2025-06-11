@@ -795,13 +795,21 @@ const MobiliarioList = () => {
   }
 
   // Filtrado combinando búsqueda y filtro de estado múltiple
-  const filteredMobiliarios = mobiliarios.filter((m) => {
-    const searchMatch =
-      m.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.identMobiliario?.toLowerCase().includes(searchTerm.toLowerCase())
-    const estadoMatch = estadoFilter.length > 0 ? estadoFilter.includes(m.estado) : true
-    return searchMatch && estadoMatch
-  })
+  const filteredMobiliarios = mobiliarios
+    .filter((m) => {
+      const searchMatch =
+        m.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.identMobiliario?.toLowerCase().includes(searchTerm.toLowerCase())
+      const estadoMatch = estadoFilter.length > 0 ? estadoFilter.includes(m.estado) : true
+      return searchMatch && estadoMatch
+    })
+    .sort((a, b) => {
+      // Ordenar por identMobiliario de forma alfanumérica
+      return a.identMobiliario.localeCompare(b.identMobiliario, undefined, {
+        numeric: true,
+        sensitivity: "base",
+      })
+    })
 
   const paginatedMobiliarios = filteredMobiliarios.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
 
