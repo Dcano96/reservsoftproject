@@ -1298,7 +1298,7 @@ const HospedajeList = () => {
           title: "¡Actualizado!",
           text: "El hospedaje se actualizó correctamente.",
           confirmButtonColor: "#2563eb",
-          timer: 2000,
+          timer: 3000,
           showConfirmButton: false,
         })
         // Actualizar el estado local inmediatamente con formato correcto
@@ -1311,7 +1311,7 @@ const HospedajeList = () => {
           title: "¡Creado!",
           text: "El hospedaje se creó correctamente.",
           confirmButtonColor: "#2563eb",
-          timer: 2000,
+          timer: 3000,
           showConfirmButton: false,
         })
         setHospedajes((prev) => [...prev, res.hospedaje])
@@ -2518,14 +2518,8 @@ Estado: ${hospedaje.estado}`
                           <Edit size={18} />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Descargar PDF">
-                        <IconButton
-                          className={`${classes.actionButton} ${classes.btnDownload}`}
-                          onClick={() => handleDownloadPDF(h)}
-                        >
-                          <Download size={18} />
-                        </IconButton>
-                      </Tooltip>
+                    
+
                       <Tooltip title="Eliminar hospedaje">
                         <IconButton
                           className={`${classes.actionButton} ${classes.btnDelete}`}
