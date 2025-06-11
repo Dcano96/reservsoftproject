@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -498,7 +497,6 @@ const ApartamentoList = () => {
   const [apartamentos, setApartamentos] = useState([])
   const [open, setOpen] = useState(false)
   const [editingId, setEditingId] = useState(null)
-  // Incluimos "Capacidad" en el estado inicial (como número)
   const [formData, setFormData] = useState({
     Tipo: "Type 1",
     NumeroApto: "",
@@ -534,7 +532,6 @@ const ApartamentoList = () => {
     try {
       const data = await apartamentoService.getApartamentos()
       console.log("Datos recibidos de la API:", data)
-      // Asegurarse de que todos los apartamentos tengan un valor para Capacidad
       const dataWithCapacidad = data.map((apt) => ({
         ...apt,
         Capacidad: apt.Capacidad != null ? apt.Capacidad : 0,
@@ -544,7 +541,6 @@ const ApartamentoList = () => {
       setApartamentos(sortedData)
     } catch (error) {
       console.error("Error fetching apartamentos", error)
-      // Alerta: Error al cargar los apartamentos desde la API
       Swal.fire({
         icon: "error",
         title: "Error",
@@ -557,7 +553,6 @@ const ApartamentoList = () => {
     fetchApartamentos()
   }, [])
 
-  // Al abrir el modal: en modo edición usamos una comprobación para no pasar 0 por vacío
   const handleOpen = (apartamento) => {
     setFormErrors({})
     if (apartamento) {
@@ -566,7 +561,6 @@ const ApartamentoList = () => {
         Tipo: apartamento.Tipo || "",
         NumeroApto: apartamento.NumeroApto || "",
         Piso: apartamento.Piso || "",
-        // Usar comprobación para que si el valor es 0 se mantenga 0 y no se reemplace por ""
         Capacidad: apartamento.Capacidad != null ? apartamento.Capacidad : 0,
         Tarifa: apartamento.Tarifa || "",
         Estado: apartamento.Estado ?? true,
@@ -574,10 +568,8 @@ const ApartamentoList = () => {
       setEditingId(apartamento._id)
       setIsFormValid(true)
     } else {
-      // Verificar si hay tipos activos disponibles
       const tiposActivos = tipoApartamentos.filter((tipo) => tipo.estado)
       if (tiposActivos.length === 0) {
-        // Alerta: No hay tipos de apartamentos activos disponibles
         Swal.fire({
           icon: "warning",
           title: "No hay tipos disponibles",
@@ -587,7 +579,6 @@ const ApartamentoList = () => {
         return
       }
 
-      // Seleccionar el primer tipo activo por defecto
       const tipoInicial =
         selectedTipo === "Todos" || !tiposActivos.some((t) => t.nombre === selectedTipo)
           ? tiposActivos[0]?.nombre || ""
@@ -597,7 +588,7 @@ const ApartamentoList = () => {
         Tipo: tipoInicial,
         NumeroApto: "",
         Piso: "",
-        Capacidad: 0,
+        Capacidad: "",
         Tarifa: "",
         Estado: true,
       })
@@ -616,7 +607,6 @@ const ApartamentoList = () => {
       setMobiliarios(data)
     } catch (error) {
       console.error("Error al obtener mobiliarios asociados", error)
-      // Alerta: Error al cargar los mobiliarios asociados al apartamento
       Swal.fire({
         icon: "error",
         title: "Error",
@@ -639,7 +629,6 @@ const ApartamentoList = () => {
     console.log(`Campo cambiado: ${name}, Valor: ${value}, Tipo: ${typeof value}`)
 
     if (name === "Piso") {
-      // Solo permitir números enteros para el campo Piso
       if (value === "" || /^\d+$/.test(value)) {
         newValue = value === "" ? "" : Number(value)
       } else {
@@ -652,7 +641,6 @@ const ApartamentoList = () => {
         return
       }
     } else if (name === "Estado") {
-      // Convertir explícitamente a booleano
       newValue = value === "true"
       console.log(`Valor de Estado convertido a: ${newValue} (${typeof newValue})`)
     }
@@ -661,33 +649,34 @@ const ApartamentoList = () => {
     console.log("Datos del formulario actualizados:", updatedFormData)
 
     setFormData(updatedFormData)
-    validateField(name, newValue)
+
+    // Validar el campo individual
+    const isFieldValid = validateField(name, newValue, updatedFormData)
+
+    // Validar todo el formulario
     validateForm(updatedFormData)
   }
 
-  const validateField = (name, value) => {
+  // Función mejorada para validar campos individuales
+  const validateField = (name, value, currentFormData = formData) => {
     let errorMessage = ""
+
     if (name === "NumeroApto") {
-      if (value === 0 || value === "") {
+      if (value === "" || value === 0) {
         errorMessage = "El número de apartamento es obligatorio"
       } else if (Number(value) < 1 || Number(value) > 200) {
         errorMessage = "El número de apartamento debe estar entre 1 y 200"
       } else {
-        try {
-          if (!editingId || (editingId && formData.NumeroApto !== value)) {
-            const existingApartamentos = apartamentos.filter(
-              (apt) => apt.NumeroApto === value && apt.Tipo === formData.Tipo,
-            )
-            if (existingApartamentos.length > 0) {
-              errorMessage = `El apartamento número ${value} ya existe para el tipo ${formData.Tipo}`
-            }
-          }
-        } catch (error) {
-          console.error("Error al verificar duplicados:", error)
+        // Verificar duplicados solo si no estamos editando o si el número cambió
+        const existingApartamentos = apartamentos.filter(
+          (apt) => apt.NumeroApto === Number(value) && apt.Tipo === currentFormData.Tipo && apt._id !== editingId,
+        )
+        if (existingApartamentos.length > 0) {
+          errorMessage = `El apartamento número ${value} ya existe para el tipo ${currentFormData.Tipo}`
         }
       }
     } else if (name === "Piso") {
-      if (value === 0 || value === "") {
+      if (value === "" || value === 0) {
         errorMessage = "El piso es obligatorio"
       } else if (!Number.isInteger(Number(value))) {
         errorMessage = "El piso debe ser un número entero"
@@ -695,56 +684,68 @@ const ApartamentoList = () => {
         errorMessage = "El piso debe estar entre 1 y 20"
       }
     } else if (name === "Capacidad") {
-      if (value === "" || value === undefined || value === null) {
+      if (value === "" || value === 0) {
         errorMessage = "La capacidad es obligatoria"
       } else if (Number(value) < 1 || Number(value) > 6) {
         errorMessage = "La capacidad debe estar entre 1 y 6"
       }
     } else if (name === "Tarifa") {
-      if (value === 0 || value === "") {
+      if (value === "" || value === 0) {
         errorMessage = "La tarifa es obligatoria"
       } else if (Number(value) <= 0) {
         errorMessage = "La tarifa debe ser un valor positivo"
-      } else if (!/^\d+$/.test(String(value))) {
-        errorMessage = "La tarifa solo debe contener números"
+      } else if (Number(value) < 50000) {
+        errorMessage = "La tarifa debe ser mínimo 50,000"
       }
     }
+
     setFormErrors((prev) => ({ ...prev, [name]: errorMessage }))
-    // Alerta: Muestra mensaje de validación para el campo que falló
-    // if (errorMessage) {
-    //   Swal.fire({
-    //     icon: "warning",
-    //     title: "Validación",
-    //     text: errorMessage,
-    //     confirmButtonColor: "#2563eb",
-    //     toast: true,
-    //     position: "top-end",
-    //     showConfirmButton: false,
-    //     timer: 3000,
-    //     timerProgressBar: true,
-    //   })
-    // }
     return !errorMessage
   }
 
+  // Función mejorada para validar todo el formulario
   const validateForm = (data) => {
-    const isValid =
-      data.NumeroApto !== "" &&
-      Number(data.NumeroApto) > 0 &&
-      data.Piso !== "" &&
-      Number(data.Piso) > 0 &&
-      data.Capacidad !== "" &&
-      Number(data.Capacidad) > 0 &&
-      data.Tarifa !== "" &&
-      Number(data.Tarifa) > 0
+    const errors = {}
+
+    // Validar cada campo
+    if (!data.NumeroApto || data.NumeroApto === "" || Number(data.NumeroApto) <= 0) {
+      errors.NumeroApto = true
+    }
+    if (!data.Piso || data.Piso === "" || Number(data.Piso) <= 0) {
+      errors.Piso = true
+    }
+    if (!data.Capacidad || data.Capacidad === "" || Number(data.Capacidad) <= 0) {
+      errors.Capacidad = true
+    }
+    if (!data.Tarifa || data.Tarifa === "" || Number(data.Tarifa) <= 0) {
+      errors.Tarifa = true
+    }
+
+    // Verificar duplicados para NumeroApto
+    if (data.NumeroApto && Number(data.NumeroApto) > 0) {
+      const existingApartamentos = apartamentos.filter(
+        (apt) => apt.NumeroApto === Number(data.NumeroApto) && apt.Tipo === data.Tipo && apt._id !== editingId,
+      )
+      if (existingApartamentos.length > 0) {
+        errors.NumeroApto = true
+      }
+    }
+
+    // El formulario es válido si no hay errores
+    const isValid = Object.keys(errors).length === 0
     setIsFormValid(isValid)
+
+    console.log("Validación del formulario:", { data, errors, isValid })
+    return isValid
   }
 
+  // Función mejorada para manejar el envío del formulario
   const handleSubmit = async () => {
+    console.log("Iniciando handleSubmit con datos:", formData)
+
     // Verificar si el tipo de apartamento está inactivo
     const tipoSeleccionado = tipoApartamentos.find((tipo) => tipo.nombre === formData.Tipo)
     if (tipoSeleccionado && !tipoSeleccionado.estado && !editingId) {
-      // Alerta: Error de validación al intentar crear un apartamento con tipo inactivo
       Swal.fire({
         icon: "error",
         title: "Error de validación",
@@ -754,30 +755,52 @@ const ApartamentoList = () => {
       return
     }
 
-    const tempErrors = {}
-    if (Number(formData.NumeroApto) <= 0) {
-      tempErrors.NumeroApto = "El número de apartamento es obligatorio"
+    // Validación exhaustiva antes del envío
+    const validationErrors = {}
+
+    // Validar NumeroApto
+    if (!formData.NumeroApto || formData.NumeroApto === "" || Number(formData.NumeroApto) <= 0) {
+      validationErrors.NumeroApto = "El número de apartamento es obligatorio y debe ser mayor que 0"
+    } else if (Number(formData.NumeroApto) < 1 || Number(formData.NumeroApto) > 200) {
+      validationErrors.NumeroApto = "El número de apartamento debe estar entre 1 y 200"
     } else {
+      // Verificar duplicados
       const existingApartamentos = apartamentos.filter(
-        (apt) => apt.NumeroApto === formData.NumeroApto && apt.Tipo === formData.Tipo && apt._id !== editingId,
+        (apt) => apt.NumeroApto === Number(formData.NumeroApto) && apt.Tipo === formData.Tipo && apt._id !== editingId,
       )
       if (existingApartamentos.length > 0) {
-        tempErrors.NumeroApto = `El apartamento número ${formData.NumeroApto} ya existe para el tipo ${formData.Tipo}`
+        validationErrors.NumeroApto = `El apartamento número ${formData.NumeroApto} ya existe para el tipo ${formData.Tipo}`
       }
     }
-    if (Number(formData.Piso) <= 0) {
-      tempErrors.Piso = "El piso es obligatorio y debe ser mayor que 0"
+
+    // Validar Piso
+    if (!formData.Piso || formData.Piso === "" || Number(formData.Piso) <= 0) {
+      validationErrors.Piso = "El piso es obligatorio y debe ser mayor que 0"
+    } else if (Number(formData.Piso) < 1 || Number(formData.Piso) > 20) {
+      validationErrors.Piso = "El piso debe estar entre 1 y 20"
     }
-    if (Number(formData.Capacidad) <= 0) {
-      tempErrors.Capacidad = "La capacidad es obligatoria y debe ser mayor que 0"
+
+    // Validar Capacidad
+    if (!formData.Capacidad || formData.Capacidad === "" || Number(formData.Capacidad) <= 0) {
+      validationErrors.Capacidad = "La capacidad es obligatoria y debe ser mayor que 0"
+    } else if (Number(formData.Capacidad) < 1 || Number(formData.Capacidad) > 6) {
+      validationErrors.Capacidad = "La capacidad debe estar entre 1 y 6"
     }
-    if (Number(formData.Tarifa) <= 0) {
-      tempErrors.Tarifa = "La tarifa es obligatoria y debe ser un valor positivo"
+
+    // Validar Tarifa
+    if (!formData.Tarifa || formData.Tarifa === "" || Number(formData.Tarifa) <= 0) {
+      validationErrors.Tarifa = "La tarifa es obligatoria y debe ser mayor que 0"
+    } else if (Number(formData.Tarifa) < 50000) {
+      validationErrors.Tarifa = "La tarifa debe ser mínimo 50,000"
     }
-    if (Object.keys(tempErrors).length > 0) {
-      setFormErrors(tempErrors)
-      // Alerta: Muestra el primer error de validación encontrado en el formulario
-      const firstError = Object.values(tempErrors)[0]
+
+    // Si hay errores de validación, mostrarlos y detener el envío
+    if (Object.keys(validationErrors).length > 0) {
+      console.log("Errores de validación encontrados:", validationErrors)
+      setFormErrors(validationErrors)
+
+      // Mostrar el primer error encontrado
+      const firstError = Object.values(validationErrors)[0]
       Swal.fire({
         icon: "error",
         title: "Error de validación",
@@ -787,6 +810,7 @@ const ApartamentoList = () => {
       return
     }
 
+    // Si llegamos aquí, todas las validaciones pasaron
     const dataToSend = {
       ...formData,
       NumeroApto: Number(formData.NumeroApto),
@@ -795,12 +819,11 @@ const ApartamentoList = () => {
       Tarifa: Number(formData.Tarifa),
     }
 
-    console.log("Datos a enviar para guardar:", dataToSend)
+    console.log("Datos validados para enviar:", dataToSend)
 
     try {
       if (editingId) {
         await apartamentoService.updateApartamento(editingId, dataToSend)
-        // Alerta: Confirmación de actualización exitosa del apartamento
         Swal.fire({
           icon: "success",
           title: "Actualizado",
@@ -809,7 +832,6 @@ const ApartamentoList = () => {
         })
       } else {
         await apartamentoService.createApartamento(dataToSend)
-        // Alerta: Confirmación de creación exitosa del apartamento
         Swal.fire({
           icon: "success",
           title: "Creado",
@@ -817,14 +839,14 @@ const ApartamentoList = () => {
           confirmButtonColor: "#2563eb",
         })
       }
-      // Esperar un momento para recargar datos
+
+      // Recargar datos y cerrar modal
       setTimeout(async () => {
         await fetchApartamentos()
         handleClose()
       }, 500)
     } catch (error) {
       console.error("Error saving apartamento", error)
-      // Alerta: Error al guardar los datos del apartamento
       Swal.fire({
         icon: "error",
         title: "Error",
@@ -833,14 +855,10 @@ const ApartamentoList = () => {
     }
   }
 
-  // Keep the original handleDelete function for actual deletion
   const handleDelete = async (id) => {
-    // Primero, encontrar el apartamento por su ID para verificar su estado
     const apartamentoToDelete = apartamentos.find((apt) => apt._id === id)
 
-    // Verificar si el apartamento está activo
     if (apartamentoToDelete && apartamentoToDelete.Estado) {
-      // Alerta: No se permite eliminar un apartamento activo
       Swal.fire({
         icon: "warning",
         title: "Acción no permitida",
@@ -848,11 +866,9 @@ const ApartamentoList = () => {
         confirmButtonText: "OK",
         confirmButtonColor: "#3085d6",
       })
-      return // Detener la ejecución para no continuar con la eliminación
+      return
     }
 
-    // Si no está activo, proceder con la confirmación de eliminación normal
-    // Alerta: Confirmación antes de eliminar un apartamento
     const confirmDelete = await Swal.fire({
       title: "¿Eliminar apartamento?",
       text: "Esta acción no se puede deshacer",
@@ -867,7 +883,6 @@ const ApartamentoList = () => {
     if (confirmDelete.isConfirmed) {
       try {
         await apartamentoService.deleteApartamento(id)
-        // Alerta: Confirmación de eliminación exitosa del apartamento
         Swal.fire({
           icon: "success",
           title: "Eliminado",
@@ -878,9 +893,7 @@ const ApartamentoList = () => {
       } catch (error) {
         console.error("Error deleting apartamento", error)
 
-        // Verificar si es un error 400 (Bad Request)
         if (error.response && error.response.status === 400) {
-          // Alerta: No se puede eliminar un apartamento con registros asociados
           Swal.fire({
             icon: "warning",
             title: "Acción no permitida",
@@ -888,8 +901,6 @@ const ApartamentoList = () => {
             confirmButtonColor: "#3085d6",
           })
         } else {
-          // Para otros tipos de errores, mostrar un mensaje genérico
-          // Alerta: Error general al intentar eliminar el apartamento
           Swal.fire({
             icon: "error",
             title: "Error",
@@ -975,7 +986,6 @@ const ApartamentoList = () => {
         </Box>
       </div>
 
-      {/* Selector de tipo */}
       <Box mb={2}>
         <FormControl fullWidth variant="outlined">
           <InputLabel id="select-tipo-label">Tipos</InputLabel>
@@ -995,7 +1005,6 @@ const ApartamentoList = () => {
         </FormControl>
       </Box>
 
-      {/* Tabla de apartamentos */}
       <TableContainer component={Paper} className={classes.tableContainer}>
         <Table>
           <TableHead>
@@ -1074,7 +1083,6 @@ const ApartamentoList = () => {
         className={classes.pagination}
       />
 
-      {/* Modal para crear/editar */}
       <Dialog
         open={open}
         onClose={handleClose}
@@ -1091,7 +1099,6 @@ const ApartamentoList = () => {
           </IconButton>
         </DialogTitle>
         <DialogContent className={classes.dialogContent}>
-          {/* Sección de Información Básica */}
           <Box className={classes.formSection}>
             <Typography className={classes.sectionTitle}>
               <Home size={20} /> Información Básica
@@ -1139,7 +1146,6 @@ const ApartamentoList = () => {
             />
           </Box>
 
-          {/* Sección de Ubicación y Tarifa */}
           <Box className={classes.formSection}>
             <Typography className={classes.sectionTitle}>
               <Building size={20} /> Ubicación y Tarifa
@@ -1160,13 +1166,12 @@ const ApartamentoList = () => {
               required
               InputProps={{ inputProps: { min: 1, max: 20 } }}
             />
-            {/* Campo Capacidad */}
             <TextField
               className={classes.formField}
               margin="dense"
               label="Capacidad"
               name="Capacidad"
-              value={formData.Capacidad === 0 ? "" : formData.Capacidad}
+              value={formData.Capacidad}
               onChange={handleChange}
               onBlur={() => validateField("Capacidad", formData.Capacidad)}
               fullWidth
@@ -1191,10 +1196,9 @@ const ApartamentoList = () => {
               error={!!formErrors.Tarifa}
               helperText={formErrors.Tarifa}
               required
-              InputProps={{ inputProps: { min: 1 } }}
+              InputProps={{ inputProps: { min: 50000 } }}
             />
 
-            {/* Selector para el Estado */}
             <FormControl fullWidth variant="outlined" className={classes.formField}>
               <InputLabel id="estado-label">Estado</InputLabel>
               <Select
@@ -1215,13 +1219,16 @@ const ApartamentoList = () => {
           <Button onClick={handleClose} className={classes.cancelButton}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} className={classes.submitButton} disabled={!isFormValid}>
+          <Button
+            onClick={handleSubmit}
+            className={classes.submitButton}
+            disabled={!isFormValid || Object.keys(formErrors).some((key) => formErrors[key])}
+          >
             {editingId ? "Actualizar" : "Crear"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Modal de detalles */}
       <Dialog
         open={openDetails}
         onClose={handleCloseDetails}
