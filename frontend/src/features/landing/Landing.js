@@ -26,6 +26,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  MenuItem,
 } from "@material-ui/core"
 import { makeStyles } from "@material-ui/core/styles"
 import {
@@ -41,7 +42,6 @@ import {
   Favorite,
   FavoriteBorder,
   Search,
-  PlayArrow,
   Visibility,
   Pool,
   Wifi,
@@ -1576,9 +1576,10 @@ function Landing() {
   const [reservationDialogOpen, setReservationDialogOpen] = useState(false)
   const [selectedApartamento, setSelectedApartamento] = useState(null)
   const [reservedDates, setReservedDates] = useState({})
-  // Modificar la inicialización del estado reservationForm para incluir el campo documento
+  // Modificar el estado reservationForm para incluir el tipo de documento
   const [reservationForm, setReservationForm] = useState({
-    documento: "", // Añadir el campo documento
+    documento: "",
+    tipo_documento: "cedula", // Añadir tipo de documento con valor por defecto
     titular_reserva: "",
     email: "",
     telefono: "",
@@ -1936,6 +1937,7 @@ function Landing() {
       monto_pago: apartamento ? apartamento.precio * 0.5 : 0, // 50% del total
       acompanantes: [],
       documento: "",
+      tipo_documento: "cedula", // Añadir tipo de documento con valor por defecto
     })
 
     // Resetear errores del formulario
@@ -1983,6 +1985,7 @@ function Landing() {
       nombre: "",
       apellido: "",
       documento_acompanante: "",
+      tipo_documento_acompanante: "cedula", // Añadir tipo de documento con valor por defecto
     }
     setReservationForm({
       ...reservationForm,
@@ -2293,11 +2296,13 @@ function Landing() {
         apartamento_id: selectedApartamento.id, // Asegurarse de enviar el ID del apartamento
         huespedes: reservationForm.acompanantes.length + 1, // +1 por el titular
         documento: reservationForm.documento,
+        tipo_documento: reservationForm.tipo_documento, // Añadir tipo de documento
         monto_pago: reservationForm.monto_pago, // Añadir el monto del pago parcial
         acompanantes: reservationForm.acompanantes.map((acompanante) => ({
           nombre: acompanante.nombre,
           apellido: acompanante.apellido,
           documento: acompanante.documento_acompanante,
+          tipo_documento: acompanante.tipo_documento_acompanante, // Añadir tipo de documento
         })),
       }
 
@@ -2341,6 +2346,7 @@ function Landing() {
         monto_pago: 0,
         acompanantes: [],
         documento: "",
+        tipo_documento: "cedula",
       })
       setComprobantePago(null)
       setComprobantePreview("")
@@ -2831,9 +2837,7 @@ function Landing() {
                           {apartamento.tag || apartamento.tipo}
                         </div>
                         <div className={classes.apartmentCardPrice}>${apartamento.precio} / noche</div>
-                        <IconButton className={classes.videoButton}>
-                          <PlayArrow />
-                        </IconButton>
+
                         <Button className={classes.viewButton} startIcon={<Visibility />}>
                           Ver tour 360°
                         </Button>
@@ -3294,6 +3298,23 @@ function Landing() {
             </Typography>
 
             <TextField
+              select
+              label="Tipo de documento"
+              name="tipo_documento"
+              value={reservationForm.tipo_documento || "cedula"}
+              onChange={handleReservationFormChange}
+              className={classes.reservationField}
+              variant="outlined"
+              fullWidth
+              required
+              style={{ marginBottom: "16px" }}
+            >
+              <MenuItem value="cedula">Cédula de Ciudadanía</MenuItem>
+              <MenuItem value="pasaporte">Pasaporte</MenuItem>
+              <MenuItem value="tarjeta_identidad">Tarjeta de Identidad</MenuItem>
+            </TextField>
+
+            <TextField
               label="Documento de identidad"
               name="documento"
               value={reservationForm.documento || ""}
@@ -3576,7 +3597,23 @@ function Landing() {
                   </Typography>
 
                   <Grid container spacing={2}>
-                    <Grid item xs={12} sm={4}>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        select
+                        label="Tipo de documento"
+                        value={acompanante.tipo_documento_acompanante || "cedula"}
+                        onChange={(e) => handleAcompananteChange(index, "tipo_documento_acompanante", e.target.value)}
+                        className={classes.reservationField}
+                        variant="outlined"
+                        fullWidth
+                        required
+                      >
+                        <MenuItem value="cedula">Cédula de Ciudadanía</MenuItem>
+                        <MenuItem value="pasaporte">Pasaporte</MenuItem>
+                        <MenuItem value="tarjeta_identidad">Tarjeta de Identidad</MenuItem>
+                      </TextField>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
                       <TextField
                         label="Nombre"
                         value={acompanante.nombre}
@@ -3594,7 +3631,7 @@ function Landing() {
                         helperText="Solo letras, máximo 60 caracteres"
                       />
                     </Grid>
-                    <Grid item xs={12} sm={4}>
+                    <Grid item xs={12} sm={6}>
                       <TextField
                         label="Apellido"
                         value={acompanante.apellido}
@@ -3612,7 +3649,7 @@ function Landing() {
                         helperText="Solo letras, máximo 60 caracteres"
                       />
                     </Grid>
-                    <Grid item xs={12} sm={4}>
+                    <Grid item xs={12} sm={6}>
                       <TextField
                         label="Documento"
                         value={acompanante.documento_acompanante || ""}
