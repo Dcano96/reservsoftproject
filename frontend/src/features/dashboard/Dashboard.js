@@ -872,7 +872,7 @@ const Dashboard = () => {
                 <div className="bird-tail"></div>
               </div>
             </div>
-            {open && <h1 className="logo-text">NidoSky</h1>}
+            {open && <h1 className="logo-text">ReservSoft</h1>}
           </div>
           <button className="toggle-button" onClick={toggleDrawer}>
             {open ? <ChevronLeft /> : <ChevronRight />}
