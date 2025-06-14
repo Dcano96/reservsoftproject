@@ -50,6 +50,34 @@ const landingSchema = new mongoose.Schema({
     instagram: String,
     twitter: String,
   },
+
+  // ===== CAMPOS AGREGADOS PARA COMPROBANTES Y FECHAS =====
+  // Fechas de pagos
+  fecha_primer_pago: {
+    type: Date,
+    required: false,
+  },
+  fecha_segundo_pago: {
+    type: Date,
+    required: false,
+  },
+
+  // Comprobantes de pago
+  comprobante_pago: {
+    type: String, // URL del comprobante
+    required: false,
+  },
+  comprobante_segundo_pago: {
+    type: String, // URL del segundo comprobante
+    required: false,
+  },
+
+  // Fecha cuando se subió el comprobante
+  fecha_comprobante: {
+    type: Date,
+    required: false,
+  },
+
   createdAt: {
     type: Date,
     default: Date.now,
@@ -69,4 +97,3 @@ landingSchema.pre("save", function (next) {
 const Landing = mongoose.model("Landing", landingSchema)
 
 module.exports = Landing
-

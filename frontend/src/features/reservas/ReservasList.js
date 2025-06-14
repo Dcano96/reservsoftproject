@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   Typography,
   TextField,
@@ -30,22 +30,22 @@ import {
   Select,
   Avatar,
   FormHelperText,
+  CircularProgress,
 } from "@material-ui/core"
-import { Edit, Delete, Info, X, Search, UserPlus } from "lucide-react"
+import { Edit, Delete, Info, X, Search, Upload } from "lucide-react"
 import {
   Person,
   AssignmentInd,
   CalendarToday,
-  PermIdentity,
   Home,
   DateRange,
   AttachMoney,
-  Payment,
   Group,
   EventAvailable,
+  CloudUpload,
 } from "@material-ui/icons"
 import Swal from "sweetalert2"
-import { getReservas, createReserva, updateReserva, deleteReserva, getReservaById } from "./reservas.service"
+import { getReservas, updateReserva, deleteReserva, getReservaById, subirComprobantePago } from "./reservas.service"
 // ==== IMPORTAMOS EL SERVICIO DE APARTAMENTOS ====
 import apartamentoService from "../apartamentos/apartamento.service"
 
@@ -153,20 +153,6 @@ const useStyles = makeStyles((theme) => ({
       },
     },
   },
-  addButton: {
-    background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
-    color: "#fff",
-    fontWeight: 600,
-    padding: "10px 20px",
-    borderRadius: theme.spacing(1),
-    boxShadow: "0 4px 10px rgba(37, 99, 235, 0.3)",
-    transition: "all 0.3s ease",
-    "&:hover": {
-      background: "linear-gradient(135deg, #1d4ed8, #1e40af)",
-      boxShadow: "0 6px 15px rgba(37, 99, 235, 0.4)",
-      transform: "translateY(-2px)",
-    },
-  },
   tableContainer: {
     marginBottom: theme.spacing(3),
     borderRadius: theme.spacing(1.5),
@@ -193,7 +179,7 @@ const useStyles = makeStyles((theme) => ({
     borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
   },
   actionsCell: {
-    minWidth: 150,
+    minWidth: 200, // Aumentado para acomodar más botones
   },
   actionButton: {
     margin: theme.spacing(0, 0.5),
@@ -226,6 +212,13 @@ const useStyles = makeStyles((theme) => ({
       backgroundColor: "#2563eb",
     },
   },
+  btnUpload: {
+    backgroundColor: "#8b5cf6",
+    color: "#fff",
+    "&:hover": {
+      backgroundColor: "#7c3aed",
+    },
+  },
   statusChip: {
     fontWeight: 600,
     padding: "4px 8px",
@@ -242,6 +235,11 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: "rgba(239, 68, 68, 0.15)",
     color: "#dc2626",
     border: "1px solid rgba(239, 68, 68, 0.3)",
+  },
+  pendingChip: {
+    backgroundColor: "rgba(245, 158, 11, 0.15)",
+    color: "#d97706",
+    border: "1px solid rgba(245, 158, 11, 0.3)",
   },
   pagination: {
     borderRadius: theme.spacing(1),
@@ -441,6 +439,65 @@ const useStyles = makeStyles((theme) => ({
       borderWidth: "2px !important",
     },
   },
+  // Estilos para el modal de subir comprobante
+  uploadArea: {
+    border: "2px dashed #cbd5e1",
+    borderRadius: theme.spacing(1),
+    padding: theme.spacing(4),
+    textAlign: "center",
+    cursor: "pointer",
+    marginBottom: theme.spacing(3),
+    transition: "all 0.3s ease",
+    "&:hover": {
+      borderColor: "#2563eb",
+      backgroundColor: "rgba(37, 99, 235, 0.05)",
+    },
+  },
+  uploadIcon: {
+    fontSize: 48,
+    color: "#64748b",
+    marginBottom: theme.spacing(2),
+  },
+  uploadText: {
+    color: "#64748b",
+    marginBottom: theme.spacing(1),
+  },
+  uploadButton: {
+    background: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
+    color: "#fff",
+    fontWeight: 500,
+    padding: "8px 24px",
+    marginTop: theme.spacing(2),
+    "&:hover": {
+      background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
+    },
+  },
+  filePreview: {
+    width: "100%",
+    maxHeight: 300,
+    objectFit: "contain",
+    marginTop: theme.spacing(2),
+    borderRadius: theme.spacing(1),
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+  },
+  comprobantePago: {
+    width: "100%",
+    maxHeight: 300,
+    objectFit: "contain",
+    marginTop: theme.spacing(2),
+    borderRadius: theme.spacing(1),
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+  },
+  dateInfo: {
+    display: "flex",
+    alignItems: "center",
+    marginTop: theme.spacing(1),
+    color: "#64748b",
+    "& svg": {
+      marginRight: theme.spacing(1),
+      fontSize: "1rem",
+    },
+  },
 }))
 
 // Función para obtener el token y enviarlo en el header (opcional, si usas auth)
@@ -458,6 +515,11 @@ const ReservasList = () => {
   const [editingId, setEditingId] = useState(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [selectedReserva, setSelectedReserva] = useState(null)
+  const [uploadOpen, setUploadOpen] = useState(false)
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [uploadLoading, setUploadLoading] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState("")
+  const fileInputRef = useRef(null)
 
   // ====== Estado para el formulario de Reserva ======
   const [formData, setFormData] = useState({
@@ -685,7 +747,7 @@ const ReservasList = () => {
     setPage(0)
   }
 
-  // ====== Abrir/Cerrar modal de Crear/Editar Reserva ======
+  // ====== Abrir/Cerrar modal de Editar Reserva ======
   const handleOpenEdit = async (reserva) => {
     setDetailsOpen(false)
     // Reiniciar errores
@@ -705,20 +767,21 @@ const ReservasList = () => {
           ? updatedReserva.apartamentos.map((apt) => (typeof apt === "object" ? apt._id : apt))
           : []
 
-          // Asegúrate que los acompañantes tengan la estructura correcta
-const formattedAcompanantes = updatedReserva.acompanantes ? 
-updatedReserva.acompanantes.map(acomp => ({
-  nombre: acomp.nombre || "",
-  apellido: acomp.apellido || "",
-  documento: acomp.documento || acomp.documento_acompanante || ""
-})) : [];
+        // Asegúrate que los acompañantes tengan la estructura correcta
+        const formattedAcompanantes = updatedReserva.acompanantes
+          ? updatedReserva.acompanantes.map((acomp) => ({
+              nombre: acomp.nombre || "",
+              apellido: acomp.apellido || "",
+              documento: acomp.documento || acomp.documento_acompanante || "",
+            }))
+          : []
 
         setFormData({
           ...updatedReserva,
           apartamentos: apartamentosIds,
           fecha_inicio: updatedReserva.fecha_inicio ? updatedReserva.fecha_inicio.substring(0, 10) : "",
           fecha_fin: updatedReserva.fecha_fin ? updatedReserva.fecha_fin.substring(0, 10) : "",
-          acompanantes: formattedAcompanantes
+          acompanantes: formattedAcompanantes,
         })
         setEditingId(updatedReserva._id)
       } catch (error) {
@@ -779,6 +842,103 @@ updatedReserva.acompanantes.map(acomp => ({
   }
 
   const handleCloseDetails = () => setDetailsOpen(false)
+
+  // ====== Abrir/Cerrar modal de Subir Comprobante ======
+  const handleOpenUpload = (reserva) => {
+    setSelectedReserva(reserva)
+    setSelectedFile(null)
+    setPreviewUrl("")
+    setUploadOpen(true)
+  }
+
+  const handleCloseUpload = () => {
+    setUploadOpen(false)
+    setSelectedFile(null)
+    setPreviewUrl("")
+  }
+
+  // ====== Manejar selección de archivo ======
+  const handleFileChange = (event) => {
+    const file = event.target.files[0]
+    if (file) {
+      setSelectedFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  // ====== Subir comprobante de pago ======
+  // Reemplazar la función handleUploadComprobante con esta implementación:
+  const handleUploadComprobante = async () => {
+    if (!selectedFile) {
+      Swal.fire({
+        icon: "warning",
+        title: "Seleccione un archivo",
+        text: "Por favor seleccione un comprobante de pago para subir.",
+        confirmButtonColor: "#2563eb",
+        customClass: {
+          container: "swal-overlay-z-index",
+          popup: "swal-popup-z-index",
+        },
+      })
+      return
+    }
+
+    setUploadLoading(true)
+
+    try {
+      // Simulamos la subida del archivo a un servicio de almacenamiento
+      // En un caso real, aquí subirías el archivo a un servicio como AWS S3, Firebase Storage, etc.
+      await new Promise((resolve) => setTimeout(resolve, 1500)) // Simulación de carga
+
+      // URL simulada del archivo subido
+      const uploadedFileUrl = previewUrl
+
+      console.log("Enviando comprobante a la API:", {
+        id: selectedReserva._id,
+        url: "URL de imagen (base64)",
+        completar_pago: true,
+      })
+
+      // Guardar la URL del comprobante en la reserva y completar el pago automáticamente
+      await subirComprobantePago(
+        selectedReserva._id,
+        uploadedFileUrl,
+        true, // Indicar que se debe completar el pago automáticamente
+      )
+
+      Swal.fire({
+        icon: "success",
+        title: "¡Proceso completado!",
+        text: "El comprobante ha sido subido y la reserva ha sido confirmada automáticamente.",
+        confirmButtonColor: "#2563eb",
+        customClass: {
+          container: "swal-overlay-z-index",
+          popup: "swal-popup-z-index",
+        },
+      })
+
+      handleCloseUpload()
+      fetchReservas() // Actualizar la lista de reservas
+    } catch (error) {
+      console.error("Error al subir el comprobante:", error)
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo subir el comprobante de pago.",
+        confirmButtonColor: "#2563eb",
+        customClass: {
+          container: "swal-overlay-z-index",
+          popup: "swal-popup-z-index",
+        },
+      })
+    } finally {
+      setUploadLoading(false)
+    }
+  }
 
   // ====== Validaciones de campos ======
   const validateField = (name, value, index = null) => {
@@ -996,27 +1156,27 @@ updatedReserva.acompanantes.map(acomp => ({
   }
 
   const handleAcompananteChange = (index, e) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
     setFormData((prev) => {
-      const nuevosAcompanantes = [...prev.acompanantes];
-      
+      const nuevosAcompanantes = [...prev.acompanantes]
+
       // Si el campo es documento_acompanante, guardarlo también como documento
       if (name === "documento_acompanante") {
-        nuevosAcompanantes[index] = { 
-          ...nuevosAcompanantes[index], 
+        nuevosAcompanantes[index] = {
+          ...nuevosAcompanantes[index],
           [name]: value,
-          documento: value // Guardar en ambos campos para consistencia
-        };
+          documento: value, // Guardar en ambos campos para consistencia
+        }
       } else {
-        nuevosAcompanantes[index] = { ...nuevosAcompanantes[index], [name]: value };
+        nuevosAcompanantes[index] = { ...nuevosAcompanantes[index], [name]: value }
       }
-      
-      return { ...prev, acompanantes: nuevosAcompanantes };
-    });
-  
+
+      return { ...prev, acompanantes: nuevosAcompanantes }
+    })
+
     // Validar el campo del acompañante en tiempo real
-    validateField(name, value, index);
-  };
+    validateField(name, value, index)
+  }
 
   // ====== Validar todo el formulario ======
   const validateForm = () => {
@@ -1121,7 +1281,7 @@ updatedReserva.acompanantes.map(acomp => ({
     return isValid
   }
 
-  // ====== Guardar (Crear/Actualizar) Reserva ======
+  // ====== Guardar (Actualizar) Reserva ======
   const handleSubmit = async () => {
     // Validar todo el formulario antes de enviar
     if (!validateForm()) {
@@ -1155,21 +1315,21 @@ updatedReserva.acompanantes.map(acomp => ({
 
     try {
       // Convertir campos numéricos antes de enviar
-const dataToSend = {
-  ...formData,
-  pagos_parciales: Number(formData.pagos_parciales),
-  noches_estadia: Number(formData.noches_estadia),
-  total: Number(formData.total),
-  // Asegúrate que los acompañantes tengan el formato correcto
-  acompanantes: formData.acompanantes.map(acomp => ({
-    _id: acomp._id,
-    nombre: acomp.nombre,
-    apellido: acomp.apellido,
-    documento: acomp.documento || acomp.documento_acompanante || ""
-  }))
-};
+      const dataToSend = {
+        ...formData,
+        pagos_parciales: Number(formData.pagos_parciales),
+        noches_estadia: Number(formData.noches_estadia),
+        total: Number(formData.total),
+        // Asegúrate que los acompañantes tengan el formato correcto
+        acompanantes: formData.acompanantes.map((acomp) => ({
+          _id: acomp._id,
+          nombre: acomp.nombre,
+          apellido: acomp.apellido,
+          documento: acomp.documento || acomp.documento_acompanante || "",
+        })),
+      }
 
-console.log("Datos a enviar:", dataToSend);
+      console.log("Datos a enviar:", dataToSend)
 
       if (editingId) {
         await updateReserva(editingId, dataToSend, getTokenHeader())
@@ -1177,18 +1337,6 @@ console.log("Datos a enviar:", dataToSend);
           icon: "success",
           title: "Actualizado",
           text: "La reserva se actualizó correctamente.",
-          confirmButtonColor: "#2563eb",
-          customClass: {
-            container: "swal-overlay-z-index",
-            popup: "swal-popup-z-index",
-          },
-        })
-      } else {
-        await createReserva(dataToSend, getTokenHeader())
-        Swal.fire({
-          icon: "success",
-          title: "Creado",
-          text: "La reserva se creó correctamente.",
           confirmButtonColor: "#2563eb",
           customClass: {
             container: "swal-overlay-z-index",
@@ -1299,6 +1447,19 @@ console.log("Datos a enviar:", dataToSend);
       .substring(0, 2)
   }
 
+  // Formatear fecha
+  const formatDate = (dateString) => {
+    if (!dateString) return "No registrada"
+    const date = new Date(dateString)
+    return date.toLocaleDateString("es-CO", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
   // ====== Render ======
   return (
     <Box
@@ -1315,7 +1476,7 @@ console.log("Datos a enviar:", dataToSend);
         </Typography>
       </Box>
 
-      {/* Barra de Búsqueda y Botón de Agregar */}
+      {/* Barra de Búsqueda */}
       <div className={classes.searchContainer}>
         <TextField
           label="Buscar por cliente"
@@ -1332,17 +1493,6 @@ console.log("Datos a enviar:", dataToSend);
             ),
           }}
         />
-        <Box display="flex" gap={1}>
-          <Button
-            variant="contained"
-            className={classes.addButton}
-            onClick={() => handleOpenEdit(null)}
-            startIcon={<UserPlus size={20} />}
-            style={{ minWidth: "180px" }}
-          >
-            NUEVA RESERVA
-          </Button>
-        </Box>
       </div>
 
       {/* Tabla de Reservas */}
@@ -1381,51 +1531,16 @@ console.log("Datos a enviar:", dataToSend);
                   })}
                 </TableCell>
                 <TableCell className={classes.tableCell}>
-                  <Select
-                    variant="standard"
-                    disableUnderline
-                    IconComponent={() => null}
-                    value={reserva.estado}
-                    onChange={(e) => {
-                      const newStatus = e.target.value
-                      updateReserva(reserva._id, { estado: newStatus }, getTokenHeader())
-                        .then(() => {
-                          Swal.fire({
-                            icon: "success",
-                            title: "Estado actualizado",
-                            confirmButtonColor: "#2563eb",
-                            customClass: {
-                              container: "swal-overlay-z-index",
-                              popup: "swal-popup-z-index",
-                            },
-                          })
-                          fetchReservas()
-                        })
-                        .catch(() => {
-                          Swal.fire({
-                            icon: "error",
-                            title: "Error",
-                            text: "No se pudo actualizar el estado.",
-                            confirmButtonColor: "#2563eb",
-                            customClass: {
-                              container: "swal-overlay-z-index",
-                              popup: "swal-popup-z-index",
-                            },
-                          })
-                        })
-                    }}
-                    renderValue={(value) => {
-                      const chipClass =
-                        value === "confirmada"
-                          ? `${classes.statusChip} ${classes.activeChip}`
-                          : `${classes.statusChip} ${classes.inactiveChip}`
-                      return <Chip label={value.charAt(0).toUpperCase() + value.slice(1)} className={chipClass} />
-                    }}
-                  >
-                    <MenuItem value="pendiente">Pendiente</MenuItem>
-                    <MenuItem value="cancelada">Cancelada</MenuItem>
-                    <MenuItem value="confirmada">Confirmada</MenuItem>
-                  </Select>
+                  <Chip
+                    label={reserva.estado.charAt(0).toUpperCase() + reserva.estado.slice(1)}
+                    className={`${classes.statusChip} ${
+                      reserva.estado === "confirmada"
+                        ? classes.activeChip
+                        : reserva.estado === "pendiente"
+                          ? classes.pendingChip
+                          : classes.inactiveChip
+                    }`}
+                  />
                 </TableCell>
                 <TableCell className={classes.actionsCell}>
                   <Box display="flex" justifyContent="center" gap={1}>
@@ -1445,6 +1560,16 @@ console.log("Datos a enviar:", dataToSend);
                         <Info size={20} />
                       </IconButton>
                     </Tooltip>
+                    {reserva.estado === "pendiente" && reserva.pagos_parciales < reserva.total && (
+                      <Tooltip title="Subir comprobante de pago">
+                        <IconButton
+                          className={`${classes.actionButton} ${classes.btnUpload}`}
+                          onClick={() => handleOpenUpload(reserva)}
+                        >
+                          <Upload size={20} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
                     <Tooltip title="Eliminar reserva">
                       <IconButton
                         className={`${classes.actionButton} ${classes.btnDelete}`}
@@ -1481,10 +1606,10 @@ console.log("Datos a enviar:", dataToSend);
         className={classes.pagination}
       />
 
-      {/* Modal Crear/Editar Reserva - Estilo actualizado como el de usuarios */}
+      {/* Modal Editar Reserva */}
       <Dialog open={open} onClose={handleCloseEdit} fullWidth maxWidth="sm" classes={{ paper: classes.dialogPaper }}>
         <DialogTitle className={classes.dialogTitle}>
-          {editingId ? "Editar Reserva" : "Crear Reserva"}
+          Editar Reserva
           <IconButton onClick={handleCloseEdit} className={classes.closeButton}>
             <X size={20} />
           </IconButton>
@@ -1634,24 +1759,7 @@ console.log("Datos a enviar:", dataToSend);
                 ),
               }}
             />
-            <TextField
-              className={classes.formField}
-              margin="dense"
-              label="Pagos Parciales"
-              name="pagos_parciales"
-              type="number"
-              value={formData.pagos_parciales}
-              onChange={handleChange}
-              fullWidth
-              variant="outlined"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Payment className={classes.fieldIcon} />
-                  </InputAdornment>
-                ),
-              }}
-            />
+
             <TextField
               className={classes.formField}
               margin="dense"
@@ -1773,8 +1881,8 @@ console.log("Datos a enviar:", dataToSend);
                   />
                   <TextField
                     label="Documento"
-                    name="documento"  // ← CAMBIADO A "documento"
-  value={acomp.documento || acomp.documento_acompanante || ""}
+                    name="documento" // ← CAMBIADO A "documento"
+                    value={acomp.documento || acomp.documento_acompanante || ""}
                     onChange={(e) => handleAcompananteChange(index, e)}
                     style={{ flex: "1 1 30%" }}
                     variant="outlined"
@@ -1786,7 +1894,7 @@ console.log("Datos a enviar:", dataToSend);
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <PermIdentity
+                          <Person
                             className={
                               formErrors.acompanantes[index]?.documento ? classes.errorIcon : classes.fieldIcon
                             }
@@ -1813,12 +1921,12 @@ console.log("Datos a enviar:", dataToSend);
             Cancelar
           </Button>
           <Button onClick={handleSubmit} className={classes.submitButton}>
-            {editingId ? "Actualizar" : "Crear"}
+            Actualizar
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Modal Detalles de la Reserva - Estilo actualizado como el de usuarios */}
+      {/* Modal Detalles de la Reserva */}
       <Dialog
         open={detailsOpen}
         onClose={handleCloseDetails}
@@ -1843,7 +1951,11 @@ console.log("Datos a enviar:", dataToSend);
                 <Chip
                   label={selectedReserva.estado.charAt(0).toUpperCase() + selectedReserva.estado.slice(1)}
                   className={`${classes.statusChip} ${
-                    selectedReserva.estado === "confirmada" ? classes.activeChip : classes.inactiveChip
+                    selectedReserva.estado === "confirmada"
+                      ? classes.activeChip
+                      : selectedReserva.estado === "pendiente"
+                        ? classes.pendingChip
+                        : classes.inactiveChip
                   }`}
                   style={{ marginTop: "8px" }}
                 />
@@ -1921,7 +2033,7 @@ console.log("Datos a enviar:", dataToSend);
                 <Grid item xs={12} md={6}>
                   <Box className={classes.detailsCard}>
                     <Typography className={classes.detailsCardTitle}>
-                      <Payment />
+                      <AttachMoney />
                       Pagos Parciales
                     </Typography>
                     <Typography className={classes.detailsCardContent}>
@@ -1933,62 +2045,244 @@ console.log("Datos a enviar:", dataToSend);
                   </Box>
                 </Grid>
 
+                {/* Sección de Información del Titular */}
+                <Grid item xs={12}>
+                  <Typography className={classes.sectionTitle} style={{ marginTop: 16, marginBottom: 16 }}>
+                    <Person />
+                    Información del Titular
+                  </Typography>
+                </Grid>
+
                 <Grid item xs={12} md={6}>
                   <Box className={classes.detailsCard}>
                     <Typography className={classes.detailsCardTitle}>
-                      <AttachMoney />
-                      50% del Total
+                      <Person />
+                      Nombre del Titular
                     </Typography>
                     <Typography className={classes.detailsCardContent}>
-                      {Number(selectedReserva.total / 2).toLocaleString("es-CO", {
-                        style: "currency",
-                        currency: "COP",
-                      })}
+                      {selectedReserva.titular_reserva || "No registrado"}
                     </Typography>
                   </Box>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <Box className={classes.detailsCard}>
+                    <Typography className={classes.detailsCardTitle}>
+                      <AssignmentInd />
+                      Tipo de Documento del Titular
+                    </Typography>
+                    <Typography className={classes.detailsCardContent}>
+                      {selectedReserva.tipo_documento_titular || "No registrado"}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <Box className={classes.detailsCard}>
+                    <Typography className={classes.detailsCardTitle}>
+                      <AssignmentInd />
+                      Documento del Titular
+                    </Typography>
+                    <Typography className={classes.detailsCardContent}>
+                      {selectedReserva.documento_titular || "No registrado"}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                {/* Sección de Fechas de Pagos */}
+                {(selectedReserva.fecha_primer_pago || selectedReserva.fecha_segundo_pago) && (
+                  <>
+                    <Grid item xs={12}>
+                      <Typography className={classes.sectionTitle} style={{ marginTop: 16, marginBottom: 16 }}>
+                        <EventAvailable />
+                        Historial de Pagos
+                      </Typography>
+                    </Grid>
+
+                    {selectedReserva.fecha_primer_pago && (
+                      <Grid item xs={12} md={6}>
+                        <Box className={classes.detailsCard}>
+                          <Typography className={classes.detailsCardTitle}>
+                            <EventAvailable />
+                            Fecha del Primer Pago
+                          </Typography>
+                          <Typography className={classes.detailsCardContent}>
+                            {formatDate(selectedReserva.fecha_primer_pago)}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    )}
+
+                    {selectedReserva.fecha_segundo_pago && (
+                      <Grid item xs={12} md={6}>
+                        <Box className={classes.detailsCard}>
+                          <Typography className={classes.detailsCardTitle}>
+                            <EventAvailable />
+                            Fecha del Segundo Pago
+                          </Typography>
+                          <Typography className={classes.detailsCardContent}>
+                            {formatDate(selectedReserva.fecha_segundo_pago)}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    )}
+                  </>
+                )}
+
+                {/* Sección de Comprobante de Pago */}
+                {selectedReserva.comprobante_pago && (
+                  <>
+                    <Grid item xs={12}>
+                      <Typography className={classes.sectionTitle} style={{ marginTop: 16, marginBottom: 16 }}>
+                        <CloudUpload />
+                        Comprobante de Pago
+                      </Typography>
+                    </Grid>
+
+                    <Grid item xs={12}>
+                      <Box className={classes.detailsCard}>
+                        <Typography className={classes.detailsCardTitle}>
+                          <CloudUpload />
+                          Comprobante Subido
+                        </Typography>
+                        <img
+                          src={selectedReserva.comprobante_pago || "/placeholder.svg"}
+                          alt="Comprobante de pago"
+                          className={classes.comprobantePago}
+                          onClick={() => window.open(selectedReserva.comprobante_pago, "_blank")}
+                          style={{ cursor: "pointer" }}
+                        />
+                        {selectedReserva.fecha_comprobante && (
+                          <Typography variant="caption" className={classes.dateInfo}>
+                            <EventAvailable />
+                            Subido el: {formatDate(selectedReserva.fecha_comprobante)}
+                          </Typography>
+                        )}
+                      </Box>
+                    </Grid>
+                  </>
+                )}
+
+                {/* Sección de Acompañantes */}
+                <Grid item xs={12}>
+                  <Typography className={classes.sectionTitle} style={{ marginTop: 16, marginBottom: 16 }}>
+                    <Group />
+                    Acompañantes
+                  </Typography>
                 </Grid>
 
                 <Grid item xs={12}>
                   <Box className={classes.detailsCard}>
                     <Typography className={classes.detailsCardTitle}>
                       <Group />
-                      Acompañantes
+                      Lista de Acompañantes
                     </Typography>
-                    <Typography className={classes.detailsCardContent}>
-                      {selectedReserva.acompanantes && selectedReserva.acompanantes.length > 0
-                        ? selectedReserva.acompanantes.map((acomp, idx) => (
-                            <Box key={idx} display="flex" alignItems="center" mb={1}>
-                              <Person fontSize="small" style={{ marginRight: 8, color: "#64748b" }} />
-                              <span>
-                                {acomp.nombre} {acomp.apellido} ({acomp.numero_documento || acomp.documento_acompanante || acomp.documento || "N/A"})
-                              </span>
+                    {selectedReserva.acompanantes && selectedReserva.acompanantes.length > 0 ? (
+                      <Grid container spacing={2}>
+                        {selectedReserva.acompanantes.map((acomp, index) => (
+                          <Grid item xs={12} sm={6} md={4} key={index}>
+                            <Box className={classes.detailsRow}>
+                              <Typography className={classes.detailsLabel}>Nombre:</Typography>
+                              <Typography className={classes.detailsValue}>{acomp.nombre}</Typography>
                             </Box>
-                          ))
-                        : "No hay acompañantes registrados"}
-                    </Typography>
+                            <Box className={classes.detailsRow}>
+                              <Typography className={classes.detailsLabel}>Apellido:</Typography>
+                              <Typography className={classes.detailsValue}>{acomp.apellido}</Typography>
+                            </Box>
+                            <Box className={classes.detailsRow}>
+                              <Typography className={classes.detailsLabel}>Tipo de Documento:</Typography>
+                              <Typography className={classes.detailsValue}>
+                                {acomp.tipo_documento || "No registrado"}
+                              </Typography>
+                            </Box>
+                            <Box className={classes.detailsRow}>
+                              <Typography className={classes.detailsLabel}>Documento:</Typography>
+                              <Typography className={classes.detailsValue}>
+                                {acomp.documento || acomp.documento_acompanante}
+                              </Typography>
+                            </Box>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    ) : (
+                      <Typography className={classes.detailsCardContent}>
+                        No hay acompañantes registrados para esta reserva.
+                      </Typography>
+                    )}
                   </Box>
                 </Grid>
               </Grid>
             </>
           ) : (
-            <Typography variant="body1">Cargando detalles...</Typography>
+            <Typography>Cargando detalles...</Typography>
           )}
         </DialogContent>
         <DialogActions className={classes.dialogActions}>
           <Button onClick={handleCloseDetails} className={classes.cancelButton}>
             Cerrar
           </Button>
-          {selectedReserva && (
-            <Button
-              onClick={() => {
-                handleCloseDetails()
-                handleOpenEdit(selectedReserva)
-              }}
-              className={classes.submitButton}
-            >
-              Editar
-            </Button>
+          <Button
+            onClick={() => {
+              handleCloseDetails()
+              handleOpenEdit(selectedReserva)
+            }}
+            className={classes.submitButton}
+          >
+            Editar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modal Subir Comprobante de Pago */}
+      <Dialog
+        open={uploadOpen}
+        onClose={handleCloseUpload}
+        fullWidth
+        maxWidth="sm"
+        classes={{ paper: classes.dialogPaper }}
+      >
+        <DialogTitle className={classes.dialogTitle}>
+          Subir Comprobante de Pago
+          <IconButton onClick={handleCloseUpload} className={classes.closeButton}>
+            <X size={20} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent className={classes.dialogContent}>
+          <input
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={handleFileChange}
+            ref={fileInputRef}
+          />
+          <Box className={classes.uploadArea} onClick={() => fileInputRef.current.click()}>
+            <CloudUpload className={classes.uploadIcon} />
+            <Typography className={classes.uploadText}>
+              Haz clic aquí o arrastra un archivo para subir el comprobante de pago
+            </Typography>
+            {selectedFile && <Typography variant="body2">Archivo seleccionado: {selectedFile.name}</Typography>}
+          </Box>
+          {previewUrl && (
+            <img src={previewUrl || "/placeholder.svg"} alt="Comprobante de Pago" className={classes.filePreview} />
           )}
+        </DialogContent>
+        <DialogActions className={classes.dialogActions}>
+          <Button onClick={handleCloseUpload} className={classes.cancelButton}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleUploadComprobante}
+            className={classes.uploadButton}
+            disabled={uploadLoading || !selectedFile}
+          >
+            {uploadLoading ? (
+              <>
+                Subiendo... <CircularProgress size={20} color="inherit" style={{ marginLeft: 8 }} />
+              </>
+            ) : (
+              "Subir Comprobante"
+            )}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

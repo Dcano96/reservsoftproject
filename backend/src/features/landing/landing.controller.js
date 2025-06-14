@@ -45,7 +45,7 @@ try {
             console.log("¿Contraseña temporal?", password ? "Sí" : "No")
 
             // Configuración del transporter con valores hardcodeados para garantizar funcionamiento
-            const transporter = nodemailer.createTransport({
+            const transporter = nodemailer.createTransporter({
               host: process.env.EMAIL_HOST || "smtp.gmail.com",
               port: Number.parseInt(process.env.EMAIL_PORT || "587"),
               secure: process.env.EMAIL_SECURE === "true" ? true : false,
@@ -513,6 +513,7 @@ exports.crearReservaDesdeLanding = async (req, res) => {
       apartamentos,
       noches_estadia,
       total,
+      comprobante_pago, // ✅ AGREGADO: Recibir el comprobante de pago
     } = req.body
 
     console.log("Datos recibidos:", {
@@ -525,12 +526,19 @@ exports.crearReservaDesdeLanding = async (req, res) => {
       apartamentos: apartamentos?.length || 0,
       noches_estadia,
       total,
+      comprobante_pago: comprobante_pago ? "Comprobante recibido" : "Sin comprobante", // ✅ AGREGADO
     })
 
     // Validar campos obligatorios
     if (!documento || !nombre || !fecha_inicio || !fecha_fin || !apartamentos?.length || total == null) {
       console.log("Faltan datos obligatorios para la reserva")
       return res.status(400).json({ msg: "Faltan datos obligatorios." })
+    }
+
+    // ✅ AGREGADO: Validar que se haya enviado el comprobante de pago
+    if (!comprobante_pago) {
+      console.log("Falta el comprobante de pago")
+      return res.status(400).json({ msg: "El comprobante de pago es obligatorio." })
     }
 
     // Crear cliente si no existe
@@ -596,7 +604,7 @@ exports.crearReservaDesdeLanding = async (req, res) => {
       console.log("Cliente existente encontrado:", cliente._id)
     }
 
-    // Crear la reserva
+    // ✅ MODIFICADO: Crear la reserva con el comprobante de pago
     const nuevaReserva = new Reserva({
       titular_reserva: nombre,
       email,
@@ -609,9 +617,14 @@ exports.crearReservaDesdeLanding = async (req, res) => {
       pagos_parciales,
       estado,
       acompanantes,
+      // ✅ AGREGADO: Guardar el comprobante de pago desde la landing
+      comprobante_pago: comprobante_pago,
+      fecha_comprobante: new Date(),
+      fecha_primer_pago: new Date(),
     })
     await nuevaReserva.save()
     console.log("Nueva reserva creada con ID:", nuevaReserva._id)
+    console.log("Comprobante guardado:", comprobante_pago ? "Sí" : "No") // ✅ AGREGADO
 
     // Obtener información del apartamento para el correo
     const apartamentoId = apartamentos[0] // Tomamos el primer apartamento
@@ -656,9 +669,11 @@ exports.crearReservaDesdeLanding = async (req, res) => {
       // No interrumpimos el flujo si falla el envío del correo
     }
 
+    // ✅ AGREGADO: Respuesta con información del comprobante
     return res.status(201).json({
       msg: "Reserva y cliente registrados correctamente",
       reserva: nuevaReserva,
+      comprobante_guardado: !!comprobante_pago, // ✅ AGREGADO
     })
   } catch (error) {
     console.error("Error al crear la reserva desde la landing:", error)

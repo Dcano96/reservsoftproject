@@ -11,7 +11,7 @@ const AcompananteSchema = new mongoose.Schema({
     required: true,
     match: [/^[a-zA-ZÀ-ÿ\s]+$/, "El apellido solo puede contener letras y espacios"],
   },
-  documento: {  // Cambiado de 'documento' a 'numero_documento'
+  documento: {
     type: String,
     required: true,
   },
@@ -26,9 +26,8 @@ const ReservaSchema = new mongoose.Schema(
       match: [/^[a-zA-ZÀ-ÿ\s]+$/, "El nombre solo puede contener letras y espacios"],
     },
     titular_documento: {
-      // Añadir este campo
       type: String,
-      required: false, // No lo hacemos obligatorio para mantener compatibilidad con reservas existentes
+      required: false,
     },
     email: {
       type: String,
@@ -36,7 +35,7 @@ const ReservaSchema = new mongoose.Schema(
     },
     telefono: {
       type: String,
-      match: [/^\+?[0-9\s\-$$]+$/, "Por favor ingrese un número de teléfono válido"], // Validación más flexible
+      match: [/^\+?[0-9\s\-$$]+$/, "Por favor ingrese un número de teléfono válido"],
     },
     fecha_inicio: {
       type: Date,
@@ -78,6 +77,33 @@ const ReservaSchema = new mongoose.Schema(
     },
     acompanantes: { type: [AcompananteSchema], default: [] },
     numero_acompanantes: { type: Number, default: 0 },
+
+    // ===== CAMPOS AGREGADOS PARA COMPROBANTES Y FECHAS =====
+    // Fechas de pagos
+    fecha_primer_pago: {
+      type: Date,
+      required: false,
+    },
+    fecha_segundo_pago: {
+      type: Date,
+      required: false,
+    },
+
+    // Comprobantes de pago
+    comprobante_pago: {
+      type: String, // URL del comprobante
+      required: false,
+    },
+    comprobante_segundo_pago: {
+      type: String, // URL del segundo comprobante
+      required: false,
+    },
+
+    // Fecha cuando se subió el comprobante
+    fecha_comprobante: {
+      type: Date,
+      required: false,
+    },
   },
   { timestamps: true },
 )

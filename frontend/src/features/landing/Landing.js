@@ -62,7 +62,6 @@ import {
   CloudUpload,
   Add,
   InfoOutlined,
-  Description,
 } from "@material-ui/icons"
 import axios from "axios"
 import { useHistory } from "react-router-dom"
@@ -3167,54 +3166,38 @@ function Landing() {
           <Grid container spacing={4}>
             <Grid item xs={12} md={4}>
               <div className={classes.footerLogo}>
-                <img
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/nidosky-V3qv6QnKvcP2qqA4Vxok6rQ8wpnZi9.png"
-                  alt="Nido Sky"
-                  onError={(e) => {
-                    e.target.onerror = null
-                    e.target.src = "https://via.placeholder.com/50x50?text=Logo"
-                  }}
-                />
+                {logoLoaded ? (
+                  <img
+                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/nidosky-V3qv6QnKvcP2qqA4Vxok6rQ8wpnZi9.png"
+                    alt="Nido Sky"
+                    onError={(e) => {
+                      e.target.onerror = null
+                      e.target.src = "https://via.placeholder.com/80x80?text=Logo"
+                    }}
+                  />
+                ) : (
+                  <div style={{ width: 80, height: 80 }}></div>
+                )}
               </div>
               <Typography variant="body2" className={classes.footerText}>
-                Ofreciendo experiencias de lujo y confort en El Poblado, Medellín. Nuestro compromiso es hacer de su
-                estancia una experiencia inolvidable en la ciudad de la eterna primavera.
+                Nido Sky Hotel es tu refugio de lujo en El Poblado, Medellín. Ofrecemos una experiencia única de
+                hospitalidad con servicios de primera clase y atención personalizada.
               </Typography>
               <div className={classes.footerSocial}>
-                <IconButton className={classes.footerSocialIcon} size="small">
+                <IconButton className={classes.footerSocialIcon}>
                   <Facebook />
                 </IconButton>
-                <IconButton className={classes.footerSocialIcon} size="small">
+                <IconButton className={classes.footerSocialIcon}>
                   <Instagram />
                 </IconButton>
-                <IconButton className={classes.footerSocialIcon} size="small">
+                <IconButton className={classes.footerSocialIcon}>
                   <Twitter />
                 </IconButton>
               </div>
             </Grid>
             <Grid item xs={12} md={4}>
-              <div className={classes.footerContact}>
-                <Room />
-                <Typography variant="body2" className={classes.footerContactText}>
-                  Calle 10 #43E-25, El Poblado, Medellín
-                </Typography>
-              </div>
-              <div className={classes.footerContact}>
-                <Phone />
-                <Typography variant="body2" className={classes.footerContactText}>
-                  +57 (4) 444-5555
-                </Typography>
-              </div>
-              <div className={classes.footerContact}>
-                <Email />
-                <Typography variant="body2" className={classes.footerContactText}>
-                  info@nidosky.com
-                </Typography>
-              </div>
-            </Grid>
-            <Grid item xs={12} sm={6} md={2}>
               <Typography variant="h6" className={classes.footerTitle}>
-                Enlaces
+                Enlaces Rápidos
               </Typography>
               <div className={classes.footerLink} onClick={() => scrollToSection(apartamentosRef)}>
                 <ArrowForward />
@@ -3222,52 +3205,55 @@ function Landing() {
               </div>
               <div className={classes.footerLink} onClick={() => scrollToSection(aboutRef)}>
                 <ArrowForward />
-                Nosotros
+                Sobre Nosotros
               </div>
               <div className={classes.footerLink} onClick={() => scrollToSection(featuresRef)}>
                 <ArrowForward />
                 Servicios
               </div>
-              <div className={classes.footerLink} onClick={() => scrollToSection(contactRef)}>
+              <div className={classes.footerLink}>
                 <ArrowForward />
-                Contacto
+                Política de Privacidad
+              </div>
+              <div className={classes.footerLink}>
+                <ArrowForward />
+                Términos y Condiciones
               </div>
             </Grid>
-            <Grid item xs={12} sm={6} md={2}>
+            <Grid item xs={12} md={4}>
               <Typography variant="h6" className={classes.footerTitle}>
-                Servicios
+                Contacto
               </Typography>
-              <div className={classes.footerLink}>
-                <ArrowForward />
-                Reservas
+              <div className={classes.footerContact}>
+                <Room />
+                <div className={classes.footerContactText}>
+                  Carrera 15 #10-25
+                  <br />
+                  El Poblado, Medellín
+                  <br />
+                  Colombia
+                </div>
               </div>
-              <div className={classes.footerLink}>
-                <ArrowForward />
-                Concierge
+              <div className={classes.footerContact}>
+                <Phone />
+                <div className={classes.footerContactText}>+57 300 123 4567</div>
               </div>
-              <div className={classes.footerLink}>
-                <ArrowForward />
-                Spa & Wellness
-              </div>
-              <div className={classes.footerLink}>
-                <ArrowForward />
-                Restaurante
+              <div className={classes.footerContact}>
+                <Email />
+                <div className={classes.footerContactText}>info@nidosky.com</div>
               </div>
             </Grid>
           </Grid>
           <div className={classes.footerBottom}>
             <Typography variant="body2" className={classes.footerCopyright}>
-              © 2024 Nido Sky. Todos los derechos reservados.
+              © 2024 Nido Sky Hotel. Todos los derechos reservados.
             </Typography>
             <div className={classes.footerBottomLinks}>
               <Typography variant="body2" className={classes.footerBottomLink}>
                 Política de Privacidad
               </Typography>
               <Typography variant="body2" className={classes.footerBottomLink}>
-                Términos y Condiciones
-              </Typography>
-              <Typography variant="body2" className={classes.footerBottomLink}>
-                Cookies
+                Términos de Servicio
               </Typography>
             </div>
           </div>
@@ -3297,6 +3283,7 @@ function Landing() {
               Datos del titular
             </Typography>
 
+            {/* MODIFICADO: Quitar "tarjeta_identidad" del select del titular */}
             <TextField
               select
               label="Tipo de documento"
@@ -3311,7 +3298,6 @@ function Landing() {
             >
               <MenuItem value="cedula">Cédula de Ciudadanía</MenuItem>
               <MenuItem value="pasaporte">Pasaporte</MenuItem>
-              <MenuItem value="tarjeta_identidad">Tarjeta de Identidad</MenuItem>
             </TextField>
 
             <TextField
@@ -3335,27 +3321,21 @@ function Landing() {
             />
 
             <TextField
-              label="Nombre completo del titular"
+              label="Nombre completo"
               name="titular_reserva"
-              value={reservationForm.titular_reserva}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^A-Za-zÁáÉéÍíÓóÚúÑñ\s]/g, "")
-                const event = {
-                  target: {
-                    name: "titular_reserva",
-                    value: value,
-                  },
-                }
-                handleReservationFormChange(event)
-              }}
+              value={reservationForm.titular_reserva || ""}
+              onChange={handleReservationFormChange}
               className={classes.reservationField}
               variant="outlined"
               fullWidth
               required
               inputProps={{
-                maxLength: 60,
+                maxLength: 50,
+                onInput: (e) => {
+                  e.target.value = e.target.value.replace(/[^A-Za-zÁáÉéÍíÓóÚúÑñ\s]/g, "")
+                },
               }}
-              helperText={formErrors.titular_reserva || "Solo letras, máximo 60 caracteres"}
+              helperText={formErrors.titular_reserva || "Solo letras y espacios, máximo 50 caracteres"}
               error={!!formErrors.titular_reserva}
             />
 
@@ -3363,56 +3343,50 @@ function Landing() {
               label="Correo electrónico"
               name="email"
               type="email"
-              value={reservationForm.email}
+              value={reservationForm.email || ""}
               onChange={handleReservationFormChange}
               className={classes.reservationField}
               variant="outlined"
               fullWidth
               required
-              helperText={formErrors.email || "Formato: ejemplo@dominio.com"}
+              helperText={formErrors.email || "Ingrese un correo electrónico válido"}
               error={!!formErrors.email}
             />
 
             <TextField
               label="Teléfono"
               name="telefono"
-              value={reservationForm.telefono}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^0-9+]/g, "")
-                const event = {
-                  target: {
-                    name: "telefono",
-                    value: value,
-                  },
-                }
-                handleReservationFormChange(event)
-              }}
+              value={reservationForm.telefono || ""}
+              onChange={handleReservationFormChange}
               className={classes.reservationField}
               variant="outlined"
               fullWidth
               required
               inputProps={{
                 maxLength: 15,
+                onInput: (e) => {
+                  e.target.value = e.target.value.replace(/[^+0-9]/g, "")
+                },
               }}
-              helperText={formErrors.telefono || "Solo números y +, 8-15 dígitos"}
+              helperText={formErrors.telefono || "Solo números, puede incluir + al inicio"}
               error={!!formErrors.telefono}
             />
 
-            {/* Datos de la reserva */}
+            {/* Fechas de reserva */}
             <Typography
               variant="h6"
               style={{ marginTop: theme.spacing(3), marginBottom: theme.spacing(2), color: "#0A2463" }}
             >
-              Datos de la reserva
+              Fechas de reserva
             </Typography>
 
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label="Fecha de inicio"
+                  label="Fecha de entrada"
                   name="fecha_inicio"
                   type="date"
-                  value={reservationForm.fecha_inicio}
+                  value={reservationForm.fecha_inicio || ""}
                   onChange={handleReservationFormChange}
                   className={classes.reservationField}
                   variant="outlined"
@@ -3420,16 +3394,16 @@ function Landing() {
                   required
                   InputLabelProps={{ shrink: true }}
                   inputProps={{ min: new Date().toISOString().split("T")[0] }}
-                  helperText={formErrors.fecha_inicio || "Seleccione una fecha disponible"}
+                  helperText={formErrors.fecha_inicio}
                   error={!!formErrors.fecha_inicio}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label="Fecha de fin"
+                  label="Fecha de salida"
                   name="fecha_fin"
                   type="date"
-                  value={reservationForm.fecha_fin}
+                  value={reservationForm.fecha_fin || ""}
                   onChange={handleReservationFormChange}
                   className={classes.reservationField}
                   variant="outlined"
@@ -3437,137 +3411,11 @@ function Landing() {
                   required
                   InputLabelProps={{ shrink: true }}
                   inputProps={{ min: reservationForm.fecha_inicio || new Date().toISOString().split("T")[0] }}
-                  helperText={formErrors.fecha_fin || "Seleccione una fecha de salida"}
+                  helperText={formErrors.fecha_fin}
                   error={!!formErrors.fecha_fin}
                 />
               </Grid>
             </Grid>
-
-            <Grid container spacing={2} style={{ marginTop: theme.spacing(1) }}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Noches de estadía"
-                  type="number"
-                  name="noches_estadia"
-                  value={calcularNochesEstadia()}
-                  className={classes.reservationField}
-                  variant="outlined"
-                  fullWidth
-                  InputProps={{ readOnly: true }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Total a pagar"
-                  type="number"
-                  name="total"
-                  value={calcularPrecioTotal()}
-                  className={classes.reservationField}
-                  variant="outlined"
-                  fullWidth
-                  InputProps={{
-                    readOnly: true,
-                    startAdornment: <span style={{ marginRight: theme.spacing(1) }}>$</span>,
-                  }}
-                />
-              </Grid>
-            </Grid>
-
-            <Grid container spacing={2} style={{ marginTop: theme.spacing(1) }}>
-              <Grid item xs={12}>
-                <TextField
-                  label="Monto a pagar (50% mínimo)"
-                  type="number"
-                  name="monto_pago"
-                  value={reservationForm.monto_pago}
-                  onChange={handleReservationFormChange}
-                  className={classes.reservationField}
-                  variant="outlined"
-                  fullWidth
-                  required
-                  InputProps={{
-                    inputProps: { min: calcularPrecioTotal() * 0.5, max: calcularPrecioTotal() },
-                    startAdornment: <span style={{ marginRight: theme.spacing(1) }}>$</span>,
-                  }}
-                  helperText={formErrors.monto_pago || `Mínimo 50%: $${(calcularPrecioTotal() * 0.5).toFixed(2)}`}
-                  error={!!formErrors.monto_pago}
-                />
-              </Grid>
-            </Grid>
-
-            {/* Sección para subir comprobante de pago */}
-            <div className={classes.uploadSection}>
-              <Typography variant="h6" className={classes.uploadTitle}>
-                <CloudUpload style={{ marginRight: theme.spacing(1) }} /> Comprobante de Pago
-              </Typography>
-
-              {/* Contenedor flex horizontal para poner la info y el botón lado a lado */}
-              <div style={{ display: "flex", alignItems: "flex-start", gap: theme.spacing(2) }}>
-                {/* Información de pago a la izquierda */}
-                <div className={classes.paymentInfo} style={{ flex: 1 }}>
-                  <Typography variant="subtitle1" className={classes.paymentInfoTitle}>
-                    <InfoOutlined style={{ marginRight: theme.spacing(1) }} /> Información de Pago
-                  </Typography>
-                  <Typography variant="body2" className={classes.paymentInfoText}>
-                    Para confirmar su reserva, debe realizar un pago del 50% del valor total.
-                  </Typography>
-                  <Typography variant="body2" className={classes.paymentInfoText}>
-                    <strong>Banco:</strong> Bancolombia
-                  </Typography>
-                  <Typography variant="body2" className={classes.paymentInfoText}>
-                    <strong>Cuenta:</strong> 123-456789-00
-                  </Typography>
-                  <Typography variant="body2" className={classes.paymentInfoText}>
-                    <strong>Titular:</strong> Nido Sky S.A.S.
-                  </Typography>
-                  <Typography variant="body2" className={classes.paymentInfoText}>
-                    <strong>NIT:</strong> 900.123.456-7
-                  </Typography>
-                </div>
-
-                {/* Botón y vista previa a la derecha */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: "200px" }}>
-                  <input
-                    type="file"
-                    accept="image/*,.pdf"
-                    className={classes.fileInput}
-                    ref={fileInputRef}
-                    onChange={handleComprobanteChange}
-                  />
-
-                  <Button
-                    variant="contained"
-                    className={classes.uploadButton}
-                    onClick={handleUploadClick}
-                    startIcon={<CloudUpload />}
-                  >
-                    Subir Comprobante
-                  </Button>
-
-                  {comprobantePago && (
-                    <Box mt={2} display="flex" flexDirection="column" alignItems="center">
-                      {comprobantePreview && comprobantePago.type.includes("image") ? (
-                        <img
-                          src={comprobantePreview || "/placeholder.svg"}
-                          alt="Vista previa"
-                          className={classes.filePreview}
-                          style={{ maxHeight: 100, maxWidth: "100%" }}
-                        />
-                      ) : (
-                        <Description style={{ fontSize: 40, color: "#0A2463" }} />
-                      )}
-                      <Typography
-                        variant="body2"
-                        className={classes.fileName}
-                        style={{ textAlign: "center", wordBreak: "break-word" }}
-                      >
-                        {comprobantePago.name}
-                      </Typography>
-                    </Box>
-                  )}
-                </div>
-              </div>
-            </div>
 
             {/* Sección de acompañantes */}
             <div className={classes.acompanantesSection}>
@@ -3597,6 +3445,7 @@ function Landing() {
                   </Typography>
 
                   <Grid container spacing={2}>
+                    {/* MANTENER: Tipo de documento para acompañantes con todas las opciones */}
                     <Grid item xs={12} sm={6}>
                       <TextField
                         select
@@ -3685,66 +3534,130 @@ function Landing() {
               </Button>
             </div>
 
+            {/* Sección de pago */}
+            <Typography
+              variant="h6"
+              style={{ marginTop: theme.spacing(3), marginBottom: theme.spacing(2), color: "#0A2463" }}
+            >
+              Información de pago
+            </Typography>
+
+            <TextField
+              label="Monto a pagar (mínimo 50%)"
+              name="monto_pago"
+              type="number"
+              value={reservationForm.monto_pago || ""}
+              onChange={handleReservationFormChange}
+              className={classes.reservationField}
+              variant="outlined"
+              fullWidth
+              required
+              inputProps={{
+                min: selectedApartamento ? selectedApartamento.precio * 0.5 : 0,
+                max: calcularPrecioTotal(),
+                step: "0.01",
+              }}
+              helperText={
+                formErrors.monto_pago ||
+                `Mínimo: $${selectedApartamento ? (selectedApartamento.precio * 0.5).toFixed(2) : 0}`
+              }
+              error={!!formErrors.monto_pago}
+            />
+
+            {/* Información de pago */}
+            <div className={classes.paymentInfo}>
+              <Typography variant="subtitle1" className={classes.paymentInfoTitle}>
+                <InfoOutlined />
+                Información para el pago
+              </Typography>
+              <Typography variant="body2" className={classes.paymentInfoText}>
+                <strong>Banco:</strong> Bancolombia
+              </Typography>
+              <Typography variant="body2" className={classes.paymentInfoText}>
+                <strong>Cuenta de Ahorros:</strong> 123-456-789-01
+              </Typography>
+              <Typography variant="body2" className={classes.paymentInfoText}>
+                <strong>Titular:</strong> Nido Sky Hotel S.A.S.
+              </Typography>
+              <Typography variant="body2" className={classes.paymentInfoText}>
+                <strong>NIT:</strong> 900.123.456-7
+              </Typography>
+            </div>
+
+            {/* Sección de comprobante de pago */}
+            <div className={classes.uploadSection}>
+              <Typography variant="subtitle1" className={classes.uploadTitle}>
+                <CloudUpload />
+                Comprobante de pago
+              </Typography>
+              <Typography
+                variant="body2"
+                style={{ textAlign: "center", marginBottom: theme.spacing(2), color: "#8D99AE" }}
+              >
+                Sube una imagen del comprobante de tu transferencia o consignación
+              </Typography>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleComprobanteChange}
+                className={classes.fileInput}
+              />
+
+              <Button
+                variant="contained"
+                startIcon={<CloudUpload />}
+                className={classes.uploadButton}
+                onClick={handleUploadClick}
+              >
+                Seleccionar archivo
+              </Button>
+
+              {comprobantePreview && (
+                <>
+                  <img
+                    src={comprobantePreview || "/placeholder.svg"}
+                    alt="Comprobante"
+                    className={classes.filePreview}
+                  />
+                  <Typography variant="caption" className={classes.fileName}>
+                    {comprobantePago?.name}
+                  </Typography>
+                </>
+              )}
+            </div>
+
             {/* Resumen de la reserva */}
             {selectedApartamento && reservationForm.fecha_inicio && reservationForm.fecha_fin && (
               <div className={classes.reservationTotal}>
                 <Typography variant="h6" className={classes.reservationTotalTitle}>
-                  Resumen de Reserva
+                  Resumen de la reserva
                 </Typography>
                 <div className={classes.reservationTotalRow}>
-                  <Typography variant="body2" className={classes.reservationTotalLabel}>
-                    Apartamento:
-                  </Typography>
-                  <Typography variant="body2" className={classes.reservationTotalValue}>
-                    {selectedApartamento.nombre}
+                  <Typography className={classes.reservationTotalLabel}>Apartamento:</Typography>
+                  <Typography className={classes.reservationTotalValue}>{selectedApartamento.nombre}</Typography>
+                </div>
+                <div className={classes.reservationTotalRow}>
+                  <Typography className={classes.reservationTotalLabel}>Precio por noche:</Typography>
+                  <Typography className={classes.reservationTotalValue}>${selectedApartamento.precio}</Typography>
+                </div>
+                <div className={classes.reservationTotalRow}>
+                  <Typography className={classes.reservationTotalLabel}>Noches:</Typography>
+                  <Typography className={classes.reservationTotalValue}>{calcularNochesEstadia()}</Typography>
+                </div>
+                <div className={classes.reservationTotalRow}>
+                  <Typography className={classes.reservationTotalLabel}>Huéspedes:</Typography>
+                  <Typography className={classes.reservationTotalValue}>
+                    {reservationForm.acompanantes.length + 1}
                   </Typography>
                 </div>
                 <div className={classes.reservationTotalRow}>
-                  <Typography variant="body2" className={classes.reservationTotalLabel}>
-                    Precio por noche:
-                  </Typography>
-                  <Typography variant="body2" className={classes.reservationTotalValue}>
-                    ${selectedApartamento.precio}
-                  </Typography>
-                </div>
-                <div className={classes.reservationTotalRow}>
-                  <Typography variant="body2" className={classes.reservationTotalLabel}>
-                    Noches:
-                  </Typography>
-                  <Typography variant="body2" className={classes.reservationTotalValue}>
-                    {calcularNochesEstadia()}
-                  </Typography>
-                </div>
-                <div className={classes.reservationTotalRow}>
-                  <Typography variant="body2" className={classes.reservationTotalLabel}>
-                    Huéspedes:
-                  </Typography>
-                  <Typography variant="body2" className={classes.reservationTotalValue}>
-                    {reservationForm.acompanantes.length + 1} {/* +1 por el titular */}
-                  </Typography>
-                </div>
-                <div className={classes.reservationTotalRow}>
-                  <Typography variant="body1" className={classes.reservationTotalLabel}>
+                  <Typography className={`${classes.reservationTotalLabel} ${classes.reservationTotalFinal}`}>
                     Total:
                   </Typography>
-                  <Typography variant="body1" className={classes.reservationTotalFinal}>
+                  <Typography className={`${classes.reservationTotalValue} ${classes.reservationTotalFinal}`}>
                     ${calcularPrecioTotal()}
-                  </Typography>
-                </div>
-                <div className={classes.reservationTotalRow}>
-                  <Typography variant="body1" className={classes.reservationTotalLabel}>
-                    Pago inicial (50%):
-                  </Typography>
-                  <Typography variant="body1" className={classes.reservationTotalFinal}>
-                    ${reservationForm.monto_pago}
-                  </Typography>
-                </div>
-                <div className={classes.reservationTotalRow}>
-                  <Typography variant="body1" className={classes.reservationTotalLabel}>
-                    Saldo pendiente:
-                  </Typography>
-                  <Typography variant="body1" className={classes.reservationTotalFinal}>
-                    ${calcularPrecioTotal() - reservationForm.monto_pago}
                   </Typography>
                 </div>
               </div>
@@ -3752,30 +3665,17 @@ function Landing() {
           </div>
         </DialogContent>
         <div className={classes.reservationActions}>
-          <Grid container spacing={2}>
-            <Grid item xs={6}>
-              <Button
-                fullWidth
-                variant="text"
-                className={classes.cancelButton}
-                onClick={handleReservationClose}
-                disabled={loading}
-              >
-                Cancelar
-              </Button>
-            </Grid>
-            <Grid item xs={6}>
-              <Button
-                fullWidth
-                variant="contained"
-                className={classes.reservationButton}
-                onClick={handleReservationSubmit}
-                disabled={loading}
-              >
-                {loading ? "Procesando..." : "Confirmar Reserva"}
-              </Button>
-            </Grid>
-          </Grid>
+          <Button onClick={handleReservationClose} className={classes.cancelButton}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleReservationSubmit}
+            variant="contained"
+            className={classes.reservationButton}
+            disabled={loading}
+          >
+            {loading ? "Procesando..." : "Confirmar Reserva"}
+          </Button>
         </div>
       </Dialog>
     </div>

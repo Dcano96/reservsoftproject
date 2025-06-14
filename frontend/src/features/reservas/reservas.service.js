@@ -27,17 +27,6 @@ export const getReservaById = async (id) => {
   }
 }
 
-// Crear una nueva reserva
-export const createReserva = async (reservaData) => {
-  try {
-    const response = await api.post(API_URL, reservaData)
-    return response.data
-  } catch (error) {
-    console.error("Error al crear la reserva:", error)
-    throw error
-  }
-}
-
 // Actualizar una reserva
 export const updateReserva = async (id, reservaData) => {
   try {
@@ -89,6 +78,33 @@ export const updateAcompanante = async (reservaId, acompananteId, acompananteDat
     return response.data
   } catch (error) {
     console.error("Error al actualizar acompañante:", error)
+    throw error
+  }
+}
+
+// Completar pago de una reserva
+export const completarPagoReserva = async (id, montoData) => {
+  try {
+    const response = await api.post(`${API_URL}/${id}/completar-pago`, montoData)
+    return response.data
+  } catch (error) {
+    console.error("Error al completar el pago de la reserva:", error)
+    throw error
+  }
+}
+
+// Subir comprobante de pago
+export const subirComprobantePago = async (id, comprobante_url, completar_pago = false) => {
+  try {
+    console.log("Enviando comprobante:", { comprobante_url, completar_pago })
+    const response = await api.post(`${API_URL}/${id}/comprobante`, {
+      comprobante_url,
+      completar_pago,
+    })
+    return response.data
+  } catch (error) {
+    console.error("Error al subir el comprobante de pago:", error)
+    console.error("Error del servidor:", error.response?.data)
     throw error
   }
 }

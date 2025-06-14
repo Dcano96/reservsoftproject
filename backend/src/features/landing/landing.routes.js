@@ -30,8 +30,10 @@ router.get("/", landingController.getLandingInfo)
 router.get("/apartamentos-destacados", landingController.getFeaturedApartments)
 router.post("/testimonios", landingController.addTestimonial)
 
+// ✅ AGREGADO: Ruta para crear reserva desde landing (con comprobante)
+router.post("/crear-reserva", landingController.crearReservaDesdeLanding)
+
 // Rutas protegidas (solo administradores)
 router.put("/", verifyToken, isAdmin, landingController.updateLandingInfo)
 
 module.exports = router
-

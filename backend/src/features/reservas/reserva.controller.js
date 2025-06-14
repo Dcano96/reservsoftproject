@@ -12,22 +12,22 @@ const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id)
 const generateSecurePassword = () => {
   // Prefijo "Temp" seguido de un número aleatorio entre 1-9
   const prefix = "Temp" + Math.floor(Math.random() * 9 + 1)
-  
+
   // Generar letras minúsculas aleatorias (3-4 caracteres)
-  const lowercaseChars = 'abcdefghijkmnopqrstuvwxyz'
-  let lowercase = ''
+  const lowercaseChars = "abcdefghijkmnopqrstuvwxyz"
+  let lowercase = ""
   const lowercaseLength = Math.floor(Math.random() * 2) + 3 // 3-4 caracteres
   for (let i = 0; i < lowercaseLength; i++) {
     lowercase += lowercaseChars.charAt(Math.floor(Math.random() * lowercaseChars.length))
   }
-  
+
   // Añadir 1-2 números aleatorios
   const numbers = Math.floor(Math.random() * 90 + 10).toString()
-  
+
   // Añadir un carácter especial
-  const specialChars = '!@#$%^&*-_=+?'
+  const specialChars = "!@#$%^&*-_=+?"
   const specialChar = specialChars.charAt(Math.floor(Math.random() * specialChars.length))
-  
+
   // Combinar todo para formar la contraseña
   // Formato: Temp + número + letras minúsculas + números + carácter especial
   return prefix + lowercase + numbers + specialChar
@@ -705,7 +705,7 @@ exports.crearReservaPublica = async (req, res) => {
         // Generar una contraseña segura con el formato requerido
         randomPassword = generateSecurePassword()
         console.log("Contraseña temporal generada:", randomPassword)
-        
+
         const bcrypt = require("bcryptjs")
         const salt = await bcrypt.genSalt(10)
         const hashedPassword = await bcrypt.hash(randomPassword, salt)
@@ -821,6 +821,7 @@ exports.crearReservaPublica = async (req, res) => {
       numero_acompanantes: numAcompanantes, // Recibir explícitamente el número de acompañantes
       numero_reserva: nuevoNumeroReserva,
       titular_documento: documento,
+      fecha_primer_pago: new Date(), // Registrar la fecha del primer pago
     })
 
     await nuevaReserva.save()
@@ -902,6 +903,7 @@ exports.crearReservaPublica = async (req, res) => {
     })
   }
 }
+
 // Obtiene las fechas reservadas para un apartamento específico
 exports.obtenerFechasReservadas = async (req, res) => {
   try {
@@ -949,6 +951,188 @@ exports.obtenerFechasReservadas = async (req, res) => {
   }
 }
 
+// Completa el pago de una reserva y cambia su estado a confirmada
+exports.completarPagoReserva = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { monto_pago } = req.body
+
+    if (!id) {
+      return res.status(400).json({
+        msg: "ID de reserva no proporcionado",
+        error: true,
+      })
+    }
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({
+        msg: "ID de reserva inválido",
+        error: true,
+      })
+    }
+
+    const reserva = await Reserva.findById(id)
+
+    if (!reserva) {
+      return res.status(404).json({
+        msg: "Reserva no encontrada",
+        error: true,
+      })
+    }
+
+    // Verificar si la reserva ya está confirmada
+    if (reserva.estado === "confirmada") {
+      return res.status(400).json({
+        msg: "La reserva ya está confirmada",
+        error: true,
+      })
+    }
+
+    // Verificar si la reserva está cancelada
+    if (reserva.estado === "cancelada") {
+      return res.status(400).json({
+        msg: "No se puede completar el pago de una reserva cancelada",
+        error: true,
+      })
+    }
+
+    // Calcular el monto restante por pagar
+    const montoRestante = reserva.total - reserva.pagos_parciales
+
+    // Si se proporciona un monto específico, validarlo
+    if (monto_pago) {
+      const montoNumerico = Number.parseFloat(monto_pago)
+
+      if (isNaN(montoNumerico) || montoNumerico <= 0) {
+        return res.status(400).json({
+          msg: "El monto de pago debe ser un número positivo",
+          error: true,
+        })
+      }
+
+      if (montoNumerico > montoRestante) {
+        return res.status(400).json({
+          msg: "El monto de pago no puede ser mayor que el saldo pendiente",
+          error: true,
+        })
+      }
+
+      // Actualizar pagos parciales con el monto proporcionado
+      reserva.pagos_parciales += montoNumerico
+    } else {
+      // Si no se proporciona monto, se asume que se paga el total restante
+      reserva.pagos_parciales = reserva.total
+    }
+
+    // Si se ha pagado el total completo, cambiar estado a confirmada
+    if (reserva.pagos_parciales >= reserva.total) {
+      reserva.estado = "confirmada"
+      // Registrar la fecha del segundo pago
+      reserva.fecha_segundo_pago = new Date()
+    }
+
+    await reserva.save()
+
+    res.status(200).json({
+      msg: "Pago completado correctamente",
+      reserva,
+      error: false,
+    })
+  } catch (error) {
+    console.error("Error al completar el pago:", error)
+    res.status(500).json({
+      msg: "Error en el servidor al procesar el pago",
+      error: true,
+      details: error.message,
+    })
+  }
+}
+
+// Subir comprobante de pago
+exports.subirComprobantePago = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { comprobante_url, completar_pago } = req.body
+
+    console.log("Recibida solicitud para subir comprobante:", {
+      id,
+      comprobante_url: comprobante_url ? "URL recibida" : "No recibida",
+      completar_pago,
+    })
+
+    if (!id) {
+      return res.status(400).json({
+        msg: "ID de reserva no proporcionado",
+        error: true,
+      })
+    }
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({
+        msg: "ID de reserva inválido",
+        error: true,
+      })
+    }
+
+    if (!comprobante_url) {
+      return res.status(400).json({
+        msg: "URL del comprobante no proporcionada",
+        error: true,
+      })
+    }
+
+    const reserva = await Reserva.findById(id)
+
+    if (!reserva) {
+      return res.status(404).json({
+        msg: "Reserva no encontrada",
+        error: true,
+      })
+    }
+
+    // Guardar la URL del comprobante
+    reserva.comprobante_pago = comprobante_url
+
+    // Registrar la fecha de subida del comprobante
+    reserva.fecha_comprobante = new Date()
+
+    // Si es el segundo pago, guardar en el campo correspondiente
+    if (reserva.pagos_parciales < reserva.total) {
+      reserva.comprobante_segundo_pago = comprobante_url
+    }
+
+    // Si se solicita completar el pago automáticamente
+    if (completar_pago === true) {
+      // Calcular el monto restante
+      const montoRestante = reserva.total - reserva.pagos_parciales
+
+      // Completar el pago
+      reserva.pagos_parciales = reserva.total
+
+      // Cambiar estado a confirmada
+      reserva.estado = "confirmada"
+
+      // Registrar la fecha del segundo pago
+      reserva.fecha_segundo_pago = new Date()
+    }
+
+    await reserva.save()
+
+    res.status(200).json({
+      msg: "Comprobante de pago subido correctamente" + (completar_pago ? " y pago completado" : ""),
+      reserva,
+      error: false,
+    })
+  } catch (error) {
+    console.error("Error al subir comprobante de pago:", error)
+    res.status(500).json({
+      msg: "Error en el servidor al subir el comprobante",
+      error: true,
+      details: error.message,
+    })
+  }
+}
+
 // Exportar la función de generación de contraseñas para uso en otros módulos
 module.exports = {
   crearReserva: exports.crearReserva,
@@ -961,5 +1145,7 @@ module.exports = {
   eliminarAcompanante: exports.eliminarAcompanante,
   crearReservaPublica: exports.crearReservaPublica,
   obtenerFechasReservadas: exports.obtenerFechasReservadas,
-  generateSecurePassword
+  completarPagoReserva: exports.completarPagoReserva,
+  subirComprobantePago: exports.subirComprobantePago,
+  generateSecurePassword,
 }

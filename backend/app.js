@@ -2,6 +2,7 @@ require("dotenv").config()
 const express = require("express")
 const cors = require("cors")
 const morgan = require("morgan")
+const path = require("path") // ✅ AGREGADO
 const connectDB = require("./config/db")
 // Otras importaciones...
 
@@ -29,19 +30,27 @@ connectDB()
 
 // Middlewares
 // Reemplazar la configuración simple de CORS con una más específica
-app.use(cors({
-  origin: '*', // Permite solicitudes desde cualquier origen
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  credentials: true, // Permite cookies en solicitudes cross-origin
-  preflightContinue: false,
-  optionsSuccessStatus: 204
-}))
+app.use(
+  cors({
+    origin: "*", // Permite solicitudes desde cualquier origen
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+    credentials: true, // Permite cookies en solicitudes cross-origin
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  }),
+)
 
 // Middleware adicional para asegurar que las respuestas OPTIONS funcionen correctamente
-app.options('*', cors()) // Habilita preflight para todas las rutas
+app.options("*", cors()) // Habilita preflight para todas las rutas
 
-app.use(express.json())
+// Configurar límites aumentados para las solicitudes
+app.use(express.json({ limit: "50mb" }))
+app.use(express.urlencoded({ limit: "50mb", extended: true }))
+
+// ✅ AGREGADO: Servir archivos estáticos para comprobantes
+app.use("/uploads", express.static(path.join(__dirname, "uploads")))
+
 app.use(morgan("dev"))
 // Otros middlewares...
 

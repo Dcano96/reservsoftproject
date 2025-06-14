@@ -4,6 +4,11 @@ require("dotenv").config()
 // Importar la aplicación
 const app = require("./app")
 
+// Aumentar el límite de tamaño para las solicitudes
+const express = require("express")
+app.use(express.json({ limit: "50mb" }))
+app.use(express.urlencoded({ limit: "50mb", extended: true }))
+
 // Configurar puerto y host
 const PORT = process.env.PORT || 5000
 const HOST = process.env.HOST || '0.0.0.0'

@@ -1,5 +1,3 @@
-//Routes de reservas
-
 const express = require("express")
 const router = express.Router()
 const authMiddleware = require("../../middlewares/authMiddleware")
@@ -12,7 +10,6 @@ router.post("/publica", reservaController.crearReservaPublica)
 router.get("/fechas-reservadas/:id", reservaController.obtenerFechasReservadas)
 
 // Rutas protegidas
-router.post("/", authMiddleware, roleMiddleware(), reservaController.crearReserva)
 router.get("/", authMiddleware, roleMiddleware(), reservaController.obtenerReservas)
 router.get("/:id", authMiddleware, roleMiddleware(), reservaController.obtenerReserva)
 router.put("/:id", authMiddleware, roleMiddleware(), reservaController.actualizarReserva)
@@ -33,5 +30,8 @@ router.delete(
   reservaController.eliminarAcompanante,
 )
 
-module.exports = router
+// Rutas para pagos
+router.post("/:id/completar-pago", authMiddleware, roleMiddleware(), reservaController.completarPagoReserva)
+router.post("/:id/comprobante", authMiddleware, roleMiddleware(), reservaController.subirComprobantePago)
 
+module.exports = router
