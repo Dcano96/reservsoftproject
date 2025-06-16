@@ -247,9 +247,9 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   checkedInRow: {
-    backgroundColor: "rgba(220, 252, 231, 0.7) !important", // Changed back to green
+    backgroundColor: "rgba(220, 252, 231, 0.7) !important",
     "&:hover": {
-      backgroundColor: "rgba(220, 252, 231, 0.9) !important", // Changed back to green
+      backgroundColor: "rgba(220, 252, 231, 0.9) !important",
     },
   },
   tableCell: {
@@ -309,7 +309,7 @@ const useStyles = makeStyles((theme) => ({
     marginRight: theme.spacing(1),
   },
   checkedInAvatar: {
-    backgroundColor: "#10b981", // Changed back to green
+    backgroundColor: "#10b981",
   },
   hospedajeContainer: {
     display: "flex",
@@ -320,7 +320,7 @@ const useStyles = makeStyles((theme) => ({
   checkInIndicator: {
     display: "flex",
     alignItems: "center",
-    color: "#10b981", // Changed back to green
+    color: "#10b981",
     fontWeight: 600,
     "& svg": {
       marginRight: theme.spacing(0.5),
@@ -354,8 +354,8 @@ const useStyles = makeStyles((theme) => ({
     overflow: "hidden",
     width: "90vw",
     maxWidth: "900px",
-    height: "85vh", // Increased height
-    maxHeight: "800px", // Increased max height
+    height: "85vh",
+    maxHeight: "800px",
     margin: "auto",
   },
   dialogTitle: {
@@ -366,7 +366,7 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: 600,
     position: "relative",
     minHeight: "50px",
-    flexShrink: 0, // Prevent title from shrinking
+    flexShrink: 0,
   },
   closeButton: {
     position: "absolute",
@@ -382,7 +382,7 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(2, 3),
     backgroundColor: "#fff",
     flex: 1,
-    overflow: "auto", // Enable scroll
+    overflow: "auto",
     "& .MuiTextField-root": {
       marginBottom: theme.spacing(2),
     },
@@ -394,8 +394,8 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: "flex-end",
     gap: theme.spacing(1.5),
     borderTop: "1px solid #e2e8f0",
-    minHeight: "70px", // Increased height for better visibility
-    flexShrink: 0, // Prevent actions from shrinking
+    minHeight: "70px",
+    flexShrink: 0,
   },
   cancelButton: {
     color: "#64748b",
@@ -571,8 +571,8 @@ const useStyles = makeStyles((theme) => ({
     alignItems: "flex-end",
   },
   acompananteField: {
-    flex: "1 1 200px",
-    minWidth: "180px",
+    flex: "1 1 150px",
+    minWidth: "140px",
   },
   acompananteDeleteBtn: {
     marginLeft: theme.spacing(1),
@@ -644,7 +644,7 @@ const useStyles = makeStyles((theme) => ({
   // Estilos optimizados para el wizard paso a paso
   stepperContainer: {
     marginBottom: theme.spacing(2),
-    flexShrink: 0, // Prevent stepper from shrinking
+    flexShrink: 0,
   },
   stepContent: {
     padding: theme.spacing(2, 0),
@@ -704,7 +704,7 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: "#e2e8f0",
     position: "relative",
     overflow: "hidden",
-    flexShrink: 0, // Prevent progress bar from shrinking
+    flexShrink: 0,
   },
   stepperProgressBar: {
     position: "absolute",
@@ -787,8 +787,8 @@ const useStyles = makeStyles((theme) => ({
       width: "90vw",
       maxWidth: "1000px",
       margin: "16px",
-      height: "85vh", // Increased height
-      maxHeight: "800px", // Increased max height
+      height: "85vh",
+      maxHeight: "800px",
       display: "flex",
       flexDirection: "column",
     },
@@ -798,7 +798,7 @@ const useStyles = makeStyles((theme) => ({
     flex: 1,
     display: "flex",
     flexDirection: "column",
-    overflow: "auto", // Enable scroll
+    overflow: "auto",
   },
   fieldGroup: {
     marginBottom: theme.spacing(2),
@@ -815,15 +815,15 @@ const useStyles = makeStyles((theme) => ({
   stepContentWrapper: {
     flex: 1,
     padding: theme.spacing(1, 0),
-    overflow: "auto", // Enable scroll for step content
+    overflow: "auto",
   },
   // Modal de Check-in optimizado
   checkInDialog: {
     "& .MuiDialog-paper": {
       width: "85vw",
       maxWidth: "700px",
-      height: "85vh", // Increased height
-      maxHeight: "750px", // Increased max height
+      height: "85vh",
+      maxHeight: "750px",
     },
   },
   // Modal de habitaciones optimizado
@@ -831,23 +831,23 @@ const useStyles = makeStyles((theme) => ({
     "& .MuiDialog-paper": {
       width: "90vw",
       maxWidth: "800px",
-      height: "85vh", // Increased height
-      maxHeight: "750px", // Increased max height
+      height: "85vh",
+      maxHeight: "750px",
     },
   },
   // Estilos para el indicador de check-in realizado
   checkInStatusCard: {
     padding: theme.spacing(1.5),
     borderRadius: theme.spacing(1),
-    backgroundColor: "#dcfce7", // Changed back to green
-    border: "2px solid #10b981", // Changed back to green
+    backgroundColor: "#dcfce7",
+    border: "2px solid #10b981",
     marginBottom: theme.spacing(2),
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
   },
   checkInStatusText: {
-    color: "#166534", // Changed back to green
+    color: "#166534",
     fontWeight: 600,
     display: "flex",
     alignItems: "center",
@@ -882,6 +882,7 @@ const HospedajeList = () => {
   const [formData, setFormData] = useState({
     numeroReserva: "",
     cliente: "",
+    tipoDocumento: "CC", // Nuevo campo con valor por defecto
     numeroIdentificacion: "",
     email: "",
     telefono: "",
@@ -913,6 +914,13 @@ const HospedajeList = () => {
   // Estado para la paginación de habitaciones
   const [roomsPage, setRoomsPage] = useState(0)
   const [roomsPerPage, setRoomsPerPage] = useState(4)
+
+  // Opciones de tipo de documento
+  const tiposDocumento = [
+    { value: "T.I", label: "Tarjeta de Identidad" },
+    { value: "CC", label: "Cédula de Ciudadanía" },
+    { value: "PP/Visa", label: "Pasaporte/Visa" },
+  ]
 
   // Pasos del wizard
   const steps = [
@@ -1060,6 +1068,7 @@ const HospedajeList = () => {
       setFormData({
         numeroReserva: hospedaje.numeroReserva || "",
         cliente: hospedaje.cliente || "",
+        tipoDocumento: hospedaje.tipoDocumento || "CC", // Nuevo campo
         numeroIdentificacion: hospedaje.numeroIdentificacion || "",
         email: hospedaje.email || "",
         telefono: hospedaje.telefono || "",
@@ -1068,7 +1077,7 @@ const HospedajeList = () => {
         apartamentos: apartamentosIds,
         estadia: hospedaje.estadia || "",
         total: hospedaje.total || "",
-        estado: hospedaje.estado || "pendiente", // Mantener el estado actual
+        estado: hospedaje.estado || "pendiente",
         acompanantes: hospedaje.acompanantes || [],
         descuento: hospedaje.descuento || { porcentaje: "", precioOriginal: "", precioConDescuento: "" },
       })
@@ -1077,6 +1086,7 @@ const HospedajeList = () => {
       setFormData({
         numeroReserva: "",
         cliente: "",
+        tipoDocumento: "CC", // Valor por defecto
         numeroIdentificacion: "",
         email: "",
         telefono: "",
@@ -1203,7 +1213,7 @@ const HospedajeList = () => {
   const agregarAcompanante = () => {
     setFormData((prev) => ({
       ...prev,
-      acompanantes: [...(prev.acompanantes || []), { nombre: "", apellido: "", documento: "" }],
+      acompanantes: [...(prev.acompanantes || []), { nombre: "", apellido: "", tipoDocumento: "CC", documento: "" }], // Agregado tipoDocumento
     }))
   }
 
@@ -1365,7 +1375,7 @@ const HospedajeList = () => {
           title: "¡Eliminado!",
           text: "El hospedaje se eliminó correctamente.",
           confirmButtonColor: "#2563eb",
-          timer: 2000,
+          timer: 3000,
           showConfirmButton: false,
         })
         setHospedajes((prev) => prev.filter((h) => h._id !== id))
@@ -1391,7 +1401,7 @@ const HospedajeList = () => {
         title: "¡Actualizado!",
         text: "El estado del hospedaje se actualizó correctamente.",
         confirmButtonColor: "#2563eb",
-        timer: 2000,
+        timer: 3000,
         showConfirmButton: false,
       })
       // Actualizar inmediatamente el estado local
@@ -1487,7 +1497,7 @@ const HospedajeList = () => {
         title: "¡Check-in Realizado!",
         text: "Datos guardados correctamente.",
         confirmButtonColor: "#2563eb",
-        timer: 2000,
+        timer: 3000,
         showConfirmButton: false,
       })
       setHospedajes((prev) => prev.map((h) => (h._id === updatedData.hospedaje._id ? updatedData.hospedaje : h)))
@@ -1543,7 +1553,7 @@ const HospedajeList = () => {
           title: "¡Check-in Eliminado!",
           text: "El check-in se ha eliminado correctamente.",
           confirmButtonColor: "#2563eb",
-          timer: 2000,
+          timer: 3000,
           showConfirmButton: false,
         })
 
@@ -1617,7 +1627,7 @@ const HospedajeList = () => {
   const addCheckInAcompanante = () => {
     setCheckInData((prev) => ({
       ...prev,
-      acompanantes: [...prev.acompanantes, { nombre: "", apellido: "", documento: "" }],
+      acompanantes: [...prev.acompanantes, { nombre: "", apellido: "", tipoDocumento: "CC", documento: "" }], // Agregado tipoDocumento
     }))
   }
 
@@ -1660,7 +1670,7 @@ const HospedajeList = () => {
         title: "¡Guardado!",
         text: response.msg,
         confirmButtonColor: "#2563eb",
-        timer: 2000,
+        timer: 3000,
         showConfirmButton: false,
       })
       closeRoomsModal()
@@ -1701,6 +1711,7 @@ Estado: ${hospedaje.estado}`
     const data = hospedajes.map((h) => ({
       "Número de Reserva": h.numeroReserva,
       Cliente: h.cliente,
+      "Número Identificación": h.numeroIdentificacion,
       "Fecha Inicio": h.fecha_inicio ? h.fecha_inicio.substring(0, 10) : "",
       "Fecha Fin": h.fecha_fin ? h.fecha_fin.substring(0, 10) : "",
       Apartamentos: formatApartamentosSimple(h.apartamentos),
@@ -1788,6 +1799,7 @@ Estado: ${hospedaje.estado}`
       case 0:
         return (
           formData.cliente.trim() !== "" &&
+          formData.tipoDocumento.trim() !== "" && // Validación del nuevo campo
           formData.numeroIdentificacion.trim() !== "" &&
           formData.email.trim() !== "" &&
           formData.telefono.trim() !== ""
@@ -1865,6 +1877,30 @@ Estado: ${hospedaje.estado}`
                     ),
                   }}
                 />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth className={classes.inputField} margin="dense" size="small">
+                  <InputLabel id="tipo-documento-label">Tipo de Documento</InputLabel>
+                  <Select
+                    labelId="tipo-documento-label"
+                    name="tipoDocumento"
+                    value={formData.tipoDocumento}
+                    onChange={handleChange}
+                    variant="outlined"
+                    required
+                    startAdornment={
+                      <InputAdornment position="start">
+                        <ContactMail className={classes.fieldIcon} />
+                      </InputAdornment>
+                    }
+                  >
+                    {tiposDocumento.map((tipo) => (
+                      <MenuItem key={tipo.value} value={tipo.value}>
+                        {tipo.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid item xs={12} md={6}>
                 <TextField
@@ -2210,6 +2246,26 @@ Estado: ${hospedaje.estado}`
                       ),
                     }}
                   />
+                  <FormControl className={classes.acompananteField} variant="outlined" size="small">
+                    <InputLabel id={`tipo-documento-acomp-${index}-label`}>Tipo Doc.</InputLabel>
+                    <Select
+                      labelId={`tipo-documento-acomp-${index}-label`}
+                      name="tipoDocumento"
+                      value={acomp.tipoDocumento || "CC"}
+                      onChange={(e) => handleAcompananteChange(index, e)}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <ContactMail className={classes.fieldIcon} />
+                        </InputAdornment>
+                      }
+                    >
+                      {tiposDocumento.map((tipo) => (
+                        <MenuItem key={tipo.value} value={tipo.value}>
+                          {tipo.value}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                   <TextField
                     label="Documento"
                     name="documento"
@@ -2262,6 +2318,12 @@ Estado: ${hospedaje.estado}`
                   <Box className={classes.stepperSummaryItem}>
                     <Typography className={classes.stepperSummaryLabel}>Cliente:</Typography>
                     <Typography className={classes.stepperSummaryValue}>{formData.cliente}</Typography>
+                  </Box>
+                  <Box className={classes.stepperSummaryItem}>
+                    <Typography className={classes.stepperSummaryLabel}>Tipo Documento:</Typography>
+                    <Typography className={classes.stepperSummaryValue}>
+                      {tiposDocumento.find((t) => t.value === formData.tipoDocumento)?.label || formData.tipoDocumento}
+                    </Typography>
                   </Box>
                   <Box className={classes.stepperSummaryItem}>
                     <Typography className={classes.stepperSummaryLabel}>Identificación:</Typography>
@@ -2370,7 +2432,7 @@ Estado: ${hospedaje.estado}`
                       <Box key={index} className={classes.stepperSummaryItem}>
                         <Typography className={classes.stepperSummaryLabel}>Acompañante {index + 1}:</Typography>
                         <Typography className={classes.stepperSummaryValue}>
-                          {acomp.nombre} {acomp.apellido} - {acomp.documento}
+                          {acomp.nombre} {acomp.apellido} - {acomp.tipoDocumento}: {acomp.documento}
                         </Typography>
                       </Box>
                     ))}
@@ -2438,7 +2500,7 @@ Estado: ${hospedaje.estado}`
         </Box>
       </Box>
 
-      {/* Tabla de hospedajes */}
+      {/* Tabla de hospedajes - SIN columna de documento */}
       <TableContainer component={Paper} className={classes.tableContainer}>
         <Table>
           <TableHead>
@@ -2518,8 +2580,6 @@ Estado: ${hospedaje.estado}`
                           <Edit size={18} />
                         </IconButton>
                       </Tooltip>
-                    
-
                       <Tooltip title="Eliminar hospedaje">
                         <IconButton
                           className={`${classes.actionButton} ${classes.btnDelete}`}
@@ -2711,9 +2771,10 @@ Estado: ${hospedaje.estado}`
                   <Box className={classes.detailsCard}>
                     <Typography className={classes.detailsCardTitle}>
                       <ContactMail />
-                      Número de Identificación
+                      Documento
                     </Typography>
                     <Typography className={classes.detailsCardContent}>
+                      <strong>{selectedHospedaje.tipoDocumento || "CC"}:</strong>{" "}
                       {selectedHospedaje.numeroIdentificacion}
                     </Typography>
                   </Box>
@@ -2867,7 +2928,7 @@ Estado: ${hospedaje.estado}`
                                 {ac.nombre} {ac.apellido}
                               </Typography>
                               <Typography variant="caption" style={{ color: "#64748b" }}>
-                                Documento: {ac.documento}
+                                {ac.tipoDocumento || "CC"}: {ac.documento}
                               </Typography>
                             </Box>
                           </Box>
@@ -2972,7 +3033,8 @@ Estado: ${hospedaje.estado}`
                 <Avatar className={classes.detailsAvatar}>{getInitials(selectedHospedaje.cliente)}</Avatar>
                 <Typography className={classes.detailsName}>{selectedHospedaje.cliente}</Typography>
                 <Typography className={classes.detailsDescription}>
-                  ID: {selectedHospedaje.numeroIdentificacion} | Reserva: {selectedHospedaje.numeroReserva}
+                  {selectedHospedaje.tipoDocumento || "CC"}: {selectedHospedaje.numeroIdentificacion} | Reserva:{" "}
+                  {selectedHospedaje.numeroReserva}
                 </Typography>
               </Box>
 
@@ -3142,6 +3204,27 @@ Estado: ${hospedaje.estado}`
                               ),
                             }}
                           />
+                          <FormControl className={classes.acompananteField} variant="outlined" size="small">
+                            <InputLabel id={`tipo-documento-checkin-${index}-label`}>Tipo Doc.</InputLabel>
+                            <Select
+                              labelId={`tipo-documento-checkin-${index}-label`}
+                              name="tipoDocumento"
+                              value={acomp.tipoDocumento || "CC"}
+                              onChange={(e) => handleCheckInAcompananteChange(index, e)}
+                              disabled={!editMode}
+                              startAdornment={
+                                <InputAdornment position="start">
+                                  <ContactMail className={classes.fieldIcon} />
+                                </InputAdornment>
+                              }
+                            >
+                              {tiposDocumento.map((tipo) => (
+                                <MenuItem key={tipo.value} value={tipo.value}>
+                                  {tipo.value}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
                           <TextField
                             label="Documento"
                             name="documento"

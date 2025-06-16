@@ -14,6 +14,7 @@ const CheckInDataSchema = new Schema({
 const AcompananteSchema = new Schema({
   nombre: { type: String, required: true },
   apellido: { type: String },
+  tipoDocumento: { type: String, enum: ["T.I", "CC", "PP/Visa"], default: "CC" }, // Nuevo campo
   documento: { type: String },
 })
 
@@ -29,6 +30,7 @@ const HospedajeSchema = new Schema(
   {
     numeroReserva: { type: Number, required: true },
     cliente: { type: String, required: true },
+    tipoDocumento: { type: String, enum: ["T.I", "CC", "PP/Visa"], default: "CC" }, // Nuevo campo
     numeroIdentificacion: { type: String },
     email: { type: String }, // Nuevo campo para email
     telefono: { type: String }, // Nuevo campo para teléfono
