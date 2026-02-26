@@ -11,7 +11,7 @@ const createTransporter = () => {
 
   // Detectar si estamos usando Gmail
   const isGmail = process.env.EMAIL_USER?.includes("@gmail.com")
-  
+
   if (isGmail) {
     console.log("Detectado Gmail como proveedor, usando configuración específica para Gmail")
     return nodemailer.createTransport({
@@ -59,22 +59,22 @@ const formatDate = (dateString) => {
 const generateSecurePassword = () => {
   // Prefijo "Temp" seguido de un número aleatorio entre 1-9
   const prefix = "Temp" + Math.floor(Math.random() * 9 + 1)
-  
+
   // Generar letras minúsculas aleatorias (3-4 caracteres)
-  const lowercaseChars = 'abcdefghijkmnopqrstuvwxyz'
-  let lowercase = ''
+  const lowercaseChars = "abcdefghijkmnopqrstuvwxyz"
+  let lowercase = ""
   const lowercaseLength = Math.floor(Math.random() * 2) + 3 // 3-4 caracteres
   for (let i = 0; i < lowercaseLength; i++) {
     lowercase += lowercaseChars.charAt(Math.floor(Math.random() * lowercaseChars.length))
   }
-  
+
   // Añadir 1-2 números aleatorios
   const numbers = Math.floor(Math.random() * 90 + 10).toString()
-  
+
   // Añadir un carácter especial
-  const specialChars = '!@#$%^&*-_=+?'
+  const specialChars = "!@#$%^&*-_=+?"
   const specialChar = specialChars.charAt(Math.floor(Math.random() * specialChars.length))
-  
+
   // Combinar todo para formar la contraseña
   // Formato: Temp + número + letras minúsculas + números + carácter especial
   return prefix + lowercase + numbers + specialChar
@@ -118,7 +118,6 @@ const sendReservationConfirmation = async (cliente, reservationData, password = 
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     const precioTotal = reservationData.total || reservationData.precioPorNoche * diffDays
 
-    // Crear contenido HTML del correo (mantener el mismo contenido HTML)
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -132,29 +131,21 @@ const sendReservationConfirmation = async (cliente, reservationData, password = 
             color: #333;
             max-width: 600px;
             margin: 0 auto;
+            padding: 20px;
           }
           .header {
-            background: linear-gradient(135deg, #0A2463 0%, #3E92CC 100%);
+            background-color: #0A2463;
             color: white;
             padding: 20px;
             text-align: center;
-            border-radius: 5px 5px 0 0;
+            border-radius: 5px;
+            margin-bottom: 20px;
           }
           .content {
             padding: 20px;
             border: 1px solid #ddd;
-            border-top: none;
-            border-radius: 0 0 5px 5px;
-          }
-          .footer {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 12px;
-            color: #666;
-          }
-          .logo {
-            max-width: 150px;
-            margin-bottom: 10px;
+            border-radius: 5px;
+            background-color: #ffffff;
           }
           .reservation-details {
             background-color: #f9f9f9;
@@ -167,17 +158,7 @@ const sendReservationConfirmation = async (cliente, reservationData, password = 
             padding: 15px;
             border-radius: 5px;
             margin: 15px 0;
-            border-left: 4px solid #D8B08C;
-          }
-          .button {
-            display: inline-block;
-            background-color: #D8B08C;
-            color: #0A2463;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            margin: 15px 0;
+            border-left: 4px solid #0A2463;
           }
           table {
             width: 100%;
@@ -191,19 +172,27 @@ const sendReservationConfirmation = async (cliente, reservationData, password = 
             font-weight: bold;
             width: 40%;
           }
+          .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+          }
         </style>
       </head>
       <body>
         <div class="header">
-          <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/nidosky-V3qv6QnKvcP2qqA4Vxok6rQ8wpnZi9.png" alt="Nido Sky Logo" class="logo">
-          <h1>¡Reserva Confirmada!</h1>
+          <h1>Nido Sky</h1>
+          <h2>Reserva Confirmada</h2>
         </div>
         <div class="content">
-          <p>Hola <strong>${cliente.nombre}</strong>,</p>
-          <p>¡Gracias por elegir Nido Sky para tu estancia en Medellín! Tu reserva ha sido confirmada exitosamente.</p>
+          <p>Estimado/a <strong>${cliente.nombre}</strong>,</p>
+          <p>Su reserva ha sido confirmada exitosamente. A continuación encontrará los detalles:</p>
           
           <div class="reservation-details">
-            <h2>Detalles de tu Reserva:</h2>
+            <h3>Detalles de la Reserva:</h3>
             <table>
               <tr>
                 <td>Apartamento:</td>
@@ -226,12 +215,8 @@ const sendReservationConfirmation = async (cliente, reservationData, password = 
                 <td>${reservationData.huespedes}</td>
               </tr>
               <tr>
-                <td>Precio por noche:</td>
-                <td>${reservationData.precioPorNoche}</td>
-              </tr>
-              <tr>
                 <td>Precio total:</td>
-                <td><strong>${precioTotal}</strong></td>
+                <td><strong>$${precioTotal.toLocaleString()}</strong></td>
               </tr>
             </table>
           </div>
@@ -240,106 +225,85 @@ const sendReservationConfirmation = async (cliente, reservationData, password = 
             password
               ? `
           <div class="credentials">
-            <h2>Tus Credenciales de Acceso:</h2>
-            <p>Hemos creado una cuenta para ti en nuestro sistema. Puedes acceder con las siguientes credenciales:</p>
+            <h3>Credenciales de Acceso:</h3>
+            <p>Hemos creado una cuenta para usted:</p>
             <table>
               <tr>
                 <td>Email:</td>
                 <td>${cliente.email}</td>
               </tr>
               <tr>
-                <td>Contraseña:</td>
-                <td>${password}</td>
+                <td>Contraseña temporal:</td>
+                <td><strong>${password}</strong></td>
               </tr>
             </table>
-            <p><em>Te recomendamos cambiar tu contraseña después del primer inicio de sesión.</em></p>
+            <p><em>Recomendamos cambiar su contraseña después del primer acceso.</em></p>
           </div>
           `
               : ""
           }
           
-          <p>Si tienes alguna pregunta o necesitas hacer cambios en tu reserva, no dudes en contactarnos.</p>
-          
-          <a href="http://localhost:3000/login" class="button">Ingresar al Sistema</a>
-          
-          <h3>Información de Contacto:</h3>
+          <p>Para cualquier consulta, puede contactarnos:</p>
           <p>
-            📞 +57 300 123 4567<br>
-            ✉️ info@nidosky.com<br>
-            📍 Calle 10 #43E-25, El Poblado, Medellín, Colombia
+            Teléfono: +57 300 123 4567<br>
+            Email: info@nidosky.com
           </p>
+          
+          <p>Gracias por elegir Nido Sky.</p>
         </div>
         <div class="footer">
-          <p>© ${new Date().getFullYear()} Nido Sky. Todos los derechos reservados.</p>
-          <p>Este correo fue enviado a ${cliente.email} porque realizaste una reserva en Nido Sky.</p>
+          <p>© ${new Date().getFullYear()} Nido Sky - Medellín, Colombia</p>
         </div>
       </body>
       </html>
     `
 
-    // Versión de texto plano para clientes que no soportan HTML
     const textContent = `
-      ¡Reserva Confirmada!
+      NIDO SKY - RESERVA CONFIRMADA
       
-      Hola ${cliente.nombre},
+      Estimado/a ${cliente.nombre},
       
-      ¡Gracias por elegir Nido Sky para tu estancia en Medellín! Tu reserva ha sido confirmada exitosamente.
+      Su reserva ha sido confirmada exitosamente.
       
-      Detalles de tu Reserva:
+      DETALLES DE LA RESERVA:
       - Apartamento: ${reservationData.apartamento}
       - Fecha de entrada: ${formatDate(reservationData.fechaEntrada)}
       - Fecha de salida: ${formatDate(reservationData.fechaSalida)}
       - Número de noches: ${diffDays}
       - Huéspedes: ${reservationData.huespedes}
-      - Precio por noche: ${reservationData.precioPorNoche}
-      - Precio total: ${precioTotal}
+      - Precio total: $${precioTotal.toLocaleString()}
       
       ${
         password
           ? `
-      Tus Credenciales de Acceso:
-      Hemos creado una cuenta para ti en nuestro sistema. Puedes acceder con las siguientes credenciales:
+      CREDENCIALES DE ACCESO:
       - Email: ${cliente.email}
-      - Contraseña: ${password}
+      - Contraseña temporal: ${password}
       
-      Te recomendamos cambiar tu contraseña después del primer inicio de sesión.
+      Recomendamos cambiar su contraseña después del primer acceso.
       `
           : ""
       }
       
-      Si tienes alguna pregunta o necesitas hacer cambios en tu reserva, no dudes en contactarnos.
-      
-      Para ingresar al sistema, visita: http://localhost:3000/login
-      
-      Información de Contacto:
+      Para consultas:
       Teléfono: +57 300 123 4567
       Email: info@nidosky.com
-      Dirección: Calle 10 #43E-25, El Poblado, Medellín, Colombia
       
-      © ${new Date().getFullYear()} Nido Sky. Todos los derechos reservados.
-      Este correo fue enviado a ${cliente.email} porque realizaste una reserva en Nido Sky.
+      Gracias por elegir Nido Sky.
+      
+      © ${new Date().getFullYear()} Nido Sky - Medellín, Colombia
     `
 
-    // Configurar opciones del correo con mejoras
     const mailOptions = {
       from: {
         name: "Nido Sky",
         address: process.env.EMAIL_USER,
       },
       to: cliente.email,
-      subject: "Confirmación de tu Reserva en Nido Sky",
+      subject: "Confirmación de Reserva - Nido Sky",
       html: htmlContent,
-      text: textContent, // Versión de texto plano
-      // Añadir cabeceras para mejorar la entrega
-      headers: {
-        "X-Priority": "1",
-        "X-MSMail-Priority": "High",
-        Importance: "High",
-      },
-      // Añadir ID de mensaje único para evitar duplicados
+      text: textContent,
       messageId: `<reservation-${Date.now()}@nidosky.com>`,
-      // Añadir información de prioridad
-      priority: "high",
     }
 
     // Intentar enviar el correo con reintentos

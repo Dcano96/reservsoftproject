@@ -41,16 +41,6 @@ import UserProfile from "../usuarios/UserProfile"
 
 import "./Dashboard.css"
 
-// IMPORTANTE: Obtener el módulo guardado antes de que se monte el componente
-const getSavedModule = () => {
-  try {
-    return localStorage.getItem("moduloDashboard") || null
-  } catch (e) {
-    console.error("Error al leer el módulo guardado:", e)
-    return null
-  }
-}
-
 const Dashboard = () => {
   const history = useHistory()
   const location = useLocation()
@@ -65,19 +55,10 @@ const Dashboard = () => {
   const pagosChartRef = useRef(null)
   const chartInstances = useRef({})
 
-  // IMPORTANTE: Inicializar el módulo seleccionado con el valor guardado
-  // ELIMINAR estas líneas:
-  // const savedModule = getSavedModule()
-  // console.log("Módulo guardado al iniciar:", savedModule)
-  // const [selectedModule, setSelectedModule] = useState(savedModule)
-
-  // REEMPLAZAR con esta implementación simple:
   const [selectedModule, setSelectedModule] = useState(() => {
-    // Obtener el módulo guardado de localStorage al inicializar
     return localStorage.getItem("moduloDashboard") || "dashboard"
   })
 
-  // Añadir un nuevo estado para el filtro de tiempo justo después de los otros estados
   const [timeFilter, setTimeFilter] = useState("month") // Opciones: "day", "month", "year"
 
   // Estado para módulo seleccionado, datos, y controles UI
@@ -85,10 +66,6 @@ const Dashboard = () => {
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [open, setOpen] = useState(true)
-
-  // Referencia para controlar si es la primera carga
-  const isFirstLoad = useRef(true)
-  const moduleInitialized = useRef(false)
 
   // Prevenir navegación con botones de adelante/atrás
   useEffect(() => {
@@ -143,8 +120,6 @@ const Dashboard = () => {
           setUserName(name)
           setUserPermissions(permisos)
           setIsAdmin(role.toLowerCase() === "administrador" || role.toLowerCase() === "admin")
-          console.log("Rol obtenido:", role.toLowerCase())
-          console.log("Permisos obtenidos:", permisos)
         }
       } catch (e) {
         console.error("Error al decodificar el token:", e)
@@ -216,49 +191,12 @@ const Dashboard = () => {
     (module) => module !== "profile" && (isAdmin || hasModulePermission(module, "leer")),
   )
 
-  // IMPORTANTE: Efecto para guardar el módulo seleccionado cuando cambie
-  // ELIMINAR estos efectos que están causando problemas:
-  // - Eliminar el efecto que usa moduleInitialized.current
-  // - Eliminar cualquier efecto que modifique selectedModule basado en permisos
-
-  // AÑADIR este efecto simple para guardar el módulo cuando cambie:
   useEffect(() => {
     if (selectedModule) {
       localStorage.setItem("moduloDashboard", selectedModule)
     }
   }, [selectedModule])
 
-  // IMPORTANTE: Inicializar el módulo seleccionado si no hay uno guardado o no tiene permiso
-  // ELIMINAR este useEffect
-  // useEffect(() => {
-  //   if (userRole && !moduleInitialized.current) {
-  //     moduleInitialized.current = true
-
-  //     // Si no hay un módulo seleccionado o no tiene permiso para acceder a él
-  //     if (!selectedModule || (selectedModule !== "profile" && !hasModulePermission(selectedModule, "leer"))) {
-  //       console.log("No hay módulo seleccionado o no tiene permiso, seleccionando uno predeterminado")
-
-  //       // Buscar un módulo accesible
-  //       const accessibleModules = allModules.filter(
-  //         (module) => module !== "profile" && hasModulePermission(module, "leer"),
-  //       )
-
-  //       if (accessibleModules.length > 0) {
-  //         console.log("Módulo predeterminado seleccionado:", accessibleModules[0])
-  //         setSelectedModule(accessibleModules[0])
-  //       } else {
-  //         console.log("No hay módulos accesibles")
-  //         setSelectedModule("no-access")
-  //         setData({ error: "No tienes acceso a ningún módulo del sistema" })
-  //       }
-  //     } else {
-  //       console.log("Usando módulo ya seleccionado:", selectedModule)
-  //     }
-  //   }
-  // }, [userRole, selectedModule, allModules])
-
-  // Inicializar y actualizar gráficos cuando cambian los datos
-  // Añadir la función para cambiar el filtro de tiempo after the function toggleMobileMenu
   const changeTimeFilter = (event) => {
     const filter = event.target.value
     setTimeFilter(filter)
@@ -274,8 +212,6 @@ const Dashboard = () => {
     }
   }
 
-  // Modificar la función renderDashboard para incluir los botones de filtro
-  // Reemplazar la función renderDashboard completa con esta versión:
   const renderDashboard = () => {
     return (
       <div className="dashboard-charts-container">
@@ -332,11 +268,45 @@ const Dashboard = () => {
     )
   }
 
-  // Añadir una nueva función renderCharts para manejar los diferentes filtros de tiempo
-  // Añadir esta función después de la función renderDashboard:
   const renderCharts = (filter) => {
+    // Plugin personalizado para mostrar texto en el centro del gráfico de anillo
+    const doughnutTextPlugin = {
+      id: "doughnutText",
+      afterDraw(chart) {
+        if (chart.config.type !== "doughnut" || chart.data.datasets[0].data.length === 0) {
+          return
+        }
+        const { ctx, data } = chart
+        const total = data.datasets[0].data.reduce((a, b) => a + b, 0)
+        const centerX = chart.getDatasetMeta(0).data[0].x
+        const centerY = chart.getDatasetMeta(0).data[0].y
+
+        ctx.save()
+        ctx.textAlign = "center"
+        ctx.textBaseline = "middle"
+
+        ctx.font = "1rem Poppins, sans-serif"
+        ctx.fillStyle = "#64748b" // slate-500
+        ctx.fillText("Total", centerX, centerY + 20)
+
+        ctx.font = "bold 2.25rem Poppins, sans-serif"
+        ctx.fillStyle = "#1e293b" // slate-800
+        ctx.fillText(total, centerX, centerY - 5)
+
+        ctx.restore()
+      },
+    }
+
+    // Gráfico de Reservas y Descuentos (Línea)
     if (reservasChartRef.current) {
       const reservasCtx = reservasChartRef.current.getContext("2d")
+      const reservasGradient = reservasCtx.createLinearGradient(0, 0, 0, 400)
+      reservasGradient.addColorStop(0, "rgba(192, 132, 252, 0.6)") // purple-300
+      reservasGradient.addColorStop(1, "rgba(192, 132, 252, 0)")
+
+      const descuentosGradient = reservasCtx.createLinearGradient(0, 0, 0, 400)
+      descuentosGradient.addColorStop(0, "rgba(74, 222, 128, 0.6)") // green-400
+      descuentosGradient.addColorStop(1, "rgba(74, 222, 128, 0)")
 
       // Datos según el filtro seleccionado
       let labels, reservasData, descuentosData
@@ -350,43 +320,46 @@ const Dashboard = () => {
         reservasData = [12, 19, 15, 25, 22, 30, 35, 38, 28, 25, 30, 35]
         descuentosData = [5, 10, 15, 5, 10, 20, 15, 10, 5, 15, 10, 5]
       } else {
-        // year
         labels = ["2020", "2021", "2022", "2023", "2024"]
         reservasData = [150, 220, 280, 310, 350]
         descuentosData = [8, 12, 10, 15, 18]
       }
 
       const reservasChartData = {
-        labels: labels,
+        labels,
         datasets: [
           {
             label: "Reservas",
             data: reservasData,
-            backgroundColor: "rgba(56, 189, 248, 0.3)",
-            borderColor: "rgba(56, 189, 248, 1)",
+            backgroundColor: reservasGradient,
+            borderColor: "#a855f7", // purple-500
             borderWidth: 3,
             tension: 0.4,
             fill: true,
-            pointBackgroundColor: "#ffffff",
-            pointBorderColor: "rgba(56, 189, 248, 1)",
+            pointBackgroundColor: "#a855f7",
+            pointBorderColor: "#ffffff",
+            pointHoverBackgroundColor: "#ffffff",
+            pointHoverBorderColor: "#a855f7",
             pointBorderWidth: 2,
             pointRadius: 5,
-            pointHoverRadius: 7,
+            pointHoverRadius: 8,
             yAxisID: "y",
           },
           {
             label: "Descuentos (%)",
             data: descuentosData,
-            backgroundColor: "rgba(251, 146, 60, 0.3)",
-            borderColor: "rgba(251, 146, 60, 1)",
+            backgroundColor: descuentosGradient,
+            borderColor: "#22c55e", // green-500
             borderWidth: 3,
             tension: 0.4,
             fill: true,
-            pointBackgroundColor: "#ffffff",
-            pointBorderColor: "rgba(251, 146, 60, 1)",
+            pointBackgroundColor: "#22c55e",
+            pointBorderColor: "#ffffff",
+            pointHoverBackgroundColor: "#ffffff",
+            pointHoverBorderColor: "#22c55e",
             pointBorderWidth: 2,
             pointRadius: 5,
-            pointHoverRadius: 7,
+            pointHoverRadius: 8,
             yAxisID: "y1",
           },
         ],
@@ -400,33 +373,24 @@ const Dashboard = () => {
           maintainAspectRatio: false,
           interaction: { mode: "index", intersect: false },
           plugins: {
-            legend: {
-              display: true,
-              position: "top",
-              labels: {
-                font: { size: 14, weight: "bold", family: "'Poppins', sans-serif" },
-                padding: 20,
-                usePointStyle: true,
-                pointStyle: "circle",
-              },
-            },
+            legend: { display: false },
             tooltip: {
-              backgroundColor: "rgba(255, 255, 255, 0.95)",
-              titleColor: "#0284c7",
-              bodyColor: "#0c4a6e",
-              borderColor: "rgba(56, 189, 248, 0.3)",
+              enabled: true,
+              backgroundColor: "rgba(15, 23, 42, 0.9)",
+              titleColor: "#ffffff",
+              bodyColor: "#cbd5e1",
+              titleFont: { size: 14, weight: "bold" },
+              bodyFont: { size: 12 },
+              padding: 12,
               borderWidth: 1,
               cornerRadius: 8,
               boxPadding: 8,
               usePointStyle: true,
               callbacks: {
-                label: (context) => {
-                  let label = context.dataset.label || ""
-                  if (label) label += ": "
-                  return context.dataset.label === "Descuentos (%)"
-                    ? `${label}${context.parsed.y}%`
-                    : `${label}${context.parsed.y}`
-                },
+                label: (context) =>
+                  `${context.dataset.label}: ${
+                    context.dataset.yAxisID === "y1" ? context.parsed.y + "%" : context.parsed.y
+                  }`,
               },
             },
           },
@@ -439,28 +403,29 @@ const Dashboard = () => {
               title: {
                 display: true,
                 text: "Número de Reservas",
-                color: "rgba(56, 189, 248, 1)",
-                font: { weight: "bold", size: 13, family: "'Poppins', sans-serif" },
+                color: "#475569",
+                font: { weight: "600", size: 12 },
                 padding: { top: 10, bottom: 10 },
               },
-              grid: { color: "rgba(0, 0, 0, 0.04)", drawBorder: false },
-              ticks: { font: { size: 12, family: "'Poppins', sans-serif" }, padding: 8 },
+              grid: { color: "#e2e8f0", drawBorder: false, borderDash: [5, 5] },
+              ticks: { color: "#64748b", font: { size: 12 }, padding: 8 },
             },
             y1: {
               type: "linear",
               display: true,
               position: "right",
               beginAtZero: true,
-              max: filter === "year" ? 30 : 30,
+              max: filter === "year" ? 30 : 35,
               title: {
                 display: true,
                 text: "Porcentaje de Descuento",
-                color: "rgba(251, 146, 60, 1)",
-                font: { weight: "bold", size: 13, family: "'Poppins', sans-serif" },
+                color: "#475569",
+                font: { weight: "600", size: 12 },
                 padding: { top: 10, bottom: 10 },
               },
               grid: { drawOnChartArea: false },
               ticks: {
+                color: "#64748b",
                 callback: (value) => value + "%",
                 font: { size: 12, family: "'Poppins', sans-serif" },
                 padding: 8,
@@ -468,10 +433,10 @@ const Dashboard = () => {
             },
             x: {
               grid: { display: false },
-              ticks: { font: { size: 12, family: "'Poppins', sans-serif" }, padding: 8 },
+              ticks: { color: "#64748b", font: { size: 12 }, padding: 8 },
             },
           },
-          animation: { duration: 2000, easing: "easeOutQuart" },
+          animation: { duration: 1500, easing: "easeOutCubic" },
         },
       })
     }
@@ -483,10 +448,10 @@ const Dashboard = () => {
         datasets: [
           {
             data: [15, 8, 3],
-            backgroundColor: ["rgba(34, 197, 94, 0.85)", "rgba(56, 189, 248, 0.85)", "rgba(251, 146, 60, 0.85)"],
-            borderColor: ["rgba(34, 197, 94, 1)", "rgba(56, 189, 248, 1)", "rgba(251, 146, 60, 1)"],
-            borderWidth: 2,
-            hoverOffset: 15,
+            backgroundColor: ["#10b981", "#ec4899", "#9ca3af"], // emerald-500, pink-500, gray-400
+            borderColor: "#ffffff",
+            borderWidth: 4,
+            hoverOffset: 20,
           },
         ],
       }
@@ -496,7 +461,7 @@ const Dashboard = () => {
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          cutout: "65%",
+          cutout: "75%",
           plugins: {
             legend: {
               position: "bottom",
@@ -508,12 +473,13 @@ const Dashboard = () => {
               },
             },
             tooltip: {
-              backgroundColor: "rgba(255, 255, 255, 0.95)",
-              titleColor: "#0284c7",
-              bodyColor: "#0c4a6e",
-              borderColor: "rgba(56, 189, 248, 0.3)",
+              enabled: true,
+              backgroundColor: "rgba(15, 23, 42, 0.9)",
+              titleColor: "#ffffff",
+              bodyColor: "#cbd5e1",
+              titleFont: { size: 14, weight: "bold" },
+              bodyFont: { size: 12 },
               borderWidth: 1,
-              cornerRadius: 8,
               boxPadding: 8,
               usePointStyle: true,
               callbacks: {
@@ -531,14 +497,18 @@ const Dashboard = () => {
             animateRotate: true,
             animateScale: true,
             duration: 2000,
-            easing: "easeOutQuart",
+            easing: "easeOutCubic",
           },
         },
+        plugins: [doughnutTextPlugin], // Registrar el plugin personalizado
       })
     }
 
     if (pagosChartRef.current) {
       const pagosCtx = pagosChartRef.current.getContext("2d")
+      const pagosGradient = pagosCtx.createLinearGradient(0, 0, 0, 400)
+      pagosGradient.addColorStop(0, "#6366f1") // indigo-500
+      pagosGradient.addColorStop(1, "#ec4899") // pink-500
 
       // Datos según el filtro seleccionado
       let labels, pagosData
@@ -550,30 +520,20 @@ const Dashboard = () => {
         labels = ["Ene", "Feb", "Mar", "Abr", "May", "Jun"]
         pagosData = [12500, 15000, 18000, 16500, 21000, 22500]
       } else {
-        // year
         labels = ["2020", "2021", "2022", "2023", "2024"]
         pagosData = [120000, 150000, 180000, 210000, 250000]
       }
 
       const pagosChartData = {
-        labels: labels,
+        labels,
         datasets: [
           {
             label: "Ingresos",
             data: pagosData,
-            backgroundColor: [
-              "rgba(56, 189, 248, 0.8)",
-              "rgba(34, 211, 238, 0.8)",
-              "rgba(125, 211, 252, 0.8)",
-              "rgba(186, 230, 253, 0.8)",
-              "rgba(14, 165, 233, 0.8)",
-              "rgba(2, 132, 199, 0.8)",
-              "rgba(3, 105, 161, 0.8)",
-            ].slice(0, labels.length),
-            borderRadius: 10,
-            borderSkipped: false,
-            barThickness: 25,
-            maxBarThickness: 35,
+            backgroundColor: pagosGradient,
+            borderRadius: 8,
+            barPercentage: 0.6,
+            categoryPercentage: 0.7,
           },
         ],
       }
@@ -585,50 +545,46 @@ const Dashboard = () => {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: {
-              display: true,
-              position: "top",
-              labels: {
-                font: { size: 14, weight: "bold", family: "'Poppins', sans-serif" },
-                padding: 20,
-                usePointStyle: true,
-                pointStyle: "circle",
-              },
-            },
+            legend: { display: false },
             tooltip: {
-              backgroundColor: "rgba(255, 255, 255, 0.95)",
-              titleColor: "#0284c7",
-              bodyColor: "#0c4a6e",
-              borderColor: "rgba(56, 189, 248, 0.3)",
+              enabled: true,
+              backgroundColor: "rgba(15, 23, 42, 0.9)",
+              titleColor: "#ffffff",
+              bodyColor: "#cbd5e1",
+              titleFont: { size: 14, weight: "bold" },
+              bodyFont: { size: 12 },
+              padding: 12,
               borderWidth: 1,
               cornerRadius: 8,
               boxPadding: 8,
               usePointStyle: true,
               callbacks: {
-                label: (context) => `${context.parsed.y.toLocaleString()}`,
+                label: (context) =>
+                  `$${context.parsed.y.toLocaleString("es-CO", { minimumFractionDigits: 0 })}`,
               },
             },
           },
           scales: {
             y: {
               beginAtZero: true,
-              grid: { color: "rgba(0, 0, 0, 0.04)", drawBorder: false },
+              grid: { color: "#e2e8f0", drawBorder: false },
               ticks: {
-                callback: (value) => "$" + value.toLocaleString(),
-                font: { size: 12, family: "'Poppins', sans-serif" },
+                color: "#64748b",
+                callback: (value) => "$" + Intl.NumberFormat("es-CO", { notation: "compact" }).format(value),
+                font: { size: 12 },
                 padding: 8,
               },
               title: {
                 display: true,
                 text: "Monto en Pesos",
-                color: "rgba(56, 189, 248, 1)",
-                font: { weight: "bold", size: 13, family: "'Poppins', sans-serif" },
+                color: "#475569",
+                font: { weight: "600", size: 12 },
                 padding: { top: 10, bottom: 10 },
               },
             },
             x: {
               grid: { display: false },
-              ticks: { font: { size: 12, family: "'Poppins', sans-serif" }, padding: 8 },
+              ticks: { color: "#64748b", font: { size: 12 }, padding: 8 },
             },
           },
           animation: { duration: 2000, easing: "easeOutQuart" },
@@ -637,8 +593,6 @@ const Dashboard = () => {
     }
   }
 
-  // Modificar el useEffect que inicializa los gráficos para usar la nueva función renderCharts
-  // Reemplazar el useEffect que contiene la inicialización de gráficos con esta versión:
   useEffect(() => {
     Object.values(chartInstances.current).forEach((chart) => {
       if (chart) chart.destroy()
@@ -714,7 +668,6 @@ const Dashboard = () => {
 
   const fetchData = async (moduleName) => {
     if (!hasModulePermission(moduleName, "leer")) {
-      console.log(`Usuario sin permiso de lectura para el módulo ${moduleName}, omitiendo carga de datos.`)
       setData({ error: "No tienes permiso para acceder a este módulo" })
       return
     }
@@ -728,17 +681,8 @@ const Dashboard = () => {
 
   const handleModuleClick = (moduleName) => {
     if (!hasModulePermission(moduleName, "leer")) {
-      // ELIMINAR cualquier código que muestre alertas relacionadas con permisos de módulos
-      // Swal.fire({
-      //   title: "Acceso denegado",
-      //   text: "No tienes permisos para acceder a este módulo",
-      //   icon: "warning",
-      //   confirmButtonColor: "#2563eb",
-      //   confirmButtonText: "Entendido",
-      // })
       return
     }
-    console.log("Cambiando a módulo:", moduleName)
     setSelectedModule(moduleName)
     fetchData(moduleName)
     setIsMobileMenuOpen(false)
@@ -750,7 +694,6 @@ const Dashboard = () => {
     const loadData = async () => {
       if (userRole && selectedModule && selectedModule !== "no-access" && selectedModule !== "profile") {
         if (hasModulePermission(selectedModule, "leer")) {
-          console.log("Cargando datos para el módulo:", selectedModule)
           if (selectedModule === "dashboard") {
             await fetchAllModulesData()
           } else {
@@ -810,7 +753,6 @@ const Dashboard = () => {
     })
   }
 
-  // Modificar la parte del dropdown para mostrar el header
   const toggleProfileModal = () => setShowProfileModal(!showProfileModal)
 
   // Función para ir a la página de perfil
@@ -827,7 +769,7 @@ const Dashboard = () => {
           <div className="logo-icon-large">
             <span>N</span>
           </div>
-          <div className="logo-text-large">NidoSky</div>
+          <div className="logo-text-large">Reservsoft</div>
         </div>
       </div>
     )
@@ -847,9 +789,6 @@ const Dashboard = () => {
     hospedaje: "Hospedaje",
     profile: "Mi Perfil",
   }
-
-  // Modificar la función renderDashboard para incluir los botones de filtro
-  // Reemplazar la función renderDashboard completa con esta versión:
 
   const toggleDrawer = () => {
     setOpen(!open)
@@ -872,7 +811,7 @@ const Dashboard = () => {
                 <div className="bird-tail"></div>
               </div>
             </div>
-            {open && <h1 className="logo-text">NidoSky</h1>}
+            {open && <h1 className="logo-text">Reservsoft</h1>}
           </div>
           <button className="toggle-button" onClick={toggleDrawer}>
             {open ? <ChevronLeft /> : <ChevronRight />}
@@ -907,7 +846,7 @@ const Dashboard = () => {
                 <div className="bird-tail"></div>
               </div>
             </div>
-            <h1 className="logo-text">NidoSky</h1>
+            <h1 className="logo-text">Reservsoft</h1>
           </div>
           <button className="close-button" onClick={() => setIsMobileMenuOpen(false)}>
             <X />
@@ -1166,79 +1105,6 @@ const Dashboard = () => {
       </div>
     </div>
   )
-
-  // Añadir estilos CSS para los botones de filtro al final del archivo
-  // Añadir estos estilos CSS justo antes del return final:
-  // Estilos CSS para los botones de filtro
-  const timeFilterStyles = `
-.time-filter-controls {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 20px;
-}
-
-.filter-select-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.filter-select-container label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #64748b;
-}
-
-.filter-select {
-  padding: 8px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  background-color: white;
-  font-size: 14px;
-  font-weight: 500;
-  color: #0284c7;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  min-width: 100px;
-}
-
-.filter-select:hover {
-  border-color: #cbd5e1;
-}
-
-.filter-select:focus {
-  outline: none;
-  border-color: #0284c7;
-  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
-}
-
-@media (max-width: 768px) {
-  .time-filter-controls {
-    justify-content: center;
-  }
-  
-  .filter-select-container label {
-    font-size: 13px;
-  }
-  
-  .filter-select {
-    padding: 6px 10px;
-    font-size: 13px;
-  }
-}
-`
-
-  // Agregar los estilos al documento
-  useEffect(() => {
-    const styleElement = document.createElement("style")
-    styleElement.textContent = timeFilterStyles
-    document.head.appendChild(styleElement)
-
-    return () => {
-      document.head.removeChild(styleElement)
-    }
-  }, [])
 }
 
 export default Dashboard

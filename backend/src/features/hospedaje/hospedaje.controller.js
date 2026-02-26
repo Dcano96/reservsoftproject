@@ -22,52 +22,6 @@ exports.createHospedaje = async (req, res) => {
   }
 }
 
-// Función para sincronizar reservas en la colección de Hospedaje
-const sincronizarReservas = async () => {
-  try {
-    const reservas = await Reserva.find()
-    for (const reserva of reservas) {
-      // Se busca si ya existe un hospedaje basado en el número de reserva
-      const exists = await Hospedaje.findOne({ numeroReserva: reserva.numero_reserva })
-      if (!exists) {
-        // Se crea un nuevo hospedaje con la información de la reserva
-        const newHospedaje = new Hospedaje({
-          numeroReserva: reserva.numero_reserva,
-          cliente: reserva.titular_reserva,
-          numeroIdentificacion: reserva.titular_documento || "", // Usar el documento del titular si existe
-          email: reserva.email || "", // Usar el email de la reserva
-          telefono: reserva.telefono || "", // Usar el teléfono de la reserva
-          fecha_inicio: reserva.fecha_inicio,
-          fecha_fin: reserva.fecha_fin,
-          apartamentos: reserva.apartamentos,
-          estadia: String(reserva.noches_estadia), // Se almacena como string (según el esquema)
-          total: reserva.total,
-          estado: reserva.estado,
-          acompanantes: reserva.acompanantes,
-          descuento: {}, // No hay información de descuento en Reserva
-        })
-        await newHospedaje.save()
-      } else {
-        // Si ya existe, actualizar los campos que podrían haber cambiado en la reserva
-        exists.cliente = reserva.titular_reserva;
-        exists.numeroIdentificacion = reserva.titular_documento || exists.numeroIdentificacion;
-        exists.email = reserva.email || exists.email;
-        exists.telefono = reserva.telefono || exists.telefono;
-        exists.fecha_inicio = reserva.fecha_inicio;
-        exists.fecha_fin = reserva.fecha_fin;
-        exists.apartamentos = reserva.apartamentos;
-        exists.estadia = String(reserva.noches_estadia);
-        exists.total = reserva.total;
-        exists.estado = reserva.estado;
-        exists.acompanantes = reserva.acompanantes;
-        await exists.save();
-      }
-    }
-  } catch (error) {
-    console.error("Error al sincronizar reservas a hospedajes:", error)
-  }
-}
-
 /*
   Obtener todos los hospedajes realizando un $lookup con la colección de reservas para
   incluir la información de la reserva asociada. Se compara el número de reserva
@@ -75,9 +29,6 @@ const sincronizarReservas = async () => {
 */
 exports.getHospedajes = async (req, res) => {
   try {
-    // Sincronización: se inserta en Hospedaje cada reserva que no se encuentre aún
-    await sincronizarReservas()
-
     const hospedajes = await Hospedaje.aggregate([
       {
         $lookup: {

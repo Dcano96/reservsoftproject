@@ -12,7 +12,8 @@ import {
   Tag,
   Hotel,
   ChevronRight,
-  Settings
+  Settings,
+  Lock,
 } from "lucide-react"
 import "./Dashboard.css"
 
@@ -23,7 +24,7 @@ const cn = (...classes) => classes.filter(Boolean).join(" ")
 const moduleIcons = {
   dashboard: BarChart3,
   usuarios: Users,
-  roles: Settings, // Agregado para el módulo roles
+  roles: Lock,
   clientes: User,
   tipoApartamento: Building2, // Agregado para el módulo tipoApartamento
   apartamentos: Building2,
@@ -34,35 +35,53 @@ const moduleIcons = {
   hospedaje: Hotel,
 }
 
-// Agrupación de módulos por categoría (se agrega "roles" en administración y "tipoApartamento" en operaciones)
+// Mapeo de nombres para mostrar en la UI según la estructura de subprocesos
+const moduleDisplayNames = {
+  dashboard: "Subproceso de Medición",
+  roles: "Subproceso Gestión de Roles",
+  usuarios: "Subproceso Gestión de Usuarios",
+  tipoApartamento: "Subproceso Tipo de Apartamentos",
+  apartamentos: "Subproceso Gestión de Apartamentos",
+  mobiliarios: "Subproceso Gestión de Mobiliario",
+  descuentos: "Subproceso Gestión de Descuentos",
+  clientes: "Subproceso Gestión de Clientes",
+  reservas: "Subproceso Gestión de Reservas",
+  hospedaje: "Subproceso Gestión de Hospedaje",
+  pagos: "Subproceso Gestión de Pagos",
+}
+
 const Sidebar = ({ modules, selectedModule, onModuleClick, isCollapsed, userRole }) => {
+  // Agrupación de módulos según los procesos definidos
   const moduleGroups = {
-    administracion: ["dashboard", "usuarios", "roles", "clientes"],
-    operaciones: ["tipoApartamento", "apartamentos", "mobiliarios", "reservas", "hospedaje"],
-    finanzas: ["pagos", "descuentos"],
+    desempeno: ["dashboard"],
+    configuracion: ["roles"],
+    usuarios: ["usuarios"],
+    apartamentos: ["tipoApartamento", "apartamentos", "mobiliarios", "descuentos"],
+    reservas: ["clientes", "reservas"],
+    hospedaje: ["hospedaje"],
+    pagos: ["pagos"],
   }
 
-  // Nombres de las categorías
+  // Nombres de los procesos para los títulos de grupo
   const groupNames = {
-    administracion: "Administración",
-    operaciones: "Operaciones",
-    finanzas: "Finanzas",
+    desempeno: "Proceso de Medición",
+    configuracion: "Proceso de Configuración",
+    usuarios: "Proceso de Usuarios",
+    apartamentos: "Proceso de Apartamentos",
+    reservas: "Proceso de Reservas",
+    hospedaje: "Proceso de Hospedaje",
+    pagos: "Proceso de Pagos",
   }
 
   // Estado para grupos expandidos
-  const [expandedGroups, setExpandedGroups] = useState({
-    administracion: true,
-    operaciones: true,
-    finanzas: true,
-  })
+  const [expandedGroups, setExpandedGroups] = useState(
+    Object.keys(groupNames).reduce((acc, key) => ({ ...acc, [key]: true }), {}),
+  )
 
   // Función para alternar la expansión de un grupo
   const toggleGroup = (group) => {
     if (!isCollapsed) {
-      setExpandedGroups({
-        ...expandedGroups,
-        [group]: !expandedGroups[group],
-      })
+      setExpandedGroups((prev) => ({ ...prev, [group]: !prev[group] }))
     }
   }
 
@@ -76,28 +95,28 @@ const Sidebar = ({ modules, selectedModule, onModuleClick, isCollapsed, userRole
         return (
           <div key={groupKey} className="sidebar-section">
             {!isCollapsed && (
-              <div className="sidebar-section-title" onClick={() => toggleGroup(groupKey)}>
+              <button className="sidebar-section-title" onClick={() => toggleGroup(groupKey)}>
                 {groupNames[groupKey]}
                 <span className={`group-arrow ${expandedGroups[groupKey] ? "expanded" : ""}`}>
                   <ChevronRight />
                 </span>
-              </div>
+              </button>
             )}
             {(isCollapsed || expandedGroups[groupKey]) && (
               <div className="sidebar-menu">
                 {groupModules.map((moduleName) => {
-                  const Icon = moduleIcons[moduleName] || Building2
+                  const Icon = moduleIcons[moduleName] || Settings
                   return (
                     <button
                       key={moduleName}
                       className={cn("sidebar-menu-item", selectedModule === moduleName && "active")}
                       onClick={() => onModuleClick(moduleName)}
-                      title={isCollapsed ? moduleName : ""}
+                      title={isCollapsed ? moduleDisplayNames[moduleName] || moduleName : ""}
                     >
                       <div className="sidebar-menu-icon">
                         <Icon />
                       </div>
-                      {!isCollapsed && <span className="sidebar-menu-text capitalize">{moduleName}</span>}
+                      {!isCollapsed && <span className="sidebar-menu-text">{moduleDisplayNames[moduleName] || moduleName}</span>}
                     </button>
                   )
                 })}
