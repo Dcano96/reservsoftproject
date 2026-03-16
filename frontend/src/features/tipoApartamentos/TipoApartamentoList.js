@@ -27,8 +27,25 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Chip,
+  Grid,
 } from "@material-ui/core"
-import { Edit, Delete, Eye, X, Search, Plus, Home, FileText } from "lucide-react"
+import {
+  Edit,
+  Delete,
+  Eye,
+  X,
+  Search,
+  UserPlus,
+  Home,
+  Building,
+  Layers,
+  FileText,
+  DollarSign,
+  Settings,
+  PenTool,
+  Check,
+} from "lucide-react"
 import { useHistory } from "react-router-dom"
 import Swal from "sweetalert2"
 import tipoApartamentoService from "./tipoApartamento.service"
