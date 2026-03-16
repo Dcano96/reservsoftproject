@@ -1,18 +1,6 @@
-/* Estilos para la gestión de roles */
+/* Estilos para la gestión de roles – tema moderno */
 .MuiContainer-root {
   position: relative;
-}
-
-/* Efecto de gradiente para el fondo */
-.MuiContainer-root::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 6px;
-  background: linear-gradient(to right, #2563eb, #1d4ed8);
-  border-radius: 6px 6px 0 0;
 }
 
 /* Animaciones para elementos */

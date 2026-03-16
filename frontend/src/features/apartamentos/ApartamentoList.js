@@ -30,8 +30,24 @@ import {
   InputLabel,
   Select,
   Grid,
+  FormHelperText,
 } from "@material-ui/core"
-import { Edit, Delete, Eye, X, Search, UserPlus, Home, Building, Layers, FileText, DollarSign } from "lucide-react"
+import {
+  Edit,
+  Delete,
+  Eye,
+  X,
+  Search,
+  UserPlus,
+  Home,
+  Building,
+  Layers,
+  FileText,
+  DollarSign,
+  Settings,
+  PenTool,
+  Check,
+} from "lucide-react"
 import { useHistory } from "react-router-dom"
 import Swal from "sweetalert2"
 import apartamentoService from "./apartamento.service"
@@ -39,6 +55,16 @@ import mobiliarioService from "../mobiliarios/mobiliario.service"
 import tipoApartamentoService from "../tipoApartamentos/tipoApartamento.service"
 import "./apartamento.styles.css"
 import { makeStyles, withStyles } from "@material-ui/core/styles"
+
+// Mensajes descriptivos por campo (mismo patrón de Usuarios)
+const MENSAJES_INSTRUCTIVOS = {
+  TIPO: "Seleccione el tipo de apartamento.",
+  NUMERO: "Ingrese un número de apartamento entre 1 y 200.",
+  PISO: "Ingrese el piso (entero entre 1 y 20).",
+  CAPACIDAD: "Ingrese la capacidad (entre 1 y 6).",
+  TARIFA: "Ingrese la tarifa en COP (solo números, valor positivo).",
+  ESTADO: "Seleccione el estado del apartamento.",
+}
 
 // Función para formatear la tarifa en COP (peso colombiano)
 const formatTarifa = (tarifa) => {
@@ -80,12 +106,12 @@ const ApartamentoTableCell = withStyles((theme) => ({
 
 const useStyles = makeStyles((theme) => ({
   container: {
-    fontFamily: '"Inter", "Montserrat", sans-serif',
+    fontFamily: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     marginTop: theme.spacing(0),
-    padding: theme.spacing(2),
-    borderRadius: theme.spacing(2),
-    background: "linear-gradient(135deg, #ffffff, #f8fafc)",
-    boxShadow: "0 10px 25px rgba(0, 0, 0, 0.05)",
+    padding: theme.spacing(3),
+    borderRadius: theme.spacing(3),
+    background: "radial-gradient(circle at top left, #e0f2fe 0, #f9fafb 45%, #e5e7eb 100%)",
+    boxShadow: "0 24px 60px rgba(15, 23, 42, 0.18)",
     position: "relative",
     overflow: "hidden",
     width: "100%",
@@ -93,34 +119,26 @@ const useStyles = makeStyles((theme) => ({
   },
   pageHeader: {
     display: "flex",
-    flexDirection: "column",
     alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: theme.spacing(4),
-    position: "relative",
-    "&::after": {
-      content: '""',
-      position: "absolute",
-      bottom: "-10px",
-      width: "80px",
-      height: "4px",
-      background: "linear-gradient(to right, #2563eb, #1d4ed8)",
-      borderRadius: "2px",
-    },
+    padding: theme.spacing(2),
+    borderRadius: theme.spacing(2),
+    background: "linear-gradient(135deg, #ffffff, #e5edff)",
+    boxShadow: "0 18px 40px rgba(148, 163, 184, 0.35)",
   },
   pageTitle: {
-    fontSize: "2rem",
+    fontSize: "1.9rem",
     fontWeight: 700,
-    color: "#1e293b",
-    marginBottom: theme.spacing(1),
-    textAlign: "center",
-    background: "linear-gradient(to right, #2563eb, #1d4ed8)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
+    color: "#0f172a",
+    marginBottom: theme.spacing(0.5),
+    display: "flex",
+    alignItems: "center",
+    gap: theme.spacing(1.5),
   },
   pageSubtitle: {
-    fontSize: "1rem",
+    fontSize: "0.95rem",
     color: "#64748b",
-    textAlign: "center",
   },
   searchContainer: {
     display: "flex",
@@ -131,58 +149,69 @@ const useStyles = makeStyles((theme) => ({
     gap: theme.spacing(2),
   },
   searchField: {
-    background: "#fff",
-    borderRadius: theme.spacing(1),
-    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+    background: "#ffffff",
+    borderRadius: 999,
+    boxShadow: "0 6px 18px rgba(148, 163, 184, 0.35)",
+    minWidth: 260,
     "& .MuiOutlinedInput-root": {
-      borderRadius: theme.spacing(1),
+      borderRadius: 999,
+      paddingRight: theme.spacing(1),
+      "& input": {
+        color: "#0f172a",
+      },
       "&:hover .MuiOutlinedInput-notchedOutline": {
         borderColor: "#2563eb",
       },
       "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
         borderColor: "#2563eb",
-        borderWidth: "2px",
+        borderWidth: 2,
       },
     },
   },
   addButton: {
-    background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
-    color: "#fff",
+    background: "linear-gradient(135deg, #38bdf8, #6366f1, #a855f7)",
+    color: "#f9fafb",
     fontWeight: 600,
-    padding: "10px 20px",
-    borderRadius: theme.spacing(1),
-    boxShadow: "0 4px 10px rgba(37, 99, 235, 0.3)",
+    padding: "10px 22px",
+    borderRadius: 999,
+    boxShadow: "0 14px 35px rgba(56, 189, 248, 0.55)",
     transition: "all 0.3s ease",
     "&:hover": {
-      background: "linear-gradient(135deg, #1d4ed8, #1e40af)",
-      boxShadow: "0 6px 15px rgba(37, 99, 235, 0.4)",
+      background: "linear-gradient(135deg, #0ea5e9, #4f46e5, #9333ea)",
+      boxShadow: "0 20px 45px rgba(56, 189, 248, 0.7)",
       transform: "translateY(-2px)",
     },
   },
   tableContainer: {
     marginBottom: theme.spacing(3),
-    borderRadius: theme.spacing(1.5),
+    borderRadius: theme.spacing(2),
     overflow: "hidden",
-    boxShadow: "0 5px 15px rgba(0, 0, 0, 0.08)",
-    background: "#fff",
+    boxShadow: "0 16px 40px rgba(148, 163, 184, 0.4)",
+    background: "#ffffff",
     width: "100%",
+    border: "1px solid rgba(226, 232, 240, 1)",
   },
   tableRow: {
     transition: "all 0.3s ease",
     "&:nth-of-type(odd)": {
-      backgroundColor: "rgba(243, 244, 246, 0.5)",
+      backgroundColor: "#f9fafb",
+    },
+    "&:nth-of-type(even)": {
+      backgroundColor: "#ffffff",
     },
     "&:hover": {
-      background: "rgba(37, 99, 235, 0.08)",
-      boxShadow: "0 3px 10px rgba(0, 0, 0, 0.1)",
+      backgroundColor: "#eef2ff",
+      boxShadow: "0 8px 16px rgba(148, 163, 184, 0.45)",
+      transform: "translateY(-1px)",
     },
   },
   tableCell: {
     textAlign: "center",
-    padding: theme.spacing(1.8),
-    fontSize: "0.95rem",
-    color: "#334155",
-    borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
+    padding: theme.spacing(1.6),
+    fontSize: "0.9rem",
+    letterSpacing: "0.01em",
+    color: "#0f172a",
+    borderBottom: "1px solid rgba(226, 232, 240, 1)",
   },
   actionsCell: {
     minWidth: 150,
@@ -233,14 +262,19 @@ const useStyles = makeStyles((theme) => ({
     width: "100%",
   },
   pagination: {
-    borderRadius: theme.spacing(1),
-    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-    backgroundColor: "#fff",
+    borderRadius: theme.spacing(2),
+    boxShadow: "0 6px 18px rgba(148, 163, 184, 0.4)",
+    background: "#ffffff",
+    color: "#0f172a",
     "& .MuiTablePagination-toolbar": {
       padding: theme.spacing(1.5),
     },
     "& .MuiTablePagination-selectRoot": {
       marginRight: theme.spacing(2),
+      color: "#0f172a",
+    },
+    "& .MuiTablePagination-actions svg": {
+      color: "#0f172a",
     },
   },
   noDataRow: {
@@ -253,23 +287,27 @@ const useStyles = makeStyles((theme) => ({
     fontSize: "1.1rem",
   },
   dialogPaper: {
-    borderRadius: theme.spacing(1.5),
-    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
+    borderRadius: theme.spacing(3),
+    boxShadow: "0 26px 70px rgba(148, 163, 184, 0.55)",
     overflow: "hidden",
-    width: "600px",
-    maxWidth: "90vw",
+    width: "92%",
+    maxWidth: "860px",
+    background: "#ffffff",
+    border: "1px solid rgba(226, 232, 240, 1)",
   },
   dialogPaperLarge: {
-    borderRadius: theme.spacing(1.5),
-    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
+    borderRadius: theme.spacing(3),
+    boxShadow: "0 26px 70px rgba(148, 163, 184, 0.55)",
     overflow: "hidden",
-    width: "900px",
-    maxWidth: "95vw",
-    maxHeight: "70vh",
+    width: "92%",
+    maxWidth: "900px",
+    maxHeight: "80vh",
+    background: "#ffffff",
+    border: "1px solid rgba(226, 232, 240, 1)",
   },
   dialogTitle: {
-    background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
-    color: "#fff",
+    background: "linear-gradient(120deg, #2563eb, #1d4ed8)",
+    color: "#f9fafb",
     padding: theme.spacing(2.5, 3),
     fontSize: "1.4rem",
     fontWeight: 600,
@@ -287,38 +325,70 @@ const useStyles = makeStyles((theme) => ({
   },
   dialogContent: {
     padding: theme.spacing(4, 3, 3, 3),
-    backgroundColor: "#fff",
-    "& .MuiTextField-root": {
-      marginBottom: theme.spacing(2.5),
-    },
+    background: "#ffffff",
   },
   dialogActions: {
     padding: theme.spacing(2, 3, 3),
-    backgroundColor: "#fff",
+    backgroundColor: "#f9fafb",
     display: "flex",
     justifyContent: "flex-end",
     gap: theme.spacing(1.5),
-    borderTop: "1px solid #e2e8f0",
+    borderTop: "1px solid rgba(226, 232, 240, 1)",
   },
   cancelButton: {
     color: "#64748b",
-    fontWeight: 500,
-    padding: "8px 24px",
+    fontWeight: 600,
+    padding: "9px 22px",
+    borderRadius: 999,
+    border: "1px solid rgba(203, 213, 225, 1)",
+    transition: "all 0.3s ease",
+    textTransform: "none",
+    backgroundColor: "#ffffff",
     "&:hover": {
-      backgroundColor: "rgba(0, 0, 0, 0.05)",
+      backgroundColor: "#f9fafb",
+      borderColor: "#94a3b8",
+      boxShadow: "0 8px 20px rgba(148, 163, 184, 0.45)",
     },
   },
   submitButton: {
     background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
-    color: "#fff",
-    fontWeight: 500,
-    padding: "8px 24px",
+    color: "#ffffff",
+    fontWeight: 600,
+    padding: "9px 26px",
+    borderRadius: 999,
+    boxShadow: "0 14px 30px rgba(37, 99, 235, 0.55)",
+    transition: "all 0.3s ease",
+    textTransform: "none",
     "&:hover": {
       background: "linear-gradient(135deg, #1d4ed8, #1e40af)",
+      boxShadow: "0 20px 40px rgba(37, 99, 235, 0.7)",
+      transform: "translateY(-2px)",
+    },
+    "&:disabled": {
+      background: "rgba(148, 163, 184, 0.9)",
+      boxShadow: "none",
+      transform: "none",
+      color: "#f9fafb",
     },
   },
   formSection: {
     marginBottom: theme.spacing(3),
+  },
+  // Tarjetas de sección dentro del modal (mismo diseño que Usuarios)
+  formCard: {
+    transition: "all 0.3s ease",
+    borderRadius: theme.spacing(2),
+    padding: theme.spacing(2.5),
+    marginBottom: theme.spacing(2),
+    background: "#f8fafc",
+    border: "1px solid rgba(226, 232, 240, 1)",
+    boxShadow: "0 10px 26px rgba(148, 163, 184, 0.4)",
+    height: "100%",
+    "&:hover": {
+      boxShadow: "0 16px 36px rgba(148, 163, 184, 0.55)",
+      transform: "translateY(-2px)",
+      borderColor: "rgba(59, 130, 246, 0.7)",
+    },
   },
   sectionTitle: {
     fontSize: "1.1rem",
@@ -1000,12 +1070,42 @@ const ApartamentoList = () => {
         <Table>
           <TableHead>
             <TableRow style={{ backgroundColor: "#2563eb" }}>
-              <StyledTableCell style={{ textAlign: "left", paddingLeft: "24px" }}>Apartamento</StyledTableCell>
-              <StyledTableCell>Piso</StyledTableCell>
-              <StyledTableCell>Capacidad</StyledTableCell>
-              <StyledTableCell>Tarifa</StyledTableCell>
-              <StyledTableCell>Estado</StyledTableCell>
-              <StyledTableCell>Acciones</StyledTableCell>
+              <StyledTableCell style={{ textAlign: "left", paddingLeft: "24px" }}>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Home size={18} />
+                  Apartamento
+                </Box>
+              </StyledTableCell>
+              <StyledTableCell>
+                <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                  <Layers size={18} />
+                  Piso
+                </Box>
+              </StyledTableCell>
+              <StyledTableCell>
+                <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                  <UserPlus size={18} />
+                  Capacidad
+                </Box>
+              </StyledTableCell>
+              <StyledTableCell>
+                <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                  <DollarSign size={18} />
+                  Tarifa
+                </Box>
+              </StyledTableCell>
+              <StyledTableCell>
+                <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                  <Check size={18} />
+                  Estado
+                </Box>
+              </StyledTableCell>
+              <StyledTableCell>
+                <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                  <Settings size={18} />
+                  Acciones
+                </Box>
+              </StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -1014,13 +1114,26 @@ const ApartamentoList = () => {
                 <ApartamentoTableCell style={{ paddingLeft: "24px" }}>
                   <Box className={classes.apartamentoContainer}>
                     <Avatar className={classes.apartamentoAvatar}>{getTabIcon(apartamento.Tipo)}</Avatar>
-                    <Typography variant="body2">Apto {apartamento.NumeroApto}</Typography>
+                    <Typography variant="subtitle2" style={{ fontWeight: 600, color: "#0f172a" }}>
+                      Apto {apartamento.NumeroApto}
+                    </Typography>
                   </Box>
                 </ApartamentoTableCell>
                 <TableCell className={classes.tableCell}>{apartamento.Piso}</TableCell>
                 <TableCell className={classes.tableCell}>{apartamento.Capacidad}</TableCell>
                 <TableCell className={classes.tableCell}>{formatTarifa(apartamento.Tarifa)}</TableCell>
-                <TableCell className={classes.tableCell}>{apartamento.Estado ? "Activo" : "Inactivo"}</TableCell>
+                <TableCell className={classes.tableCell}>
+                  <Chip
+                    label={apartamento.Estado ? "Activo" : "Inactivo"}
+                    size="small"
+                    style={{
+                      backgroundColor: apartamento.Estado ? "#dcfce7" : "#fee2e2",
+                      color: apartamento.Estado ? "#166534" : "#991b1b",
+                      fontWeight: 600,
+                      borderRadius: 999,
+                    }}
+                  />
+                </TableCell>
                 <TableCell className={`${classes.tableCell} ${classes.actionsCell}`}>
                   <Box display="flex" justifyContent="center" gap={1}>
                     <Tooltip title="Editar apartamento">
@@ -1028,7 +1141,7 @@ const ApartamentoList = () => {
                         className={`${classes.actionButton} ${classes.btnEdit}`}
                         onClick={() => handleOpen(apartamento)}
                       >
-                        <Edit size={18} />
+                        <PenTool size={18} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Ver detalles">
@@ -1091,125 +1204,140 @@ const ApartamentoList = () => {
           </IconButton>
         </DialogTitle>
         <DialogContent className={classes.dialogContent}>
-          {/* Sección de Información Básica */}
-          <Box className={classes.formSection}>
-            <Typography className={classes.sectionTitle}>
-              <Home size={20} /> Información Básica
-            </Typography>
-            <FormControl fullWidth variant="outlined" className={classes.formField}>
-              <InputLabel id="tipo-label">Tipo de Apartamento</InputLabel>
-              <Select
-                labelId="tipo-label"
-                name="Tipo"
-                value={formData.Tipo}
-                onChange={handleChange}
-                label="Tipo de Apartamento"
-                fullWidth
-              >
-                {tipoApartamentos.length > 0 ? (
-                  tipoApartamentos.map((tipo) => (
-                    <MenuItem key={tipo._id} value={tipo.nombre} disabled={!tipo.estado}>
-                      {tipo.nombre} {!tipo.estado && "(Inactivo)"}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <>
-                    <MenuItem value="Type 1">Type 1</MenuItem>
-                    <MenuItem value="Type 2">Type 2</MenuItem>
-                    <MenuItem value="Penthouse">Penthouse</MenuItem>
-                  </>
-                )}
-              </Select>
-            </FormControl>
-            <TextField
-              className={classes.formField}
-              margin="dense"
-              label="Número de Apartamento"
-              name="NumeroApto"
-              value={formData.NumeroApto}
-              onChange={handleChange}
-              onBlur={() => validateField("NumeroApto", formData.NumeroApto)}
-              fullWidth
-              type="number"
-              variant="outlined"
-              error={!!formErrors.NumeroApto}
-              helperText={formErrors.NumeroApto}
-              required
-              InputProps={{ inputProps: { min: 1, max: 200 } }}
-            />
-          </Box>
+          <Grid container spacing={3}>
+            {/* Tarjeta: Información Básica (columna izquierda) */}
+            <Grid item xs={12} md={6}>
+              <Box className={classes.formCard}>
+                <Typography className={classes.sectionTitle}>
+                  <Home size={20} /> Información Básica
+                </Typography>
+                <Divider style={{ marginBottom: 16 }} />
 
-          {/* Sección de Ubicación y Tarifa */}
-          <Box className={classes.formSection}>
-            <Typography className={classes.sectionTitle}>
-              <Building size={20} /> Ubicación y Tarifa
-            </Typography>
-            <TextField
-              className={classes.formField}
-              margin="dense"
-              label="Piso"
-              name="Piso"
-              value={formData.Piso}
-              onChange={handleChange}
-              onBlur={() => validateField("Piso", formData.Piso)}
-              fullWidth
-              type="number"
-              variant="outlined"
-              error={!!formErrors.Piso}
-              helperText={formErrors.Piso}
-              required
-              InputProps={{ inputProps: { min: 1, max: 20 } }}
-            />
-            {/* Campo Capacidad */}
-            <TextField
-              className={classes.formField}
-              margin="dense"
-              label="Capacidad"
-              name="Capacidad"
-              value={formData.Capacidad === 0 ? "" : formData.Capacidad}
-              onChange={handleChange}
-              onBlur={() => validateField("Capacidad", formData.Capacidad)}
-              fullWidth
-              type="number"
-              variant="outlined"
-              error={!!formErrors.Capacidad}
-              helperText={formErrors.Capacidad}
-              required
-              InputProps={{ inputProps: { min: 1, max: 6 } }}
-            />
-            <TextField
-              className={classes.formField}
-              margin="dense"
-              label="Tarifa"
-              name="Tarifa"
-              value={formData.Tarifa}
-              onChange={handleChange}
-              onBlur={() => validateField("Tarifa", formData.Tarifa)}
-              fullWidth
-              type="number"
-              variant="outlined"
-              error={!!formErrors.Tarifa}
-              helperText={formErrors.Tarifa}
-              required
-              InputProps={{ inputProps: { min: 1 } }}
-            />
+                <FormControl fullWidth variant="outlined" className={classes.formField}>
+                  <InputLabel id="tipo-label">Tipo de Apartamento</InputLabel>
+                  <Select
+                    labelId="tipo-label"
+                    name="Tipo"
+                    value={formData.Tipo}
+                    onChange={handleChange}
+                    label="Tipo de Apartamento"
+                    fullWidth
+                  >
+                    {tipoApartamentos.length > 0 ? (
+                      tipoApartamentos.map((tipo) => (
+                        <MenuItem key={tipo._id} value={tipo.nombre} disabled={!tipo.estado}>
+                          {tipo.nombre} {!tipo.estado && "(Inactivo)"}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <>
+                        <MenuItem value="Type 1">Type 1</MenuItem>
+                        <MenuItem value="Type 2">Type 2</MenuItem>
+                        <MenuItem value="Penthouse">Penthouse</MenuItem>
+                      </>
+                    )}
+                  </Select>
+                  <FormHelperText>{MENSAJES_INSTRUCTIVOS.TIPO}</FormHelperText>
+                </FormControl>
 
-            {/* Selector para el Estado */}
-            <FormControl fullWidth variant="outlined" className={classes.formField}>
-              <InputLabel id="estado-label">Estado</InputLabel>
-              <Select
-                labelId="estado-label"
-                name="Estado"
-                value={formData.Estado.toString()}
-                onChange={handleChange}
-                label="Estado"
-                fullWidth
-              >
-                <MenuItem value="true">Activo</MenuItem>
-                <MenuItem value="false">Inactivo</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
+                <TextField
+                  className={classes.formField}
+                  margin="dense"
+                  label="Número de Apartamento"
+                  name="NumeroApto"
+                  value={formData.NumeroApto}
+                  onChange={handleChange}
+                  onBlur={() => validateField("NumeroApto", formData.NumeroApto)}
+                  fullWidth
+                  type="number"
+                  variant="outlined"
+                  error={!!formErrors.NumeroApto}
+                  helperText={formErrors.NumeroApto || MENSAJES_INSTRUCTIVOS.NUMERO}
+                  required
+                  InputProps={{ inputProps: { min: 1, max: 200 } }}
+                />
+              </Box>
+            </Grid>
+
+            {/* Tarjeta: Ubicación y Tarifa (columna derecha) */}
+            <Grid item xs={12} md={6}>
+              <Box className={classes.formCard}>
+                <Typography className={classes.sectionTitle}>
+                  <Building size={20} /> Ubicación y Tarifa
+                </Typography>
+                <Divider style={{ marginBottom: 16 }} />
+
+                <TextField
+                  className={classes.formField}
+                  margin="dense"
+                  label="Piso"
+                  name="Piso"
+                  value={formData.Piso}
+                  onChange={handleChange}
+                  onBlur={() => validateField("Piso", formData.Piso)}
+                  fullWidth
+                  type="number"
+                  variant="outlined"
+                  error={!!formErrors.Piso}
+                  helperText={formErrors.Piso || MENSAJES_INSTRUCTIVOS.PISO}
+                  required
+                  InputProps={{ inputProps: { min: 1, max: 20 } }}
+                />
+
+                {/* Campo Capacidad */}
+                <TextField
+                  className={classes.formField}
+                  margin="dense"
+                  label="Capacidad"
+                  name="Capacidad"
+                  value={formData.Capacidad === 0 ? "" : formData.Capacidad}
+                  onChange={handleChange}
+                  onBlur={() => validateField("Capacidad", formData.Capacidad)}
+                  fullWidth
+                  type="number"
+                  variant="outlined"
+                  error={!!formErrors.Capacidad}
+                  helperText={formErrors.Capacidad || MENSAJES_INSTRUCTIVOS.CAPACIDAD}
+                  required
+                  InputProps={{ inputProps: { min: 1, max: 6 } }}
+                />
+
+                <TextField
+                  className={classes.formField}
+                  margin="dense"
+                  label="Tarifa"
+                  name="Tarifa"
+                  value={formData.Tarifa}
+                  onChange={handleChange}
+                  onBlur={() => validateField("Tarifa", formData.Tarifa)}
+                  fullWidth
+                  type="number"
+                  variant="outlined"
+                  error={!!formErrors.Tarifa}
+                  helperText={formErrors.Tarifa || MENSAJES_INSTRUCTIVOS.TARIFA}
+                  required
+                  InputProps={{ inputProps: { min: 1 } }}
+                />
+
+                {/* Selector para el Estado */}
+                <FormControl fullWidth variant="outlined" className={classes.formField}>
+                  <InputLabel id="estado-label">Estado</InputLabel>
+                  <Select
+                    labelId="estado-label"
+                    name="Estado"
+                    value={formData.Estado.toString()}
+                    onChange={handleChange}
+                    label="Estado"
+                    fullWidth
+                  >
+                    <MenuItem value="true">Activo</MenuItem>
+                    <MenuItem value="false">Inactivo</MenuItem>
+                  </Select>
+                  <FormHelperText>{MENSAJES_INSTRUCTIVOS.ESTADO}</FormHelperText>
+                </FormControl>
+              </Box>
+            </Grid>
+          </Grid>
         </DialogContent>
         <DialogActions className={classes.dialogActions}>
           <Button onClick={handleClose} className={classes.cancelButton}>

@@ -106,47 +106,71 @@ const RoleTableCell = withStyles((theme) => ({
 
 const useStyles = makeStyles((theme) => ({
   container: {
-    fontFamily: '"Inter", "Montserrat", sans-serif',
+    fontFamily: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     marginTop: theme.spacing(0),
-    padding: theme.spacing(2),
-    borderRadius: theme.spacing(2),
-    background: "linear-gradient(135deg, #ffffff, #f8fafc)",
-    boxShadow: "0 10px 25px rgba(0, 0, 0, 0.05)",
+    padding: theme.spacing(3),
+    borderRadius: theme.spacing(3),
+    background:
+      "radial-gradient(circle at top left, #e0f2fe 0, #f9fafb 45%, #e5e7eb 100%)",
+    boxShadow: "0 24px 60px rgba(15, 23, 42, 0.18)",
     position: "relative",
     overflow: "hidden",
     width: "100%",
-    maxWidth: "100%", // Changed from 1200px to 100%
+    maxWidth: "100%",
   },
   pageHeader: {
     display: "flex",
-    flexDirection: "column",
     alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: theme.spacing(4),
-    position: "relative",
-    "&::after": {
-      content: '""',
-      position: "absolute",
-      bottom: "-10px",
-      width: "80px",
-      height: "4px",
-      background: "linear-gradient(to right, #2563eb, #1d4ed8)",
-      borderRadius: "2px",
-    },
+    padding: theme.spacing(2),
+    borderRadius: theme.spacing(2),
+    background: "linear-gradient(135deg, #ffffff, #e5edff)",
+    boxShadow: "0 18px 40px rgba(148, 163, 184, 0.35)",
   },
   pageTitle: {
-    fontSize: "2rem",
+    fontSize: "1.9rem",
     fontWeight: 700,
-    color: "#1e293b",
-    marginBottom: theme.spacing(1),
-    textAlign: "center",
-    background: "linear-gradient(to right, #2563eb, #1d4ed8)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
+    color: "#0f172a",
+    marginBottom: theme.spacing(0.5),
+    display: "flex",
+    alignItems: "center",
+    gap: theme.spacing(1.5),
   },
   pageSubtitle: {
-    fontSize: "1rem",
+    fontSize: "0.95rem",
     color: "#64748b",
-    textAlign: "center",
+  },
+  pageTitleIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    background:
+      "radial-gradient(circle at 0% 0%, #2563eb 0, #60a5fa 45%, #a5b4fc 100%)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#ffffff",
+    boxShadow: "0 10px 20px rgba(37, 99, 235, 0.35)",
+  },
+  headerMeta: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 4,
+  },
+  headerChips: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: theme.spacing(0.5),
+  },
+  headerChip: {
+    fontSize: "0.7rem",
+    fontWeight: 500,
+    padding: "4px 8px",
+    borderRadius: 999,
+    backgroundColor: "rgba(219, 234, 254, 0.9)",
+    color: "#1d4ed8",
   },
   searchContainer: {
     display: "flex",
@@ -157,61 +181,78 @@ const useStyles = makeStyles((theme) => ({
     gap: theme.spacing(2),
   },
   searchField: {
-    background: "#fff",
-    borderRadius: theme.spacing(1),
-    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+    background: "#ffffff",
+    borderRadius: 999,
+    boxShadow: "0 6px 18px rgba(148, 163, 184, 0.35)",
+    minWidth: 260,
     "& .MuiOutlinedInput-root": {
-      borderRadius: theme.spacing(1),
+      borderRadius: 999,
+      paddingRight: theme.spacing(1),
+      "& input": {
+        color: "#0f172a",
+      },
+      "& .MuiOutlinedInput-notchedOutline": {
+        borderColor: "rgba(148, 163, 184, 0.6)",
+      },
       "&:hover .MuiOutlinedInput-notchedOutline": {
         borderColor: "#2563eb",
       },
       "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
         borderColor: "#2563eb",
-        borderWidth: "2px",
+        borderWidth: 2,
       },
     },
   },
   addButton: {
-    background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
-    color: "#fff",
+    background:
+      "linear-gradient(135deg, #38bdf8, #6366f1, #a855f7)",
+    color: "#f9fafb",
     fontWeight: 600,
-    padding: "10px 20px",
-    borderRadius: theme.spacing(1),
-    boxShadow: "0 4px 10px rgba(37, 99, 235, 0.3)",
+    padding: "10px 22px",
+    borderRadius: 999,
+    boxShadow: "0 14px 35px rgba(56, 189, 248, 0.55)",
     transition: "all 0.3s ease",
+    textTransform: "none",
     "&:hover": {
-      background: "linear-gradient(135deg, #1d4ed8, #1e40af)",
-      boxShadow: "0 6px 15px rgba(37, 99, 235, 0.4)",
+      background:
+        "linear-gradient(135deg, #0ea5e9, #4f46e5, #9333ea)",
+      boxShadow: "0 20px 45px rgba(56, 189, 248, 0.7)",
       transform: "translateY(-2px)",
     },
   },
   tableContainer: {
     marginBottom: theme.spacing(3),
-    borderRadius: theme.spacing(1.5),
+    borderRadius: theme.spacing(2),
     overflow: "hidden",
-    boxShadow: "0 5px 15px rgba(0, 0, 0, 0.08)",
-    background: "#fff",
+    boxShadow: "0 16px 40px rgba(148, 163, 184, 0.4)",
+    background: "#ffffff",
     width: "100%",
+    border: "1px solid rgba(226, 232, 240, 1)",
   },
   tableRow: {
-    transition: "all 0.3s ease",
+    transition: "all 0.2s ease",
     "&:nth-of-type(odd)": {
-      backgroundColor: "rgba(243, 244, 246, 0.5)",
+      backgroundColor: "#f9fafb",
+    },
+    "&:nth-of-type(even)": {
+      backgroundColor: "#ffffff",
     },
     "&:hover": {
-      background: "rgba(37, 99, 235, 0.08)",
-      boxShadow: "0 3px 10px rgba(0, 0, 0, 0.1)",
+      backgroundColor: "#eef2ff",
+      boxShadow: "0 8px 16px rgba(148, 163, 184, 0.45)",
+      transform: "translateY(-1px)",
     },
   },
   tableCell: {
     textAlign: "center",
-    padding: theme.spacing(1.8),
-    fontSize: "0.95rem",
-    color: "#334155",
-    borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
+    padding: theme.spacing(1.6),
+    fontSize: "0.9rem",
+    letterSpacing: "0.01em",
+    color: "#0f172a",
+    borderBottom: "1px solid rgba(226, 232, 240, 1)",
   },
   actionsCell: {
-    minWidth: 150,
+    minWidth: 160,
   },
   actionButton: {
     margin: theme.spacing(0, 0.5),
@@ -259,14 +300,19 @@ const useStyles = makeStyles((theme) => ({
     width: "100%",
   },
   pagination: {
-    borderRadius: theme.spacing(1),
-    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-    backgroundColor: "#fff",
+    borderRadius: theme.spacing(2),
+    boxShadow: "0 6px 18px rgba(148, 163, 184, 0.4)",
+    background: "#ffffff",
+    color: "#0f172a",
     "& .MuiTablePagination-toolbar": {
       padding: theme.spacing(1.5),
     },
     "& .MuiTablePagination-selectRoot": {
       marginRight: theme.spacing(2),
+      color: "#0f172a",
+    },
+    "& .MuiTablePagination-actions svg": {
+      color: "#0f172a",
     },
   },
   noDataRow: {
@@ -280,19 +326,24 @@ const useStyles = makeStyles((theme) => ({
   },
   // Diseño mejorado para el modal
   dialogPaper: {
-    borderRadius: theme.spacing(1.5),
-    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
+    borderRadius: theme.spacing(3),
+    boxShadow: "0 26px 70px rgba(148, 163, 184, 0.55)",
     overflow: "hidden",
-    width: "90%",
-    maxWidth: "800px", // Aumentado de su valor original
+    width: "92%",
+    maxWidth: "860px",
+    background: "#ffffff",
+    border: "1px solid rgba(226, 232, 240, 1)",
   },
   dialogTitle: {
-    background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
-    color: "#fff",
+    background: "linear-gradient(120deg, #2563eb, #1d4ed8)",
+    color: "#f9fafb",
     padding: theme.spacing(2.5, 3),
     fontSize: "1.4rem",
     fontWeight: 600,
     position: "relative",
+    display: "flex",
+    alignItems: "center",
+    gap: theme.spacing(1.5),
   },
   closeButton: {
     position: "absolute",
@@ -309,48 +360,53 @@ const useStyles = makeStyles((theme) => ({
   },
   dialogContent: {
     padding: theme.spacing(4, 3, 3, 3),
-    backgroundColor: "#fff",
+    background: "#ffffff",
     "& .MuiTextField-root": {
       marginBottom: theme.spacing(2.5),
     },
   },
   dialogActions: {
     padding: theme.spacing(2, 3, 3),
-    backgroundColor: "#fff",
+    backgroundColor: "#f9fafb",
     display: "flex",
     justifyContent: "flex-end",
     gap: theme.spacing(1.5),
-    borderTop: "1px solid rgba(0, 0, 0, 0.05)",
+    borderTop: "1px solid rgba(226, 232, 240, 1)",
   },
   cancelButton: {
     color: "#64748b",
     fontWeight: 600,
-    padding: "10px 24px",
-    borderRadius: theme.spacing(1),
-    border: "1px solid #e2e8f0",
+    padding: "9px 22px",
+    borderRadius: 999,
+    border: "1px solid rgba(203, 213, 225, 1)",
     transition: "all 0.3s ease",
+    textTransform: "none",
+    backgroundColor: "#ffffff",
     "&:hover": {
-      backgroundColor: "#f1f5f9",
-      borderColor: "#cbd5e1",
+      backgroundColor: "#f9fafb",
+      borderColor: "#94a3b8",
+      boxShadow: "0 8px 20px rgba(148, 163, 184, 0.45)",
     },
   },
   submitButton: {
     background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
-    color: "#fff",
+    color: "#ffffff",
     fontWeight: 600,
-    padding: "10px 24px",
-    borderRadius: theme.spacing(1),
-    boxShadow: "0 4px 10px rgba(37, 99, 235, 0.3)",
+    padding: "9px 26px",
+    borderRadius: 999,
+    boxShadow: "0 14px 30px rgba(37, 99, 235, 0.55)",
     transition: "all 0.3s ease",
+    textTransform: "none",
     "&:hover": {
       background: "linear-gradient(135deg, #1d4ed8, #1e40af)",
-      boxShadow: "0 6px 15px rgba(37, 99, 235, 0.4)",
+      boxShadow: "0 20px 40px rgba(37, 99, 235, 0.7)",
       transform: "translateY(-2px)",
     },
     "&:disabled": {
-      background: "#94a3b8",
+      background: "rgba(148, 163, 184, 0.9)",
       boxShadow: "none",
       transform: "none",
+      color: "#f9fafb",
     },
   },
   detailsLabel: {
@@ -426,16 +482,16 @@ const useStyles = makeStyles((theme) => ({
   // Nuevo diseño para las tarjetas de permisos
   permissionCard: {
     transition: "all 0.3s ease",
-    borderRadius: theme.spacing(1),
-    padding: theme.spacing(2),
+    borderRadius: theme.spacing(2),
+    padding: theme.spacing(2.5),
     marginBottom: theme.spacing(2),
-    backgroundColor: "#f8fafc",
-    border: "1px solid #e2e8f0",
-    boxShadow: "0 2px 10px rgba(0, 0, 0, 0.03)",
+    background: "#f8fafc",
+    border: "1px solid rgba(226, 232, 240, 1)",
+    boxShadow: "0 10px 26px rgba(148, 163, 184, 0.4)",
     "&:hover": {
-      boxShadow: "0 4px 15px rgba(0, 0, 0, 0.08)",
+      boxShadow: "0 16px 36px rgba(148, 163, 184, 0.55)",
       transform: "translateY(-2px)",
-      borderColor: "#cbd5e1",
+      borderColor: "rgba(59, 130, 246, 0.7)",
     },
   },
   permissionHeader: {
@@ -601,13 +657,15 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     alignItems: "center",
     padding: theme.spacing(1),
-    borderRadius: theme.spacing(1),
-    backgroundColor: "rgba(241, 245, 249, 0.7)",
+    borderRadius: theme.spacing(1.5),
+    backgroundColor: "#f9fafb",
     marginBottom: theme.spacing(1),
-    transition: "all 0.3s ease",
+    transition: "all 0.25s ease",
+    border: "1px solid rgba(226, 232, 240, 1)",
     "&:hover": {
-      backgroundColor: "rgba(241, 245, 249, 1)",
-      boxShadow: "0 2px 5px rgba(0, 0, 0, 0.05)",
+      backgroundColor: "#eff6ff",
+      boxShadow: "0 8px 22px rgba(148, 163, 184, 0.5)",
+      borderColor: "rgba(59, 130, 246, 0.75)",
     },
   },
   permissionIcon: {
@@ -630,9 +688,10 @@ const useStyles = makeStyles((theme) => ({
     width: 100,
     height: 100,
     fontSize: 40,
-    backgroundColor: "#2563eb",
+    background:
+      "radial-gradient(circle at 30% 0%, #2563eb 0, #60a5fa 45%, #a5b4fc 100%)",
     marginBottom: theme.spacing(2),
-    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.2)",
+    boxShadow: "0 12px 30px rgba(148, 163, 184, 0.7)",
   },
   detailsName: {
     fontSize: "1.8rem",
@@ -643,19 +702,22 @@ const useStyles = makeStyles((theme) => ({
   detailsStatus: {
     display: "inline-flex",
     alignItems: "center",
-    padding: "6px 12px",
+    padding: "6px 14px",
     borderRadius: "9999px",
-    fontSize: "0.875rem",
+    fontSize: "0.8rem",
     fontWeight: 600,
     marginTop: theme.spacing(1),
+    border: "1px solid transparent",
   },
   activeStatus: {
     backgroundColor: "#dcfce7",
     color: "#166534",
+    borderColor: "rgba(34, 197, 94, 0.7)",
   },
   inactiveStatus: {
     backgroundColor: "#fee2e2",
     color: "#991b1b",
+    borderColor: "rgba(248, 113, 113, 0.7)",
   },
   detailsSection: {
     marginTop: theme.spacing(4),
@@ -669,9 +731,9 @@ const useStyles = makeStyles((theme) => ({
   permissionChipDetails: {
     margin: theme.spacing(0.5),
     fontWeight: 600,
-    padding: theme.spacing(1, 2),
-    borderRadius: theme.spacing(1),
-    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+    padding: theme.spacing(0.8, 1.8),
+    borderRadius: theme.spacing(1.5),
+    boxShadow: "0 4px 12px rgba(148, 163, 184, 0.6)",
   },
   // Estilos para los iconos de permisos
   permissionActionIcon: {
@@ -1315,10 +1377,30 @@ const RolesList = () => {
         <Table>
           <TableHead>
             <TableRow style={{ backgroundColor: "#2563eb" }}>
-              <StyledTableCell style={{ textAlign: "left", paddingLeft: "24px" }}>Rol</StyledTableCell>
-              <StyledTableCell>Permisos</StyledTableCell>
-              <StyledTableCell>Estado</StyledTableCell>
-              <StyledTableCell>Acciones</StyledTableCell>
+              <StyledTableCell style={{ textAlign: "left", paddingLeft: "24px" }}>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Shield size={18} />
+                  Rol
+                </Box>
+              </StyledTableCell>
+              <StyledTableCell>
+                <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                  <Key size={18} />
+                  Permisos
+                </Box>
+              </StyledTableCell>
+              <StyledTableCell>
+                <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                  <CheckCircle size={18} />
+                  Estado
+                </Box>
+              </StyledTableCell>
+              <StyledTableCell>
+                <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                  <Settings size={18} />
+                  Acciones
+                </Box>
+              </StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -1327,11 +1409,24 @@ const RolesList = () => {
                 <RoleTableCell style={{ paddingLeft: "24px" }}>
                   <Box className={classes.roleContainer}>
                     <Avatar className={classes.roleAvatar}>{getInitials(role.nombre)}</Avatar>
-                    <Typography variant="body2">{role.nombre}</Typography>
+                    <Typography variant="subtitle2" style={{ fontWeight: 600, color: "#0f172a" }}>
+                      {role.nombre}
+                    </Typography>
                   </Box>
                 </RoleTableCell>
                 <TableCell className={classes.tableCell}>{formatPermissions(role.permisos)}</TableCell>
-                <TableCell className={classes.tableCell}>{role.estado ? "Activo" : "Inactivo"}</TableCell>
+                <TableCell className={classes.tableCell}>
+                  <Chip
+                    label={role.estado ? "Activo" : "Inactivo"}
+                    size="small"
+                    style={{
+                      backgroundColor: role.estado ? "#dcfce7" : "#fee2e2",
+                      color: role.estado ? "#166534" : "#991b1b",
+                      fontWeight: 600,
+                      borderRadius: 999,
+                    }}
+                  />
+                </TableCell>
                 <TableCell className={`${classes.tableCell} ${classes.actionsCell}`}>
                   <Box display="flex" justifyContent="center" gap={1}>
                     <Tooltip title="Editar rol">
@@ -1339,7 +1434,7 @@ const RolesList = () => {
                         className={`${classes.actionButton} ${classes.btnEdit}`}
                         onClick={() => handleOpen(role)}
                       >
-                        <Edit size={18} />
+                        <PenTool size={18} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Ver detalles">
@@ -1347,7 +1442,7 @@ const RolesList = () => {
                         className={`${classes.actionButton} ${classes.btnDetails}`}
                         onClick={() => handleDetails(role)}
                       >
-                        <Info size={18} />
+                        <Eye size={18} />
                       </IconButton>
                     </Tooltip>
                     {role.nombre.toLowerCase() !== "administrador" && (
@@ -1356,7 +1451,7 @@ const RolesList = () => {
                           className={`${classes.actionButton} ${classes.btnDelete}`}
                           onClick={() => handleDelete(role._id)}
                         >
-                          <Delete size={18} />
+                          <Trash2 size={18} />
                         </IconButton>
                       </Tooltip>
                     )}

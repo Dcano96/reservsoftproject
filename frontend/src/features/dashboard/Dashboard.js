@@ -213,21 +213,49 @@ const Dashboard = () => {
   }
 
   const renderDashboard = () => {
+    const totalReservas = Array.isArray(data?.reservas) ? data.reservas.length : 0
+    const totalApartamentos = Array.isArray(data?.apartamentos) ? data.apartamentos.length : 0
+    const totalPagos = Array.isArray(data?.pagos)
+      ? data.pagos.reduce((acc, pago) => acc + (Number(pago.monto) || 0), 0)
+      : 0
+
     return (
       <div className="dashboard-charts-container">
-        <div className="dashboard-welcome">
-          <h2>Panel de Control</h2>
-          <p>Visualiza los datos más importantes de tu negocio</p>
+        <div className="dashboard-header-row">
+          <div className="dashboard-welcome">
+            <h2>Panel de Control</h2>
+            <p>Visualiza de un vistazo el rendimiento de tu negocio</p>
+          </div>
+
+          <div className="time-filter-controls">
+            <div className="filter-select-container">
+              <label htmlFor="time-filter">Ver periodo</label>
+              <select id="time-filter" className="filter-select" value={timeFilter} onChange={changeTimeFilter}>
+                <option value="day">Hoy</option>
+                <option value="month">Últimos 12 meses</option>
+                <option value="year">Últimos 5 años</option>
+              </select>
+            </div>
+          </div>
         </div>
 
-        <div className="time-filter-controls">
-          <div className="filter-select-container">
-            <label htmlFor="time-filter">Ver por:</label>
-            <select id="time-filter" className="filter-select" value={timeFilter} onChange={changeTimeFilter}>
-              <option value="day">Día</option>
-              <option value="month">Mes</option>
-              <option value="year">Año</option>
-            </select>
+        <div className="dashboard-kpi-grid">
+          <div className="dashboard-kpi-card">
+            <span className="dashboard-kpi-label">Reservas registradas</span>
+            <span className="dashboard-kpi-value">{totalReservas}</span>
+            <span className="dashboard-kpi-subtitle">Total en el sistema</span>
+          </div>
+          <div className="dashboard-kpi-card">
+            <span className="dashboard-kpi-label">Apartamentos</span>
+            <span className="dashboard-kpi-value">{totalApartamentos}</span>
+            <span className="dashboard-kpi-subtitle">Inventario actual</span>
+          </div>
+          <div className="dashboard-kpi-card">
+            <span className="dashboard-kpi-label">Ingresos estimados</span>
+            <span className="dashboard-kpi-value">
+              {totalPagos.toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 })}
+            </span>
+            <span className="dashboard-kpi-subtitle">Basado en pagos registrados</span>
           </div>
         </div>
 
@@ -301,12 +329,14 @@ const Dashboard = () => {
     if (reservasChartRef.current) {
       const reservasCtx = reservasChartRef.current.getContext("2d")
       const reservasGradient = reservasCtx.createLinearGradient(0, 0, 0, 400)
-      reservasGradient.addColorStop(0, "rgba(192, 132, 252, 0.6)") // purple-300
-      reservasGradient.addColorStop(1, "rgba(192, 132, 252, 0)")
+      reservasGradient.addColorStop(0, "rgba(56, 189, 248, 0.9)") // cyan-400
+      reservasGradient.addColorStop(0.6, "rgba(129, 140, 248, 0.5)") // indigo-400
+      reservasGradient.addColorStop(1, "rgba(248, 250, 252, 0)") // slate-50
 
       const descuentosGradient = reservasCtx.createLinearGradient(0, 0, 0, 400)
-      descuentosGradient.addColorStop(0, "rgba(74, 222, 128, 0.6)") // green-400
-      descuentosGradient.addColorStop(1, "rgba(74, 222, 128, 0)")
+      descuentosGradient.addColorStop(0, "rgba(244, 114, 182, 0.9)") // pink-400
+      descuentosGradient.addColorStop(0.6, "rgba(236, 72, 153, 0.5)") // pink-500
+      descuentosGradient.addColorStop(1, "rgba(248, 250, 252, 0)") // slate-50
 
       // Datos según el filtro seleccionado
       let labels, reservasData, descuentosData
@@ -332,15 +362,15 @@ const Dashboard = () => {
             label: "Reservas",
             data: reservasData,
             backgroundColor: reservasGradient,
-            borderColor: "#a855f7", // purple-500
-            borderWidth: 3,
+            borderColor: "#38bdf8", // cyan-400
+            borderWidth: 3.5,
             tension: 0.4,
             fill: true,
-            pointBackgroundColor: "#a855f7",
-            pointBorderColor: "#ffffff",
+            pointBackgroundColor: "#0ea5e9",
+            pointBorderColor: "#e0f2fe",
             pointHoverBackgroundColor: "#ffffff",
-            pointHoverBorderColor: "#a855f7",
-            pointBorderWidth: 2,
+            pointHoverBorderColor: "#0ea5e9",
+            pointBorderWidth: 2.5,
             pointRadius: 5,
             pointHoverRadius: 8,
             yAxisID: "y",
@@ -349,15 +379,15 @@ const Dashboard = () => {
             label: "Descuentos (%)",
             data: descuentosData,
             backgroundColor: descuentosGradient,
-            borderColor: "#22c55e", // green-500
-            borderWidth: 3,
+            borderColor: "#ec4899", // pink-500
+            borderWidth: 3.5,
             tension: 0.4,
             fill: true,
-            pointBackgroundColor: "#22c55e",
-            pointBorderColor: "#ffffff",
+            pointBackgroundColor: "#f472b6",
+            pointBorderColor: "#ffe4e6",
             pointHoverBackgroundColor: "#ffffff",
-            pointHoverBorderColor: "#22c55e",
-            pointBorderWidth: 2,
+            pointHoverBorderColor: "#ec4899",
+            pointBorderWidth: 2.5,
             pointRadius: 5,
             pointHoverRadius: 8,
             yAxisID: "y1",
@@ -373,17 +403,27 @@ const Dashboard = () => {
           maintainAspectRatio: false,
           interaction: { mode: "index", intersect: false },
           plugins: {
-            legend: { display: false },
+            legend: {
+              display: true,
+              position: "top",
+              labels: {
+                usePointStyle: true,
+                pointStyle: "circle",
+                color: "#475569",
+                font: { size: 12, family: "'Poppins', sans-serif" },
+              },
+            },
             tooltip: {
               enabled: true,
-              backgroundColor: "rgba(15, 23, 42, 0.9)",
+              backgroundColor: "rgba(15, 23, 42, 0.95)",
               titleColor: "#ffffff",
               bodyColor: "#cbd5e1",
               titleFont: { size: 14, weight: "bold" },
               bodyFont: { size: 12 },
               padding: 12,
               borderWidth: 1,
-              cornerRadius: 8,
+              borderColor: "rgba(148, 163, 184, 0.6)",
+              cornerRadius: 10,
               boxPadding: 8,
               usePointStyle: true,
               callbacks: {
@@ -407,8 +447,8 @@ const Dashboard = () => {
                 font: { weight: "600", size: 12 },
                 padding: { top: 10, bottom: 10 },
               },
-              grid: { color: "#e2e8f0", drawBorder: false, borderDash: [5, 5] },
-              ticks: { color: "#64748b", font: { size: 12 }, padding: 8 },
+              grid: { color: "rgba(148, 163, 184, 0.25)", drawBorder: false, borderDash: [5, 5] },
+              ticks: { color: "#64748b", font: { size: 12, family: "'Poppins', sans-serif" }, padding: 8 },
             },
             y1: {
               type: "linear",
@@ -425,7 +465,7 @@ const Dashboard = () => {
               },
               grid: { drawOnChartArea: false },
               ticks: {
-                color: "#64748b",
+                color: "#ec4899",
                 callback: (value) => value + "%",
                 font: { size: 12, family: "'Poppins', sans-serif" },
                 padding: 8,
@@ -433,7 +473,7 @@ const Dashboard = () => {
             },
             x: {
               grid: { display: false },
-              ticks: { color: "#64748b", font: { size: 12 }, padding: 8 },
+              ticks: { color: "#64748b", font: { size: 12, family: "'Poppins', sans-serif" }, padding: 8 },
             },
           },
           animation: { duration: 1500, easing: "easeOutCubic" },
@@ -448,7 +488,7 @@ const Dashboard = () => {
         datasets: [
           {
             data: [15, 8, 3],
-            backgroundColor: ["#10b981", "#ec4899", "#9ca3af"], // emerald-500, pink-500, gray-400
+            backgroundColor: ["#22c55e", "#f97316", "#64748b"], // emerald-500, orange-500, slate-500
             borderColor: "#ffffff",
             borderWidth: 4,
             hoverOffset: 20,
@@ -467,19 +507,20 @@ const Dashboard = () => {
               position: "bottom",
               labels: {
                 padding: 20,
-                font: { size: 14, family: "'Poppins', sans-serif" },
+                font: { size: 13, family: "'Poppins', sans-serif" },
                 usePointStyle: true,
                 pointStyle: "circle",
               },
             },
             tooltip: {
               enabled: true,
-              backgroundColor: "rgba(15, 23, 42, 0.9)",
+              backgroundColor: "rgba(15, 23, 42, 0.95)",
               titleColor: "#ffffff",
               bodyColor: "#cbd5e1",
               titleFont: { size: 14, weight: "bold" },
               bodyFont: { size: 12 },
               borderWidth: 1,
+              borderColor: "rgba(148, 163, 184, 0.6)",
               boxPadding: 8,
               usePointStyle: true,
               callbacks: {
@@ -507,8 +548,9 @@ const Dashboard = () => {
     if (pagosChartRef.current) {
       const pagosCtx = pagosChartRef.current.getContext("2d")
       const pagosGradient = pagosCtx.createLinearGradient(0, 0, 0, 400)
-      pagosGradient.addColorStop(0, "#6366f1") // indigo-500
-      pagosGradient.addColorStop(1, "#ec4899") // pink-500
+      pagosGradient.addColorStop(0, "#4f46e5") // indigo-600
+      pagosGradient.addColorStop(0.5, "#6366f1") // indigo-500
+      pagosGradient.addColorStop(1, "#a855f7") // purple-500
 
       // Datos según el filtro seleccionado
       let labels, pagosData
@@ -531,8 +573,8 @@ const Dashboard = () => {
             label: "Ingresos",
             data: pagosData,
             backgroundColor: pagosGradient,
-            borderRadius: 8,
-            barPercentage: 0.6,
+            borderRadius: 10,
+            barPercentage: 0.55,
             categoryPercentage: 0.7,
           },
         ],
@@ -545,17 +587,20 @@ const Dashboard = () => {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { display: false },
+            legend: {
+              display: false,
+            },
             tooltip: {
               enabled: true,
-              backgroundColor: "rgba(15, 23, 42, 0.9)",
+              backgroundColor: "rgba(15, 23, 42, 0.95)",
               titleColor: "#ffffff",
               bodyColor: "#cbd5e1",
               titleFont: { size: 14, weight: "bold" },
               bodyFont: { size: 12 },
               padding: 12,
               borderWidth: 1,
-              cornerRadius: 8,
+              borderColor: "rgba(148, 163, 184, 0.6)",
+              cornerRadius: 10,
               boxPadding: 8,
               usePointStyle: true,
               callbacks: {
@@ -567,24 +612,24 @@ const Dashboard = () => {
           scales: {
             y: {
               beginAtZero: true,
-              grid: { color: "#e2e8f0", drawBorder: false },
+              grid: { color: "rgba(148, 163, 184, 0.25)", drawBorder: false },
               ticks: {
                 color: "#64748b",
                 callback: (value) => "$" + Intl.NumberFormat("es-CO", { notation: "compact" }).format(value),
-                font: { size: 12 },
+                font: { size: 12, family: "'Poppins', sans-serif" },
                 padding: 8,
               },
               title: {
                 display: true,
                 text: "Monto en Pesos",
                 color: "#475569",
-                font: { weight: "600", size: 12 },
+                font: { weight: "600", size: 12, family: "'Poppins', sans-serif" },
                 padding: { top: 10, bottom: 10 },
               },
             },
             x: {
               grid: { display: false },
-              ticks: { color: "#64748b", font: { size: 12 }, padding: 8 },
+              ticks: { color: "#64748b", font: { size: 12, family: "'Poppins', sans-serif" }, padding: 8 },
             },
           },
           animation: { duration: 2000, easing: "easeOutQuart" },
