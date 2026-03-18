@@ -30,7 +30,6 @@ import { Edit, Delete, Info, X, Search, UserPlus } from "lucide-react"
 import Swal from "sweetalert2"
 import descuentoService from "./descuentos.service"
 import { makeStyles, withStyles } from "@material-ui/core/styles"
-import "./descuentos.styles.css"
 import {
   LocalOffer,
   Description,

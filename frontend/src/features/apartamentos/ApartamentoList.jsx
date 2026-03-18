@@ -36,7 +36,6 @@ import Swal from "sweetalert2"
 import apartamentoService from "./apartamento.service"
 import mobiliarioService from "../mobiliarios/mobiliario.service"
 import tipoApartamentoService from "../tipoApartamentos/tipoApartamento.service"
-import "./apartamento.styles.css"
 import { makeStyles, withStyles } from "@material-ui/core/styles"
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

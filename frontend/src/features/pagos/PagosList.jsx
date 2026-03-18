@@ -29,7 +29,6 @@ import {
 import { Edit, Delete, Info, X, Search, UserPlus } from "lucide-react"
 import Swal from "sweetalert2"
 import pagoService from "./pago.service"
-import "./pagos.styles.css"
 import { makeStyles, withStyles } from "@material-ui/core/styles"
 import {
   Person,

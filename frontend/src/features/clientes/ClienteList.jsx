@@ -28,7 +28,6 @@ import {
 import { Search, UserPlus, Edit, Delete, Info, X, User, FileText, Phone, Mail, Key, Check, ArrowLeft, ArrowRight, Edit2, Trash2, Eye, Users } from "lucide-react"
 import Swal from "sweetalert2"
 import clienteService from "./clientes.service"
-import "./clientes.styles.css"
 import { makeStyles, withStyles } from "@material-ui/core/styles"
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -375,12 +374,21 @@ const ClienteList = () => {
   }
 
   const handleClose = () => {
+    if (typeof document !== "undefined" && document.activeElement) {
+      document.activeElement.blur()
+    }
     setOpen(false)
     setFormErrors({ nombre:"", documento:"", email:"", telefono:"", password:"" })
   }
 
   const handleDetails = (cliente) => { setSelectedCliente(cliente); setDetailsOpen(true) }
-  const handleCloseDetails = () => setDetailsOpen(false)
+
+  const handleCloseDetails = () => {
+    if (typeof document !== "undefined" && document.activeElement) {
+      document.activeElement.blur()
+    }
+    setDetailsOpen(false)
+  }
 
   const validarDocumento = (value) => {
     if (!value) return "El documento es obligatorio"
@@ -490,6 +498,7 @@ const ClienteList = () => {
   }
 
   const handleFieldBlur = (e) => {
+    if (!open) return
     const { name, value } = e.target
     setTouched((prev) => ({ ...prev, [name]: true }))
     if (name === "email") {
@@ -551,6 +560,14 @@ const ClienteList = () => {
     const { name, value } = e.target
     setTouched((prev) => ({ ...prev, [name]: true }))
     let updatedValue = value
+
+    // FIX: el campo "estado" llega como string desde el <select>, convertir a booleano
+    if (name === "estado") {
+      const boolValue = value === true || value === "true"
+      setFormData((prev) => ({ ...prev, estado: boolValue }))
+      return
+    }
+
     if (name === "nombre") {
       const letrasRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/
       if (!letrasRegex.test(value)) return
@@ -582,7 +599,9 @@ const ClienteList = () => {
     } else if (name === "password" && value.length > VALIDACION.CONTRASENA.MAX_LENGTH) {
       updatedValue = value.substring(0, VALIDACION.CONTRASENA.MAX_LENGTH)
     }
+
     setFormData((prev) => ({ ...prev, [name]: updatedValue }))
+
     let error = ""
     const isEditing = !!editingId
     switch (name) {
@@ -686,7 +705,13 @@ const ClienteList = () => {
         <Typography className={classes.dlgHdrTitle}>{title}</Typography>
         <Typography className={classes.dlgHdrSub}>{sub}</Typography>
       </Box>
-      <button className={classes.dlgCloseBtn} onClick={onClose}><X size={15} strokeWidth={2.5}/></button>
+      <button
+        className={classes.dlgCloseBtn}
+        onMouseDown={(e) => { e.preventDefault(); e.stopPropagation() }}
+        onClick={(e) => { e.stopPropagation(); onClose() }}
+      >
+        <X size={15} strokeWidth={2.5}/>
+      </button>
     </Box>
   )
 
@@ -830,7 +855,14 @@ const ClienteList = () => {
       </Box>
 
       {/* MODAL CREAR / EDITAR */}
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth classes={{ paper:classes.dlgPaper }} aria-labelledby="form-dialog-title">
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="sm" fullWidth
+        classes={{ paper:classes.dlgPaper }}
+        aria-labelledby="form-dialog-title"
+        disableEnforceFocus
+      >
         <DlgHdr
           icon={editingId ? <Edit2 size={20} color="#fff" strokeWidth={2.2}/> : <UserPlus size={20} color="#fff" strokeWidth={2.2}/>}
           title={editingId ? "Editar Cliente" : "Nuevo Cliente"}
@@ -922,7 +954,7 @@ const ClienteList = () => {
                 className={classes.fmField} select margin="dense" label="Estado" name="estado"
                 value={formData.estado} onChange={handleChange} fullWidth variant="outlined"
                 inputRef={estadoRef}
-                helperText={editingId ? "Cambiar el estado del cliente" : "El cliente se creará como activo por defecto"}
+                helperText="Cambiar el estado del cliente"
               >
                 <MenuItem value={true}>✅ Activo</MenuItem>
                 <MenuItem value={false}>❌ Inactivo</MenuItem>
@@ -941,7 +973,14 @@ const ClienteList = () => {
       </Dialog>
 
       {/* MODAL DETALLES */}
-      <Dialog open={detailsOpen} onClose={handleCloseDetails} maxWidth="sm" fullWidth classes={{ paper:classes.dlgPaper }} aria-labelledby="details-dialog-title">
+      <Dialog
+        open={detailsOpen}
+        onClose={handleCloseDetails}
+        maxWidth="sm" fullWidth
+        classes={{ paper:classes.dlgPaper }}
+        aria-labelledby="details-dialog-title"
+        disableEnforceFocus
+      >
         <DlgHdr
           icon={<Eye size={20} color="#fff" strokeWidth={2.2}/>}
           title="Detalles del Cliente"

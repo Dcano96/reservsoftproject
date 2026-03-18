@@ -6,7 +6,7 @@ import ResetPassword from "./features/auth/ResetPassword"
 import Dashboard from "./features/dashboard/Dashboard"
 import UserProfile from "./features/usuarios/UserProfile"
 import ProtectedRoute from "./features/auth/ProtectedRoute"
-import Landing from "./features/landing/Landing"
+import Landing from "./features/landing/Landing.jsx"  // ✅ CAMBIADO
 
 function App() {
   return (

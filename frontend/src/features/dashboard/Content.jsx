@@ -20,7 +20,7 @@ import {
   EyeOff,
   AlertCircle,
 } from "lucide-react"
-import "./Dashboard.css"
+
 
 // Función para obtener el ícono del módulo
 const getModuleIcon = (moduleName) => {

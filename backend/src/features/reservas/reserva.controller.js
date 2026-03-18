@@ -49,6 +49,31 @@ const normalizarAcompanantes = (acompanantes = []) => {
   })
 }
 
+/* ─────────────────────────────────────────────────────────────
+   HELPER: limpiar campos numéricos del body
+   Convierte a Number los campos que el frontend puede enviar
+   como string (p.ej. cuando vienen de un input deshabilitado
+   o del spread de un objeto de Mongoose).
+───────────────────────────────────────────────────────────── */
+const limpiarCamposNumericos = (body) => {
+  const cleaned = { ...body }
+
+  if (cleaned.total !== undefined) {
+    const n = Number(cleaned.total)
+    cleaned.total = isNaN(n) ? 0 : n
+  }
+  if (cleaned.pagos_parciales !== undefined) {
+    const n = Number(cleaned.pagos_parciales)
+    cleaned.pagos_parciales = isNaN(n) ? 0 : n
+  }
+  if (cleaned.noches_estadia !== undefined) {
+    const n = Number(cleaned.noches_estadia)
+    cleaned.noches_estadia = isNaN(n) ? 1 : n
+  }
+
+  return cleaned
+}
+
 // ─── CREAR RESERVA ────────────────────────────────────────────
 exports.crearReserva = async (req, res) => {
   try {
@@ -77,11 +102,8 @@ exports.crearReserva = async (req, res) => {
     }
 
     const diffTime = Math.abs(fin - inicio)
-    const noches_estadia = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-    if (noches_estadia < 1) {
-      return res.status(400).json({ msg: "La estadía debe ser de al menos una noche", error: true })
-    }
+    // Mismo día (check-in = check-out) se cobra como 1 noche mínima
+    const noches_estadia = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)))
 
     if (!Array.isArray(apartamentos)) {
       return res.status(400).json({ msg: "El formato de apartamentos es inválido", error: true })
@@ -129,11 +151,20 @@ exports.crearReserva = async (req, res) => {
       if (apartamento) total += apartamento.Tarifa * noches_estadia
     }
 
+    // FIX: validación cruzada pagos_parciales <= total hecha aquí en el controlador
+    const pagos_parciales = Number(req.body.pagos_parciales) || 0
+    if (pagos_parciales > total) {
+      return res.status(400).json({
+        msg: "Los pagos parciales no pueden superar el total de la reserva",
+        error: true,
+      })
+    }
+
     const reservaData = {
       ...req.body,
       noches_estadia,
       total,
-      pagos_parciales: req.body.pagos_parciales || 0,
+      pagos_parciales,
       acompanantes: acompanantesNorm,
     }
 
@@ -181,12 +212,15 @@ exports.obtenerReserva = async (req, res) => {
 
 /* ─────────────────────────────────────────────────────────────
    ACTUALIZAR RESERVA
-   FIX PRINCIPAL: normalizar acompañantes SIEMPRE antes de
-   guardar, sin importar si la reserva vino de la landing o
-   del dashboard. Se usa runValidators: false para evitar que
-   Mongoose rechace el documento por campos legacy de la landing
-   (email, telefono, titular_documento, etc.) que no siempre
-   están presentes en reservas del dashboard.
+   FIX PRINCIPAL: 
+   1. Normalizar acompañantes SIEMPRE antes de guardar.
+   2. Limpiar campos numéricos (total, pagos_parciales, noches_estadia)
+      para evitar que lleguen como string desde el frontend.
+   3. Validar lógica cruzada (pagos <= total, fin > inicio) aquí
+      en el controlador, ya que los validadores del Schema no
+      funcionan con findByIdAndUpdate (this es el query, no el doc).
+   4. runValidators: false para evitar que Mongoose rechace el
+      documento por campos legacy de la landing.
 ───────────────────────────────────────────────────────────── */
 exports.actualizarReserva = async (req, res) => {
   try {
@@ -197,8 +231,38 @@ exports.actualizarReserva = async (req, res) => {
 
     console.log("Datos recibidos para actualizar reserva:", JSON.stringify(req.body, null, 2))
 
+    // FIX: limpiar campos numéricos antes de cualquier validación
+    const bodyNormalizado = limpiarCamposNumericos({ ...req.body })
+
+    // FIX: validación cruzada de fechas en el controlador
+    // Reglas: fecha_inicio >= mañana | fecha_fin >= fecha_inicio
+    if (bodyNormalizado.fecha_inicio && bodyNormalizado.fecha_fin) {
+      const inicio = new Date(bodyNormalizado.fecha_inicio)
+      const fin = new Date(bodyNormalizado.fecha_fin)
+      if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) {
+        return res.status(400).json({ msg: "Formato de fecha inválido", error: true })
+      }
+      inicio.setHours(0, 0, 0, 0)
+      fin.setHours(0, 0, 0, 0)
+      if (fin < inicio) {
+        return res.status(400).json({ msg: "La fecha de fin debe ser igual o posterior a la fecha de inicio", error: true })
+      }
+    }
+
+    // FIX: validación cruzada pagos_parciales <= total en el controlador
+    if (
+      bodyNormalizado.pagos_parciales !== undefined &&
+      bodyNormalizado.total !== undefined
+    ) {
+      if (bodyNormalizado.pagos_parciales > bodyNormalizado.total) {
+        return res.status(400).json({
+          msg: "Los pagos parciales no pueden superar el total de la reserva",
+          error: true,
+        })
+      }
+    }
+
     // FIX: normalizar acompañantes con el helper centralizado
-    const bodyNormalizado = { ...req.body }
     if (Array.isArray(bodyNormalizado.acompanantes)) {
       bodyNormalizado.acompanantes = normalizarAcompanantes(bodyNormalizado.acompanantes)
 
@@ -215,7 +279,7 @@ exports.actualizarReserva = async (req, res) => {
 
     const reservaActualizada = await Reserva.findByIdAndUpdate(id, bodyNormalizado, {
       new: true,
-      runValidators: false, // Evita ValidationError por campos legacy de landing
+      runValidators: false, // Evita ValidationError por campos legacy de landing y validadores cruzados
     }).populate("apartamentos")
 
     if (!reservaActualizada) return res.status(404).json({ msg: "Reserva no encontrada", error: true })
@@ -432,11 +496,8 @@ exports.crearReservaPublica = async (req, res) => {
     }
 
     const diffTime = Math.abs(fin - inicio)
-    const noches_estadia = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-    if (noches_estadia < 1) {
-      return res.status(400).json({ msg: "La estadía debe ser de al menos una noche", error: true })
-    }
+    // Mismo día (check-in = check-out) se cobra como 1 noche mínima
+    const noches_estadia = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)))
 
     if (!isValidObjectId(apartamento_id)) {
       return res.status(400).json({ msg: "ID de apartamento inválido", error: true })

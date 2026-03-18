@@ -1,6 +1,6 @@
 "use client"
-
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef } from "react"
+import { useHistory } from "react-router-dom"
 import {
   Typography,
   Button,
@@ -26,6 +26,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  Fade,
 } from "@material-ui/core"
 import { makeStyles } from "@material-ui/core/styles"
 import {
@@ -65,10 +66,7 @@ import {
   Description,
 } from "@material-ui/icons"
 import axios from "axios"
-import { useHistory } from "react-router-dom"
 import Swal from "sweetalert2"
-import "./landing.styles.css" // Importar estilos CSS
-import { Fade } from "@material-ui/core"
 
 // ✅ Configuración de API con variables de entorno
 const API_BASE_URL = process.env.REACT_APP_API_URL || ""
@@ -1558,9 +1556,9 @@ const heroImages = [
 ]
 
 function Landing() {
+const history = useHistory()
   const classes = useStyles()
   const theme = useTheme()
-  const history = useHistory()
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
   const fileInputRef = useRef(null)
 
@@ -2218,9 +2216,8 @@ function Landing() {
   }
 
   const handleLogin = () => {
-    console.log("Redirigiendo al login...")
-    window.location.href = "/login"
-  }
+  history.push("/login")
+}
 
   // ✅ Actualizar handleReservationSubmit con configuración de API
   const handleReservationSubmit = async () => {

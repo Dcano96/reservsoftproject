@@ -15,7 +15,7 @@ import {
   Settings,
   Lock,
 } from "lucide-react"
-import "./Dashboard.css"
+
 
 // Función de utilidad para combinar clases
 const cn = (...classes) => classes.filter(Boolean).join(" ")

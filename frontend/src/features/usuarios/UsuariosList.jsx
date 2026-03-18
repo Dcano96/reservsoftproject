@@ -57,7 +57,6 @@ import {
 import Swal from "sweetalert2"
 import usuarioService from "./usuarios.service"
 import rolesService from "../roles/roles.service"
-import "./usuarios.styles.css"
 import { makeStyles, withStyles } from "@material-ui/core/styles"
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -182,7 +181,6 @@ const NCell = withStyles(() => ({
    STYLES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 const useStyles = makeStyles(theme => ({
-  /* ROOT */
   root: {
     fontFamily:"'DM Sans',sans-serif",
     borderRadius:26, overflow:"hidden",
@@ -194,7 +192,6 @@ const useStyles = makeStyles(theme => ({
     position:"relative",
     "&::before":{ content:'""', position:"absolute", top:0, left:0, right:0, height:3, background:T.gv, zIndex:2 },
   },
-  /* HEADER */
   hdr:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"24px 26px 20px", flexWrap:"wrap", gap:14, borderBottom:"1px solid rgba(108,63,255,0.08)" },
   hdrLeft:{ display:"flex", alignItems:"center", gap:14 },
   hdrIcon:{
@@ -211,7 +208,6 @@ const useStyles = makeStyles(theme => ({
     letterSpacing:"-0.5px", lineHeight:1.1,
   },
   hdrSub:{ fontSize:".82rem", color:T.ink3, marginTop:3 },
-  /* STATS */
   statsRow:{ display:"flex", gap:12, padding:"18px 26px 0", flexWrap:"wrap" },
   stat:{
     flex:"1 1 110px", borderRadius:18, padding:"16px 18px",
@@ -229,7 +225,6 @@ const useStyles = makeStyles(theme => ({
   statLabel:{ fontFamily:"'DM Sans',sans-serif", fontSize:".70rem", fontWeight:700, letterSpacing:"1.1px", textTransform:"uppercase", marginBottom:5 },
   statVal:{ fontFamily:"'Syne',sans-serif", fontSize:"2rem", fontWeight:800, lineHeight:1 },
   statSub:{ fontFamily:"'DM Sans',sans-serif", fontSize:".72rem", marginTop:4, fontWeight:500 },
-  /* TOOLBAR */
   toolbar:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 26px", gap:12, flexWrap:"wrap" },
   searchPill:{
     display:"flex", alignItems:"center", gap:9,
@@ -249,20 +244,17 @@ const useStyles = makeStyles(theme => ({
     textTransform:"uppercase",
     "&:hover":{ transform:"translateY(-2px)", boxShadow:"0 9px 26px rgba(108,63,255,.52) !important" },
   },
-  /* TABLE */
   tblWrap:{ margin:"0 26px 16px", borderRadius:20, overflow:"hidden", border:`1px solid rgba(108,63,255,.10)`, boxShadow:"0 4px 20px rgba(108,63,255,.07)" },
   tblRow:{ transition:"background .15s", "&:nth-of-type(odd)":{ background:"rgba(244,241,255,.30)" }, "&:hover":{ background:"rgba(108,63,255,.055)" } },
   nameWrap:{ display:"flex", alignItems:"center", gap:10 },
   nameAv:{ width:36, height:36, borderRadius:12, background:T.gv, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, boxShadow:"0 3px 12px rgba(108,63,255,.30)", fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:13, color:"#fff" },
   nameText:{ fontWeight:700, fontSize:".90rem", color:T.ink },
   nameId:{ fontSize:".72rem", color:T.ink4, marginTop:1 },
-  /* CHIPS */
   chip:{ display:"inline-flex", alignItems:"center", gap:5, padding:"5px 12px", borderRadius:20, fontFamily:"'DM Sans',sans-serif", fontSize:".74rem", fontWeight:700, whiteSpace:"nowrap" },
   cOn:  { background:"rgba(0,212,170,.12)", color:"#00917a" },
   cOff: { background:"rgba(255,59,130,.10)", color:"#cc2060" },
   cRole:{ background:"rgba(108,63,255,.10)", color:"#5929d9", border:`1px solid rgba(108,63,255,.16)` },
   cNoRole:{ background:"rgba(176,165,200,.15)", color:T.ink3 },
-  /* ACTIONS */
   actWrap:{ display:"flex", justifyContent:"center", gap:5 },
   actBtn:{ width:32, height:32, borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", border:"none", cursor:"pointer", transition:"all .18s", "&:hover":{ transform:"scale(1.14)", boxShadow:"0 4px 14px rgba(0,0,0,.18)" } },
   bEdit:  { background:"linear-gradient(135deg,#00D4AA,#00A3E0)", color:"#fff" },
@@ -270,7 +262,6 @@ const useStyles = makeStyles(theme => ({
   bRole:  { background:"linear-gradient(135deg,#FF7B2C,#F5C518)", color:"#fff" },
   bDel:   { background:T.ge, color:"#fff" },
   bGhost: { visibility:"hidden", background:"transparent" },
-  /* PAGINATION */
   pagWrap:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 26px 22px", flexWrap:"wrap", gap:10 },
   pagInfo:{ fontFamily:"'DM Sans',sans-serif", fontSize:".80rem", color:T.ink3 },
   pagBtns:{ display:"flex", gap:6 },
@@ -284,7 +275,6 @@ const useStyles = makeStyles(theme => ({
   },
   pagBtnOn:{ background:`${T.gv} !important`, color:"#fff !important", borderColor:"transparent !important", boxShadow:"0 3px 10px rgba(108,63,255,.38) !important" },
   emptyCell:{ textAlign:"center", padding:40, fontFamily:"'DM Sans',sans-serif", fontSize:".94rem", color:T.ink3 },
-  /* DIALOG */
   dlgPaper:{
     borderRadius:"26px !important", boxShadow:"0 24px 64px rgba(108,63,255,0.24) !important",
     border:`1px solid ${T.bM}`, width:640, maxWidth:"96vw",
@@ -340,7 +330,6 @@ const useStyles = makeStyles(theme => ({
     boxShadow:"0 4px 14px rgba(108,63,255,.38) !important", transition:"all .2s !important",
     "&:hover":{ transform:"translateY(-2px)", boxShadow:"0 8px 22px rgba(108,63,255,.50) !important" },
   },
-  /* DETAILS */
   detHero:{ display:"flex", flexDirection:"column", alignItems:"center", padding:"4px 0 18px" },
   detAv:{ width:76, height:76, borderRadius:22, background:T.gv, display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 10px 32px rgba(108,63,255,.40)", marginBottom:12, fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:26, color:"#fff" },
   detName:{ fontFamily:"'Syne',sans-serif !important", fontSize:"1.20rem !important", fontWeight:"800 !important", color:`${T.ink} !important`, marginBottom:4, textAlign:"center" },
@@ -351,7 +340,6 @@ const useStyles = makeStyles(theme => ({
   detLbl:{ fontFamily:"'DM Sans',sans-serif", fontSize:".68rem", fontWeight:700, letterSpacing:".9px", textTransform:"uppercase", color:T.ink3 },
   detVal:{ fontFamily:"'DM Sans',sans-serif", fontSize:".90rem", fontWeight:600, color:T.ink },
   detValMono:{ fontFamily:"monospace", fontSize:".78rem", color:T.ink3 },
-  /* LEGACY — keep for compatibility */
   container:{ fontFamily:"'DM Sans',sans-serif" },
   errorMessage:{ fontSize:".90rem", color:"#ef4444", fontWeight:500, marginTop:4 },
 }))
@@ -362,7 +350,6 @@ const useStyles = makeStyles(theme => ({
 const UsuarioList = () => {
   const cls = useStyles()
 
-  /* ── state ── (idéntico al original) */
   const [usuarios,        setUsuarios]        = useState([])
   const [open,            setOpen]            = useState(false)
   const [detailsOpen,     setDetailsOpen]     = useState(false)
@@ -377,7 +364,6 @@ const UsuarioList = () => {
   const [fieldValidation, setFieldValidation] = useState({ documento:false, nombre:false, telefono:false, email:false, password:false, rol:false })
   const [touched,         setTouched]         = useState({ documento:false, nombre:false, telefono:false, email:false, password:false, rol:false })
 
-  /* refs */
   const documentoRef = useRef(null)
   const nombreRef    = useRef(null)
   const telefonoRef  = useRef(null)
@@ -386,7 +372,6 @@ const UsuarioList = () => {
   const rolRef       = useRef(null)
   const estadoRef    = useRef(null)
 
-  /* ── fetch ── */
   const fetchUsuarios = async () => {
     try { const data = await usuarioService.getUsuarios(); setUsuarios(data) }
     catch(e) { console.error("Error fetching usuarios",e); Swal.fire({...SW,icon:"error",title:"Error",text:"No se pudieron cargar los usuarios."}) }
@@ -400,7 +385,6 @@ const UsuarioList = () => {
   }
   useEffect(() => { fetchUsuarios(); fetchAvailableRoles() }, [])
 
-  /* ── helpers ── */
   const isAdminUser = u => u.documento==="1152458310" && u.nombre==="David Andres Goez Cano"
   const getInitials = name => name.split(" ").map(w=>w[0]).join("").toUpperCase().substring(0,2)
 
@@ -492,13 +476,21 @@ const UsuarioList = () => {
     setFieldValidation(p=>({...p,[name]:!error}))
     return !error
   }
+
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     FIX: handleFieldBlur guarda con !open para
+     ignorar el blur que se dispara cuando el
+     Dialog está en proceso de cerrarse.
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   const handleFieldBlur = e => {
+    if (!open) return
     const{name,value}=e.target
     setTouched(p=>({...p,[name]:true}))
     if(name==="email"){ const er=validarEmail(value); setFormErrors(p=>({...p,email:er})); setFieldValidation(p=>({...p,email:!er})) }
     else if(name==="password"){ if(editingId&&!value){setFormErrors(p=>({...p,password:""}));setFieldValidation(p=>({...p,password:true}))}else{const er=validarPassword(value,formData.nombre,formData.documento,formData.email);setFormErrors(p=>({...p,password:er}));setFieldValidation(p=>({...p,password:!er}))}}
     else validateField(name,value)
   }
+
   const handleKeyDown = (e,next) => {
     const{name,value}=e.target
     if(e.key==="Enter"||e.key==="Tab"){
@@ -513,6 +505,7 @@ const UsuarioList = () => {
       }
     }
   }
+
   const handleChange = e => {
     const{name,value}=e.target
     setTouched(p=>({...p,[name]:true}))
@@ -543,6 +536,7 @@ const UsuarioList = () => {
     setFormErrors(p=>({...p,[name]:error}))
     setFieldValidation(p=>({...p,[name]:!error}))
   }
+
   const validateForm = () => {
     setTouched({documento:true,nombre:true,telefono:true,email:true,password:true,rol:true})
     const dE=validarDocumento(formData.documento), nE=validarNombre(formData.nombre),
@@ -554,7 +548,12 @@ const UsuarioList = () => {
     return !dE&&!nE&&!tE&&!eE&&(editingId?true:!pE)&&!rE
   }
 
-  /* ── open/close ── */
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     FIX: handleClose y handleCloseDetails hacen
+     blur del elemento activo ANTES de cerrar el
+     Dialog, evitando que el onBlur de un campo
+     dispare validaciones durante el cierre.
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   const handleOpen = u => {
     setFormErrors({nombre:"",documento:"",email:"",telefono:"",password:"",rol:""})
     setFieldValidation({documento:false,nombre:false,telefono:false,email:false,password:false,rol:false})
@@ -564,11 +563,24 @@ const UsuarioList = () => {
     setOpen(true)
     setTimeout(()=>documentoRef.current?.focus(),100)
   }
-  const handleClose = () => { setOpen(false); setFormErrors({nombre:"",documento:"",email:"",telefono:"",password:"",rol:""}) }
-  const handleDetails = u => { setSelectedUsuario(u); setDetailsOpen(true) }
-  const handleCloseDetails = () => setDetailsOpen(false)
 
-  /* ── submit ── */
+  const handleClose = () => {
+    if (typeof document !== "undefined" && document.activeElement) {
+      document.activeElement.blur()
+    }
+    setOpen(false)
+    setFormErrors({nombre:"",documento:"",email:"",telefono:"",password:"",rol:""})
+  }
+
+  const handleDetails = u => { setSelectedUsuario(u); setDetailsOpen(true) }
+
+  const handleCloseDetails = () => {
+    if (typeof document !== "undefined" && document.activeElement) {
+      document.activeElement.blur()
+    }
+    setDetailsOpen(false)
+  }
+
   const handleSubmit = async () => {
     if(!validateForm()){
       if(!fieldValidation.documento) documentoRef.current?.focus()
@@ -589,7 +601,6 @@ const UsuarioList = () => {
     } catch(e){ console.error(e); Swal.fire({...SW,icon:"error",title:"Error",text:e.response?.data?.msg||"Ocurrió un error al guardar el usuario."}) }
   }
 
-  /* ── delete ── */
   const handleDelete = async id => {
     const u=usuarios.find(x=>x._id===id)
     if(u&&isAdminUser(u)){ Swal.fire({...SW,icon:"error",title:"Acción no permitida",text:"No se puede eliminar al usuario administrador"}); return }
@@ -601,7 +612,6 @@ const UsuarioList = () => {
     }
   }
 
-  /* ── remove role ── */
   const handleRemoveRole = async id => {
     const u=usuarios.find(x=>x._id===id)
     if(u&&isAdminUser(u)){ Swal.fire({...SW,icon:"error",title:"Acción no permitida",text:"No se puede quitar el rol al usuario administrador"}); return }
@@ -612,7 +622,6 @@ const UsuarioList = () => {
     }
   }
 
-  /* ── filter + paginate ── */
   const filtered   = usuarios.filter(u =>
     u.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.documento.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -625,7 +634,12 @@ const UsuarioList = () => {
   const totalInactive = usuarios.filter(u=>!u.estado).length
   const totalWithRole = usuarios.filter(u=>u.rol&&u.rol!=="").length
 
-  /* ── shared dialog header ── */
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     FIX: DlgHdr — onMouseDown preventDefault +
+     stopPropagation evita que MUI Dialog reciba
+     el evento de clic y re-dispare onClose antes
+     de que el campo pierda el foco correctamente.
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   const DlgHdr = ({ icon, title, sub, onClose }) => (
     <Box className={cls.dlgHdr}>
       <Box className={cls.dlgHdrIco}>{icon}</Box>
@@ -633,13 +647,16 @@ const UsuarioList = () => {
         <Typography className={cls.dlgHdrTitle}>{title}</Typography>
         <Typography className={cls.dlgHdrSub}>{sub}</Typography>
       </Box>
-      <button className={cls.dlgCloseBtn} onClick={onClose}><X size={15} strokeWidth={2.5}/></button>
+      <button
+        className={cls.dlgCloseBtn}
+        onMouseDown={(e) => { e.preventDefault(); e.stopPropagation() }}
+        onClick={(e) => { e.stopPropagation(); onClose() }}
+      >
+        <X size={15} strokeWidth={2.5}/>
+      </button>
     </Box>
   )
 
-  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     RENDER
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   return (
     <Box className={cls.root}>
 
@@ -803,7 +820,16 @@ const UsuarioList = () => {
       </Box>
 
       {/* ━━━━━━━━ MODAL CREAR / EDITAR ━━━━━━━━ */}
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth classes={{ paper:cls.dlgPaper }}>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="sm" fullWidth
+        classes={{ paper:cls.dlgPaper }}
+        /* FIX: disableEnforceFocus evita que MUI intente devolver el foco
+           a un campo del Dialog cuando el usuario hace clic en el botón X,
+           lo cual disparaba el onBlur → validación antes del cierre. */
+        disableEnforceFocus
+      >
         <DlgHdr
           icon={editingId?<Edit2 size={20} color="#fff" strokeWidth={2.2}/>:<UserPlus size={20} color="#fff" strokeWidth={2.2}/>}
           title={editingId?"Editar Usuario":"Nuevo Usuario"}
@@ -923,7 +949,13 @@ const UsuarioList = () => {
       </Dialog>
 
       {/* ━━━━━━━━ MODAL DETALLES ━━━━━━━━ */}
-      <Dialog open={detailsOpen} onClose={handleCloseDetails} fullWidth maxWidth="sm" classes={{ paper:cls.dlgPaper }}>
+      <Dialog
+        open={detailsOpen}
+        onClose={handleCloseDetails}
+        fullWidth maxWidth="sm"
+        classes={{ paper:cls.dlgPaper }}
+        disableEnforceFocus
+      >
         <DlgHdr
           icon={<Eye size={20} color="#fff" strokeWidth={2.2}/>}
           title="Detalles del Usuario"

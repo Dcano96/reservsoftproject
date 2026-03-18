@@ -52,8 +52,8 @@ import apartamentoService from "../apartamentos/apartamento.service"
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 const MENSAJES_INSTRUCTIVOS = {
   TITULAR: "Ingrese el nombre completo del cliente titular de la reserva. Solo letras.",
-  FECHA_INICIO: "Seleccione la fecha de inicio. Debe ser al menos 2 días después de hoy.",
-  FECHA_FIN: "Seleccione la fecha de fin. Debe ser posterior a la fecha de inicio.",
+  FECHA_INICIO: "Seleccione la fecha de inicio. Puede ser hoy mismo o una fecha futura.",
+  FECHA_FIN: "Seleccione la fecha de fin. Debe ser igual o posterior a la fecha de inicio.",
   APARTAMENTOS: "Seleccione uno o más apartamentos para la reserva.",
   NOCHES: "Se calcula automáticamente según las fechas seleccionadas.",
   PAGOS_PARCIALES: "Ingrese el monto de pagos parciales realizados. Ej: 150000.",
@@ -115,8 +115,6 @@ if (typeof document !== "undefined" && !document.getElementById("rs-swal")) {
     .swal2-icon.swal2-error{border-color:#FF3B82!important;color:#FF3B82!important;}
     .swal2-icon.swal2-error [class^=swal2-x-mark-line]{background:#FF3B82!important;}
     .swal2-timer-progress-bar{background:linear-gradient(90deg,#6C3FFF,#C040FF)!important;}
-    .swal-overlay-z-index{z-index:13000!important;}
-    .swal-popup-z-index{z-index:13001!important;}
     .swal2-container{z-index:13000!important;}
     .swal2-backdrop-show{z-index:13000!important;}
   `
@@ -354,6 +352,20 @@ const useStyles = makeStyles(() => ({
     fontFamily: "'DM Sans',sans-serif", fontSize: ".74rem", fontWeight: 700,
     color: T.ink3, letterSpacing: ".6px", textTransform: "uppercase",
   },
+  /* ── Banner de errores inline dentro del modal ── */
+  errorBanner: {
+    borderRadius: 13, padding: "12px 16px", marginBottom: 16,
+    background: "rgba(255,59,130,.07)", border: "1.5px solid rgba(255,59,130,.22)",
+    display: "flex", flexDirection: "column", gap: 4,
+  },
+  errorBannerTitle: {
+    fontFamily: "'Syne',sans-serif", fontSize: ".80rem", fontWeight: 700,
+    color: "#cc2060", marginBottom: 2,
+  },
+  errorBannerItem: {
+    fontFamily: "'DM Sans',sans-serif", fontSize: ".78rem",
+    color: "#cc2060", display: "flex", alignItems: "flex-start", gap: 6,
+  },
   detHero: { display: "flex", flexDirection: "column", alignItems: "center", padding: "4px 0 18px" },
   detAv: { width: 76, height: 76, borderRadius: 22, background: T.gv, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 32px rgba(108,63,255,.40)", marginBottom: 12, fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 26, color: "#fff" },
   detName: { fontFamily: "'Syne',sans-serif !important", fontSize: "1.20rem !important", fontWeight: "800 !important", color: `${T.ink} !important`, marginBottom: 4, textAlign: "center" },
@@ -382,6 +394,26 @@ const getInitials = (name) =>
 
 const formatCOP = (val) =>
   Number(val).toLocaleString("es-CO", { style: "currency", currency: "COP" })
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   REGLAS DE FECHA
+   - fecha_inicio: mínimo mañana (hoy + 1 día)
+   - fecha_fin:    igual o mayor a fecha_inicio (estadía de 0+ noches)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+// Construye la fecha de hoy en hora local (año/mes/día) para comparar
+// correctamente con los valores de inputs type="date", que en JS se
+// parsean como UTC y en Colombia (UTC-5) se desplazan un día hacia atrás.
+const getToday = () => {
+  const d = new Date()
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate())
+}
+
+// Convierte "YYYY-MM-DD" a Date local sin desfase UTC
+const parseDateLocal = (str) => {
+  if (!str) return null
+  const [y, m, d] = str.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    INITIAL FORM STATE
@@ -424,7 +456,7 @@ const ReservasList = () => {
       setReservas(data)
     } catch (error) {
       console.error("Error fetching reservas", error)
-      Swal.fire({ ...SW, icon: "error", title: "Error", text: "No se pudieron cargar las reservas.", customClass: { container: "swal-overlay-z-index", popup: "rs-pop" } })
+      Swal.fire({ ...SW, icon: "error", title: "Error", text: "No se pudieron cargar las reservas." })
     }
   }
 
@@ -434,7 +466,7 @@ const ReservasList = () => {
       setApartamentos(data)
     } catch (error) {
       console.error("Error fetching apartments", error)
-      Swal.fire({ ...SW, icon: "error", title: "Error", text: "No se pudieron cargar los apartamentos.", customClass: { container: "swal-overlay-z-index", popup: "rs-pop" } })
+      Swal.fire({ ...SW, icon: "error", title: "Error", text: "No se pudieron cargar los apartamentos." })
     }
   }
 
@@ -451,7 +483,10 @@ const ReservasList = () => {
     if (formData.fecha_inicio && formData.fecha_fin) {
       const start = new Date(formData.fecha_inicio)
       const end = new Date(formData.fecha_fin)
-      const diffDays = end - start > 0 ? Math.floor((end - start) / (1000 * 60 * 60 * 24)) : 0
+      // fecha_fin >= fecha_inicio → noches puede ser 0 (mismo día = check-in/out)
+      // Mismo día (check-in y check-out) se cobra como 1 noche mínima
+      const rawDays = end >= start ? Math.floor((end - start) / (1000 * 60 * 60 * 24)) : 0
+      const diffDays = rawDays === 0 ? 1 : rawDays
       if (diffDays !== formData.noches_estadia)
         setFormData((prev) => ({ ...prev, noches_estadia: diffDays }))
     }
@@ -469,7 +504,7 @@ const ReservasList = () => {
   /* ── exportToExcel ── */
   const exportToExcel = async () => {
     if (reservas.length === 0) {
-      Swal.fire({ ...SW, icon: "info", title: "Sin datos", text: "No hay reservas para exportar.", customClass: { container: "swal-overlay-z-index", popup: "rs-pop" } })
+      Swal.fire({ ...SW, icon: "info", title: "Sin datos", text: "No hay reservas para exportar." })
       return
     }
     const ExcelJS = (await import("exceljs")).default
@@ -528,11 +563,7 @@ const ReservasList = () => {
   const totalPages = Math.max(1, Math.ceil(filteredReservas.length / rowsPerPage))
   const handleChangeRowsPerPage = (e) => { setRowsPerPage(Number.parseInt(e.target.value, 10)); setPage(0) }
 
-  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     FIX 1 — handleOpenEdit: normalizar documento en acompañantes
-     El campo puede llegar como `documento` o `documento_acompanante` desde la BD.
-     Se unifican ambos para que el form siempre tenga `documento` disponible.
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  /* ── handleOpenEdit ── */
   const handleOpenEdit = async (reserva) => {
     setDetailsOpen(false)
     setFormErrors(INITIAL_ERRORS)
@@ -540,12 +571,9 @@ const ReservasList = () => {
     if (reserva) {
       try {
         const updatedReserva = await getReservaById(reserva._id)
-
         const apartamentosIds = updatedReserva.apartamentos
           ? updatedReserva.apartamentos.map(apt => typeof apt === "object" ? apt._id : apt)
           : []
-
-        // FIX 1: normalizar siempre documento y documento_acompanante
         const formattedAcompanantes = (updatedReserva.acompanantes || []).map(a => {
           const docValue = a.documento || a.documento_acompanante || ""
           return {
@@ -556,7 +584,6 @@ const ReservasList = () => {
             documento_acompanante: docValue,
           }
         })
-
         setFormData({
           ...updatedReserva,
           apartamentos: apartamentosIds,
@@ -567,7 +594,7 @@ const ReservasList = () => {
         setEditingId(updatedReserva._id)
       } catch (error) {
         console.error("Error al obtener los detalles de la reserva", error)
-        Swal.fire({ ...SW, icon: "error", title: "Error", text: "No se pudieron cargar los detalles de la reserva.", customClass: { container: "swal-overlay-z-index", popup: "rs-pop" } })
+        Swal.fire({ ...SW, icon: "error", title: "Error", text: "No se pudieron cargar los detalles de la reserva." })
         return
       }
     } else {
@@ -587,15 +614,22 @@ const ReservasList = () => {
       setDetailsOpen(true)
     } catch (error) {
       console.error("Error al obtener los detalles de la reserva", error)
-      Swal.fire({ ...SW, icon: "error", title: "Error", text: "No se pudieron cargar los detalles de la reserva.", customClass: { container: "swal-overlay-z-index", popup: "rs-pop" } })
+      Swal.fire({ ...SW, icon: "error", title: "Error", text: "No se pudieron cargar los detalles de la reserva." })
     }
   }
 
   const handleCloseDetails = () => setDetailsOpen(false)
 
-  /* ── validateField ── */
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     validateField — solo actualiza helperText,
+     nunca lanza Swal dentro del modal.
+     Reglas de fecha actualizadas:
+       - fecha_inicio >= mañana
+       - fecha_fin    >= fecha_inicio
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   const validateField = (name, value, index = null) => {
     let error = ""
+
     if (index !== null) {
       const acompananteErrors = { ...formErrors.acompanantes }
       if (!acompananteErrors[index]) acompananteErrors[index] = {}
@@ -613,12 +647,10 @@ const ReservasList = () => {
           if (!value.trim()) error = "El documento es obligatorio"
           else if (!/^\d+$/.test(value)) error = "El documento solo debe contener números"
           else if (value.length > 10) error = "El documento no debe exceder 10 dígitos"
-          // guardar bajo la clave "documento" siempre
           acompananteErrors[index].documento = error; break
         default: break
       }
       setFormErrors(prev => ({ ...prev, acompanantes: acompananteErrors }))
-      // FIX: errors shown in helperText, no Swal toast inside Dialog
       return error === ""
     }
 
@@ -627,28 +659,32 @@ const ReservasList = () => {
         if (!value.trim()) error = "El nombre del cliente es obligatorio"
         else if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(value)) error = "El nombre del cliente solo debe contener letras"
         break
-      case "fecha_inicio":
-        if (!value) { error = "La fecha de inicio es obligatoria" }
-        else {
-          const today = new Date(); today.setHours(0, 0, 0, 0)
-          const minDate = new Date(today); minDate.setDate(today.getDate() + 2)
-          const sel = new Date(value); sel.setHours(0, 0, 0, 0)
-          if (sel < minDate) error = "La fecha de inicio debe ser al menos 2 días después de hoy"
+      case "fecha_inicio": {
+        if (!value) {
+          error = "La fecha de inicio es obligatoria"
+        } else {
+          const today = getToday()
+          const sel = parseDateLocal(value)
+          if (sel < today) error = "La fecha de inicio debe ser igual o posterior a hoy"
         }
         break
-      case "fecha_fin":
-        if (!value) { error = "La fecha de fin es obligatoria" }
-        else if (formData.fecha_inicio) {
-          if (new Date(value) <= new Date(formData.fecha_inicio)) error = "La fecha de fin debe ser posterior a la fecha de inicio"
+      }
+      case "fecha_fin": {
+        if (!value) {
+          error = "La fecha de fin es obligatoria"
+        } else if (formData.fecha_inicio) {
+          const inicio = parseDateLocal(formData.fecha_inicio)
+          const fin = parseDateLocal(value)
+          if (fin < inicio) error = "La fecha de fin debe ser igual o posterior a la fecha de inicio"
         }
         break
+      }
       case "apartamentos":
         if (!value || value.length === 0) error = "Debe seleccionar al menos un apartamento"
         break
       default: break
     }
     setFormErrors(prev => ({ ...prev, [name]: error }))
-    // FIX: errors shown in helperText, no Swal toast inside Dialog
     return error === ""
   }
 
@@ -674,8 +710,6 @@ const ReservasList = () => {
     }))
   }
 
-  // FIX: eliminación directa sin Swal confirm — el popup de confirmación sobre el Dialog
-  // de MUI bloquea la interacción. El botón X ya es suficientemente explícito como acción destructiva.
   const handleDeleteAcompanante = (index) => {
     setFormData(prev => {
       const n = [...prev.acompanantes]; n.splice(index, 1); return { ...prev, acompanantes: n }
@@ -685,17 +719,11 @@ const ReservasList = () => {
     })
   }
 
-  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     FIX 2 — handleAcompananteChange: sincronizar siempre
-     ambos campos (documento y documento_acompanante)
-     sin importar cuál venga en el event.
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   const handleAcompananteChange = (index, e) => {
     const { name, value } = e.target
     setFormData(prev => {
       const n = [...prev.acompanantes]
       if (name === "documento" || name === "documento_acompanante") {
-        // FIX 2: mantener ambos campos en sync para evitar undefined en validación
         n[index] = { ...n[index], documento: value, documento_acompanante: value }
       } else {
         n[index] = { ...n[index], [name]: value }
@@ -706,9 +734,9 @@ const ReservasList = () => {
   }
 
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     FIX 3 — getFormErrors: lógica de validación
-     extraída a función pura que devuelve el objeto
-     errors sin depender del estado (evita stale closure).
+     getFormErrors — función pura, reglas actualizadas:
+       - fecha_inicio >= mañana
+       - fecha_fin    >= fecha_inicio
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   const getFormErrors = () => {
     const errors = { titular_reserva: "", fecha_inicio: "", fecha_fin: "", apartamentos: "", acompanantes: {} }
@@ -723,16 +751,17 @@ const ReservasList = () => {
     if (!formData.fecha_inicio) {
       errors.fecha_inicio = "La fecha de inicio es obligatoria"; isValid = false
     } else {
-      const today = new Date(); today.setHours(0, 0, 0, 0)
-      const minDate = new Date(today); minDate.setDate(today.getDate() + 2)
-      const sel = new Date(formData.fecha_inicio); sel.setHours(0, 0, 0, 0)
-      if (sel < minDate) { errors.fecha_inicio = "La fecha de inicio debe ser al menos 2 días después de hoy"; isValid = false }
+      const today = getToday()
+      const sel = parseDateLocal(formData.fecha_inicio)
+      if (sel < today) { errors.fecha_inicio = "La fecha de inicio debe ser igual o posterior a hoy"; isValid = false }
     }
 
     if (!formData.fecha_fin) {
       errors.fecha_fin = "La fecha de fin es obligatoria"; isValid = false
-    } else if (formData.fecha_inicio && new Date(formData.fecha_fin) <= new Date(formData.fecha_inicio)) {
-      errors.fecha_fin = "La fecha de fin debe ser posterior a la fecha de inicio"; isValid = false
+    } else if (formData.fecha_inicio) {
+      const inicio = parseDateLocal(formData.fecha_inicio)
+      const fin = parseDateLocal(formData.fecha_fin)
+      if (fin < inicio) { errors.fecha_fin = "La fecha de fin debe ser igual o posterior a la fecha de inicio"; isValid = false }
     }
 
     if (!formData.apartamentos || formData.apartamentos.length === 0) {
@@ -742,7 +771,6 @@ const ReservasList = () => {
     if (formData.acompanantes?.length > 0) {
       formData.acompanantes.forEach((acomp, index) => {
         if (!errors.acompanantes[index]) errors.acompanantes[index] = {}
-        // FIX 3: usar ?? "" para evitar llamar .trim() sobre undefined
         const nombre = acomp.nombre ?? ""
         const apellido = acomp.apellido ?? ""
         const documento = acomp.documento ?? acomp.documento_acompanante ?? ""
@@ -763,32 +791,17 @@ const ReservasList = () => {
   }
 
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     FIX 3 cont. — handleSubmit: usa errors local
-     (no formErrors del estado que puede estar stale)
+     handleSubmit — errores de validación se
+     muestran en el banner inline del modal,
+     nunca en un Swal externo al Dialog.
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   const handleSubmit = async () => {
     const { errors, isValid } = getFormErrors()
     setFormErrors(errors)
 
-    if (!isValid) {
-      const errorMessages = []
-      if (errors.titular_reserva) errorMessages.push(errors.titular_reserva)
-      if (errors.fecha_inicio) errorMessages.push(errors.fecha_inicio)
-      if (errors.fecha_fin) errorMessages.push(errors.fecha_fin)
-      if (errors.apartamentos) errorMessages.push(errors.apartamentos)
-      // FIX 3: iterar sobre errors local, no sobre formErrors stale
-      Object.keys(errors.acompanantes).forEach(index => {
-        const ae = errors.acompanantes[index]
-        if (ae.nombre) errorMessages.push(`Acompañante ${Number(index) + 1}: ${ae.nombre}`)
-        if (ae.apellido) errorMessages.push(`Acompañante ${Number(index) + 1}: ${ae.apellido}`)
-        if (ae.documento) errorMessages.push(`Acompañante ${Number(index) + 1}: ${ae.documento}`)
-      })
-      return Swal.fire({
-        ...SWD, icon: "error", title: "Error de validación",
-        html: errorMessages.map(e => `• ${e}`).join("<br>"),
-        customClass: { container: "swal-overlay-z-index", popup: "rs-pop rs-danger" }
-      })
-    }
+    // Si hay errores, simplemente los mostramos en el banner inline y salimos.
+    // NO lanzamos ningún Swal aquí para no sacar el foco del modal.
+    if (!isValid) return
 
     try {
       const dataToSend = {
@@ -800,7 +813,6 @@ const ReservasList = () => {
           _id: a._id,
           nombre: a.nombre,
           apellido: a.apellido,
-          // FIX 3: garantizar que documento nunca sea undefined al enviar
           documento: a.documento || a.documento_acompanante || "",
         })),
       }
@@ -815,9 +827,10 @@ const ReservasList = () => {
       fetchReservas(); handleCloseEdit(); setDetailsOpen(false)
     } catch (error) {
       console.error("Error al guardar la reserva:", error)
+      // Error de red / servidor → sí usamos Swal porque el modal ya cerró o no aplica
       Swal.fire({
-        ...SWD, icon: "error", title: "Error al guardar", text: error.message || "Ocurrió un error al guardar la reserva.",
-        customClass: { container: "swal-overlay-z-index", popup: "rs-pop rs-danger" }
+        ...SWD, icon: "error", title: "Error al guardar",
+        text: error.message || "Ocurrió un error al guardar la reserva.",
       })
     }
   }
@@ -825,12 +838,11 @@ const ReservasList = () => {
   const handleDelete = async (id) => {
     const r = reservas.find(x => x._id === id)
     if (r?.estado === "confirmada") {
-      return Swal.fire({ ...SW, icon: "error", title: "No se puede eliminar", text: "Una reserva confirmada no puede ser eliminada.", customClass: { container: "swal-overlay-z-index", popup: "rs-pop" } })
+      return Swal.fire({ ...SW, icon: "error", title: "No se puede eliminar", text: "Una reserva confirmada no puede ser eliminada." })
     }
     const result = await Swal.fire({
       ...SWD, title: "¿Estás seguro?", text: "Esta acción no se puede deshacer.",
       icon: "warning", showCancelButton: true, confirmButtonText: "Sí, eliminar", cancelButtonText: "Cancelar",
-      customClass: { container: "swal-overlay-z-index", popup: "rs-pop rs-danger" }
     })
     if (result.isConfirmed) {
       try {
@@ -839,7 +851,7 @@ const ReservasList = () => {
         fetchReservas()
       } catch (error) {
         console.error("Error al eliminar la reserva:", error)
-        Swal.fire({ ...SWD, icon: "error", title: "Error al eliminar", text: error.message || "Ocurrió un error al eliminar la reserva.", customClass: { container: "swal-overlay-z-index", popup: "rs-pop rs-danger" } })
+        Swal.fire({ ...SWD, icon: "error", title: "Error al eliminar", text: error.message || "Ocurrió un error al eliminar la reserva." })
       }
     }
   }
@@ -864,6 +876,22 @@ const ReservasList = () => {
   const totalConfirmadas = reservas.filter(r => r.estado === "confirmada").length
   const totalCanceladas = reservas.filter(r => r.estado === "cancelada").length
   const totalPendientes = reservas.filter(r => r.estado === "pendiente").length
+
+  /* ── Banner de errores inline ── */
+  const getInlineErrorMessages = () => {
+    const msgs = []
+    if (formErrors.titular_reserva) msgs.push(formErrors.titular_reserva)
+    if (formErrors.fecha_inicio) msgs.push(formErrors.fecha_inicio)
+    if (formErrors.fecha_fin) msgs.push(formErrors.fecha_fin)
+    if (formErrors.apartamentos) msgs.push(formErrors.apartamentos)
+    Object.keys(formErrors.acompanantes).forEach(idx => {
+      const ae = formErrors.acompanantes[idx]
+      if (ae?.nombre) msgs.push(`Acompañante ${Number(idx) + 1}: ${ae.nombre}`)
+      if (ae?.apellido) msgs.push(`Acompañante ${Number(idx) + 1}: ${ae.apellido}`)
+      if (ae?.documento) msgs.push(`Acompañante ${Number(idx) + 1}: ${ae.documento}`)
+    })
+    return msgs
+  }
 
   const DlgHdr = ({ icon, title, sub, onClose }) => (
     <Box className={classes.dlgHdr}>
@@ -1072,6 +1100,23 @@ const ReservasList = () => {
         />
         <DialogContent className={classes.dlgBody}>
 
+          {/* ── Banner de errores inline (reemplaza el Swal externo) ── */}
+          {(() => {
+            const msgs = getInlineErrorMessages()
+            return msgs.length > 0 ? (
+              <Box className={classes.errorBanner}>
+                <Typography className={classes.errorBannerTitle}>
+                  Corrige los siguientes campos:
+                </Typography>
+                {msgs.map((m, i) => (
+                  <Typography key={i} className={classes.errorBannerItem}>
+                    <span style={{ flexShrink: 0, marginTop: 1 }}>•</span> {m}
+                  </Typography>
+                ))}
+              </Box>
+            ) : null
+          })()}
+
           {/* Sección 1: Información del Cliente */}
           <Box className={classes.fmSection}>
             <Box className={classes.fmSectionLbl}>
@@ -1259,7 +1304,6 @@ const ReservasList = () => {
                     InputProps={{ startAdornment: <InputAdornment position="start"><User size={14} color={T.ink3} strokeWidth={2} /></InputAdornment> }}
                   />
                 </Box>
-                {/* FIX: usar siempre acomp.documento (ya normalizado en handleOpenEdit) */}
                 <TextField
                   className={`${classes.fmField} ${formErrors.acompanantes[index]?.documento ? classes.fmFieldError : ""}`}
                   label="Documento" name="documento"
@@ -1390,7 +1434,6 @@ const ReservasList = () => {
                             {acomp.nombre} {acomp.apellido}
                           </Typography>
                           <Typography style={{ fontFamily: "'DM Sans',sans-serif", fontSize: ".78rem", color: T.ink3, marginLeft: "auto" }}>
-                            {/* FIX: normalizar también en la vista de detalles */}
                             Doc: {acomp.documento || acomp.documento_acompanante || acomp.numero_documento || "N/A"}
                           </Typography>
                         </Box>

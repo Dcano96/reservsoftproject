@@ -17,7 +17,7 @@ import {
 } from "@material-ui/icons"
 import authService from "./auth.service"
 import { useHistory } from "react-router-dom"
-import "./style.css"
+
 
 // Modificar los estilos adicionales para hacer los inputs más grandes
 const estilosAdicionales = {
