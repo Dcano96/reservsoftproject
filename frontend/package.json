@@ -2,7 +2,6 @@
   "name": "reservsoft-frontend",
   "version": "1.0.0",
   "private": true,
-  "proxy": "http://localhost:5000",
   "dependencies": {
     "@craco/craco": "6.4.3",
     "@date-io/date-fns": "^1.3.13",
@@ -35,8 +34,8 @@
     "xlsx": "^0.18.5"
   },
   "scripts": {
-    "start": "set NODE_OPTIONS=--openssl-legacy-provider && craco start",
-    "build": "set NODE_OPTIONS=--openssl-legacy-provider && craco build",
+    "start": "NODE_OPTIONS=--openssl-legacy-provider craco start",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider craco build",
     "test": "craco test",
     "eject": "react-scripts eject"
   },
