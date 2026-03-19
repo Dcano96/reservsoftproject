@@ -9,7 +9,6 @@ yarn-error.log
 .env.development
 .env.test
 .env.production
-*.env
 
 # Archivos de construcción
 /dist
@@ -56,7 +55,3 @@ coverage/
 *.cert
 *.p12
 credentials.json
-*credentials*
-*secret*
-*password*
-*token*
