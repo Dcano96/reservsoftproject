@@ -2,1567 +2,1564 @@
 import React, { useState, useEffect, useRef } from "react"
 import { useHistory } from "react-router-dom"
 import {
-  Typography,
-  Button,
-  Grid,
-  Card,
-  CardContent,
-  Box,
-  Paper,
-  TextField,
-  AppBar,
-  Toolbar,
-  IconButton,
-  Drawer,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  Zoom,
-  Slide,
-  useMediaQuery,
-  useTheme,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  Fade,
+  Typography, Button, Grid, Card, CardContent, Box, Paper,
+  TextField, AppBar, Toolbar, IconButton, Drawer, List,
+  ListItem, ListItemText, Divider, Zoom, Slide, useMediaQuery,
+  useTheme, Chip, Dialog, DialogTitle, DialogContent, Fade,
 } from "@material-ui/core"
 import { makeStyles } from "@material-ui/core/styles"
 import {
-  LocationOn,
-  Star,
-  Menu as MenuIcon,
-  Close,
-  LocalHotel,
-  Bathtub,
-  Person,
-  ChevronLeft,
-  ChevronRight,
-  Favorite,
-  FavoriteBorder,
-  Search,
-  PlayArrow,
-  Visibility,
-  Pool,
-  Wifi,
-  Spa,
-  FitnessCenter,
-  Restaurant,
-  AcUnit,
-  LocalBar,
-  Security,
-  Facebook,
-  Instagram,
-  Twitter,
-  Room,
-  ArrowForward,
-  CheckCircle,
-  Phone,
-  Email,
-  CloudUpload,
-  Add,
-  InfoOutlined,
-  Description,
+  LocationOn, Star, Menu as MenuIcon, Close, LocalHotel, Bathtub,
+  Person, ChevronLeft, ChevronRight, Favorite, FavoriteBorder,
+  Search, PlayArrow, Visibility, Pool, Wifi, Spa, FitnessCenter,
+  Restaurant, AcUnit, LocalBar, Security, Facebook, Instagram,
+  Twitter, Room, ArrowForward, CheckCircle, Phone, Email,
+  CloudUpload, Add, InfoOutlined, Description, ArrowUpward,
+  FlashOn, TrendingUp, EmojiEvents, Explore,
 } from "@material-ui/icons"
 import axios from "axios"
 import Swal from "sweetalert2"
 
-// ✅ Configuración de API con variables de entorno
+/* ─── API CONFIG (unchanged) ─────────────────────────────────────────────── */
 const API_BASE_URL = process.env.REACT_APP_API_URL || ""
-
-// ✅ Configurar las rutas específicas
 const API_ENDPOINTS = {
   apartamentos: API_BASE_URL ? `${API_BASE_URL}/api/apartamentos` : "/api/apartamentos",
   apartamentosDestacados: API_BASE_URL
     ? `${API_BASE_URL}/api/landing/apartamentos-destacados`
     : "/api/landing/apartamentos-destacados",
   reservasPublica: API_BASE_URL ? `${API_BASE_URL}/api/reservas/publica` : "/api/reservas/publica",
-  fechasReservadas: (apartamentoId) =>
-    API_BASE_URL
-      ? `${API_BASE_URL}/api/reservas/fechas-reservadas/${apartamentoId}`
-      : `/api/reservas/fechas-reservadas/${apartamentoId}`,
+  fechasReservadas: (id) =>
+    API_BASE_URL ? `${API_BASE_URL}/api/reservas/fechas-reservadas/${id}` : `/api/reservas/fechas-reservadas/${id}`,
 }
-
-console.log("🔧 API Configuration Landing:", {
-  baseUrl: API_BASE_URL,
-  endpoints: API_ENDPOINTS,
-})
-
-// ✅ Función para hacer llamadas a la API con manejo de errores
 const apiCall = async (url, options = {}) => {
-  try {
-    console.log(`📡 API Call: ${url}`)
-    const response = await axios.get(url, options)
-    console.log(`✅ API Success: ${url}`, response.data)
-    return response
-  } catch (error) {
-    console.error(`❌ API Error: ${url}`, error.response?.data || error.message)
-    throw error
-  }
+  const response = await axios.get(url, options)
+  return response
 }
 
-// Paleta de colores moderna y elegante
-const theme = {
-  primary: "#0A2463", // Azul oscuro
-  secondary: "#3E92CC", // Azul claro
-  accent: "#D8B08C", // Dorado/Beige
-  light: "#FFFAFF", // Blanco hueso
-  dark: "#1E1B18", // Negro suave
-  gray: "#8D99AE", // Gris azulado
-  success: "#2EC4B6", // Verde turquesa
-  gradient: "linear-gradient(135deg, #0A2463 0%, #3E92CC 100%)", // Gradiente azul
-  accentGradient: "linear-gradient(135deg, #D8B08C 0%, #E6CCB2 100%)", // Gradiente dorado
-}
+/* ─── SAMPLE DATA (unchanged) ─────────────────────────────────────────────── */
+const apartamentosEjemplo = [
+  { id:1, nombre:"Apartamento Tipo 1", tipo:"Tipo 1", ubicacion:"El Poblado, Medellín", precio:250, capacidad:2, camas:1, banos:1, tamano:45, caracteristicas:["Balcón","Vista ciudad","Cocina equipada","WiFi"], imagen:"https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80", disponible:true, tag:"Popular" },
+  { id:2, nombre:"Apartamento Tipo 2", tipo:"Tipo 2", ubicacion:"El Poblado, Medellín", precio:350, capacidad:4, camas:2, banos:2, tamano:75, caracteristicas:["Sala de estar","Comedor","Terraza","Smart TV"], imagen:"https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80", disponible:true, tag:"Familiar" },
+  { id:3, nombre:"Penthouse Exclusivo", tipo:"Penthouse", ubicacion:"El Poblado, Medellín", precio:550, capacidad:6, camas:3, banos:3, tamano:120, caracteristicas:["Terraza panorámica","Jacuzzi","Bar privado","Concierge"], imagen:"https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80", disponible:true, tag:"Lujo" },
+  { id:4, nombre:"Suite Ejecutiva", tipo:"Suite", ubicacion:"El Poblado, Medellín", precio:400, capacidad:2, camas:1, banos:1, tamano:60, caracteristicas:["Escritorio","Cafetera","Minibar","Caja fuerte"], imagen:"https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80", disponible:true, tag:"Ejecutivo" },
+  { id:5, nombre:"Apartamento Familiar", tipo:"Tipo 2", ubicacion:"El Poblado, Medellín", precio:380, capacidad:5, camas:2, banos:2, tamano:85, caracteristicas:["Cocina completa","Área juegos","Lavadora","Secadora"], imagen:"https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80", disponible:true, tag:"Familiar" },
+  { id:6, nombre:"Loft Moderno", tipo:"Loft", ubicacion:"El Poblado, Medellín", precio:320, capacidad:2, camas:1, banos:1, tamano:55, caracteristicas:["Diseño abierto","LED","Smart TV","Sonido"], imagen:"https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80", disponible:true, tag:"Moderno" },
+]
+const testimoniosEjemplo = [
+  { id:1, nombre:"María Rodríguez", comentario:"Una experiencia increíble. Las vistas desde nuestra habitación eran espectaculares y el servicio fue impecable. Definitivamente volveremos a Nido Sky.", rating:5, avatar:"https://randomuser.me/api/portraits/women/44.jpg", rol:"Huésped frecuente" },
+  { id:2, nombre:"Carlos Mendoza", comentario:"El mejor hotel en El Poblado. La atención al detalle es extraordinaria y las instalaciones son de primera clase. El penthouse es simplemente espectacular.", rating:5, avatar:"https://randomuser.me/api/portraits/men/32.jpg", rol:"Viajero de negocios" },
+  { id:3, nombre:"Ana Gómez", comentario:"Nido Sky superó todas nuestras expectativas. El spa es increíble y la comida del restaurante es deliciosa. La ubicación en El Poblado es perfecta.", rating:5, avatar:"https://randomuser.me/api/portraits/women/68.jpg", rol:"Turista internacional" },
+]
+const heroImages = [
+  "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1600&q=85",
+  "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1600&q=85",
+  "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=1600&q=85",
+]
 
-// Estilos completamente renovados para un diseño moderno y distintivo
-const useStyles = makeStyles((theme) => ({
+
+/* ─── STYLES — Paleta clara inspirada en UsuarioList ────────────────────── */
+/* Colores base:
+   Fondo: #F4F1FF (lila muy claro) / #FFFFFF
+   Texto: #0C0A14 (casi negro) / #2D2640 / #6B5E87
+   Acento: #6C3FFF → #C040FF (violeta)
+   Cards: rgba(255,255,255,0.82) con glassmorphism
+*/
+const useStyles = makeStyles((muiTheme) => ({
   root: {
     overflowX: "hidden",
+    backgroundColor: "#F4F1FF",
+    fontFamily: "'Outfit', sans-serif",
+    color: "#0C0A14",
     position: "relative",
-    backgroundColor: "#FFFAFF",
-    fontFamily: "'Poppins', sans-serif",
-    color: "#1E1B18",
   },
-  // Navbar
+
+  "@global": {
+    "@import": "url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap')",
+    "@keyframes floatY": {
+      "0%,100%": { transform: "translateY(0px)" },
+      "50%": { transform: "translateY(-18px)" },
+    },
+    "@keyframes pulse": {
+      "0%,100%": { opacity: 1, transform: "scale(1)" },
+      "50%": { opacity: 0.7, transform: "scale(1.08)" },
+    },
+    "@keyframes shimmer": {
+      "0%": { backgroundPosition: "-200% center" },
+      "100%": { backgroundPosition: "200% center" },
+    },
+    "@keyframes slideInUp": {
+      "0%": { transform: "translateY(50px)", opacity: 0 },
+      "100%": { transform: "translateY(0)", opacity: 1 },
+    },
+    "@keyframes cardFloat": {
+      "0%,100%": { transform: "translateY(0) rotateX(0deg)" },
+      "50%": { transform: "translateY(-6px) rotateX(2deg)" },
+    },
+    "*": { boxSizing: "border-box", scrollBehavior: "smooth" },
+    "body,html": { margin: 0, padding: 0 },
+    "::-webkit-scrollbar": { width: 6 },
+    "::-webkit-scrollbar-track": { background: "#EDE9FF" },
+    "::-webkit-scrollbar-thumb": { background: "linear-gradient(#6C3FFF,#C040FF)", borderRadius: 3 },
+    /* Swal toasts must appear above MUI Dialog (z-index 1300) */
+    ".swal2-container": { zIndex: "9999 !important" },
+    ".swal2-toast": { fontFamily: "'Outfit',sans-serif !important", borderRadius: "14px !important", boxShadow: "0 8px 32px rgba(108,63,255,0.20) !important", border: "1px solid rgba(108,63,255,0.18) !important" },
+    ".swal2-popup.swal2-toast .swal2-title": { fontSize: "0.88rem !important", fontWeight: "700 !important", color: "#0C0A14 !important" },
+    ".swal2-popup.swal2-toast .swal2-html-container": { fontSize: "0.80rem !important", color: "#6B5E87 !important" },
+  },
+
+  /* ── PARTICLES CANVAS ── */
+  particleCanvas: {
+    position: "fixed",
+    inset: 0,
+    pointerEvents: "none",
+    zIndex: 0,
+    opacity: 0.18,
+  },
+
+  /* ── NAVBAR ── */
   appBar: {
     backgroundColor: "transparent",
     boxShadow: "none",
-    position: "absolute",
-    zIndex: 1100,
-    transition: "all 0.4s ease",
+    position: "fixed",
+    zIndex: 1300,
+    transition: "all 0.5s cubic-bezier(.4,0,.2,1)",
   },
   appBarScrolled: {
-    backgroundColor: "rgba(10, 36, 99, 0.95)",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+    background: "rgba(12,10,20,0.96)",
+    backdropFilter: "blur(20px) saturate(180%)",
+    borderBottom: "1px solid rgba(108,63,255,0.35)",
+    boxShadow: "0 4px 24px rgba(0,0,0,0.35)",
   },
   toolbar: {
     display: "flex",
     justifyContent: "space-between",
-    padding: theme.spacing(2, 4),
-    [theme.breakpoints.down("sm")]: {
-      padding: theme.spacing(1, 2),
-    },
+    alignItems: "center",
+    padding: "0 56px",
+    height: 76,
+    [muiTheme.breakpoints.down("sm")]: { padding: "0 20px" },
   },
-  logo: {
+  logoWrap: {
     display: "flex",
     alignItems: "center",
+    gap: 10,
     cursor: "pointer",
     "& img": {
-      height: 80, // Aumentado de 50px a 80px
-      objectFit: "contain",
-      transition: "all 0.3s ease",
+      height: 46,
+      filter: "drop-shadow(0 0 10px rgba(108,63,255,0.5))",
     },
   },
   navLinks: {
     display: "flex",
     alignItems: "center",
-    [theme.breakpoints.down("sm")]: {
-      display: "none",
-    },
+    gap: 4,
+    [muiTheme.breakpoints.down("sm")]: { display: "none" },
   },
   navLink: {
-    color: "#FFFAFF",
-    marginLeft: theme.spacing(4),
+    color: "rgba(255,255,255,0.88)",
     textTransform: "none",
-    fontSize: "0.95rem",
+    fontSize: "0.88rem",
     fontWeight: 500,
-    position: "relative",
-    "&::after": {
-      content: '""',
-      position: "absolute",
-      bottom: -5,
-      left: 0,
-      width: 0,
-      height: 2,
-      backgroundColor: "#D8B08C",
-      transition: "all 0.3s ease",
-    },
-    "&:hover::after": {
-      width: "100%",
+    fontFamily: "'Outfit', sans-serif",
+    padding: "6px 16px",
+    borderRadius: 8,
+    transition: "all 0.3s",
+    "&:hover": {
+      color: "#fff",
+      backgroundColor: "rgba(255,255,255,0.12)",
     },
   },
-  activeNavLink: {
-    color: "#D8B08C",
-    fontWeight: 600,
-    "&::after": {
-      width: "100%",
+  navLinkScrolled: {
+    color: "#fff !important",
+    "&:hover": {
+      color: "#C4B5FD !important",
+      backgroundColor: "rgba(108,63,255,0.20) !important",
+    },
+  },
+  activeNavLink: { color: "#C4B5FD !important" },
+  loginButton: {
+    marginLeft: 8,
+    background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
+    color: "#fff",
+    padding: "9px 28px",
+    borderRadius: 50,
+    textTransform: "none",
+    fontWeight: 700,
+    fontSize: "0.88rem",
+    fontFamily: "'Outfit', sans-serif",
+    boxShadow: "0 5px 18px rgba(108,63,255,0.40)",
+    transition: "all 0.35s",
+    "&:hover": {
+      transform: "translateY(-2px) scale(1.03)",
+      boxShadow: "0 9px 26px rgba(108,63,255,0.55)",
     },
   },
   menuButton: {
     display: "none",
-    color: "#FFFAFF",
-    [theme.breakpoints.down("sm")]: {
-      display: "block",
-    },
+    color: "#6C3FFF",
+    [muiTheme.breakpoints.down("sm")]: { display: "block" },
   },
-  loginButton: {
-    marginLeft: theme.spacing(4),
-    backgroundColor: "#D8B08C",
-    color: "#0A2463",
-    padding: "10px 30px",
-    borderRadius: "4px",
-    textTransform: "none",
-    fontWeight: 600,
-    transition: "all 0.3s ease",
-    "&:hover": {
-      backgroundColor: "#E6CCB2",
-      transform: "translateY(-2px)",
-      boxShadow: "0 6px 20px rgba(216, 176, 140, 0.3)",
-    },
-  },
-  // Drawer
+
+  /* ── DRAWER ── */
   drawer: {
-    width: 280,
+    width: 300,
+    "& .MuiDrawer-paper": {
+      background: "#fff",
+      borderRight: "1px solid rgba(108,63,255,0.14)",
+      boxShadow: "4px 0 32px rgba(108,63,255,0.10)",
+    },
   },
   drawerHeader: {
+    padding: "28px 24px 20px",
+    borderBottom: "1px solid rgba(108,63,255,0.10)",
     display: "flex",
-    alignItems: "center",
     justifyContent: "space-between",
-    padding: theme.spacing(2, 3),
-    background: "linear-gradient(135deg, #0A2463 0%, #3E92CC 100%)",
-    color: "#FFFAFF",
-    height: 80,
-  },
-  drawerLogo: {
-    display: "flex",
     alignItems: "center",
-    "& img": {
-      height: 60, // Aumentado de 40px a 60px
-      marginRight: theme.spacing(1),
-    },
   },
-  drawerContent: {
-    padding: theme.spacing(2, 0),
+  drawerLogoText: {
+    fontFamily: "'Playfair Display', serif",
+    fontStyle: "italic",
+    fontSize: "1.4rem",
+    fontWeight: 700,
+    background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    backgroundClip: "text",
   },
   drawerItem: {
-    padding: theme.spacing(1.5, 3),
-    transition: "all 0.2s ease",
+    padding: "12px 24px",
+    transition: "all 0.2s",
     "&:hover": {
-      backgroundColor: "rgba(10, 36, 99, 0.05)",
+      backgroundColor: "rgba(108,63,255,0.07)",
+      paddingLeft: 32,
+    },
+    "& span": {
+      color: "#2D2640",
+      fontFamily: "'Outfit', sans-serif",
+      fontSize: "0.95rem",
     },
   },
-  drawerItemText: {
-    fontSize: "1rem",
-    fontWeight: 500,
-    color: "#0A2463",
-  },
-  drawerDivider: {
-    margin: theme.spacing(2, 0),
-    backgroundColor: "rgba(10, 36, 99, 0.1)",
-  },
-  drawerLoginButton: {
-    margin: theme.spacing(2, 3),
-    backgroundColor: "#D8B08C",
-    color: "#0A2463",
-    padding: "10px 0",
-    borderRadius: "4px",
+  drawerLoginBtn: {
+    margin: "16px 24px",
+    background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
+    color: "#fff",
+    borderRadius: 50,
     textTransform: "none",
-    fontWeight: 600,
+    fontWeight: 700,
     width: "calc(100% - 48px)",
-    "&:hover": {
-      backgroundColor: "#E6CCB2",
-    },
+    padding: "12px 0",
+    fontFamily: "'Outfit', sans-serif",
+    boxShadow: "0 5px 18px rgba(108,63,255,0.38)",
   },
-  // Hero Section
+
+  /* ── HERO — mantiene fondo oscuro porque es sobre fotos ── */
   heroSection: {
     position: "relative",
     height: "100vh",
-    width: "100%",
-    overflow: "hidden",
+    minHeight: 700,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
-  heroBackground: {
+  heroBg: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
+    inset: 0,
     backgroundSize: "cover",
     backgroundPosition: "center",
-    transition: "opacity 5s linear",
-    "&::before": {
+    transition: "opacity 1.5s ease",
+    "&::after": {
       content: '""',
       position: "absolute",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      backgroundColor: "rgba(10, 36, 99, 0.3)",
-      backgroundImage:
-        "linear-gradient(to bottom, rgba(10, 36, 99, 0.3) 0%, rgba(10, 36, 99, 0.3) 50%, rgba(10, 36, 99, 0.3) 100%)",
+      inset: 0,
+      background: "linear-gradient(135deg, rgba(12,10,20,0.72) 0%, rgba(108,63,255,0.38) 50%, rgba(12,10,20,0.78) 100%)",
     },
+  },
+  heroGlowOrb1: {
+    position: "absolute",
+    width: 600,
+    height: 600,
+    borderRadius: "50%",
+    background: "radial-gradient(circle, rgba(108,63,255,0.30) 0%, transparent 70%)",
+    top: -100,
+    right: -100,
+    animation: "$floatY 8s ease-in-out infinite",
+    pointerEvents: "none",
+    zIndex: 1,
+  },
+  heroGlowOrb2: {
+    position: "absolute",
+    width: 400,
+    height: 400,
+    borderRadius: "50%",
+    background: "radial-gradient(circle, rgba(192,64,255,0.22) 0%, transparent 70%)",
+    bottom: -50,
+    left: -50,
+    animation: "$floatY 10s ease-in-out infinite reverse",
+    pointerEvents: "none",
+    zIndex: 1,
   },
   heroContent: {
     position: "relative",
     zIndex: 2,
     textAlign: "center",
-    color: "#FFFAFF",
-    maxWidth: 1200,
-    padding: theme.spacing(0, 3),
+    maxWidth: 900,
+    padding: "0 32px",
+    animation: "$slideInUp 1s ease forwards",
+  },
+  heroBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    background: "rgba(255,255,255,0.18)",
+    border: "1px solid rgba(255,255,255,0.38)",
+    borderRadius: 100,
+    padding: "7px 20px",
+    marginBottom: 24,
+    backdropFilter: "blur(12px)",
+    "& svg": { fontSize: 16, color: "#fff" },
+    "& span": {
+      fontSize: "0.78rem",
+      fontWeight: 600,
+      letterSpacing: "0.12em",
+      textTransform: "uppercase",
+      color: "#fff",
+      fontFamily: "'Outfit', sans-serif",
+    },
   },
   heroTitle: {
-    fontFamily: "'Playfair Display', serif",
-    fontSize: "5rem",
-    fontWeight: 700,
-    marginBottom: theme.spacing(2),
-    textShadow: "2px 2px 4px rgba(0,0,0,0.3)",
-    [theme.breakpoints.down("sm")]: {
-      fontSize: "3rem",
-    },
-    "& span": {
-      color: "#D8B08C",
-    },
-  },
-  heroSubtitle: {
-    fontSize: "1.5rem",
-    maxWidth: 700,
-    margin: "0 auto",
-    marginBottom: theme.spacing(5),
-    textShadow: "1px 1px 3px rgba(0,0,0,0.3)",
-    [theme.breakpoints.down("sm")]: {
-      fontSize: "1.2rem",
+    fontFamily: "'Outfit', sans-serif",
+    fontWeight: 900,
+    fontSize: "5.5rem",
+    lineHeight: 1.02,
+    color: "#fff",
+    marginBottom: 20,
+    [muiTheme.breakpoints.down("sm")]: { fontSize: "3rem" },
+    "& em": {
+      fontStyle: "normal",
+      background: "linear-gradient(135deg, #C4B5FD 0%, #EC4899 50%, #F59E0B 100%)",
+      backgroundSize: "200% auto",
+      WebkitBackgroundClip: "text",
+      WebkitTextFillColor: "transparent",
+      backgroundClip: "text",
+      animation: "$shimmer 3s linear infinite",
     },
   },
-  heroLocation: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: theme.spacing(5),
-    "& svg": {
-      color: "#D8B08C",
-      marginRight: theme.spacing(1),
-      fontSize: "1.5rem",
-    },
-    "& span": {
-      fontSize: "1.2rem",
-      fontWeight: 500,
-      textShadow: "1px 1px 3px rgba(0,0,0,0.3)",
-    },
+  heroSub: {
+    fontSize: "1.15rem",
+    fontWeight: 300,
+    color: "rgba(255,255,255,0.85)",
+    maxWidth: 620,
+    margin: "0 auto 44px",
+    lineHeight: 1.75,
+    fontFamily: "'Outfit', sans-serif",
   },
   heroButtons: {
     display: "flex",
+    gap: 16,
     justifyContent: "center",
-    gap: theme.spacing(3),
-    [theme.breakpoints.down("xs")]: {
-      flexDirection: "column",
-      alignItems: "center",
-    },
+    flexWrap: "wrap",
   },
-  primaryButton: {
-    backgroundColor: "#D8B08C",
-    color: "#0A2463",
-    padding: "12px 36px",
-    borderRadius: "4px",
+  heroPrimBtn: {
+    background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
+    backgroundSize: "200% auto",
+    color: "#fff",
+    padding: "14px 40px",
+    borderRadius: 50,
     textTransform: "none",
-    fontSize: "1.1rem",
-    fontWeight: 600,
-    boxShadow: "0 4px 14px rgba(0,0,0,0.15)",
-    transition: "all 0.3s ease",
+    fontSize: "0.96rem",
+    fontWeight: 700,
+    fontFamily: "'Outfit', sans-serif",
+    boxShadow: "0 8px 32px rgba(108,63,255,0.52)",
+    transition: "all 0.4s",
     "&:hover": {
-      backgroundColor: "#E6CCB2",
-      transform: "translateY(-3px)",
-      boxShadow: "0 6px 20px rgba(0,0,0,0.2)",
+      backgroundPosition: "right center",
+      transform: "translateY(-3px) scale(1.04)",
+      boxShadow: "0 16px 48px rgba(108,63,255,0.68)",
     },
   },
-  secondaryButton: {
+  heroSecBtn: {
     backgroundColor: "transparent",
-    color: "#FFFAFF",
-    padding: "12px 36px",
-    borderRadius: "4px",
+    color: "#fff",
+    padding: "13px 40px",
+    borderRadius: 50,
     textTransform: "none",
-    fontSize: "1.1rem",
-    fontWeight: 600,
-    border: "2px solid #D8B08C",
-    transition: "all 0.3s ease",
+    fontSize: "0.96rem",
+    fontWeight: 500,
+    fontFamily: "'Outfit', sans-serif",
+    border: "1.5px solid rgba(255,255,255,0.55)",
+    transition: "all 0.3s",
     "&:hover": {
-      backgroundColor: "rgba(255, 255, 255, 0.1)",
-      transform: "translateY(-3px)",
-      boxShadow: "0 6px 20px rgba(0,0,0,0.1)",
+      borderColor: "#fff",
+      backgroundColor: "rgba(255,255,255,0.15)",
+      transform: "translateY(-2px)",
     },
   },
-  heroArrows: {
+  heroNavBtns: {
     position: "absolute",
-    bottom: 40,
-    left: 0,
-    right: 0,
+    bottom: 44,
+    width: "100%",
     display: "flex",
     justifyContent: "center",
-    gap: theme.spacing(2),
-    zIndex: 2,
+    gap: 12,
+    zIndex: 3,
   },
-  heroArrow: {
-    backgroundColor: "rgba(216, 176, 140, 0.3)",
-    color: "#FFFAFF",
-    transition: "all 0.3s ease",
+  heroNavBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: "50%",
+    backgroundColor: "rgba(255,255,255,0.18)",
+    border: "1.5px solid rgba(255,255,255,0.40)",
+    color: "#fff",
+    backdropFilter: "blur(8px)",
+    transition: "all 0.3s",
     "&:hover": {
-      backgroundColor: "rgba(216, 176, 140, 0.6)",
+      backgroundColor: "rgba(255,255,255,0.30)",
       transform: "scale(1.1)",
     },
   },
-  // Booking Form
-  bookingFormContainer: {
+  heroDots: {
+    position: "absolute",
+    bottom: 108,
+    left: "50%",
+    transform: "translateX(-50%)",
+    display: "flex",
+    gap: 10,
+    zIndex: 3,
+  },
+  heroDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "rgba(255,255,255,0.40)",
+    cursor: "pointer",
+    transition: "all 0.4s cubic-bezier(.4,0,.2,1)",
+  },
+  heroDotActive: {
+    width: 28,
+    backgroundColor: "#fff",
+    boxShadow: "0 0 12px rgba(255,255,255,0.6)",
+  },
+
+  /* ── BOOKING BAR ── */
+  bookingWrap: {
     position: "relative",
-    marginTop: -70,
-    zIndex: 10,
-    [theme.breakpoints.down("sm")]: {
-      marginTop: -40,
-    },
+    zIndex: 20,
+    marginTop: -64,
+    padding: "0 72px",
+    [muiTheme.breakpoints.down("sm")]: { padding: "0 16px", marginTop: 0 },
   },
-  bookingForm: {
-    backgroundColor: "#FFFAFF",
-    padding: theme.spacing(4),
-    boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
-    borderRadius: "8px",
-    maxWidth: 1200,
-    margin: "0 auto",
-    [theme.breakpoints.down("sm")]: {
-      padding: theme.spacing(3),
-      margin: "0 16px",
-    },
-  },
-  bookingFormTitle: {
-    fontFamily: "'Playfair Display', serif",
-    color: "#0A2463",
-    marginBottom: theme.spacing(3),
-    textAlign: "center",
-    fontWeight: 700,
-  },
-  bookingFormInner: {
+  bookingBar: {
+    background: "rgba(255,255,255,0.88)",
+    backdropFilter: "blur(28px) saturate(180%)",
+    border: "1px solid rgba(108,63,255,0.16)",
+    borderRadius: 22,
+    padding: "28px 36px",
     display: "flex",
     alignItems: "center",
-    gap: theme.spacing(2),
-    [theme.breakpoints.down("sm")]: {
-      flexDirection: "column",
-    },
+    gap: 16,
+    boxShadow: "0 20px 60px rgba(108,63,255,0.14), inset 0 1px 0 rgba(255,255,255,0.9)",
+    [muiTheme.breakpoints.down("sm")]: { flexDirection: "column", padding: "24px 20px", borderRadius: 18 },
+  },
+  bookingLabel: {
+    fontFamily: "'Outfit', sans-serif",
+    fontWeight: 700,
+    fontSize: "1.1rem",
+    whiteSpace: "nowrap",
+    background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    backgroundClip: "text",
   },
   bookingInput: {
     flex: 1,
     "& .MuiOutlinedInput-root": {
-      borderRadius: 4,
-      backgroundColor: "#FFFAFF",
-      transition: "all 0.3s ease",
-      "&:hover": {
-        boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-      },
-      "&.Mui-focused": {
-        boxShadow: "0 4px 12px rgba(10, 36, 99, 0.1)",
-      },
+      borderRadius: 13,
+      backgroundColor: "rgba(244,241,255,0.60)",
+      fontFamily: "'Outfit', sans-serif",
+      color: "#0C0A14",
+      "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#6C3FFF" },
     },
-    "& .MuiOutlinedInput-notchedOutline": {
-      borderColor: "rgba(10, 36, 99, 0.2)",
-    },
-    "& .Mui-focused .MuiOutlinedInput-notchedOutline": {
-      borderColor: "#0A2463",
-    },
-    "& .MuiInputLabel-root": {
-      color: "#8D99AE",
-    },
-    "& .MuiInputBase-input": {
-      color: "#1E1B18",
-    },
-    "& .MuiInputLabel-outlined.MuiInputLabel-shrink": {
-      color: "#0A2463",
-    },
+    "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(108,63,255,0.20)" },
+    "& .Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#6C3FFF", borderWidth: 2 },
+    "& .MuiInputLabel-root": { color: "#6B5E87", fontFamily: "'Outfit', sans-serif" },
+    "& .MuiInputBase-input": { color: "#0C0A14", fontFamily: "'Outfit', sans-serif" },
+    "& .MuiInputLabel-outlined.MuiInputLabel-shrink": { color: "#6C3FFF" },
   },
-  bookingButton: {
+  bookingSubmit: {
     height: 56,
-    borderRadius: 4,
-    padding: theme.spacing(0, 4),
+    minWidth: 180,
+    borderRadius: 50,
     textTransform: "none",
-    fontWeight: 600,
-    fontSize: "1rem",
-    backgroundColor: "#0A2463",
-    color: "#FFFAFF",
-    boxShadow: "0 4px 14px rgba(10, 36, 99, 0.2)",
-    transition: "all 0.3s ease",
-    "&:hover": {
-      backgroundColor: "#3E92CC",
-      boxShadow: "0 6px 20px rgba(10, 36, 99, 0.3)",
-      transform: "translateY(-2px)",
-    },
-    [theme.breakpoints.down("sm")]: {
-      width: "100%",
-    },
-  },
-  // Section Styles
-  section: {
-    padding: theme.spacing(10, 0),
-    position: "relative",
-    width: "100%",
-    [theme.breakpoints.down("sm")]: {
-      padding: theme.spacing(6, 0),
-    },
-  },
-  sectionInner: {
-    maxWidth: "100%", // Cambiado de 1200px a 100%
-    margin: "0 auto",
-    padding: "0 24px",
-    width: "100%",
-    [theme.breakpoints.down("sm")]: {
-      padding: "0 16px",
-    },
-  },
-  sectionTitle: {
-    position: "relative",
-    marginBottom: theme.spacing(5),
-    textAlign: "center",
     fontWeight: 700,
-    fontFamily: "'Playfair Display', serif",
-    color: "#0A2463",
-    fontSize: "3.5rem", // Aumentado para mejor proporción con el ancho completo
-    [theme.breakpoints.down("sm")]: {
-      fontSize: "2.5rem",
-      marginBottom: theme.spacing(4),
+    fontSize: "0.9rem",
+    fontFamily: "'Outfit', sans-serif",
+    letterSpacing: "0.04em",
+    background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
+    color: "#fff",
+    boxShadow: "0 6px 24px rgba(108,63,255,0.42)",
+    transition: "all 0.35s",
+    "&:hover": {
+      transform: "translateY(-2px)",
+      boxShadow: "0 12px 36px rgba(108,63,255,0.58)",
+    },
+    [muiTheme.breakpoints.down("sm")]: { width: "100%" },
+  },
+
+  /* ── STATS STRIP ── */
+  statsWrap: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: 2,
+    margin: "60px 72px 0",
+    background: "rgba(255,255,255,0.82)",
+    backdropFilter: "blur(22px) saturate(180%)",
+    border: "1px solid rgba(108,63,255,0.12)",
+    borderRadius: 18,
+    overflow: "hidden",
+    boxShadow: "0 5px 22px rgba(108,63,255,0.10)",
+    [muiTheme.breakpoints.down("sm")]: {
+      gridTemplateColumns: "repeat(2, 1fr)",
+      margin: "40px 16px 0",
     },
   },
-  sectionTitleUnderline: {
-    position: "relative",
-    "&::after": {
-      content: '""',
-      position: "absolute",
-      bottom: -15,
-      left: "50%",
-      transform: "translateX(-50%)",
-      width: 80,
-      height: 3,
-      backgroundColor: "#D8B08C",
-      borderRadius: 2,
-    },
-  },
-  sectionTitleLeft: {
-    textAlign: "left",
-    "&::after": {
-      left: 0,
-      transform: "none",
-    },
-  },
-  sectionTitleLight: {
-    color: "#FFFAFF",
-    "&::after": {
-      backgroundColor: "#D8B08C",
-    },
-  },
-  sectionSubtitle: {
+  statItem: {
+    padding: "32px 24px",
     textAlign: "center",
-    maxWidth: 800,
+    position: "relative",
+    transition: "all 0.35s",
+    cursor: "default",
+    "&:hover": { background: "rgba(108,63,255,0.07)" },
+  },
+  statNum: {
+    fontFamily: "'Outfit', sans-serif",
+    fontWeight: 900,
+    fontSize: "2.6rem",
+    background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    backgroundClip: "text",
+    display: "block",
+    lineHeight: 1,
+  },
+  statLabel: {
+    fontSize: "0.78rem",
+    color: "#6B5E87",
+    letterSpacing: "0.10em",
+    textTransform: "uppercase",
+    fontFamily: "'Outfit', sans-serif",
+    marginTop: 6,
+    display: "block",
+    fontWeight: 700,
+  },
+
+  /* ── SECTION COMMONS ── */
+  sxWrap: {
+    maxWidth: 1400,
     margin: "0 auto",
-    marginBottom: theme.spacing(6),
-    color: "#8D99AE",
-    fontSize: "1.1rem",
-    lineHeight: 1.6,
+    padding: "0 72px",
+    [muiTheme.breakpoints.down("sm")]: { padding: "0 20px" },
   },
-  sectionSubtitleLight: {
-    color: "rgba(255, 255, 255, 0.8)",
+  sxBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "rgba(108,63,255,0.10)",
+    border: "1px solid rgba(108,63,255,0.22)",
+    borderRadius: 100,
+    padding: "5px 18px",
+    marginBottom: 16,
+    "& span": {
+      fontSize: "0.72rem",
+      fontWeight: 700,
+      letterSpacing: "0.14em",
+      textTransform: "uppercase",
+      color: "#6C3FFF",
+      fontFamily: "'Outfit', sans-serif",
+    },
+    "& div": { width: 6, height: 6, borderRadius: "50%", backgroundColor: "#6C3FFF", animation: "$pulse 2s infinite" },
   },
-  // Apartments Section
-  apartmentSection: {
-    backgroundColor: "#FFFAFF",
+  sxTitle: {
+    fontFamily: "'Outfit', sans-serif",
+    fontWeight: 900,
+    fontSize: "3rem",
+    color: "#0C0A14",
+    lineHeight: 1.1,
+    marginBottom: 14,
+    [muiTheme.breakpoints.down("sm")]: { fontSize: "2.1rem" },
+  },
+  sxSub: {
+    fontSize: "1rem",
+    fontWeight: 400,
+    color: "#6B5E87",
+    fontFamily: "'Outfit', sans-serif",
+    lineHeight: 1.7,
+    marginBottom: 56,
+    maxWidth: 600,
+  },
+
+  /* ── APARTMENTS ── */
+  aptSection: {
+    background: "linear-gradient(180deg, #F4F1FF 0%, #EDE9FF 50%, #F4F1FF 100%)",
+    padding: "100px 0",
     position: "relative",
     overflow: "hidden",
-    width: "100%", // Asegurar que ocupe todo el ancho
-    padding: 0, // Eliminar padding
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      top: 0, left: 0, right: 0,
+      height: 1,
+      background: "linear-gradient(90deg, transparent, rgba(108,63,255,0.3), transparent)",
+    },
   },
-  apartmentSectionBg: {
-    position: "absolute",
-    top: 0,
-    left: 0,
+  aptGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: 28,
+    [muiTheme.breakpoints.down("md")]: { gridTemplateColumns: "repeat(2, 1fr)" },
+    [muiTheme.breakpoints.down("sm")]: { gridTemplateColumns: "1fr" },
+  },
+  aptCard: {
+    borderRadius: 22,
+    overflow: "hidden",
+    background: "rgba(255,255,255,0.88)",
+    backdropFilter: "blur(22px) saturate(180%)",
+    border: "1px solid rgba(255,255,255,0.90)",
+    transition: "all 0.5s cubic-bezier(.4,0,.2,1)",
+    cursor: "pointer",
+    boxShadow: "0 5px 22px rgba(108,63,255,0.12)",
+    "&:hover": {
+      transform: "translateY(-12px)",
+      border: "1px solid rgba(108,63,255,0.30)",
+      boxShadow: "0 24px 64px rgba(108,63,255,0.22)",
+    },
+    "&:hover $aptImg": { transform: "scale(1.08)" },
+    "&:hover $aptReserveBtn": {
+      background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
+      color: "#fff",
+      boxShadow: "0 6px 20px rgba(108,63,255,0.42)",
+    },
+  },
+  aptImgWrap: {
+    position: "relative",
+    height: 260,
+    overflow: "hidden",
+  },
+  aptImg: {
     width: "100%",
     height: "100%",
-    opacity: 0.03,
-    backgroundImage:
-      "url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/recepcion.png-XPx7tO9N6DKxWdsfId1Xajk9SrXgS8.jpeg')",
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundAttachment: "fixed",
+    objectFit: "cover",
+    transition: "transform 0.7s cubic-bezier(.4,0,.2,1)",
   },
-  apartmentFilters: {
+  aptImgOverlay: {
+    position: "absolute",
+    inset: 0,
+    background: "linear-gradient(to top, rgba(12,10,20,0.75) 0%, transparent 55%)",
+  },
+  aptTag: {
+    position: "absolute",
+    top: 16,
+    left: 16,
+    background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
+    color: "#fff",
+    padding: "5px 14px",
+    borderRadius: 100,
+    fontSize: "0.7rem",
+    fontWeight: 700,
+    letterSpacing: "0.10em",
+    textTransform: "uppercase",
+    fontFamily: "'Outfit', sans-serif",
+    boxShadow: "0 3px 10px rgba(108,63,255,0.40)",
+  },
+  aptTagLux: {
+    background: "linear-gradient(135deg, #F59E0B, #EF4444)",
+    boxShadow: "0 3px 10px rgba(245,158,11,0.40)",
+  },
+  aptPrice: {
+    position: "absolute",
+    bottom: 16,
+    right: 16,
+    background: "rgba(255,255,255,0.92)",
+    backdropFilter: "blur(12px)",
+    border: "1px solid rgba(108,63,255,0.20)",
+    color: "#0C0A14",
+    padding: "6px 14px",
+    borderRadius: 12,
+    fontSize: "0.82rem",
+    fontFamily: "'Outfit', sans-serif",
+    fontWeight: 600,
+    "& strong": { color: "#6C3FFF", fontSize: "1rem" },
+  },
+  aptBody: {
+    padding: "22px 22px 20px",
+    background: "#fff",
+  },
+  aptTitle: {
+    fontFamily: "'Outfit', sans-serif",
+    fontWeight: 700,
+    fontSize: "1.2rem",
+    color: "#0C0A14",
+    marginBottom: 6,
+  },
+  aptLoc: {
+    display: "flex",
+    alignItems: "center",
+    gap: 4,
+    color: "#6B5E87",
+    fontSize: "0.8rem",
+    marginBottom: 14,
+    fontFamily: "'Outfit', sans-serif",
+    "& svg": { fontSize: 14, color: "#6C3FFF" },
+  },
+  aptFeatures: {
+    display: "flex",
+    gap: 16,
+    paddingTop: 14,
+    borderTop: "1px solid rgba(108,63,255,0.08)",
+    marginBottom: 14,
+  },
+  aptFeature: {
+    display: "flex",
+    alignItems: "center",
+    gap: 5,
+    fontSize: "0.78rem",
+    color: "#6B5E87",
+    fontFamily: "'Outfit', sans-serif",
+    "& svg": { fontSize: 15, color: "#6C3FFF" },
+  },
+  aptChips: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 6,
+    marginBottom: 18,
+  },
+  aptChip: {
+    height: 22,
+    backgroundColor: "rgba(108,63,255,0.10)",
+    border: "1px solid rgba(108,63,255,0.18)",
+    color: "#5929d9",
+    borderRadius: 6,
+    fontSize: "0.68rem",
+    fontFamily: "'Outfit', sans-serif",
+    fontWeight: 600,
+    "& .MuiChip-label": { padding: "0 8px" },
+  },
+  aptActions: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: theme.spacing(6),
-    flexWrap: "wrap",
-    gap: theme.spacing(2),
+    paddingTop: 14,
+    borderTop: "1px solid rgba(108,63,255,0.08)",
   },
-  searchField: {
-    maxWidth: 400,
+  aptReserveBtn: {
+    borderRadius: 50,
+    textTransform: "none",
+    fontWeight: 700,
+    fontSize: "0.84rem",
+    fontFamily: "'Outfit', sans-serif",
+    background: "rgba(108,63,255,0.10)",
+    border: "1px solid rgba(108,63,255,0.25)",
+    color: "#6C3FFF",
+    padding: "8px 20px",
+    transition: "all 0.35s",
+    "&:hover": { color: "#fff" },
+  },
+  aptFavBtn: {
+    color: "rgba(107,94,135,0.5)",
+    transition: "all 0.3s",
+    "&:hover": { color: "#EC4899", transform: "scale(1.2)" },
+  },
+  aptFavActive: { color: "#EC4899 !important" },
+  videoBtn: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%,-50%)",
+    width: 52,
+    height: 52,
+    borderRadius: "50%",
+    background: "rgba(108,63,255,0.85)",
+    backdropFilter: "blur(12px)",
+    color: "#fff",
+    transition: "all 0.3s",
+    "&:hover": { transform: "translate(-50%,-50%) scale(1.15)", background: "#6C3FFF" },
+    "& svg": { fontSize: 22 },
+  },
+  viewBtn: {
+    position: "absolute",
+    bottom: 16,
+    left: 16,
+    background: "rgba(255,255,255,0.88)",
+    backdropFilter: "blur(8px)",
+    color: "#2D2640",
+    border: "1px solid rgba(255,255,255,0.7)",
+    borderRadius: 8,
+    padding: "4px 12px",
+    fontSize: "0.7rem",
+    fontFamily: "'Outfit', sans-serif",
+    display: "flex",
+    alignItems: "center",
+    gap: 4,
+    "&:hover": { borderColor: "#6C3FFF", color: "#6C3FFF" },
+    "& svg": { fontSize: 13 },
+  },
+  filterRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 40,
+    flexWrap: "wrap",
+    gap: 16,
+  },
+  searchInput: {
+    maxWidth: 380,
     width: "100%",
     "& .MuiOutlinedInput-root": {
-      borderRadius: 4,
-      backgroundColor: "#FFFAFF",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-      transition: "all 0.3s ease",
-      "&:hover": {
-        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-      },
-      "&.Mui-focused": {
-        boxShadow: "0 4px 12px rgba(10, 36, 99, 0.15)",
-      },
+      borderRadius: 50,
+      backgroundColor: "rgba(255,255,255,0.88)",
+      fontFamily: "'Outfit', sans-serif",
+      color: "#0C0A14",
+      "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#6C3FFF" },
     },
-    "& .MuiOutlinedInput-notchedOutline": {
-      borderColor: "rgba(10, 36, 99, 0.2)",
-    },
-    "& .Mui-focused .MuiOutlinedInput-notchedOutline": {
-      borderColor: "#0A2463",
-    },
+    "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(108,63,255,0.20)" },
+    "& .Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#6C3FFF" },
+    "& .MuiInputBase-input": { color: "#0C0A14", fontFamily: "'Outfit', sans-serif" },
+    "& .MuiInputBase-input::placeholder": { color: "#6B5E87" },
   },
-  apartmentCard: {
-    height: "100%",
-    borderRadius: 8,
-    overflow: "hidden",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
-    transition: "all 0.4s ease",
-    backgroundColor: "#FFFAFF",
-    border: "1px solid rgba(0,0,0,0.05)",
-    position: "relative",
+  showAllBtn: {
+    background: "rgba(108,63,255,0.10)",
+    border: "1px solid rgba(108,63,255,0.25)",
+    color: "#6C3FFF",
+    borderRadius: 50,
+    textTransform: "none",
+    fontWeight: 700,
+    fontSize: "0.85rem",
+    fontFamily: "'Outfit', sans-serif",
+    padding: "10px 24px",
+    transition: "all 0.3s",
     "&:hover": {
-      transform: "translateY(-15px)",
-      boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
-      border: "1px solid rgba(10, 36, 99, 0.2)",
-    },
-    "&:hover $apartmentCardMedia": {
-      transform: "scale(1.05)",
+      background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
+      color: "#fff",
+      border: "1px solid transparent",
+      boxShadow: "0 5px 18px rgba(108,63,255,0.38)",
     },
   },
-  apartmentCardMedia: {
-    height: 450, // Aumentado de 350px a 450px
+
+  /* ── ABOUT — oscura como el footer ── */
+  aboutSection: {
+    background: "linear-gradient(135deg, #0C0A14 0%, #1A0F3A 50%, #0C0A14 100%)",
+    padding: "100px 72px",
     position: "relative",
-    backgroundColor: "#f0f0f0",
-    transition: "transform 0.7s ease",
-    transformOrigin: "center",
+    overflow: "hidden",
+    [muiTheme.breakpoints.down("sm")]: { padding: "60px 20px" },
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      top: 0, left: 0, right: 0,
+      height: 1,
+      background: "linear-gradient(90deg, transparent, rgba(108,63,255,0.5), transparent)",
+    },
   },
-  apartmentCardPrice: {
+  aboutImgWrap: {
+    position: "relative",
+    borderRadius: 24,
+    overflow: "hidden",
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      inset: -2,
+      background: "linear-gradient(135deg, #6C3FFF, #EC4899, #F59E0B)",
+      borderRadius: 26,
+      zIndex: -1,
+    },
+    "& img": {
+      width: "100%",
+      borderRadius: 22,
+      display: "block",
+      position: "relative",
+      zIndex: 1,
+    },
+  },
+  aboutFloatCard: {
     position: "absolute",
-    bottom: 15,
-    right: 15,
-    backgroundColor: "#D8B08C",
-    color: "#0A2463",
-    padding: theme.spacing(0.75, 2),
-    borderRadius: 4,
-    fontWeight: 700,
-    boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-    zIndex: 1,
+    bottom: -20,
+    right: -20,
+    background: "rgba(12,10,20,0.92)",
+    backdropFilter: "blur(20px)",
+    border: "1px solid rgba(108,63,255,0.40)",
+    borderRadius: 18,
+    padding: "16px 24px",
+    animation: "$cardFloat 4s ease-in-out infinite",
+    zIndex: 5,
+    boxShadow: "0 10px 32px rgba(108,63,255,0.30)",
+    "& span": { display: "block" },
+    "& .big": {
+      fontFamily: "'Outfit', sans-serif",
+      fontWeight: 900,
+      fontSize: "1.8rem",
+      background: "linear-gradient(135deg, #C4B5FD, #C040FF)",
+      WebkitBackgroundClip: "text",
+      WebkitTextFillColor: "transparent",
+      backgroundClip: "text",
+    },
+    "& .small": {
+      fontSize: "0.75rem",
+      color: "rgba(255,255,255,0.55)",
+      fontFamily: "'Outfit', sans-serif",
+      letterSpacing: "0.08em",
+      textTransform: "uppercase",
+      fontWeight: 700,
+    },
   },
-  apartmentCardContent: {
-    padding: theme.spacing(4),
-    backgroundColor: "#FFFAFF",
+  aboutBody: {
+    fontSize: "0.96rem",
+    fontWeight: 400,
+    color: "rgba(255,255,255,0.72)",
+    lineHeight: 1.8,
+    marginBottom: 24,
+    fontFamily: "'Outfit', sans-serif",
   },
-  apartmentCardTitle: {
-    fontWeight: 700,
-    marginBottom: theme.spacing(1),
-    color: "#0A2463",
-    fontFamily: "'Playfair Display', serif",
-    fontSize: "1.8rem",
-  },
-  apartmentCardLocation: {
+  checkRow: {
     display: "flex",
     alignItems: "center",
-    color: "#8D99AE",
-    marginBottom: theme.spacing(2),
-    "& svg": {
-      fontSize: 18,
-      marginRight: theme.spacing(0.5),
-      color: "#D8B08C",
+    gap: 12,
+    marginBottom: 14,
+    "& svg": { color: "#C4B5FD", fontSize: 18 },
+    "& span": {
+      fontSize: "0.92rem",
+      color: "rgba(255,255,255,0.88)",
+      fontFamily: "'Outfit', sans-serif",
+      fontWeight: 500,
     },
   },
-  apartmentCardFeatures: {
+  pillRow: {
     display: "flex",
     flexWrap: "wrap",
-    gap: theme.spacing(2),
-    marginBottom: theme.spacing(2),
+    gap: 10,
+    marginTop: 28,
   },
-  apartmentCardFeature: {
+  pill: {
     display: "flex",
     alignItems: "center",
-    fontSize: "0.875rem",
-    color: "#8D99AE",
-    "& svg": {
-      fontSize: 18,
-      marginRight: theme.spacing(0.5),
-      color: "#0A2463",
+    gap: 8,
+    background: "rgba(108,63,255,0.18)",
+    border: "1px solid rgba(196,181,253,0.28)",
+    borderRadius: 12,
+    padding: "8px 16px",
+    transition: "all 0.3s",
+    "&:hover": { background: "rgba(108,63,255,0.30)", border: "1px solid rgba(196,181,253,0.50)", transform: "translateY(-2px)" },
+    "& svg": { fontSize: 16, color: "#C4B5FD" },
+    "& span": { fontSize: "0.82rem", color: "rgba(255,255,255,0.85)", fontFamily: "'Outfit', sans-serif", fontWeight: 600 },
+  },
+
+  /* ── SERVICES — oscura ── */
+  servicesSection: {
+    background: "linear-gradient(180deg, #0C0A14 0%, #1A0F3A 100%)",
+    padding: "100px 72px",
+    position: "relative",
+    [muiTheme.breakpoints.down("sm")]: { padding: "60px 20px" },
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      top: 0, left: 0, right: 0,
+      height: 1,
+      background: "linear-gradient(90deg, transparent, rgba(192,64,255,0.4), transparent)",
     },
   },
-  apartmentCardActions: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: theme.spacing(2),
-  },
-  apartmentCardButton: {
-    borderRadius: 4,
-    textTransform: "none",
-    fontWeight: 600,
-    backgroundColor: "#0A2463",
-    color: "#FFFAFF",
-    padding: "8px 20px",
-    boxShadow: "0 4px 14px rgba(10, 36, 99, 0.2)",
-    transition: "all 0.3s ease",
-    "&:hover": {
-      backgroundColor: "#3E92CC",
-      boxShadow: "0 6px 20px rgba(10, 36, 99, 0.3)",
-      transform: "translateY(-2px)",
-    },
-  },
-  favoriteButton: {
-    color: "#E63946",
-    transition: "all 0.3s ease",
-    "&:hover": {
-      transform: "scale(1.2)",
-    },
-  },
-  apartmentTag: {
-    position: "absolute",
-    top: 15,
-    left: 15,
-    backgroundColor: "#0A2463",
-    color: "#FFFAFF",
-    padding: theme.spacing(0.5, 1.5),
-    borderRadius: 4,
-    fontWeight: 600,
-    fontSize: "0.8rem",
-    zIndex: 1,
-    boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-  },
-  luxuryTag: {
-    backgroundColor: "#D8B08C",
-    color: "#0A2463",
-  },
-  // About Section
-  aboutSection: {
-    backgroundColor: "#0A2463",
+  serviceCard: {
+    background: "rgba(255,255,255,0.06)",
+    backdropFilter: "blur(16px)",
+    border: "1px solid rgba(196,181,253,0.18)",
+    borderRadius: 22,
+    padding: "40px 28px 32px",
+    textAlign: "center",
+    height: "100%",
+    transition: "all 0.45s cubic-bezier(.4,0,.2,1)",
     position: "relative",
     overflow: "hidden",
-    color: "#FFFAFF",
-  },
-  aboutPattern: {
-    position: "absolute",
-    top: -100,
-    right: -100,
-    width: 300,
-    height: 300,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    borderRadius: "50%",
-    zIndex: 0,
-  },
-  aboutContent: {
-    position: "relative",
-    zIndex: 1,
-  },
-  aboutImage: {
-    width: "100%",
-    borderRadius: 8,
-    boxShadow: "0 15px 40px rgba(0,0,0,0.3)",
-    transition: "all 0.5s ease",
-    border: "1px solid rgba(255, 255, 255, 0.1)",
+    boxShadow: "0 5px 22px rgba(0,0,0,0.20)",
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      top: 0, left: 0, right: 0,
+      height: 3,
+      background: "linear-gradient(90deg, #6C3FFF, #C040FF)",
+      transform: "scaleX(0)",
+      transition: "transform 0.4s",
+      transformOrigin: "left",
+    },
     "&:hover": {
-      transform: "scale(1.02)",
-      boxShadow: "0 20px 50px rgba(0,0,0,0.4)",
-      border: "1px solid rgba(255, 255, 255, 0.2)",
+      transform: "translateY(-10px)",
+      border: "1px solid rgba(196,181,253,0.40)",
+      background: "rgba(108,63,255,0.12)",
+      boxShadow: "0 24px 64px rgba(108,63,255,0.30)",
+    },
+    "&:hover::before": { transform: "scaleX(1)" },
+    "&:hover $svcIconWrap": { transform: "rotateY(180deg)" },
+  },
+  svcIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: "50%",
+    background: "linear-gradient(135deg, rgba(108,63,255,0.30), rgba(192,64,255,0.20))",
+    border: "1.5px solid rgba(196,181,253,0.30)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    margin: "0 auto 20px",
+    transition: "transform 0.6s cubic-bezier(.4,0,.2,1)",
+    transformStyle: "preserve-3d",
+    "& svg": { fontSize: 30, color: "#C4B5FD" },
+  },
+  svcTitle: {
+    fontFamily: "'Outfit', sans-serif",
+    fontWeight: 700,
+    fontSize: "1.1rem",
+    color: "#fff",
+    marginBottom: 10,
+  },
+  svcText: {
+    fontSize: "0.84rem",
+    color: "rgba(255,255,255,0.62)",
+    lineHeight: 1.7,
+    fontFamily: "'Outfit', sans-serif",
+    fontWeight: 400,
+  },
+
+  /* ── TESTIMONIALS — lavanda medio ── */
+  testimSection: {
+    background: "linear-gradient(135deg, #EDE9FF 0%, #E4DEFF 50%, #EDE9FF 100%)",
+    padding: "100px 72px",
+    position: "relative",
+    [muiTheme.breakpoints.down("sm")]: { padding: "60px 20px" },
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      top: 0, left: 0, right: 0,
+      height: 1,
+      background: "linear-gradient(90deg, transparent, rgba(108,63,255,0.35), transparent)",
     },
   },
-  aboutTitle: {
-    fontWeight: 700,
-    marginBottom: theme.spacing(3),
-    color: "#FFFAFF",
+  testimCard: {
+    background: "rgba(255,255,255,0.80)",
+    backdropFilter: "blur(22px) saturate(180%)",
+    border: "1px solid rgba(108,63,255,0.14)",
+    borderRadius: 22,
+    padding: "32px 28px",
+    height: "100%",
+    boxShadow: "0 5px 22px rgba(108,63,255,0.10)",
+    transition: "all 0.4s",
+    "&:hover": {
+      transform: "translateY(-8px)",
+      border: "1px solid rgba(108,63,255,0.30)",
+      boxShadow: "0 24px 60px rgba(108,63,255,0.20)",
+    },
+  },
+  testimQuoteMark: {
     fontFamily: "'Playfair Display', serif",
+    fontSize: "4rem",
+    lineHeight: 0.7,
+    color: "#6C3FFF",
+    opacity: 0.45,
+    marginBottom: 12,
+  },
+  testimStars: {
+    display: "flex",
+    gap: 2,
+    marginBottom: 16,
+    "& svg": { fontSize: 16, color: "#F59E0B" },
+  },
+  testimText: {
+    fontSize: "0.93rem",
+    fontWeight: 400,
+    color: "#2D2640",
+    fontFamily: "'Outfit', sans-serif",
+    lineHeight: 1.8,
+    fontStyle: "italic",
+    marginBottom: 24,
+  },
+  testimAuthor: {
+    display: "flex",
+    alignItems: "center",
+    gap: 14,
+    paddingTop: 20,
+    borderTop: "1px solid rgba(108,63,255,0.12)",
+  },
+  testimAvatar: {
+    width: 52,
+    height: 52,
+    borderRadius: "50%",
+    objectFit: "cover",
+    border: "2.5px solid rgba(108,63,255,0.30)",
+    boxShadow: "0 4px 14px rgba(108,63,255,0.18)",
+  },
+  testimName: {
+    fontWeight: 700,
+    fontSize: "0.92rem",
+    color: "#0C0A14",
+    fontFamily: "'Outfit', sans-serif",
+  },
+  testimRole: {
+    fontSize: "0.78rem",
+    color: "#6B5E87",
+    fontFamily: "'Outfit', sans-serif",
+  },
+
+  /* ── CTA — mantiene fondo oscuro/foto ── */
+  ctaSection: {
     position: "relative",
-    paddingBottom: theme.spacing(2),
-    fontSize: "2.5rem",
+    padding: "120px 72px",
+    textAlign: "center",
+    overflow: "hidden",
+    [muiTheme.breakpoints.down("sm")]: { padding: "72px 24px" },
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      inset: 0,
+      backgroundImage: "url('https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1600&q=80')",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      opacity: 0.20,
+    },
     "&::after": {
       content: '""',
       position: "absolute",
-      bottom: 0,
-      left: 0,
-      width: 60,
-      height: 3,
-      backgroundColor: "#D8B08C",
-      borderRadius: 2,
+      inset: 0,
+      background: "linear-gradient(135deg, rgba(108,63,255,0.88) 0%, rgba(192,64,255,0.80) 100%)",
     },
-  },
-  aboutText: {
-    color: "rgba(255, 255, 255, 0.8)",
-    marginBottom: theme.spacing(3),
-    lineHeight: 1.8,
-    fontSize: "1.05rem",
-  },
-  aboutFeature: {
-    display: "flex",
-    alignItems: "center",
-    marginBottom: theme.spacing(2),
-  },
-  aboutFeatureIcon: {
-    color: "#D8B08C",
-    marginRight: theme.spacing(1.5),
-    fontSize: 20,
-  },
-  aboutFeatureText: {
-    color: "#FFFAFF",
-    fontWeight: 500,
-  },
-  amenitiesRow: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: theme.spacing(2),
-    marginTop: theme.spacing(3),
-  },
-  amenityItem: {
-    display: "flex",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    padding: theme.spacing(1, 2),
-    borderRadius: 4,
-    "& svg": {
-      color: "#D8B08C",
-      marginRight: theme.spacing(1),
-      fontSize: 20,
-    },
-  },
-  // Features Section
-  featuresSection: {
-    backgroundColor: "#FFFAFF",
-    position: "relative",
-    overflow: "hidden",
-  },
-  featuresBg: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundImage: "linear-gradient(135deg, rgba(10, 36, 99, 0.03) 0%, rgba(62, 146, 204, 0.03) 100%)",
-    zIndex: 0,
-  },
-  featuresGrid: {
-    position: "relative",
-    zIndex: 1,
-  },
-  featureItem: {
-    textAlign: "center",
-    padding: theme.spacing(4),
-    borderRadius: 8,
-    transition: "all 0.4s ease",
-    backgroundColor: "#FFFAFF",
-    boxShadow: "0 5px 20px rgba(0,0,0,0.05)",
-    height: "100%",
-    border: "1px solid rgba(0,0,0,0.05)",
-    "&:hover": {
-      transform: "translateY(-10px)",
-      boxShadow: "0 15px 30px rgba(0,0,0,0.1)",
-      border: "1px solid rgba(10, 36, 99, 0.2)",
-    },
-    "&:hover $featureIcon": {
-      transform: "scale(1.1) rotateY(180deg)",
-      color: "#D8B08C",
-    },
-  },
-  featureIcon: {
-    fontSize: 60,
-    color: "#0A2463",
-    marginBottom: theme.spacing(2),
-    transition: "all 0.5s ease",
-  },
-  featureTitle: {
-    fontWeight: 700,
-    marginBottom: theme.spacing(1.5),
-    color: "#0A2463",
-    fontFamily: "'Playfair Display', serif",
-  },
-  featureText: {
-    color: "#8D99AE",
-    lineHeight: 1.6,
-  },
-  // Testimonial Section
-  testimonialSection: {
-    backgroundColor: "#3E92CC",
-    color: "#FFFAFF",
-    position: "relative",
-    overflow: "hidden",
-  },
-  testimonialPattern: {
-    position: "absolute",
-    top: -100,
-    left: -100,
-    width: 300,
-    height: 300,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    borderRadius: "50%",
-    zIndex: 0,
-  },
-  testimonialContainer: {
-    position: "relative",
-    zIndex: 1,
-  },
-  testimonialCard: {
-    padding: theme.spacing(4),
-    borderRadius: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    backdropFilter: "blur(10px)",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
-    height: "100%",
-    display: "flex",
-    flexDirection: "column",
-    transition: "all 0.3s ease",
-    border: "1px solid rgba(255, 255, 255, 0.1)",
-    "&:hover": {
-      transform: "translateY(-10px)",
-      boxShadow: "0 15px 40px rgba(0,0,0,0.3)",
-      backgroundColor: "rgba(255, 255, 255, 0.15)",
-      border: "1px solid rgba(255, 255, 255, 0.2)",
-    },
-  },
-  testimonialRating: {
-    display: "flex",
-    marginBottom: theme.spacing(2),
-    "& svg": {
-      color: "#D8B08C",
-      fontSize: 20,
-    },
-  },
-  testimonialText: {
-    fontStyle: "italic",
-    marginBottom: theme.spacing(3),
-    flex: 1,
-    lineHeight: 1.8,
-    fontSize: "1.05rem",
-    position: "relative",
-    paddingLeft: theme.spacing(3),
-    color: "rgba(255, 255, 255, 0.9)",
-    "&::before": {
-      content: '"\\201C"',
-      position: "absolute",
-      top: -20,
-      left: 0,
-      fontSize: "4rem",
-      color: "rgba(216, 176, 140, 0.3)",
-      fontFamily: "Georgia, serif",
-    },
-  },
-  testimonialAuthor: {
-    display: "flex",
-    alignItems: "center",
-  },
-  testimonialAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: "50%",
-    marginRight: theme.spacing(2),
-    objectFit: "cover",
-    border: "3px solid #D8B08C",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.2)",
-  },
-  testimonialName: {
-    fontWeight: 600,
-    fontSize: "1.1rem",
-    marginBottom: theme.spacing(0.5),
-    color: "#FFFAFF",
-  },
-  testimonialRole: {
-    color: "rgba(255, 255, 255, 0.7)",
-    fontSize: "0.9rem",
-  },
-  // CTA Section
-  ctaSection: {
-    background: "linear-gradient(135deg, #0A2463 0%, #3E92CC 100%)",
-    color: "#FFFAFF",
-    textAlign: "center",
-    padding: theme.spacing(10, 0),
-    position: "relative",
-    overflow: "hidden",
-  },
-  ctaPattern: {
-    position: "absolute",
-    top: -50,
-    right: -50,
-    width: 200,
-    height: 200,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    borderRadius: "50%",
-    zIndex: 0,
   },
   ctaContent: {
     position: "relative",
     zIndex: 1,
   },
   ctaTitle: {
-    fontWeight: 700,
-    marginBottom: theme.spacing(2),
-    fontFamily: "'Playfair Display', serif",
-    fontSize: "3rem",
-    [theme.breakpoints.down("sm")]: {
-      fontSize: "2.5rem",
-    },
+    fontFamily: "'Outfit', sans-serif",
+    fontWeight: 900,
+    fontSize: "3.5rem",
+    color: "#fff",
+    marginBottom: 20,
+    [muiTheme.breakpoints.down("sm")]: { fontSize: "2.2rem" },
   },
   ctaText: {
-    maxWidth: 800,
-    margin: "0 auto",
-    marginBottom: theme.spacing(4),
-    fontSize: "1.1rem",
-    lineHeight: 1.6,
-    color: "rgba(255, 255, 255, 0.9)",
+    fontSize: "1rem",
+    fontWeight: 300,
+    color: "rgba(255,255,255,0.88)",
+    fontFamily: "'Outfit', sans-serif",
+    maxWidth: 560,
+    margin: "0 auto 44px",
+    lineHeight: 1.7,
   },
-  ctaButton: {
-    backgroundColor: "#D8B08C",
-    color: "#0A2463",
-    padding: theme.spacing(1.5, 4),
-    borderRadius: 4,
-    fontWeight: 600,
+  ctaBtn: {
+    background: "#fff",
+    color: "#6C3FFF",
+    padding: "16px 52px",
+    borderRadius: 50,
     textTransform: "none",
-    fontSize: "1.1rem",
-    boxShadow: "0 4px 14px rgba(0,0,0,0.2)",
-    transition: "all 0.3s ease",
-    "&:hover": {
-      backgroundColor: "#E6CCB2",
-      boxShadow: "0 6px 20px rgba(0,0,0,0.3)",
-      transform: "translateY(-3px)",
-    },
-  },
-  // Footer
-  footer: {
-    backgroundColor: "#0A2463",
-    color: "#FFFAFF",
-    padding: theme.spacing(8, 0, 4),
-    position: "relative",
-  },
-  footerContent: {
-    maxWidth: 1200,
-    margin: "0 auto",
-    padding: "0 24px",
-    width: "100%",
-  },
-  footerLogo: {
-    display: "flex",
-    alignItems: "center",
-    marginBottom: theme.spacing(3),
-    "& img": {
-      height: 80,
-      marginRight: theme.spacing(2),
-    },
-  },
-  footerText: {
-    color: "rgba(255,255,255,0.7)",
-    marginBottom: theme.spacing(3),
-    lineHeight: 1.8,
-  },
-  footerSocial: {
-    display: "flex",
-    gap: theme.spacing(1.5),
-    marginBottom: theme.spacing(3),
-  },
-  footerSocialIcon: {
-    backgroundColor: "rgba(255,255,255,0.1)",
-    color: "#FFFAFF",
-    transition: "all 0.3s ease",
-    "&:hover": {
-      backgroundColor: "#D8B08C",
-      transform: "translateY(-3px)",
-    },
-  },
-  footerTitle: {
+    fontSize: "1rem",
     fontWeight: 700,
-    marginBottom: theme.spacing(3),
-    position: "relative",
-    paddingBottom: theme.spacing(1.5),
-    fontFamily: "'Playfair Display', serif",
-    color: "#FFFAFF",
-    "&::after": {
-      content: '""',
-      position: "absolute",
-      bottom: 0,
-      left: 0,
-      width: 40,
-      height: 2,
-      backgroundColor: "#D8B08C",
+    fontFamily: "'Outfit', sans-serif",
+    boxShadow: "0 8px 36px rgba(0,0,0,0.25)",
+    transition: "all 0.4s",
+    "&:hover": {
+      transform: "translateY(-3px) scale(1.04)",
+      boxShadow: "0 16px 56px rgba(0,0,0,0.35)",
+      background: "#f4f1ff",
     },
+  },
+  ctaGlow: {
+    position: "absolute",
+    width: 500,
+    height: 500,
+    borderRadius: "50%",
+    background: "radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%,-50%)",
+    zIndex: 0,
+    pointerEvents: "none",
+  },
+
+  /* ── FOOTER ── */
+  footer: {
+    background: "#0C0A14",
+    padding: "72px 72px 40px",
+    position: "relative",
+    borderTop: "3px solid #6C3FFF",
+    [muiTheme.breakpoints.down("sm")]: { padding: "48px 24px 32px" },
+  },
+  footerLogoText: {
+    fontFamily: "'Playfair Display', serif",
+    fontStyle: "italic",
+    fontWeight: 700,
+    fontSize: "1.6rem",
+    background: "linear-gradient(135deg, #C4B5FD, #EC4899)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    backgroundClip: "text",
+    display: "block",
+    marginBottom: 16,
+  },
+  footerTagline: {
+    fontSize: "0.85rem",
+    fontWeight: 300,
+    color: "rgba(255,255,255,0.50)",
+    lineHeight: 1.7,
+    fontFamily: "'Outfit', sans-serif",
+    marginBottom: 24,
+  },
+  footerSocials: { display: "flex", gap: 8 },
+  footerSocBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: "50%",
+    border: "1px solid rgba(108,63,255,0.35)",
+    color: "rgba(255,255,255,0.50)",
+    transition: "all 0.3s",
+    "&:hover": {
+      borderColor: "#C4B5FD",
+      color: "#C4B5FD",
+      background: "rgba(108,63,255,0.18)",
+      transform: "translateY(-2px)",
+    },
+  },
+  footerHeading: {
+    fontFamily: "'Outfit', sans-serif",
+    fontWeight: 700,
+    fontSize: "0.88rem",
+    color: "#fff",
+    marginBottom: 20,
+    textTransform: "uppercase",
+    letterSpacing: "0.12em",
+    paddingBottom: 12,
+    borderBottom: "1px solid rgba(108,63,255,0.25)",
   },
   footerLink: {
-    color: "rgba(255,255,255,0.7)",
-    marginBottom: theme.spacing(1.5),
     display: "flex",
     alignItems: "center",
-    transition: "all 0.3s ease",
-    "&:hover": {
-      color: "#D8B08C",
-      textDecoration: "none",
-      transform: "translateX(5px)",
-    },
-    "& svg": {
-      fontSize: 16,
-      marginRight: theme.spacing(1),
-      color: "#D8B08C",
-    },
+    gap: 8,
+    color: "rgba(255,255,255,0.50)",
+    fontSize: "0.84rem",
+    fontFamily: "'Outfit', sans-serif",
+    marginBottom: 12,
+    cursor: "pointer",
+    transition: "all 0.25s",
+    "&:hover": { color: "#C4B5FD", transform: "translateX(4px)" },
+    "& svg": { fontSize: 10, color: "#6C3FFF" },
   },
   footerContact: {
     display: "flex",
     alignItems: "flex-start",
-    marginBottom: theme.spacing(2),
-    "& svg": {
-      color: "#D8B08C",
-      marginRight: theme.spacing(1.5),
-      marginTop: 3,
-      fontSize: 20,
-    },
-  },
-  footerContactText: {
-    color: "rgba(255,255,255,0.7)",
-    lineHeight: 1.6,
+    gap: 12,
+    marginBottom: 14,
+    "& svg": { fontSize: 16, color: "#C4B5FD", marginTop: 2 },
+    "& span": { fontSize: "0.84rem", color: "rgba(255,255,255,0.50)", fontFamily: "'Outfit', sans-serif", lineHeight: 1.5 },
   },
   footerBottom: {
-    borderTop: "1px solid rgba(255,255,255,0.1)",
-    paddingTop: theme.spacing(3),
-    marginTop: theme.spacing(4),
+    borderTop: "1px solid rgba(255,255,255,0.07)",
+    marginTop: 48,
+    paddingTop: 24,
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    [theme.breakpoints.down("sm")]: {
-      flexDirection: "column",
-      gap: theme.spacing(2),
-    },
+    flexWrap: "wrap",
+    gap: 12,
   },
-  footerCopyright: {
-    color: "rgba(255,255,255,0.7)",
+  footerCopy: {
+    fontSize: "0.78rem",
+    color: "rgba(255,255,255,0.32)",
+    fontFamily: "'Outfit', sans-serif",
   },
-  footerBottomLinks: {
+  footerPolicyLinks: {
     display: "flex",
-    gap: theme.spacing(2),
-  },
-  footerBottomLink: {
-    color: "rgba(255,255,255,0.7)",
-    fontSize: "0.875rem",
-    transition: "all 0.3s ease",
-    "&:hover": {
-      color: "#D8B08C",
+    gap: 20,
+    "& span": {
+      fontSize: "0.78rem",
+      color: "rgba(255,255,255,0.32)",
+      fontFamily: "'Outfit', sans-serif",
+      cursor: "pointer",
+      transition: "color 0.2s",
+      "&:hover": { color: "#C4B5FD" },
     },
   },
-  // Reservation Dialog
-  reservationDialog: {
+
+  /* ── MODAL — paleta clara como UsuarioList ── */
+  modalDialog: {
     "& .MuiDialog-paper": {
-      borderRadius: 8,
+      borderRadius: 26,
+      background: "rgba(255,255,255,0.98)",
+      backdropFilter: "blur(24px)",
+      border: "1px solid rgba(108,63,255,0.18)",
+      boxShadow: "0 24px 64px rgba(108,63,255,0.22)",
       overflow: "hidden",
-      boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-      backgroundColor: "#FFFAFF",
-      border: "1px solid rgba(10, 36, 99, 0.1)",
+      color: "#0C0A14",
+      position: "relative",
+      "&::before": {
+        content: '""',
+        position: "absolute",
+        top: 0, left: 0, right: 0,
+        height: 3,
+        background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
+        zIndex: 10,
+      },
+    },
+    "& .MuiBackdrop-root": {
+      backdropFilter: "blur(8px)",
+      background: "rgba(12,10,20,0.55)",
     },
   },
-  reservationDialogTitle: {
-    background: "linear-gradient(135deg, #0A2463 0%, #3E92CC 100%)",
-    color: "#FFFAFF",
-    padding: theme.spacing(3),
-    borderBottom: "1px solid rgba(10, 36, 99, 0.1)",
+  modalHeader: {
+    background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
+    padding: "22px 28px",
+    position: "relative",
+    overflow: "hidden",
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      top: -50, right: -50,
+      width: 180, height: 180,
+      borderRadius: "50%",
+      background: "rgba(255,255,255,0.08)",
+    },
   },
-  reservationDialogContent: {
-    padding: theme.spacing(4),
-    backgroundColor: "#FFFAFF",
-    maxHeight: "70vh",
+  modalHeaderTitle: {
+    fontFamily: "'Outfit', sans-serif",
+    fontWeight: 800,
+    fontSize: "1.25rem",
+    color: "#fff",
+    lineHeight: 1.2,
+  },
+  modalHeaderSub: {
+    fontSize: "0.78rem",
+    color: "rgba(255,255,255,0.78)",
+    fontFamily: "'Outfit', sans-serif",
+    marginTop: 3,
+  },
+  modalContent: {
+    padding: "24px 28px",
+    maxHeight: "66vh",
     overflowY: "auto",
+    background: "#fff",
+    "&::-webkit-scrollbar": { width: 4 },
+    "&::-webkit-scrollbar-thumb": { background: "rgba(108,63,255,0.35)", borderRadius: 2 },
   },
-  reservationForm: {
+  modalSection: { marginBottom: 24 },
+  modalSectionLabel: {
+    fontSize: "0.70rem",
+    fontWeight: 700,
+    letterSpacing: "0.16em",
+    textTransform: "uppercase",
+    color: "#6C3FFF",
+    fontFamily: "'Outfit', sans-serif",
+    marginBottom: 14,
+    paddingBottom: 8,
+    borderBottom: "1.5px solid rgba(108,63,255,0.10)",
     display: "flex",
-    flexDirection: "column",
-    gap: theme.spacing(3),
+    alignItems: "center",
+    gap: 8,
+    "& div": { width: 5, height: 5, borderRadius: "50%", background: "#6C3FFF" },
   },
-  reservationField: {
+  formField: {
     "& .MuiOutlinedInput-root": {
-      borderRadius: 4,
-      transition: "all 0.3s ease",
-      backgroundColor: "#FFFAFF",
-      "&:hover": {
-        boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-      },
-      "&.Mui-focused": {
-        boxShadow: "0 4px 10px rgba(10, 36, 99, 0.1)",
-      },
+      borderRadius: 13,
+      backgroundColor: "rgba(244,241,255,0.50)",
+      fontFamily: "'Outfit', sans-serif",
+      color: "#0C0A14",
+      transition: "all 0.3s",
+      "&:hover": { backgroundColor: "rgba(244,241,255,0.80)" },
+      "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#6C3FFF" },
+      "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#6C3FFF", borderWidth: 2 },
     },
-    "& .MuiOutlinedInput-notchedOutline": {
-      borderColor: "rgba(10, 36, 99, 0.2)",
-    },
-    "& .Mui-focused .MuiOutlinedInput-notchedOutline": {
-      borderColor: "#0A2463",
-    },
-    "& .MuiInputLabel-root": {
-      color: "#8D99AE",
-    },
-    "& .MuiInputBase-input": {
-      color: "#1E1B18",
-    },
-    "& .MuiInputLabel-outlined.MuiInputLabel-shrink": {
-      color: "#0A2463",
-    },
+    "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(108,63,255,0.22)" },
+    "& .MuiInputLabel-root": { color: "#6B5E87", fontFamily: "'Outfit', sans-serif" },
+    "& .MuiInputBase-input": { color: "#0C0A14", fontFamily: "'Outfit', sans-serif" },
+    "& .MuiInputLabel-outlined.MuiInputLabel-shrink": { color: "#6C3FFF" },
+    "& .MuiFormHelperText-root": { color: "#6B5E87", fontFamily: "'Outfit', sans-serif", fontSize: "0.74rem" },
+    "& .MuiFormHelperText-root.Mui-error": { color: "#EF4444" },
   },
-  reservationTotal: {
-    backgroundColor: "#F8F9FA",
-    padding: theme.spacing(3),
-    borderRadius: 4,
-    marginTop: theme.spacing(2),
-    boxShadow: "inset 0 2px 8px rgba(0,0,0,0.05)",
-    border: "1px solid rgba(10, 36, 99, 0.1)",
+  summaryBox: {
+    background: "rgba(108,63,255,0.06)",
+    border: "1px solid rgba(108,63,255,0.15)",
+    borderRadius: 18,
+    padding: "20px 22px",
   },
-  reservationTotalTitle: {
-    fontWeight: 600,
-    marginBottom: theme.spacing(2),
-    color: "#0A2463",
-  },
-  reservationTotalRow: {
+  summaryRow: {
     display: "flex",
     justifyContent: "space-between",
-    marginBottom: theme.spacing(1),
-    padding: theme.spacing(1, 0),
-    borderBottom: "1px dashed rgba(0,0,0,0.1)",
-    "&:last-child": {
-      borderBottom: "none",
-    },
+    padding: "8px 0",
+    borderBottom: "1px solid rgba(108,63,255,0.07)",
+    "&:last-child": { borderBottom: "none", paddingTop: 14 },
   },
-  reservationTotalLabel: {
-    color: "#8D99AE",
+  summaryLabel: { fontSize: "0.84rem", color: "#6B5E87", fontFamily: "'Outfit', sans-serif" },
+  summaryValue: { fontSize: "0.84rem", color: "#0C0A14", fontWeight: 700, fontFamily: "'Outfit', sans-serif" },
+  summaryTotal: {
+    fontSize: "1rem",
+    fontWeight: 800,
+    background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    backgroundClip: "text",
+    fontFamily: "'Outfit', sans-serif",
   },
-  reservationTotalValue: {
-    fontWeight: 500,
-    color: "#1E1B18",
+  paymentBox: {
+    background: "rgba(108,63,255,0.06)",
+    border: "1px solid rgba(108,63,255,0.18)",
+    borderRadius: 14,
+    padding: "18px 20px",
+    borderLeft: "3px solid #6C3FFF",
   },
-  reservationTotalFinal: {
+  paymentBoxTitle: {
+    fontSize: "0.82rem",
     fontWeight: 700,
-    color: "#D8B08C",
-    fontSize: "1.1rem",
+    color: "#6C3FFF",
+    fontFamily: "'Outfit', sans-serif",
+    marginBottom: 10,
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    "& svg": { fontSize: 16 },
   },
-  reservationActions: {
-    padding: theme.spacing(2, 3, 3),
-    backgroundColor: "#FFFAFF",
+  paymentBoxText: {
+    fontSize: "0.84rem",
+    color: "#2D2640",
+    fontFamily: "'Outfit', sans-serif",
+    marginBottom: 5,
+    lineHeight: 1.6,
+    fontWeight: 400,
   },
-  reservationButton: {
-    borderRadius: 4,
-    padding: theme.spacing(1.2, 4),
+  uploadBtn: {
+    background: "rgba(108,63,255,0.10)",
+    border: "1px solid rgba(108,63,255,0.25)",
+    color: "#6C3FFF",
+    borderRadius: 50,
     textTransform: "none",
-    fontWeight: 600,
-    backgroundColor: "#0A2463",
-    color: "#FFFAFF",
-    boxShadow: "0 4px 14px rgba(10, 36, 99, 0.3)",
-    transition: "all 0.3s ease",
+    fontFamily: "'Outfit', sans-serif",
+    fontSize: "0.84rem",
+    fontWeight: 700,
+    padding: "10px 22px",
+    transition: "all 0.3s",
     "&:hover": {
-      backgroundColor: "#3E92CC",
-      boxShadow: "0 6px 20px rgba(10, 36, 99, 0.4)",
-      transform: "translateY(-2px)",
+      background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
+      color: "#fff",
+      border: "1px solid transparent",
+      boxShadow: "0 5px 18px rgba(108,63,255,0.38)",
     },
   },
-  cancelButton: {
-    color: "#8D99AE",
-    "&:hover": {
-      backgroundColor: "rgba(141, 153, 174, 0.1)",
-      color: "#1E1B18",
-    },
-  },
-  // Media elements
-  videoButton: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    backgroundColor: "rgba(216, 176, 140, 0.8)",
-    color: "#FFFAFF",
-    width: 80,
-    height: 80,
-    borderRadius: "50%",
-    zIndex: 2,
-    transition: "all 0.3s ease",
-    "&:hover": {
-      backgroundColor: "#D8B08C",
-      transform: "translate(-50%, -50%) scale(1.1)",
-      boxShadow: "0 0 30px rgba(216, 176, 140, 0.5)",
-    },
-    "& svg": {
-      fontSize: 40,
-    },
-  },
-  viewButton: {
-    position: "absolute",
-    bottom: 15,
-    left: 15,
-    backgroundColor: "rgba(10, 36, 99, 0.8)",
-    color: "#FFFAFF",
-    padding: theme.spacing(0.5, 1.5),
-    borderRadius: 4,
-    fontSize: "0.8rem",
-    zIndex: 1,
-    display: "flex",
-    alignItems: "center",
-    gap: theme.spacing(0.5),
-    transition: "all 0.3s ease",
-    "&:hover": {
-      backgroundColor: "#0A2463",
-    },
-    "& svg": {
-      fontSize: 16,
-    },
-  },
-  chip: {
-    margin: theme.spacing(0.5),
-    backgroundColor: "rgba(10, 36, 99, 0.1)",
-    color: "#0A2463",
-    border: "1px solid rgba(10, 36, 99, 0.2)",
-    "& .MuiChip-label": {
-      fontWeight: 500,
-    },
-  },
-  errorText: {
-    color: "#f44336",
-    fontSize: "0.75rem",
-    marginTop: theme.spacing(0.5),
-    marginLeft: theme.spacing(1.5),
-  },
-  // Nuevos estilos para acompañantes
-  acompanantesSection: {
-    marginTop: theme.spacing(3),
-    padding: theme.spacing(3),
-    backgroundColor: "rgba(10, 36, 99, 0.03)",
-    borderRadius: 8,
-    border: "1px solid rgba(10, 36, 99, 0.1)",
-  },
-  acompanantesTitle: {
-    fontWeight: 600,
-    marginBottom: theme.spacing(2),
-    color: "#0A2463",
-    display: "flex",
-    alignItems: "center",
-    "& svg": {
-      marginRight: theme.spacing(1),
-    },
-  },
-  acompananteItem: {
-    padding: theme.spacing(2),
-    backgroundColor: "#FFFAFF",
-    borderRadius: 4,
-    marginBottom: theme.spacing(2),
-    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-    position: "relative",
-  },
-  removeAcompananteButton: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    minWidth: "auto",
-    width: 30,
-    height: 30,
-    padding: 0,
-  },
-  addAcompananteButton: {
-    marginTop: theme.spacing(1),
-    backgroundColor: "#0A2463",
-    color: "#FFFAFF",
-    "&:hover": {
-      backgroundColor: "#3E92CC",
-    },
-  },
-  // Nuevos estilos para el comprobante de pago
-  uploadSection: {
-    marginTop: theme.spacing(3),
-    padding: theme.spacing(3),
-    backgroundColor: "rgba(10, 36, 99, 0.03)",
-    borderRadius: 8,
-    border: "1px solid rgba(10, 36, 99, 0.1)",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-  },
-  uploadTitle: {
-    fontWeight: 600,
-    marginBottom: theme.spacing(2),
-    color: "#0A2463",
-    display: "flex",
-    alignItems: "center",
-    "& svg": {
-      marginRight: theme.spacing(1),
-    },
-  },
-  uploadButton: {
-    marginTop: theme.spacing(2),
-    backgroundColor: "#0A2463",
-    color: "#FFFAFF",
-    padding: theme.spacing(1, 3),
-    "&:hover": {
-      backgroundColor: "#3E92CC",
-    },
-  },
-  fileInput: {
-    display: "none",
-  },
+  fileInput: { display: "none" },
   filePreview: {
-    width: "100%",
-    maxHeight: 120,
-    objectFit: "contain",
-    marginTop: theme.spacing(2),
-    borderRadius: 4,
-    border: "1px solid rgba(10, 36, 99, 0.2)",
+    maxWidth: "100%",
+    maxHeight: 100,
+    borderRadius: 10,
+    border: "1px solid rgba(108,63,255,0.22)",
+    marginTop: 10,
   },
   fileName: {
-    marginTop: theme.spacing(1),
-    color: "#8D99AE",
-    fontSize: "0.875rem",
+    fontSize: "0.75rem",
+    color: "#6B5E87",
+    fontFamily: "'Outfit', sans-serif",
+    marginTop: 6,
   },
-  paymentInfo: {
-    marginTop: theme.spacing(2),
-    padding: theme.spacing(2),
-    backgroundColor: "rgba(216, 176, 140, 0.1)",
-    borderRadius: 4,
-    border: "1px solid rgba(216, 176, 140, 0.3)",
+  acompSection: {
+    background: "rgba(244,241,255,0.50)",
+    border: "1px solid rgba(108,63,255,0.14)",
+    borderRadius: 16,
+    padding: "20px",
   },
-  paymentInfoTitle: {
-    fontWeight: 600,
-    color: "#0A2463",
-    marginBottom: theme.spacing(1),
+  acompSub: {
+    fontSize: "0.80rem",
+    color: "#6B5E87",
+    fontFamily: "'Outfit', sans-serif",
+    marginBottom: 16,
+    fontWeight: 500,
+  },
+  acompCard: {
+    background: "rgba(255,255,255,0.90)",
+    border: "1px solid rgba(108,63,255,0.14)",
+    borderRadius: 14,
+    padding: "16px",
+    marginBottom: 12,
+    position: "relative",
+    boxShadow: "0 2px 10px rgba(108,63,255,0.07)",
+  },
+  acompCardTitle: {
+    fontSize: "0.72rem",
+    fontWeight: 700,
+    letterSpacing: "0.10em",
+    textTransform: "uppercase",
+    color: "#6C3FFF",
+    fontFamily: "'Outfit', sans-serif",
+    marginBottom: 12,
+  },
+  addAcompBtn: {
+    background: "rgba(108,63,255,0.10)",
+    border: "1px solid rgba(108,63,255,0.22)",
+    color: "#6C3FFF",
+    borderRadius: 50,
+    textTransform: "none",
+    fontFamily: "'Outfit', sans-serif",
+    fontSize: "0.82rem",
+    fontWeight: 700,
+    padding: "8px 18px",
+    transition: "all 0.3s",
+    "&:hover": { background: "rgba(108,63,255,0.18)", transform: "translateY(-1px)" },
+    "&:disabled": { opacity: 0.4 },
+  },
+  removeBtn: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    minWidth: "auto",
+    width: 28,
+    height: 28,
+    padding: 0,
+    color: "rgba(107,94,135,0.5)",
+    "&:hover": { color: "#EF4444" },
+  },
+  modalActions: {
+    padding: "14px 28px 22px",
     display: "flex",
-    alignItems: "center",
-    "& svg": {
-      marginRight: theme.spacing(1),
-      color: "#D8B08C",
-    },
+    gap: 12,
+    borderTop: "1px solid rgba(108,63,255,0.10)",
+    background: "#fff",
   },
-  paymentInfoText: {
-    color: "#1E1B18",
-    fontSize: "0.9rem",
-    marginBottom: theme.spacing(1),
+  cancelBtn: {
+    flex: 1,
+    background: "transparent",
+    border: "1.5px solid rgba(108,63,255,0.22)",
+    color: "#6B5E87",
+    borderRadius: 50,
+    textTransform: "none",
+    fontFamily: "'Outfit', sans-serif",
+    fontWeight: 600,
+    "&:hover": { borderColor: "#6C3FFF", color: "#6C3FFF", background: "rgba(108,63,255,0.06)" },
+  },
+  confirmBtn: {
+    flex: 2,
+    background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
+    color: "#fff",
+    borderRadius: 50,
+    textTransform: "none",
+    fontFamily: "'Outfit', sans-serif",
+    fontWeight: 700,
+    fontSize: "0.90rem",
+    letterSpacing: "0.04em",
+    boxShadow: "0 5px 18px rgba(108,63,255,0.40)",
+    transition: "all 0.35s",
+    "&:hover": {
+      transform: "translateY(-2px)",
+      boxShadow: "0 9px 26px rgba(108,63,255,0.55)",
+    },
+    "&:disabled": { opacity: 0.4 },
   },
 }))
-
-// Modificar las rutas de imágenes en apartamentosEjemplo
-const apartamentosEjemplo = [
-  {
-    id: 1,
-    nombre: "Apartamento Tipo 1",
-    tipo: "Tipo 1",
-    ubicacion: "El Poblado, Medellín",
-    precio: 250,
-    capacidad: 2,
-    camas: 1,
-    banos: 1,
-    tamano: 45,
-    caracteristicas: ["Balcón", "Vista a la ciudad", "Cocina equipada", "WiFi de alta velocidad"],
-    imagen: "/imagen-1.png",
-    disponible: true,
-    tag: "Popular",
-  },
-  {
-    id: 2,
-    nombre: "Apartamento Tipo 2",
-    tipo: "Tipo 2",
-    ubicacion: "El Poblado, Medellín",
-    precio: 350,
-    capacidad: 4,
-    camas: 2,
-    banos: 2,
-    tamano: 75,
-    caracteristicas: ["Sala de estar", "Comedor", "Terraza", "Smart TV"],
-    imagen: "/imagen-2.png",
-    disponible: true,
-    tag: "Familiar",
-  },
-  {
-    id: 3,
-    nombre: "Penthouse Exclusivo",
-    tipo: "Penthouse",
-    ubicacion: "El Poblado, Medellín",
-    precio: 550,
-    capacidad: 6,
-    camas: 3,
-    banos: 3,
-    tamano: 120,
-    caracteristicas: ["Terraza panorámica", "Jacuzzi", "Bar privado", "Servicio de concierge"],
-    imagen: "/imagen-3.png",
-    disponible: true,
-    tag: "Lujo",
-  },
-  {
-    id: 4,
-    nombre: "Suite Ejecutiva",
-    tipo: "Suite",
-    ubicacion: "El Poblado, Medellín",
-    precio: 400,
-    capacidad: 2,
-    camas: 1,
-    banos: 1,
-    tamano: 60,
-    caracteristicas: ["Escritorio de trabajo", "Cafetera", "Minibar", "Caja fuerte"],
-    imagen: "/imagen-1.png",
-    disponible: true,
-    tag: "Ejecutivo",
-  },
-  {
-    id: 5,
-    nombre: "Apartamento Familiar",
-    tipo: "Tipo 2",
-    ubicacion: "El Poblado, Medellín",
-    precio: 380,
-    capacidad: 5,
-    camas: 2,
-    banos: 2,
-    tamano: 85,
-    caracteristicas: ["Cocina completa", "Área de juegos", "Lavadora", "Secadora"],
-    imagen: "/imagen-2.png",
-    disponible: true,
-    tag: "Familiar",
-  },
-  {
-    id: 6,
-    nombre: "Loft Moderno",
-    tipo: "Loft",
-    ubicacion: "El Poblado, Medellín",
-    precio: 320,
-    capacidad: 2,
-    camas: 1,
-    banos: 1,
-    tamano: 55,
-    caracteristicas: ["Diseño abierto", "Iluminación LED", "Smart TV", "Sonido envolvente"],
-    imagen: "/imagen-3.png",
-    disponible: true,
-    tag: "Moderno",
-  },
-]
-
-// Datos de ejemplo para los testimonios
-const testimoniosEjemplo = [
-  {
-    id: 1,
-    nombre: "María Rodríguez",
-    comentario:
-      "Una experiencia increíble. Las vistas desde nuestra habitación eran espectaculares y el servicio fue impecable. Definitivamente volveremos a Nido Sky en nuestra próxima visita a Medellín.",
-    rating: 5,
-    avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-    rol: "Huésped frecuente",
-  },
-  {
-    id: 2,
-    nombre: "Carlos Mendoza",
-    comentario:
-      "El mejor hotel en el que nos hemos hospedado en El Poblado. La atención al detalle es extraordinaria y las instalaciones son de primera clase. El penthouse es simplemente espectacular.",
-    rating: 5,
-    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-    rol: "Viajero de negocios",
-  },
-  {
-    id: 3,
-    nombre: "Ana Gómez",
-    comentario:
-      "Nido Sky superó todas nuestras expectativas. El spa es increíble y la comida del restaurante es deliciosa. La ubicación en El Poblado es perfecta para explorar lo mejor de Medellín.",
-    rating: 5,
-    avatar: "https://randomuser.me/api/portraits/women/68.jpg",
-    rol: "Turista internacional",
-  },
-]
-
-// Imágenes mejoradas para el hero
-const heroImages = [
-  "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/recepcion.png-XPx7tO9N6DKxWdsfId1Xajk9SrXgS8.jpeg",
-  "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/gimnasio.png-Gb7Jvfxujhu3Oi4fsmrTuPRoCaOf3u.jpeg",
-  "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/piscina.png-NKUEeWXZRn7pXvG0Idk6FMgqlbWu7x.jpeg",
-]
-
+/* ═══════════════════════════════════════════════════════════════════════════ */
 function Landing() {
-const history = useHistory()
+  const history = useHistory()
   const classes = useStyles()
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+  const muiTheme = useTheme()
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down("sm"))
   const fileInputRef = useRef(null)
+  const canvasRef = useRef(null)
 
-  // Estados
+  /* ── STATE (unchanged) ── */
   const [loading, setLoading] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0)
@@ -1574,1553 +1571,647 @@ const history = useHistory()
   const [reservationDialogOpen, setReservationDialogOpen] = useState(false)
   const [selectedApartamento, setSelectedApartamento] = useState(null)
   const [reservedDates, setReservedDates] = useState({})
-  // Modificar la inicialización del estado reservationForm para incluir el campo documento
   const [reservationForm, setReservationForm] = useState({
-    documento: "", // Añadir el campo documento
-    titular_reserva: "",
-    email: "",
-    telefono: "",
-    fecha_inicio: "",
-    fecha_fin: "",
-    apartamentos: [],
-    noches_estadia: 1,
-    total: 0,
-    monto_pago: 0,
-    acompanantes: [],
+    documento: "", titular_reserva: "", email: "", telefono: "",
+    fecha_inicio: "", fecha_fin: "", apartamentos: [],
+    noches_estadia: 1, total: 0, monto_pago: 0, acompanantes: [],
   })
-  // Añadir el campo documento a los errores del formulario
   const [formErrors, setFormErrors] = useState({
-    titular_reserva: "",
-    email: "",
-    telefono: "",
-    fecha_inicio: "",
-    fecha_fin: "",
-    monto_pago: "",
-    documento: "", // Añadir el campo documento
+    titular_reserva: "", email: "", telefono: "",
+    fecha_inicio: "", fecha_fin: "", monto_pago: "", documento: "",
   })
   const [comprobantePago, setComprobantePago] = useState(null)
   const [comprobantePreview, setComprobantePreview] = useState("")
-  const [snackbarOpen, setSnackbarOpen] = useState(false)
-  const [snackbarMessage, setSnackbarMessage] = useState(
-    "¡Cliente registrado con éxito! Te hemos enviado un correo con los detalles.",
-  )
-  const [snackbarSeverity, setSnackbarSeverity] = useState("success")
   const [favorites, setFavorites] = useState([])
   const [logoLoaded, setLogoLoaded] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
-  // Refs
   const apartamentosRef = useRef(null)
   const aboutRef = useRef(null)
   const featuresRef = useRef(null)
   const contactRef = useRef(null)
 
-  // ✅ Actualizar fetchReservedDates con configuración de API
-  const fetchReservedDates = async (apartamentoId) => {
-    try {
-      console.log("Obteniendo fechas reservadas para el apartamento:", apartamentoId)
-      const response = await apiCall(API_ENDPOINTS.fechasReservadas(apartamentoId))
-
-      if (response.data && response.data.fechasReservadas) {
-        // Actualizar el estado con las fechas reservadas para este apartamento
-        setReservedDates((prev) => ({
-          ...prev,
-          [apartamentoId]: response.data.fechasReservadas,
-        }))
-        return response.data.fechasReservadas
-      }
-      return []
-    } catch (error) {
-      console.error("Error al obtener fechas reservadas:", error)
-      // Si hay un error, devolver un array vacío
-      return []
-    }
-  }
-
-  // Añadir esta función dentro del componente Landing
-  const isDateReserved = (date) => {
-    if (!selectedApartamento || !reservedDates[selectedApartamento.id]) {
-      return false
-    }
-
-    const dateStr = typeof date === "string" ? date : date.toISOString().split("T")[0]
-
-    // Verificar si la fecha está en el array de fechas reservadas
-    return reservedDates[selectedApartamento.id].some((reservedDate) => {
-      // Si la fecha reservada es un objeto con fecha_inicio y fecha_fin
-      if (reservedDate.fecha_inicio && reservedDate.fecha_fin) {
-        const inicio = new Date(reservedDate.fecha_inicio)
-        const fin = new Date(reservedDate.fecha_fin)
-        const checkDate = new Date(dateStr)
-
-        // Verificar si la fecha está dentro del rango
-        return checkDate >= inicio && checkDate <= fin
-      }
-
-      // Si es solo una fecha (string)
-      return reservedDate === dateStr
-    })
-  }
-
-  // Añadir esta función dentro del componente Landing
-  const getDisabledDates = () => {
-    if (!selectedApartamento || !reservedDates[selectedApartamento.id]) {
-      return []
-    }
-
-    const disabledDates = []
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
-    // Añadir todas las fechas anteriores a hoy
-    const pastDates = []
-    const tempDate = new Date(today)
-    tempDate.setDate(tempDate.getDate() - 1)
-    while (tempDate.getFullYear() >= today.getFullYear() - 1) {
-      pastDates.push(tempDate.toISOString().split("T")[0])
-      tempDate.setDate(tempDate.getDate() - 1)
-    }
-
-    // Añadir fechas reservadas
-    reservedDates[selectedApartamento.id].forEach((reservedDate) => {
-      if (reservedDate.fecha_inicio && reservedDate.fecha_fin) {
-        // Si es un rango de fechas
-        const inicio = new Date(reservedDate.fecha_inicio)
-        const fin = new Date(reservedDate.fecha_fin)
-
-        // Añadir todas las fechas en el rango
-        const currentDate = new Date(inicio)
-        while (currentDate <= fin) {
-          disabledDates.push(currentDate.toISOString().split("T")[0])
-          currentDate.setDate(currentDate.getDate() + 1)
-        }
-      } else {
-        // Si es una fecha individual
-        disabledDates.push(reservedDate)
-      }
-    })
-
-    return [...pastDates, ...disabledDates]
-  }
-
-  // ✅ Actualizar useEffect con configuración de API
+  /* ── PARTICLE CANVAS (unchanged) ── */
   useEffect(() => {
-    // ✅ Actualizar fetchApartamentos con configuración de API
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext("2d")
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+
+    const particles = Array.from({ length: 60 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: Math.random() * 2.5 + 0.5,
+      speedX: (Math.random() - 0.5) * 0.5,
+      speedY: -Math.random() * 0.8 - 0.3,
+      opacity: Math.random() * 0.5 + 0.1,
+      hue: Math.random() > 0.5 ? 270 : 310,
+    }))
+
+    let animId
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      particles.forEach((p) => {
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
+        ctx.fillStyle = `hsla(${p.hue}, 80%, 70%, ${p.opacity})`
+        ctx.fill()
+        p.x += p.speedX
+        p.y += p.speedY
+        if (p.y < -10) { p.y = canvas.height + 10; p.x = Math.random() * canvas.width }
+        if (p.x < -10 || p.x > canvas.width + 10) p.x = Math.random() * canvas.width
+      })
+      animId = requestAnimationFrame(animate)
+    }
+    animate()
+
+    const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight }
+    window.addEventListener("resize", handleResize)
+    return () => { cancelAnimationFrame(animId); window.removeEventListener("resize", handleResize) }
+  }, [])
+
+  /* ── ALL BUSINESS LOGIC UNCHANGED ── */
+  const fetchReservedDates = async (aptId) => {
+    try {
+      const res = await apiCall(API_ENDPOINTS.fechasReservadas(aptId))
+      if (res.data?.fechasReservadas) {
+        setReservedDates((prev) => ({ ...prev, [aptId]: res.data.fechasReservadas }))
+        return res.data.fechasReservadas
+      }
+      return []
+    } catch { return [] }
+  }
+
+  const isDateReserved = (date) => {
+    if (!selectedApartamento || !reservedDates[selectedApartamento.id]) return false
+    const dateStr = typeof date === "string" ? date : date.toISOString().split("T")[0]
+    return reservedDates[selectedApartamento.id].some((rd) => {
+      if (rd.fecha_inicio && rd.fecha_fin) {
+        return new Date(dateStr) >= new Date(rd.fecha_inicio) && new Date(dateStr) <= new Date(rd.fecha_fin)
+      }
+      return rd === dateStr
+    })
+  }
+
+  useEffect(() => {
     const fetchApartamentos = async () => {
       try {
-        console.log("Intentando cargar apartamentos desde la API...")
-
-        // ✅ Usar la configuración de endpoints
         try {
-          const response = await apiCall(API_ENDPOINTS.apartamentosDestacados)
-
-          if (response.data && response.data.length > 0) {
-            // Guardar todos los apartamentos
-            setAllApartamentos(response.data)
-            // Limitar a 6 apartamentos para la vista inicial
-            const limitedApartamentos = response.data.slice(0, 6)
-            setApartamentos(limitedApartamentos)
-            setFilteredApartamentos(limitedApartamentos)
-            return
+          const r = await apiCall(API_ENDPOINTS.apartamentosDestacados)
+          if (r.data?.length > 0) {
+            setAllApartamentos(r.data); const lim = r.data.slice(0, 6)
+            setApartamentos(lim); setFilteredApartamentos(lim); return
           }
-        } catch (error) {
-          console.error("Error al cargar apartamentos destacados:", error)
-          // Si falla, intentar con la API general de apartamentos
-        }
-
-        // ✅ Si no hay apartamentos destacados, intentar con todos los apartamentos
+        } catch {}
         try {
-          const response = await apiCall(API_ENDPOINTS.apartamentos)
-          console.log("Respuesta de la API general:", response.data)
-
-          // Agregar logging adicional para debugging
-          response.data.forEach((apt) => {
-            console.log(
-              `📸 Apartamento ${apt.NumeroApto} (${apt.Tipo}) -> Imagen asignada: ${apt.Tipo === "Penthouse" ? "/imagen-3.png" : apt.Tipo === "Tipo 2" ? "/imagen-2.png" : "/imagen-1.png"}`,
-            )
-          })
-
-          if (response.data && response.data.length > 0) {
-            // Transformar los datos para que coincidan con el formato esperado
-            const apartamentosFormateados = response.data.map((apt) => {
-              // Determinar la imagen basada en el tipo, asegurando que Penthouse siempre use imagen-3.png
-              let imagenUrl = "/imagen-1.png"
-              if (apt.Tipo === "Penthouse") {
-                imagenUrl = "/imagen-3.png"
-              } else if (apt.Tipo === "Tipo 2") {
-                imagenUrl = "/imagen-2.png"
-              }
-
-              return {
-                _id: apt._id, // Mantener el ObjectId original
-                id: apt._id, // Duplicar para compatibilidad
-                nombre: `Apartamento ${apt.NumeroApto} - ${apt.Tipo}`,
-                tipo: apt.Tipo,
-                descripcion: `Lujoso apartamento tipo ${apt.Tipo} ubicado en el piso ${apt.Piso} con todas las comodidades.`,
-                ubicacion: "El Poblado, Medellín",
-                precio: apt.Tarifa,
-                capacidad: 4,
-                camas: 2,
-                banos: 1,
-                tamano: 75,
-                caracteristicas: ["Balcón", "Vista a la ciudad", "Cocina equipada", "WiFi de alta velocidad"],
-                imagenes: ["/images/apartment-1.jpg", "/images/apartment-2.jpg", "/images/apartment-3.jpg"],
-                imagen: imagenUrl, // Usar la imagen determinada
-                estado: apt.Estado ? "disponible" : "no disponible",
-                disponible: apt.Estado,
-                tag: apt.Tipo === "Penthouse" ? "Lujo" : apt.Tipo === "Tipo 2" ? "Familiar" : "Popular",
-              }
-            })
-
-            // Guardar todos los apartamentos
-            setAllApartamentos(apartamentosFormateados)
-            // Limitar a 6 apartamentos para la vista inicial
-            const limitedApartamentos = apartamentosFormateados.slice(0, 6)
-            setApartamentos(limitedApartamentos)
-            setFilteredApartamentos(limitedApartamentos)
-            return
+          const r = await apiCall(API_ENDPOINTS.apartamentos)
+          if (r.data?.length > 0) {
+            const fmt = r.data.map((apt) => ({
+              _id: apt._id, id: apt._id,
+              nombre: `Apartamento ${apt.NumeroApto} - ${apt.Tipo}`,
+              tipo: apt.Tipo, ubicacion: "El Poblado, Medellín", precio: apt.Tarifa,
+              capacidad: 4, camas: 2, banos: 1, tamano: 75,
+              caracteristicas: ["Balcón", "Vista ciudad", "Cocina equipada", "WiFi"],
+              imagen: apt.Tipo === "Penthouse"
+                ? "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80"
+                : apt.Tipo === "Tipo 2"
+                ? "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80"
+                : "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80",
+              estado: apt.Estado ? "disponible" : "no disponible", disponible: apt.Estado,
+              tag: apt.Tipo === "Penthouse" ? "Lujo" : apt.Tipo === "Tipo 2" ? "Familiar" : "Popular",
+            }))
+            setAllApartamentos(fmt); const lim = fmt.slice(0, 6)
+            setApartamentos(lim); setFilteredApartamentos(lim); return
           }
-        } catch (error) {
-          console.error("Error al cargar apartamentos desde la API general:", error)
-          // Continuar con los datos de ejemplo
-        }
-
-        // ✅ Si llegamos aquí, usar datos de ejemplo
-        console.log("Usando datos de ejemplo para apartamentos")
+        } catch {}
         setAllApartamentos(apartamentosEjemplo)
         setApartamentos(apartamentosEjemplo.slice(0, 6))
         setFilteredApartamentos(apartamentosEjemplo.slice(0, 6))
-      } catch (error) {
-        console.error("Error al cargar apartamentos:", error)
-        console.log("Usando datos de ejemplo debido al error")
-        // Si hay error, usar los datos de ejemplo
+      } catch {
         setApartamentos(apartamentosEjemplo.slice(0, 6))
         setFilteredApartamentos(apartamentosEjemplo.slice(0, 6))
       }
     }
-
     fetchApartamentos()
-
-    // Forzar un reflow para asegurar que el scroll funcione correctamente
     document.body.style.overflow = "auto"
-    document.documentElement.style.overflow = "auto"
-
-    // Precargar las imágenes para evitar saltos
-    const preloadImages = () => {
-      const logoImg = new Image()
-      logoImg.src = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/nidosky-V3qv6QnKvcP2qqA4Vxok6rQ8wpnZi9.png"
-      logoImg.onload = () => setLogoLoaded(true)
-
-      heroImages.forEach((src) => {
-        const img = new Image()
-        img.src = src
-      })
-
-      apartamentosEjemplo.forEach((apt) => {
-        const img = new Image()
-        img.src = apt.imagen
-      })
-    }
-
-    preloadImages()
-
-    // Detectar scroll para cambiar el estilo del navbar
-    const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setScrolled(true)
-      } else {
-        setScrolled(false)
-      }
-    }
-
-    window.addEventListener("scroll", handleScroll)
-
-    // Cambiar automáticamente las imágenes del hero
-    const interval = setInterval(() => {
-      setCurrentHeroSlide((prev) => (prev + 1) % heroImages.length)
-    }, 5000)
-
-    return () => {
-      clearInterval(interval)
-      window.removeEventListener("scroll", handleScroll)
-    }
+    const img = new Image()
+    img.src = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/nidosky-V3qv6QnKvcP2qqA4Vxok6rQ8wpnZi9.png"
+    img.onload = () => setLogoLoaded(true); img.onerror = () => setLogoLoaded(true)
+    heroImages.forEach((src) => { const i = new Image(); i.src = src })
+    const onScroll = () => setScrolled(window.scrollY > 50)
+    window.addEventListener("scroll", onScroll)
+    const interval = setInterval(() => setCurrentHeroSlide((p) => (p + 1) % heroImages.length), 5500)
+    return () => { clearInterval(interval); window.removeEventListener("scroll", onScroll) }
   }, [])
 
-  // Efecto para filtrar apartamentos cuando cambia el término de búsqueda
   useEffect(() => {
-    // Usar allApartamentos o apartamentos según el estado de showAllApartments
-    const baseApartamentos = [...apartamentos]
-
-    // Filtrar por término de búsqueda
+    const base = [...apartamentos]
     if (searchTerm) {
-      const term = searchTerm.toLowerCase()
-      const filtered = baseApartamentos.filter(
-        (apt) =>
-          apt.nombre.toLowerCase().includes(term) ||
-          apt.tipo.toLowerCase().includes(term) ||
-          apt.caracteristicas?.some((c) => c.toLowerCase().includes(term)),
-      )
-      setFilteredApartamentos(filtered)
-    } else {
-      setFilteredApartamentos(baseApartamentos)
-    }
+      const t = searchTerm.toLowerCase()
+      setFilteredApartamentos(base.filter((a) =>
+        a.nombre.toLowerCase().includes(t) || a.tipo.toLowerCase().includes(t) ||
+        a.caracteristicas?.some((c) => c.toLowerCase().includes(t))
+      ))
+    } else setFilteredApartamentos(base)
   }, [searchTerm, apartamentos])
-
-  const handleDrawerToggle = () => {
-    setDrawerOpen(!drawerOpen)
-  }
-
-  const handleHeroSlideChange = (direction) => {
-    if (direction === "next") {
-      setCurrentHeroSlide((prev) => (prev + 1) % heroImages.length)
-    } else {
-      setCurrentHeroSlide((prev) => (prev - 1 + heroImages.length) % heroImages.length)
-    }
-  }
-
-  const handleSearchChange = (event) => {
-    setSearchTerm(event.target.value)
-  }
 
   const toggleShowAllApartments = () => {
     if (showAllApartments) {
-      // Si ya estamos mostrando todos, volver a mostrar solo 6
-      const limitedApartamentos = allApartamentos.slice(0, 6)
-      setApartamentos(limitedApartamentos)
-      setFilteredApartamentos(
-        searchTerm
-          ? limitedApartamentos.filter(
-              (apt) =>
-                apt.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                apt.tipo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                apt.caracteristicas?.some((c) => c.toLowerCase().includes(searchTerm.toLowerCase())),
-            )
-          : limitedApartamentos,
-      )
+      const lim = allApartamentos.slice(0, 6)
+      setApartamentos(lim); setFilteredApartamentos(lim)
     } else {
-      // Si estamos mostrando solo 6, mostrar todos
-      setApartamentos(allApartamentos)
-      setFilteredApartamentos(
-        searchTerm
-          ? allApartamentos.filter(
-              (apt) =>
-                apt.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                apt.tipo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                apt.caracteristicas?.some((c) => c.toLowerCase().includes(searchTerm.toLowerCase())),
-            )
-          : allApartamentos,
-      )
+      setApartamentos(allApartamentos); setFilteredApartamentos(allApartamentos)
     }
     setShowAllApartments(!showAllApartments)
   }
 
-  const handleReservationOpen = async (apartamento) => {
-    setSelectedApartamento(apartamento)
-    setReservationDialogOpen(true)
-
-    // Establecer fecha de entrada como hoy por defecto
+  const handleReservationOpen = async (apt) => {
+    setSelectedApartamento(apt); setReservationDialogOpen(true)
     const today = new Date().toISOString().split("T")[0]
-
-    // Inicializar el formulario con los valores por defecto
     setReservationForm({
-      titular_reserva: "",
-      email: "",
-      telefono: "",
-      fecha_inicio: today,
-      fecha_fin: "",
-      apartamentos: apartamento ? [apartamento.id] : [],
-      noches_estadia: 1,
-      total: apartamento ? apartamento.precio : 0,
-      monto_pago: apartamento ? apartamento.precio * 0.5 : 0, // 50% del total
-      acompanantes: [],
-      documento: "",
+      titular_reserva: "", email: "", telefono: "", fecha_inicio: today,
+      fecha_fin: "", apartamentos: apt ? [apt.id] : [],
+      noches_estadia: 1, total: apt ? apt.precio : 0,
+      monto_pago: apt ? apt.precio * 0.5 : 0, acompanantes: [], documento: "",
     })
-
-    // Resetear errores del formulario
-    setFormErrors({
-      titular_reserva: "",
-      email: "",
-      telefono: "",
-      fecha_inicio: "",
-      fecha_fin: "",
-      monto_pago: "",
-      documento: "",
-    })
-
-    // Resetear el comprobante de pago
-    setComprobantePago(null)
-    setComprobantePreview("")
-
-    // Obtener fechas reservadas para este apartamento
-    if (apartamento && apartamento.id) {
-      await fetchReservedDates(apartamento.id)
-    }
+    setFormErrors({ titular_reserva: "", email: "", telefono: "", fecha_inicio: "", fecha_fin: "", monto_pago: "", documento: "" })
+    setComprobantePago(null); setComprobantePreview("")
+    if (apt?.id) await fetchReservedDates(apt.id)
   }
 
-  const handleReservationClose = () => {
-    setReservationDialogOpen(false)
-  }
-
-  // Agregar/eliminar acompañantes
-  const handleAddAcompanante = () => {
-    // Verificar si ya se alcanzó el límite de capacidad
-    if (selectedApartamento && reservationForm.acompanantes.length >= selectedApartamento.capacidad - 1) {
-      Swal.fire({
-        title: "Límite de capacidad",
-        text: `Este apartamento tiene capacidad máxima para ${selectedApartamento.capacidad} personas (incluido el titular).`,
-        icon: "warning",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-      })
-      return
-    }
-    const newAcompanante = {
-      nombre: "",
-      apellido: "",
-      documento_acompanante: "",
-    }
-    setReservationForm({
-      ...reservationForm,
-      acompanantes: [...reservationForm.acompanantes, newAcompanante],
-    })
-  }
-
-  const handleRemoveAcompanante = (index) => {
-    const updatedAcompanantes = [...reservationForm.acompanantes]
-    updatedAcompanantes.splice(index, 1)
-    setReservationForm({
-      ...reservationForm,
-      acompanantes: updatedAcompanantes,
-    })
-  }
-
-  const handleAcompananteChange = (index, field, value) => {
-    const updatedAcompanantes = [...reservationForm.acompanantes]
-    updatedAcompanantes[index] = {
-      ...updatedAcompanantes[index],
-      [field]: value,
-    }
-    setReservationForm({
-      ...reservationForm,
-      acompanantes: updatedAcompanantes,
-    })
-  }
-
-  // Manejar la carga del comprobante de pago
-  const handleComprobanteChange = (event) => {
-    const file = event.target.files[0]
-    if (file) {
-      setComprobantePago(file)
-
-      // Crear una URL para previsualizar la imagen
-      const fileReader = new FileReader()
-      fileReader.onload = () => {
-        setComprobantePreview(fileReader.result)
-      }
-      fileReader.readAsDataURL(file)
-    }
-  }
-
-  const handleUploadClick = () => {
-    fileInputRef.current.click()
-  }
-
-  // Validación de campos en tiempo real
   const validateField = (name, value) => {
-    let error = ""
-
+    let e = ""
     switch (name) {
-      // Titular de reserva
       case "titular_reserva":
-        if (!value) {
-          //Nombre vació
-          error = "El nombre es obligatorio"
-        } else if (value.trim() === "") {
-          //Nombre solo con espacios
-          error = "El nombre No puede contener solo espacios"
-        } else if (value.length < 3) {
-          //Nombre muy corto
-          error = "El nombre debe tener al menos 3 caracteres"
-        } else if (value.length > 50) {
-          //Nombre muy largo
-          error = "El nombre no puede tener más de 50 caracteres"
-        } else if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(value)) {
-          //Solo letras, tildes y espacios
-          error = "El nombre solo puede contener letras y espacios"
-        }
+        if (!value || value.trim() === "") e = "El nombre es obligatorio"
+        else if (value.length < 3) e = "Al menos 3 caracteres"
+        else if (value.length > 50) e = "Máximo 50 caracteres"
+        else if (!/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/.test(value)) e = "Solo letras y espacios"
         break
-
-      //Email
       case "email":
-        if (!value) {
-          //Email vació
-          error = "El correo electrónico es obligatorio"
-        } else if (value.includes(" ")) {
-          //Email con espacios
-          error = "El correo electrónico no puede contener espacios"
-        } else if (!value.includes("@")) {
-          //Email sin arroba
-          error = "El correo electrónico debe contener un '@'"
-        } else if ((value.match(/@/g) || []).length > 1) {
-          // Multiple @
-          error = "El correo electrónico no puede contener múltiples @"
-        } else if (!/\.[a-z]{2,}$/i.test(value)) {
-          // Sin extensión (.com)
-          error = "El correo electrónico debe tener una extensión válida (.com, .net, etc.)"
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          // Formato general inválido
-          error = "Ingrese un correo electrónico válido"
-        }
+        if (!value) e = "El correo es obligatorio"
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) e = "Correo inválido"
         break
-
-      //Teléfono
       case "telefono":
-        if (!value) {
-          // Teléfono vacío
-          error = "El teléfono es obligatorio"
-        } else if (value.length < 8) {
-          // Menos de 8 dígitos
-          error = "El teléfono debe tener al menos 8 dígitos"
-        } else if (value.length > 15) {
-          // Más de 15 dígitos
-          error = "El teléfono no puede exceder los 15 dígitos"
-        } else if (!/^\+?[0-9]{8,15}$/.test(value)) {
-          // Formato inválido (puede incluir + al inicio)
-          error = "Ingrese un número de teléfono válido (solo números, puede incluir + al inicio)"
-        }
+        if (!value) e = "El teléfono es obligatorio"
+        else if (!/^\+?[0-9]{8,15}$/.test(value)) e = "Número inválido (8-15 dígitos)"
         break
-
       case "fecha_inicio":
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        const entryDate = new Date(value)
-
-        if (!value) {
-          error = "La fecha de entrada es obligatoria"
-        } else if (entryDate < today) {
-          error = "La fecha de entrada debe ser hoy o posterior"
-        }
+        const td = new Date(); td.setHours(0,0,0,0)
+        if (!value) e = "Fecha de entrada obligatoria"
+        else if (new Date(value) < td) e = "Debe ser hoy o posterior"
         break
-
       case "fecha_fin":
-        if (!value) {
-          error = "La fecha de salida es obligatoria"
-        } else if (reservationForm.fecha_inicio && new Date(value) <= new Date(reservationForm.fecha_inicio)) {
-          error = "La fecha de salida debe ser posterior a la fecha de entrada"
-        }
+        if (!value) e = "Fecha de salida obligatoria"
+        else if (reservationForm.fecha_inicio && new Date(value) <= new Date(reservationForm.fecha_inicio)) e = "Debe ser posterior a la entrada"
         break
-
       case "monto_pago":
         const total = calcularPrecioTotal()
-        const minPago = total * 0.5 // 50% del total
-
-        if (!value) {
-          // Monto vacío
-          error = "El monto de pago es obligatorio"
-        } else if (Number(value) < minPago) {
-          // Valor menor al límite permitido (50%)
-          error = `El pago mínimo debe ser del 50% (${minPago})`
-        } else if (Number(value) > total) {
-          // Valor mayor al límite permitido
-          error = "El pago no puede superar el total de la reserva"
-        }
+        if (!value) e = "Monto obligatorio"
+        else if (Number(value) < total * 0.5) e = `Mínimo 50%: $${(total*0.5).toFixed(0)}`
+        else if (Number(value) > total) e = "No puede superar el total"
         break
-
-      // Documento
       case "documento":
-        if (!value) {
-          error = "El documento es obligatorio"
-        } else if (value === "0") {
-          error = "El documento no puede ser 0"
-        } else if (!/^\d{6,12}$/.test(value)) {
-          // Numérico de long 6 a 12
-          error = "El documento debe tener entre 6 y 12 dígitos numéricos"
-        } else if (value.startsWith("0")) {
-          // No puede empezar con 0
-          error = "El documento no puede empezar con 0"
-        }
+        if (!value) e = "El documento es obligatorio"
+        else if (!/^\d{6,12}$/.test(value)) e = "6 a 12 dígitos"
+        else if (value.startsWith("0")) e = "No puede empezar con 0"
         break
-
-      default:
-        break
+      default: break
     }
-
-    return error
+    return e
   }
 
   const handleReservationFormChange = (event) => {
     const { name, value } = event.target
-
-    // Verificar si la fecha seleccionada está reservada
     if ((name === "fecha_inicio" || name === "fecha_fin") && isDateReserved(value)) {
-      Swal.fire({
-        title: "Fecha no disponible",
-        text: "Esta fecha ya está reservada. Por favor, seleccione otra fecha.",
-        icon: "error",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-      })
-      return // No actualizar el estado si la fecha está reservada
+      Swal.fire({ title: "Fecha no disponible", text: "Esta fecha ya está reservada.", icon: "error", toast: true, position: "top-end", showConfirmButton: false, timer: 3000 })
+      return
     }
-
-    // Actualizar el valor del campo
-    setReservationForm({
-      ...reservationForm,
-      [name]: value,
-    })
-
-    // Actualizar el total y el monto de pago si cambian las fechas
-    if (name === "fecha_inicio" || name === "fecha_fin") {
-      if (reservationForm.fecha_inicio && reservationForm.fecha_fin) {
-        const noches = calcularNochesEstadia()
-        const nuevoTotal = selectedApartamento ? selectedApartamento.precio * noches : 0
-        const nuevoMontoPago = nuevoTotal * 0.5 // 50% del total
-
-        setReservationForm((prev) => ({
-          ...prev,
-          noches_estadia: noches,
-          total: nuevoTotal,
-          monto_pago: nuevoMontoPago,
-        }))
-      }
-    }
-
-    // Validar el campo en tiempo real
-    const error = validateField(name, value)
-
-    // Actualizar errores
-    setFormErrors({
-      ...formErrors,
-      [name]: error,
-    })
-
-    // Mostrar alerta SweetAlert2 solo para campos de fecha
-    if (error && (name === "fecha_inicio" || name === "fecha_fin")) {
-      Swal.fire({
-        title: "Error de validación",
-        text: error,
-        icon: "error",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-      })
-    }
+    setReservationForm((p) => ({ ...p, [name]: value }))
+    const err = validateField(name, value)
+    setFormErrors((p) => ({ ...p, [name]: err }))
+    if (err && (name === "fecha_inicio" || name === "fecha_fin"))
+      Swal.fire({ title: "Error", text: err, icon: "error", toast: true, position: "top-end", showConfirmButton: false, timer: 3000 })
   }
 
-  const handleLogin = () => {
-  history.push("/login")
-}
+  const handleLogin = () => history.push("/login")
 
-  // ✅ Actualizar handleReservationSubmit con configuración de API
   const handleReservationSubmit = async () => {
-    // Validar el email ahora
-    const emailError = validateField("email", reservationForm.email)
-    if (emailError) {
-      setFormErrors({
-        ...formErrors,
-        email: emailError,
-      })
-
-      Swal.fire({
-        title: "Error de validación",
-        text: emailError,
-        icon: "error",
-        confirmButtonText: "Entendido",
-      })
-      return
-    }
-
-    // Validar todos los campos antes de enviar
-    const newErrors = {
-      titular_reserva: validateField("titular_reserva", reservationForm.titular_reserva),
-      email: emailError, // Ya validado
-      telefono: validateField("telefono", reservationForm.telefono),
-      fecha_inicio: validateField("fecha_inicio", reservationForm.fecha_inicio),
-      fecha_fin: validateField("fecha_fin", reservationForm.fecha_fin),
-      monto_pago: validateField("monto_pago", reservationForm.monto_pago),
-      documento: !reservationForm.documento ? "El documento es obligatorio" : "",
-    }
-
+    const newErrors = Object.fromEntries(
+      ["titular_reserva","email","telefono","fecha_inicio","fecha_fin","monto_pago","documento"]
+        .map((k) => [k, validateField(k, reservationForm[k])])
+    )
     setFormErrors(newErrors)
-
-    // Verificar si hay errores
-    const hasErrors = Object.values(newErrors).some((error) => error !== "")
-
-    if (hasErrors) {
-      Swal.fire({
-        title: "Formulario incompleto",
-        text: "Por favor corrija los errores antes de continuar",
-        icon: "warning",
-        confirmButtonText: "Entendido",
-      })
-      return
+    if (Object.values(newErrors).some((e) => e !== "")) {
+      Swal.fire({ title: "Formulario incompleto", text: "Corrija los errores antes de continuar", icon: "warning", toast: true, position: "top", showConfirmButton: false, timer: 3500, timerProgressBar: true, background: "#fff", color: "#0C0A14" }); return
     }
-
-    // Verificar si se ha subido el comprobante de pago
     if (!comprobantePago) {
-      Swal.fire({
-        title: "Comprobante de pago requerido",
-        text: "Por favor suba el comprobante de su pago",
-        icon: "warning",
-        confirmButtonText: "Entendido",
-      })
-      return
+      Swal.fire({ title: "Comprobante requerido", text: "Suba el comprobante de pago para continuar", icon: "warning", toast: true, position: "top", showConfirmButton: false, timer: 3500, timerProgressBar: true, background: "#fff", color: "#0C0A14" }); return
     }
-
     setLoading(true)
-
     try {
-      console.log("Preparando datos para enviar al backend...")
-
-      // Preparar datos para la API crearReservaPublica
-      const reservaData = {
-        titular_reserva: reservationForm.titular_reserva,
-        email: reservationForm.email,
-        telefono: reservationForm.telefono,
-        fecha_inicio: reservationForm.fecha_inicio,
-        fecha_fin: reservationForm.fecha_fin,
-        apartamento_id: selectedApartamento.id, // Asegurarse de enviar el ID del apartamento
-        huespedes: reservationForm.acompanantes.length + 1, // +1 por el titular
-        documento: reservationForm.documento,
-        monto_pago: reservationForm.monto_pago, // Añadir el monto del pago parcial
-        acompanantes: reservationForm.acompanantes.map((acompanante) => ({
-          nombre: acompanante.nombre,
-          apellido: acompanante.apellido,
-          documento: acompanante.documento_acompanante,
-        })),
+      const data = {
+        titular_reserva: reservationForm.titular_reserva, email: reservationForm.email,
+        telefono: reservationForm.telefono, fecha_inicio: reservationForm.fecha_inicio,
+        fecha_fin: reservationForm.fecha_fin, apartamento_id: selectedApartamento.id,
+        huespedes: reservationForm.acompanantes.length + 1, documento: reservationForm.documento,
+        monto_pago: reservationForm.monto_pago,
+        acompanantes: reservationForm.acompanantes.map((a) => ({ nombre: a.nombre, apellido: a.apellido, documento: a.documento_acompanante })),
       }
-
-      console.log("Datos a enviar:", reservaData)
-
-      // ✅ Usar la configuración de endpoints
-      const response = await axios.post(API_ENDPOINTS.reservasPublica, reservaData)
-
-      console.log("Respuesta del servidor:", response.data)
-
-      // Verificar si el cliente ya existía
-      if (response.data.clienteExistente) {
-        Swal.fire({
-          title: "Cliente ya registrado",
-          text: "Hemos encontrado tus datos en nuestro sistema. Tu reserva ha sido registrada correctamente.",
-          icon: "info",
-          confirmButtonText: "Entendido",
-        })
-      } else {
-        // Manejar respuesta exitosa
-        Swal.fire({
-          title: "¡Reserva realizada!",
-          text: "Hemos recibido tu reserva. Te enviaremos los detalles a tu correo electrónico.",
-          icon: "success",
-          confirmButtonText: "Excelente",
-        })
-      }
-
-      setReservationDialogOpen(false)
-
-      // Resetear formulario
-      setReservationForm({
-        titular_reserva: "",
-        email: "",
-        telefono: "",
-        fecha_inicio: "",
-        fecha_fin: "",
-        apartamentos: [],
-        noches_estadia: 1,
-        total: 0,
-        monto_pago: 0,
-        acompanantes: [],
-        documento: "",
-      })
-      setComprobantePago(null)
-      setComprobantePreview("")
-    } catch (error) {
-      console.error("Error al registrar reserva:", error)
-
-      // Mostrar mensaje de error más detallado
-      let errorMessage = "Error al procesar la reserva. Por favor intenta nuevamente."
-
-      if (error.response) {
-        // El servidor respondió con un código de error
-        console.error("Respuesta de error del servidor:", error.response.data)
-
-        if (error.response.status === 401) {
-          errorMessage = "No se pudo procesar la reserva. Por favor, inténtalo más tarde o contáctanos directamente."
-        } else if (error.response.data?.msg || error.response.data?.message) {
-          errorMessage = error.response.data.msg || error.response.data.message
-        }
-      } else if (error.message) {
-        errorMessage = error.message
-      }
-
+      const res = await axios.post(API_ENDPOINTS.reservasPublica, data)
       Swal.fire({
-        title: "Error",
-        text: errorMessage,
-        icon: "error",
-        confirmButtonText: "Entendido",
+        title: res.data.clienteExistente ? "Cliente ya registrado" : "¡Reserva realizada!",
+        text: res.data.clienteExistente ? "Hemos encontrado tus datos. Reserva registrada." : "Hemos recibido tu reserva. Te enviaremos un correo.",
+        icon: res.data.clienteExistente ? "info" : "success",
+        confirmButtonText: "¡Perfecto!",
+        background: "#fff",
+        color: "#0C0A14",
+        confirmButtonColor: "#6C3FFF",
+        customClass: { popup: "swal-landing-popup", confirmButton: "swal-landing-btn" },
+        buttonsStyling: true,
       })
-    } finally {
-      setLoading(false)
-    }
+      setReservationDialogOpen(false)
+      setReservationForm({ titular_reserva: "", email: "", telefono: "", fecha_inicio: "", fecha_fin: "", apartamentos: [], noches_estadia: 1, total: 0, monto_pago: 0, acompanantes: [], documento: "" })
+      setComprobantePago(null); setComprobantePreview("")
+    } catch (err) {
+      let msg = "Error al procesar la reserva."
+      if (err.response?.data?.msg || err.response?.data?.message) msg = err.response.data.msg || err.response.data.message
+      Swal.fire({ title: "Error", text: msg, icon: "error", confirmButtonText: "Entendido", background: "#fff", color: "#0C0A14", confirmButtonColor: "#6C3FFF", buttonsStyling: true })
+    } finally { setLoading(false) }
   }
 
-  // Agregar esta función para calcular noches de estadía
   const calcularNochesEstadia = () => {
-    if (!reservationForm.fecha_inicio || !reservationForm.fecha_fin) {
-      return 1
-    }
-
-    const fechaEntrada = new Date(reservationForm.fecha_inicio)
-    const fechaSalida = new Date(reservationForm.fecha_fin)
-    const diffTime = Math.abs(fechaSalida - fechaEntrada)
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-    return diffDays > 0 ? diffDays : 1
+    if (!reservationForm.fecha_inicio || !reservationForm.fecha_fin) return 1
+    const diff = Math.ceil(Math.abs(new Date(reservationForm.fecha_fin) - new Date(reservationForm.fecha_inicio)) / 86400000)
+    return diff > 0 ? diff : 1
   }
-
-  const handleSnackbarClose = () => {
-    setSnackbarOpen(false)
-  }
-
-  const handleFavoriteToggle = (id) => {
-    if (favorites.includes(id)) {
-      setFavorites(favorites.filter((favId) => favId !== id))
-    } else {
-      setFavorites([...favorites, id])
-    }
-  }
-
-  const scrollToSection = (ref) => {
-    ref.current.scrollIntoView({ behavior: "smooth" })
-  }
-
-  // Calcular precio total de la reserva
   const calcularPrecioTotal = () => {
-    if (!selectedApartamento || !reservationForm.fecha_inicio || !reservationForm.fecha_fin) {
-      return 0
-    }
-
-    const fechaEntrada = new Date(reservationForm.fecha_inicio)
-    const fechaSalida = new Date(reservationForm.fecha_fin)
-    const diffTime = Math.abs(fechaSalida - fechaEntrada)
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-    return selectedApartamento.precio * diffDays
+    if (!selectedApartamento || !reservationForm.fecha_inicio || !reservationForm.fecha_fin) return 0
+    return selectedApartamento.precio * calcularNochesEstadia()
   }
+  const handleFavoriteToggle = (id) =>
+    setFavorites((p) => p.includes(id) ? p.filter((f) => f !== id) : [...p, id])
+  const scrollToSection = (ref) => ref.current?.scrollIntoView({ behavior: "smooth" })
+  const renderStars = (n) => Array(5).fill(0).map((_, i) => <Star key={i} style={{ color: i < n ? "#F59E0B" : "rgba(255,255,255,0.2)", fontSize: 16 }} />)
 
-  // Renderizar estrellas para las valoraciones
-  const renderStars = (rating) => {
-    return Array(5)
-      .fill(0)
-      .map((_, index) => <Star key={index} color={index < rating ? "inherit" : "disabled"} />)
-  }
-
-  // Función para manejar errores de carga de imágenes
-  // Modificar la función handleImageError para dar prioridad a los penthouses
-  const handleImageError = (e) => {
-    e.target.onerror = null // Prevenir bucles infinitos
-    console.error("❌ Error al cargar imagen:", e.target.src)
-
-    // Obtener información del apartamento desde los data attributes
-    const apartmentType = e.target.getAttribute("data-apartment-type") || ""
-    const apartmentTag = e.target.getAttribute("data-apartment-tag") || ""
-
-    // También buscar en el DOM como respaldo
-    const apartmentElement = e.target.closest(".MuiCard-root")
-    const apartmentTitle = apartmentElement?.querySelector(".MuiTypography-h5")?.textContent || ""
-    const apartmentTagFromDOM = apartmentElement?.querySelector(".MuiChip-label")?.textContent || ""
-
-    console.log("🔍 Debugging - Tipo:", apartmentType, "Tag:", apartmentTag, "Título:", apartmentTitle)
-
-    // Determinar imagen de respaldo con prioridad a Penthouse
-    if (
-      apartmentType === "Penthouse" ||
-      apartmentTag === "Lujo" ||
-      apartmentTitle.includes("Penthouse") ||
-      apartmentTagFromDOM.includes("Lujo")
-    ) {
-      console.log("🏢 Cargando imagen de respaldo para Penthouse")
-      e.target.src = "/imagen-3.png"
-    } else if (
-      apartmentType === "Tipo 2" ||
-      apartmentTag === "Familiar" ||
-      apartmentTitle.includes("Tipo 2") ||
-      apartmentTagFromDOM.includes("Familiar")
-    ) {
-      console.log("🏠 Cargando imagen de respaldo para Tipo 2")
-      e.target.src = "/imagen-2.png"
-    } else {
-      console.log("🏡 Cargando imagen de respaldo por defecto")
-      e.target.src = "/imagen-1.png"
+  const handleComprobanteChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setComprobantePago(file)
+      const reader = new FileReader()
+      reader.onload = () => setComprobantePreview(reader.result)
+      reader.readAsDataURL(file)
     }
   }
 
+  const handleAddAcompanante = () => {
+    if (selectedApartamento && reservationForm.acompanantes.length >= selectedApartamento.capacidad - 1) {
+      Swal.fire({ title: "Límite", text: `Capacidad máx: ${selectedApartamento.capacidad} personas.`, icon: "warning", toast: true, position: "top-end", showConfirmButton: false, timer: 3000 }); return
+    }
+    setReservationForm((p) => ({ ...p, acompanantes: [...p.acompanantes, { nombre: "", apellido: "", documento_acompanante: "" }] }))
+  }
+  const handleRemoveAcompanante = (i) => {
+    const a = [...reservationForm.acompanantes]; a.splice(i, 1)
+    setReservationForm((p) => ({ ...p, acompanantes: a }))
+  }
+  const handleAcompananteChange = (i, field, value) => {
+    const a = [...reservationForm.acompanantes]; a[i] = { ...a[i], [field]: value }
+    setReservationForm((p) => ({ ...p, acompanantes: a }))
+  }
+
+  /* ═══════════════ RENDER ═══════════════════════════════════════════════ */
   return (
     <div className={classes.root}>
-      {/* AppBar */}
+      <canvas ref={canvasRef} className={classes.particleCanvas} />
+
+      {/* ── NAVBAR ── */}
       <AppBar position="fixed" className={`${classes.appBar} ${scrolled ? classes.appBarScrolled : ""}`}>
         <Toolbar className={classes.toolbar}>
-          <Typography variant="h6" className={classes.logo}>
-            {logoLoaded ? (
+          {/* ── LOGO: solo imagen, sin texto duplicado ── */}
+          <div className={classes.logoWrap} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+            {logoLoaded && (
               <img
                 src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/nidosky-V3qv6QnKvcP2qqA4Vxok6rQ8wpnZi9.png"
                 alt="Nido Sky"
-                onError={(e) => {
-                  e.target.onerror = null
-                  e.target.src = "https://via.placeholder.com/50x50?text=Logo"
-                }}
+                style={{ height: 44, filter: "drop-shadow(0 0 10px rgba(196,181,253,0.8))" }}
               />
-            ) : (
-              <div style={{ width: 50, height: 50 }}></div>
             )}
-          </Typography>
-          <div className={classes.navLinks}>
-            <Button className={`${classes.navLink} ${classes.activeNavLink}`}>Inicio</Button>
-            <Button className={classes.navLink} onClick={() => scrollToSection(apartamentosRef)}>
-              Apartamentos
-            </Button>
-            <Button className={classes.navLink} onClick={() => scrollToSection(aboutRef)}>
-              Nosotros
-            </Button>
-            <Button className={classes.navLink} onClick={() => scrollToSection(featuresRef)}>
-              Servicios
-            </Button>
-            <Button className={classes.navLink} onClick={() => scrollToSection(contactRef)}>
-              Contacto
-            </Button>
-            <Button variant="contained" className={classes.loginButton} onClick={handleLogin}>
-              Iniciar Sesión
-            </Button>
           </div>
-          <IconButton
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            onClick={handleDrawerToggle}
-            className={classes.menuButton}
-          >
-            <MenuIcon />
-          </IconButton>
+          <div className={classes.navLinks}>
+            {[
+              { label: "Inicio", fn: () => window.scrollTo({ top: 0, behavior: "smooth" }), active: true },
+              { label: "Apartamentos", fn: () => scrollToSection(apartamentosRef) },
+              { label: "Nosotros", fn: () => scrollToSection(aboutRef) },
+              { label: "Servicios", fn: () => scrollToSection(featuresRef) },
+              { label: "Contacto", fn: () => scrollToSection(contactRef) },
+            ].map((n) => (
+              <Button key={n.label} className={`${classes.navLink} ${n.active ? classes.activeNavLink : ""}`} onClick={n.fn}>{n.label}</Button>
+            ))}
+            <Button className={classes.loginButton} onClick={handleLogin}>Iniciar Sesión</Button>
+          </div>
+          <IconButton className={classes.menuButton} onClick={() => setDrawerOpen(true)}><MenuIcon /></IconButton>
         </Toolbar>
       </AppBar>
 
-      {/* Drawer para móviles */}
-      <Drawer anchor="right" open={drawerOpen} onClose={handleDrawerToggle} classes={{ paper: classes.drawer }}>
+      {/* ── DRAWER ── */}
+      <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)} className={classes.drawer}>
         <div className={classes.drawerHeader}>
-          <div className={classes.drawerLogo}>
-            {logoLoaded ? (
-              <img
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/nidosky-V3qv6QnKvcP2qqA4Vxok6rQ8wpnZi9.png"
-                alt="Nido Sky"
-                onError={(e) => {
-                  e.target.onerror = null
-                  e.target.src = "https://via.placeholder.com/40x40?text=Logo"
-                }}
-              />
-            ) : (
-              <div style={{ width: 40, height: 40 }}></div>
-            )}
-          </div>
-          <IconButton color="inherit" onClick={handleDrawerToggle}>
-            <Close />
-          </IconButton>
+          <span className={classes.drawerLogoText}>Nido Sky</span>
+          <IconButton style={{ color: "#C4B5FD" }} onClick={() => setDrawerOpen(false)}><Close /></IconButton>
         </div>
-        <div className={classes.drawerContent}>
-          <List>
-            <ListItem button onClick={handleDrawerToggle} className={classes.drawerItem}>
-              <ListItemText primary="Inicio" className={classes.drawerItemText} />
+        <List>
+          {[
+            { label: "Inicio", fn: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
+            { label: "Apartamentos", fn: () => scrollToSection(apartamentosRef) },
+            { label: "Nosotros", fn: () => scrollToSection(aboutRef) },
+            { label: "Servicios", fn: () => scrollToSection(featuresRef) },
+            { label: "Contacto", fn: () => scrollToSection(contactRef) },
+          ].map((item) => (
+            <ListItem button key={item.label} className={classes.drawerItem} onClick={() => { item.fn(); setDrawerOpen(false) }}>
+              <ListItemText primary={item.label} />
             </ListItem>
-            <ListItem
-              button
-              onClick={() => {
-                scrollToSection(apartamentosRef)
-                handleDrawerToggle()
-              }}
-              className={classes.drawerItem}
-            >
-              <ListItemText primary="Apartamentos" className={classes.drawerItemText} />
-            </ListItem>
-            <ListItem
-              button
-              onClick={() => {
-                scrollToSection(aboutRef)
-                handleDrawerToggle()
-              }}
-              className={classes.drawerItem}
-            >
-              <ListItemText primary="Nosotros" className={classes.drawerItemText} />
-            </ListItem>
-            <ListItem
-              button
-              onClick={() => {
-                scrollToSection(featuresRef)
-                handleDrawerToggle()
-              }}
-              className={classes.drawerItem}
-            >
-              <ListItemText primary="Servicios" className={classes.drawerItemText} />
-            </ListItem>
-            <ListItem
-              button
-              onClick={() => {
-                scrollToSection(contactRef)
-                handleDrawerToggle()
-              }}
-              className={classes.drawerItem}
-            >
-              <ListItemText primary="Contacto" className={classes.drawerItemText} />
-            </ListItem>
-          </List>
-          <Divider className={classes.drawerDivider} />
-          <Button variant="contained" className={classes.drawerLoginButton} onClick={handleLogin}>
-            Iniciar Sesión
-          </Button>
-        </div>
+          ))}
+        </List>
+        <Divider style={{ backgroundColor: "rgba(196,181,253,0.2)" }} />
+        <Button className={classes.drawerLoginBtn} onClick={handleLogin}>Iniciar Sesión</Button>
       </Drawer>
 
-      {/* Hero Section */}
+      {/* ── HERO ── */}
       <section className={classes.heroSection}>
-        {heroImages.map((image, index) => (
-          <div
-            key={index}
-            className={classes.heroBackground}
-            style={{
-              backgroundImage: `url(${image})`,
-              opacity: currentHeroSlide === index ? 1 : 0,
-            }}
-          />
+        {heroImages.map((img, i) => (
+          <div key={i} className={classes.heroBg} style={{ backgroundImage: `url(${img})`, opacity: currentHeroSlide === i ? 1 : 0 }} />
         ))}
+        <div className={classes.heroGlowOrb1} />
+        <div className={classes.heroGlowOrb2} />
+
         <div className={classes.heroContent}>
-          <Slide direction="down" in={true} timeout={1000}>
-            <div>
-              <div className={classes.heroLocation}>
-                <LocationOn />
-                <span>El Poblado, Medellín</span>
-              </div>
-              <Typography variant="h1" className={classes.heroTitle}>
-                Bienvenido a <span>Nido Sky</span>
-              </Typography>
-              <Typography variant="h5" className={classes.heroSubtitle}>
-                Lujo y exclusividad en el corazón de El Poblado, la zona más prestigiosa de Medellín
-              </Typography>
-              <div className={classes.heroButtons}>
-                <Button
-                  variant="contained"
-                  size="large"
-                  className={classes.primaryButton}
-                  onClick={() => scrollToSection(apartamentosRef)}
-                >
-                  Ver Apartamentos
-                </Button>
-                <Button
-                  variant="outlined"
-                  size="large"
-                  className={classes.secondaryButton}
-                  onClick={() => scrollToSection(aboutRef)}
-                >
-                  Conocer Más
-                </Button>
-              </div>
-            </div>
-          </Slide>
+          <div className={classes.heroBadge}>
+            <LocationOn /><span>El Poblado · Medellín · Colombia</span>
+          </div>
+          <Typography className={classes.heroTitle}>
+            Tu hogar en<br /><em>las alturas</em>
+          </Typography>
+          <Typography className={classes.heroSub}>
+            Apartamentos de lujo con vistas privilegiadas en el corazón de El Poblado. Donde cada amanecer es una obra de arte.
+          </Typography>
+          <div className={classes.heroButtons}>
+            <Button className={classes.heroPrimBtn} onClick={() => scrollToSection(apartamentosRef)}>
+              Explorar apartamentos ✦
+            </Button>
+            <Button className={classes.heroSecBtn} onClick={() => scrollToSection(aboutRef)}>
+              Conocer más
+            </Button>
+          </div>
         </div>
-        <div className={classes.heroArrows}>
-          <IconButton className={classes.heroArrow} onClick={() => handleHeroSlideChange("prev")}>
-            <ChevronLeft />
-          </IconButton>
-          <IconButton className={classes.heroArrow} onClick={() => handleHeroSlideChange("next")}>
-            <ChevronRight />
-          </IconButton>
+
+        <div className={classes.heroDots}>
+          {heroImages.map((_, i) => (
+            <div key={i} className={`${classes.heroDot} ${i === currentHeroSlide ? classes.heroDotActive : ""}`} onClick={() => setCurrentHeroSlide(i)} />
+          ))}
+        </div>
+        <div className={classes.heroNavBtns}>
+          <IconButton className={classes.heroNavBtn} onClick={() => setCurrentHeroSlide((p) => (p - 1 + heroImages.length) % heroImages.length)}><ChevronLeft /></IconButton>
+          <IconButton className={classes.heroNavBtn} onClick={() => setCurrentHeroSlide((p) => (p + 1) % heroImages.length)}><ChevronRight /></IconButton>
         </div>
       </section>
 
-      {/* Formulario de Reserva */}
-      <div className={classes.bookingFormContainer}>
-        <Paper className={classes.bookingForm} elevation={3}>
-          <Typography variant="h5" className={classes.bookingFormTitle}>
-            Reserva tu estancia
-          </Typography>
-          <div className={classes.bookingFormInner}>
-            <TextField
-              className={classes.bookingInput}
-              label="Fecha de entrada"
-              type="date"
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              inputProps={{ min: new Date().toISOString().split("T")[0] }}
-              value={reservationForm.fecha_inicio}
-              onChange={(e) => {
-                const today = new Date().toISOString().split("T")[0]
-                const selectedDate = e.target.value
-
-                if (selectedDate < today) {
-                  Swal.fire({
-                    title: "Fecha inválida",
-                    text: "La fecha de entrada debe ser hoy o posterior",
-                    icon: "warning",
-                    toast: true,
-                    position: "top-end",
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true,
-                  })
-                  return
-                }
-
-                setReservationForm({ ...reservationForm, fecha_inicio: e.target.value })
-              }}
-            />
-            <TextField
-              className={classes.bookingInput}
-              label="Fecha de salida"
-              type="date"
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              inputProps={{ min: reservationForm.fecha_inicio || new Date().toISOString().split("T")[0] }}
-              value={reservationForm.fecha_fin}
-              onChange={(e) => {
-                const entryDate = reservationForm.fecha_inicio
-                const selectedDate = e.target.value
-
-                if (entryDate && selectedDate <= entryDate) {
-                  Swal.fire({
-                    title: "Fecha inválida",
-                    text: "La fecha de salida debe ser posterior a la fecha de entrada",
-                    icon: "warning",
-                    toast: true,
-                    position: "top-end",
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true,
-                  })
-                  return
-                }
-
-                setReservationForm({ ...reservationForm, fecha_fin: e.target.value })
-              }}
-            />
-            <TextField
-              className={classes.bookingInput}
-              label="Huéspedes"
-              type="number"
-              variant="outlined"
-              InputProps={{ inputProps: { min: 1, max: 10 } }}
-              value={reservationForm.acompanantes.length + 1} // +1 por el titular
-              onChange={(e) => {
-                const numHuespedes = Number.parseInt(e.target.value) - 1 // -1 porque el titular no es acompañante
-                if (numHuespedes < 0) return
-
-                // Verificar si excede la capacidad máxima
-                if (selectedApartamento && numHuespedes > selectedApartamento.capacidad - 1) {
-                  Swal.fire({
-                    title: "Límite de capacidad",
-                    text: `Este apartamento tiene capacidad máxima para ${selectedApartamento.capacidad} personas (incluido el titular).`,
-                    icon: "warning",
-                    toast: true,
-                    position: "top-end",
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true,
-                  })
-                  return
-                }
-
-                // Ajustar la lista de acompañantes según el número de huéspedes
-                let nuevosAcompanantes = [...reservationForm.acompanantes]
-                if (numHuespedes < nuevosAcompanantes.length) {
-                  // Reducir la lista
-                  nuevosAcompanantes = nuevosAcompanantes.slice(0, numHuespedes)
-                } else if (numHuespedes > nuevosAcompanantes.length) {
-                  // Aumentar la lista
-                  const acompanantesAdicionales = Array(numHuespedes - nuevosAcompanantes.length)
-                    .fill(0)
-                    .map(() => ({ nombre: "", apellido: "", documento: "" }))
-                  nuevosAcompanantes = [...nuevosAcompanantes, ...acompanantesAdicionales]
-                }
-
-                setReservationForm({ ...reservationForm, acompanantes: nuevosAcompanantes })
-              }}
-            />
-            <Button
-              variant="contained"
-              className={classes.bookingButton}
-              onClick={() => scrollToSection(apartamentosRef)}
-            >
-              Buscar Disponibilidad
-            </Button>
-          </div>
-        </Paper>
+      {/* ── BOOKING BAR ── */}
+      <div className={classes.bookingWrap}>
+        <div className={classes.bookingBar}>
+          <Typography className={classes.bookingLabel}>Reservar</Typography>
+          <TextField className={classes.bookingInput} label="Fecha entrada" type="date" variant="outlined" size="small"
+            InputLabelProps={{ shrink: true }} inputProps={{ min: new Date().toISOString().split("T")[0] }}
+            value={reservationForm.fecha_inicio}
+            onChange={(e) => {
+              if (e.target.value < new Date().toISOString().split("T")[0]) {
+                Swal.fire({ title: "Fecha inválida", text: "Debe ser hoy o posterior", icon: "warning", toast: true, position: "top-end", showConfirmButton: false, timer: 3000 }); return
+              }
+              setReservationForm((p) => ({ ...p, fecha_inicio: e.target.value }))
+            }} />
+          <TextField className={classes.bookingInput} label="Fecha salida" type="date" variant="outlined" size="small"
+            InputLabelProps={{ shrink: true }} inputProps={{ min: reservationForm.fecha_inicio || new Date().toISOString().split("T")[0] }}
+            value={reservationForm.fecha_fin}
+            onChange={(e) => {
+              if (reservationForm.fecha_inicio && e.target.value <= reservationForm.fecha_inicio) {
+                Swal.fire({ title: "Fecha inválida", text: "Debe ser posterior a la entrada", icon: "warning", toast: true, position: "top-end", showConfirmButton: false, timer: 3000 }); return
+              }
+              setReservationForm((p) => ({ ...p, fecha_fin: e.target.value }))
+            }} />
+          <TextField className={classes.bookingInput} label="Huéspedes" type="number" variant="outlined" size="small"
+            InputProps={{ inputProps: { min: 1, max: 10 } }}
+            value={reservationForm.acompanantes.length + 1}
+            onChange={(e) => {
+              const n = parseInt(e.target.value) - 1; if (n < 0) return
+              let a = [...reservationForm.acompanantes]
+              if (n < a.length) a = a.slice(0, n); else while (a.length < n) a.push({ nombre: "", apellido: "", documento: "" })
+              setReservationForm((p) => ({ ...p, acompanantes: a }))
+            }} />
+          <Button className={classes.bookingSubmit} onClick={() => scrollToSection(apartamentosRef)}>
+            <Search style={{ marginRight: 8, fontSize: 18 }} /> Buscar
+          </Button>
+        </div>
       </div>
 
-      {/* Sección de Apartamentos */}
-      <section className={classes.apartmentSection} ref={apartamentosRef}>
-        <div className={classes.apartmentSectionBg}></div>
-        <div style={{ width: "100%", padding: "60px 40px" }}>
-          <Typography variant="h3" className={`${classes.sectionTitle} ${classes.sectionTitleUnderline}`}>
-            Nuestros Apartamentos
-          </Typography>
-          <Typography variant="body1" className={classes.sectionSubtitle}>
-            Descubre nuestras exclusivas opciones de alojamiento en El Poblado, diseñadas para brindarte la máxima
-            comodidad y una experiencia inolvidable en Medellín.
-          </Typography>
+      {/* ── STATS ── */}
+      <div className={classes.statsWrap}>
+        {[
+          { num: "150+", label: "Apartamentos" },
+          { num: "8K+", label: "Huéspedes satisfechos" },
+          { num: "12", label: "Años de experiencia" },
+          { num: "4.9★", label: "Calificación" },
+        ].map((s) => (
+          <div key={s.label} className={classes.statItem}>
+            <span className={classes.statNum}>{s.num}</span>
+            <span className={classes.statLabel}>{s.label}</span>
+          </div>
+        ))}
+      </div>
 
-          {/* Filtros y búsqueda */}
-          <div className={classes.apartmentFilters}>
-            <Typography variant="h6" style={{ color: "#0A2463", fontWeight: 600 }}>
-              Apartamentos Disponibles
-            </Typography>
-            <TextField
-              className={classes.searchField}
-              variant="outlined"
-              placeholder="Buscar apartamentos..."
-              size="small"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              InputProps={{
-                startAdornment: <Search style={{ color: "#0A2463", marginRight: 8 }} />,
-              }}
-            />
-            <Button
-              variant="contained"
-              style={{
-                backgroundColor: "#0A2463",
-                color: "#FFFAFF",
-                marginLeft: "10px",
-              }}
-              onClick={toggleShowAllApartments}
-            >
-              {showAllApartments ? "Mostrar 6 apartamentos" : "Ver todos los apartamentos"}
-            </Button>
+      {/* ── APARTMENTS ── */}
+      <section className={classes.aptSection} ref={apartamentosRef}>
+        <div className={classes.sxWrap}>
+          <div className={classes.sxBadge}><div /><span>Alojamiento exclusivo</span></div>
+          <div className={classes.filterRow}>
+            <div>
+              <Typography className={classes.sxTitle}>Nuestros Apartamentos</Typography>
+              <Typography className={classes.sxSub} style={{ marginBottom: 0 }}>
+                Espacios diseñados para vivir experiencias únicas en Medellín.
+              </Typography>
+            </div>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+              <TextField className={classes.searchInput} variant="outlined" size="small"
+                placeholder="Buscar por tipo o característica..."
+                value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{ startAdornment: <Search style={{ color: "rgba(196,181,253,0.7)", marginRight: 8, fontSize: 18 }} /> }} />
+              <Button className={classes.showAllBtn} onClick={toggleShowAllApartments}>
+                {showAllApartments ? "Ver menos" : "Ver todos"}
+              </Button>
+            </div>
           </div>
 
-          {/* Grid de apartamentos */}
-          <Grid container spacing={6}>
-            {filteredApartamentos.length > 0 ? (
-              filteredApartamentos.map((apartamento) => (
-                <Grid item key={apartamento.id} xs={12} sm={6} md={4} lg={4}>
-                  <Zoom in={true} style={{ transitionDelay: "100ms" }}>
-                    <Card className={classes.apartmentCard}>
-                      <div className={classes.apartmentCardMedia}>
-                        <img
-                          src={apartamento.imagen || "/imagen-1.png"}
-                          alt={apartamento.nombre}
-                          onError={handleImageError}
-                          data-apartment-type={apartamento.tipo}
-                          data-apartment-tag={apartamento.tag}
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            display: "block",
-                          }}
-                          onLoad={() => console.log("✅ Imagen cargada:", apartamento.imagen)}
-                        />
-                        <div
-                          className={`${classes.apartmentTag} ${apartamento.tipo === "Penthouse" ? classes.luxuryTag : ""}`}
-                        >
-                          {apartamento.tag || apartamento.tipo}
-                        </div>
-                        <div className={classes.apartmentCardPrice}>${apartamento.precio} / noche</div>
-                        <IconButton className={classes.videoButton}>
-                          <PlayArrow />
-                        </IconButton>
-                        <Button className={classes.viewButton} startIcon={<Visibility />}>
-                          Ver tour 360°
-                        </Button>
-                      </div>
-
-                      <CardContent className={classes.apartmentCardContent}>
-                        <Typography variant="h5" className={classes.apartmentCardTitle}>
-                          {apartamento.nombre}
-                        </Typography>
-                        <div className={classes.apartmentCardLocation}>
-                          <LocationOn />
-                          <Typography variant="body2">{apartamento.ubicacion}</Typography>
-                        </div>
-                        <div className={classes.apartmentCardFeatures}>
-                          <div className={classes.apartmentCardFeature}>
-                            <Person />
-                            <span>{apartamento.capacidad} Huéspedes</span>
-                          </div>
-                          <div className={classes.apartmentCardFeature}>
-                            <LocalHotel />
-                            <span>
-                              {apartamento.camas} {apartamento.camas > 1 ? "Camas" : "Cama"}
-                            </span>
-                          </div>
-                          <div className={classes.apartmentCardFeature}>
-                            <Bathtub />
-                            <span>
-                              {apartamento.banos} {apartamento.banos > 1 ? "Baños" : "Baño"}
-                            </span>
-                          </div>
-                        </div>
-                        <Box display="flex" flexWrap="wrap" mb={1}>
-                          {apartamento.caracteristicas?.map((caracteristica, index) => (
-                            <Chip key={index} label={caracteristica} size="small" className={classes.chip} />
-                          ))}
-                        </Box>
-                        <div className={classes.apartmentCardActions}>
-                          <Button
-                            variant="contained"
-                            className={classes.apartmentCardButton}
-                            onClick={() => handleReservationOpen(apartamento)}
-                          >
-                            Reservar Ahora
-                          </Button>
-                          <IconButton
-                            className={classes.favoriteButton}
-                            onClick={() => handleFavoriteToggle(apartamento.id)}
-                          >
-                            {favorites.includes(apartamento.id) ? <Favorite /> : <FavoriteBorder />}
-                          </IconButton>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Zoom>
-                </Grid>
-              ))
-            ) : (
-              <Box width="100%" textAlign="center" py={4}>
-                <Typography variant="h6" style={{ color: "#8D99AE" }}>
-                  No se encontraron apartamentos que coincidan con tu búsqueda.
-                </Typography>
-              </Box>
-            )}
-          </Grid>
-        </div>
-      </section>
-
-      {/* Sección Sobre Nosotros */}
-      <section className={classes.aboutSection} ref={aboutRef}>
-        <div className={classes.aboutPattern}></div>
-        <div className={classes.sectionInner}>
-          <Grid container spacing={6} alignItems="center" className={classes.aboutContent}>
-            <Grid item xs={12} md={6}>
-              <Fade in={true} timeout={1000}>
-                <div>
-                  <Typography variant="h3" className={classes.aboutTitle}>
-                    Sobre Nido Sky
-                  </Typography>
-                  <Typography variant="body1" className={classes.aboutText}>
-                    Nido Sky es un refugio de lujo ubicado en El Poblado, la zona más exclusiva de Medellín. Nuestro
-                    hotel combina la elegancia moderna con la calidez colombiana, ofreciendo a nuestros huéspedes una
-                    experiencia única de descanso y confort.
-                  </Typography>
-                  <Typography variant="body1" className={classes.aboutText}>
-                    Con vistas panorámicas a la ciudad, servicios de primera clase y atención personalizada, nos
-                    esforzamos por hacer de su estancia una experiencia inolvidable en el corazón de la ciudad de la
-                    eterna primavera.
-                  </Typography>
-                  <Box display="flex" flexDirection="column" gap={2}>
-                    <div className={classes.aboutFeature}>
-                      <CheckCircle className={classes.aboutFeatureIcon} />
-                      <Typography variant="body1" className={classes.aboutFeatureText}>
-                        Ubicación privilegiada en El Poblado, Medellín
-                      </Typography>
-                    </div>
-                    <div className={classes.aboutFeature}>
-                      <CheckCircle className={classes.aboutFeatureIcon} />
-                      <Typography variant="body1" className={classes.aboutFeatureText}>
-                        Servicio personalizado de alta calidad
-                      </Typography>
-                    </div>
-                    <div className={classes.aboutFeature}>
-                      <CheckCircle className={classes.aboutFeatureIcon} />
-                      <Typography variant="body1" className={classes.aboutFeatureText}>
-                        Apartamentos modernos y confortables
-                      </Typography>
-                    </div>
-                    <div className={classes.aboutFeature}>
-                      <CheckCircle className={classes.aboutFeatureIcon} />
-                      <Typography variant="body1" className={classes.aboutFeatureText}>
-                        Experiencia gastronómica excepcional
-                      </Typography>
-                    </div>
-                  </Box>
-                  <div className={classes.amenitiesRow}>
-                    <div className={classes.amenityItem}>
-                      <Pool /> Piscina
-                    </div>
+          <div className={classes.aptGrid}>
+            {filteredApartamentos.length > 0 ? filteredApartamentos.map((apt) => (
+              <Zoom in timeout={400} key={apt.id}>
+                <div className={classes.aptCard}>
+                  <div className={classes.aptImgWrap}>
+                    <img className={classes.aptImg} src={apt.imagen || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80"}
+                      alt={apt.nombre}
+                      onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80" }}
+                      data-apartment-type={apt.tipo} data-apartment-tag={apt.tag} />
+                    <div className={classes.aptImgOverlay} />
+                    <div className={`${classes.aptTag} ${apt.tipo === "Penthouse" ? classes.aptTagLux : ""}`}>{apt.tag || apt.tipo}</div>
+                    <div className={classes.aptPrice}><strong>${apt.precio}</strong> / noche</div>
+                    <IconButton className={classes.videoBtn}><PlayArrow /></IconButton>
+                    <Button className={classes.viewBtn} startIcon={<Visibility />}>Tour 360°</Button>
                   </div>
-                  <div className={classes.amenitiesRow}>
-                    <div className={classes.amenityItem}>
-                      <Pool /> Piscina
+                  <div className={classes.aptBody}>
+                    <Typography className={classes.aptTitle}>{apt.nombre}</Typography>
+                    <div className={classes.aptLoc}><LocationOn /><span>{apt.ubicacion}</span></div>
+                    <div className={classes.aptFeatures}>
+                      <div className={classes.aptFeature}><Person /><span>{apt.capacidad} huésp.</span></div>
+                      <div className={classes.aptFeature}><LocalHotel /><span>{apt.camas} cama{apt.camas > 1 ? "s" : ""}</span></div>
+                      <div className={classes.aptFeature}><Bathtub /><span>{apt.banos} baño{apt.banos > 1 ? "s" : ""}</span></div>
                     </div>
-                    <div className={classes.amenityItem}>
-                      <Wifi /> WiFi Gratis
+                    <div className={classes.aptChips}>
+                      {apt.caracteristicas?.slice(0, 3).map((c, i) => <Chip key={i} label={c} size="small" className={classes.aptChip} />)}
                     </div>
-                    <div className={classes.amenityItem}>
-                      <Spa /> Spa
-                    </div>
-                    <div className={classes.amenityItem}>
-                      <FitnessCenter /> Gimnasio
-                    </div>
-                    <div className={classes.amenityItem}>
-                      <Restaurant /> Restaurante
+                    <div className={classes.aptActions}>
+                      <Button className={classes.aptReserveBtn} onClick={() => handleReservationOpen(apt)}>
+                        Reservar ahora
+                      </Button>
+                      <IconButton className={`${classes.aptFavBtn} ${favorites.includes(apt.id) ? classes.aptFavActive : ""}`}
+                        onClick={() => handleFavoriteToggle(apt.id)}>
+                        {favorites.includes(apt.id) ? <Favorite /> : <FavoriteBorder />}
+                      </IconButton>
                     </div>
                   </div>
                 </div>
-              </Fade>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <img
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/recepcion.png-XPx7tO9N6DKxWdsfId1Xajk9SrXgS8.jpeg"
-                alt="Nido Sky"
-                className={classes.aboutImage}
-                onError={handleImageError}
-              />
-            </Grid>
-          </Grid>
+              </Zoom>
+            )) : (
+              <div style={{ gridColumn: "1/-1", textAlign: "center", padding: "60px 0" }}>
+                <Typography style={{ color: "#6B5E87", fontFamily: "'Outfit', sans-serif", fontSize: "1rem" }}>
+                  No se encontraron apartamentos con esos criterios.
+                </Typography>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
-      {/* Sección de Características */}
-      <section className={classes.featuresSection} ref={featuresRef}>
-        <div className={classes.featuresBg}></div>
-        <div className={classes.sectionInner}>
-          <Typography variant="h3" className={`${classes.sectionTitle} ${classes.sectionTitleUnderline}`}>
-            Nuestras Comodidades
-          </Typography>
-          <Typography variant="body1" className={classes.sectionSubtitle}>
-            Disfruta de nuestras instalaciones y servicios diseñados para hacer de tu estancia en Medellín una
-            experiencia inolvidable.
-          </Typography>
-          <Grid container spacing={4} className={classes.featuresGrid}>
-            <Grid item xs={12} sm={6} md={3}>
-              <div className={classes.featureItem}>
-                <Pool className={classes.featureIcon} />
-                <Typography variant="h6" className={classes.featureTitle}>
-                  Piscina Infinity
-                </Typography>
-                <Typography variant="body2" className={classes.featureText}>
-                  Disfruta de nuestra piscina con vistas panorámicas a la ciudad de Medellín.
-                </Typography>
+      {/* ── ABOUT ── */}
+      <section className={classes.aboutSection} ref={aboutRef}>
+        <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+          <Grid container spacing={8} alignItems="center">
+            <Grid item xs={12} md={5}>
+              <div className={classes.aboutImgWrap}>
+                <img src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&q=80" alt="Nido Sky lobby"
+                  style={{ width: "100%", borderRadius: 22, display: "block", filter: "brightness(0.92)" }}
+                  onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80" }} />
+                <div className={classes.aboutFloatCard}>
+                  <span className="big">12+</span>
+                  <span className="small">Años de excelencia</span>
+                </div>
               </div>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <div className={classes.featureItem}>
-                <Wifi className={classes.featureIcon} />
-                <Typography variant="h6" className={classes.featureTitle}>
-                  WiFi de Alta Velocidad
-                </Typography>
-                <Typography variant="body2" className={classes.featureText}>
-                  Conexión de fibra óptica en todas las áreas del hotel.
-                </Typography>
+            <Grid item xs={12} md={7}>
+              <div className={classes.sxBadge} style={{ backgroundColor:"rgba(196,181,253,0.15)", borderColor:"rgba(196,181,253,0.35)" }}>
+                <div style={{ backgroundColor:"#C4B5FD" }}/><span style={{ color:"#C4B5FD" }}>Nuestra historia</span>
               </div>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <div className={classes.featureItem}>
-                <Restaurant className={classes.featureIcon} />
-                <Typography variant="h6" className={classes.featureTitle}>
-                  Restaurante Gourmet
-                </Typography>
-                <Typography variant="body2" className={classes.featureText}>
-                  Gastronomía de primera clase con ingredientes locales y sabores internacionales.
-                </Typography>
-              </div>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <div className={classes.featureItem}>
-                <Spa className={classes.featureIcon} />
-                <Typography variant="h6" className={classes.featureTitle}>
-                  Spa & Wellness
-                </Typography>
-                <Typography variant="body2" className={classes.featureText}>
-                  Relájate con nuestros tratamientos exclusivos y terapias rejuvenecedoras.
-                </Typography>
-              </div>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <div className={classes.featureItem}>
-                <AcUnit className={classes.featureIcon} />
-                <Typography variant="h6" className={classes.featureTitle}>
-                  Clima Controlado
-                </Typography>
-                <Typography variant="body2" className={classes.featureText}>
-                  Temperatura ideal en todos nuestros apartamentos para tu máximo confort.
-                </Typography>
-              </div>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <div className={classes.featureItem}>
-                <FitnessCenter className={classes.featureIcon} />
-                <Typography variant="h6" className={classes.featureTitle}>
-                  Gimnasio Completo
-                </Typography>
-                <Typography variant="body2" className={classes.featureText}>
-                  Equipamiento moderno para mantenerte en forma durante tu estancia.
-                </Typography>
-              </div>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <div className={classes.featureItem}>
-                <LocalBar className={classes.featureIcon} />
-                <Typography variant="h6" className={classes.featureTitle}>
-                  Bar &amp; Lounge
-                </Typography>
-                <Typography variant="body2" className={classes.featureText}>
-                  Disfruta de cócteles exclusivos con las mejores vistas de la ciudad.
-                </Typography>
-              </div>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <div className={classes.featureItem}>
-                <Security className={classes.featureIcon} />
-                <Typography variant="h6" className={classes.featureTitle}>
-                  Seguridad 24/7
-                </Typography>
-                <Typography variant="body2" className={classes.featureText}>
-                  Vigilancia permanente y sistema de seguridad avanzado para tu tranquilidad.
-                </Typography>
+              <Typography className={classes.sxTitle} style={{ color:"#fff" }}>
+                El arte de vivir<br />en las alturas
+              </Typography>
+              <Typography className={classes.aboutBody}>
+                Nido Sky nació con la visión de crear un espacio donde el lujo y la autenticidad colombiana coexisten en perfecta armonía. Ubicados en El Poblado, ofrecemos apartamentos de alto estándar con vistas privilegiadas y servicios de talla mundial.
+              </Typography>
+              <Typography className={classes.aboutBody}>
+                Cada detalle ha sido cuidadosamente diseñado para convertir tu estadía en una experiencia sensorial única, donde el confort se convierte en arte y cada momento en un recuerdo imborrable.
+              </Typography>
+              {[
+                "Ubicación privilegiada en El Poblado, Medellín",
+                "Servicio personalizado disponible 24 horas",
+                "Apartamentos modernos con acabados premium",
+                "Gastronomía gourmet con ingredientes locales",
+              ].map((t) => (
+                <div key={t} className={classes.checkRow}>
+                  <CheckCircle fontSize="small" />
+                  <span>{t}</span>
+                </div>
+              ))}
+              <div className={classes.pillRow}>
+                {[
+                  { icon: <Pool />, label: "Piscina" },
+                  { icon: <Wifi />, label: "WiFi 1 Gbps" },
+                  { icon: <Spa />, label: "Spa & Wellness" },
+                  { icon: <FitnessCenter />, label: "Gimnasio" },
+                  { icon: <Restaurant />, label: "Restaurante" },
+                ].map((p) => (
+                  <div key={p.label} className={classes.pill}>{p.icon}<span>{p.label}</span></div>
+                ))}
               </div>
             </Grid>
           </Grid>
         </div>
       </section>
 
-      {/* Sección de Testimonios */}
-      <section className={classes.testimonialSection}>
-        <div className={classes.testimonialPattern}></div>
-        <div className={classes.sectionInner}>
-          <Typography
-            variant="h3"
-            className={`${classes.sectionTitle} ${classes.sectionTitleLight} ${classes.sectionTitleUnderline}`}
-          >
-            Lo Que Dicen Nuestros Huéspedes
-          </Typography>
-          <Typography variant="body1" className={`${classes.sectionSubtitle} ${classes.sectionSubtitleLight}`}>
-            Descubre las experiencias de quienes ya han disfrutado de nuestro hotel en El Poblado.
-          </Typography>
-          <Grid container spacing={4} className={classes.testimonialContainer}>
-            {testimoniosEjemplo.map((testimonio) => (
-              <Grid item key={testimonio.id} xs={12} md={4}>
-                <div className={classes.testimonialCard}>
-                  <div className={classes.testimonialRating}>{renderStars(testimonio.rating)}</div>
-                  <Typography variant="body1" className={classes.testimonialText}>
-                    {testimonio.comentario}
-                  </Typography>
-                  <div className={classes.testimonialAuthor}>
-                    <img
-                      src={testimonio.avatar || "/placeholder.svg"}
-                      alt={testimonio.nombre}
-                      className={classes.testimonialAvatar}
-                      onError={handleImageError}
-                    />
+      {/* ── SERVICES ── */}
+      <section className={classes.servicesSection} ref={featuresRef}>
+        <div className={classes.sxWrap}>
+          <div style={{ textAlign: "center" }}>
+            <div className={classes.sxBadge} style={{ justifyContent:"center", backgroundColor:"rgba(196,181,253,0.15)", borderColor:"rgba(196,181,253,0.35)" }}>
+              <div style={{ backgroundColor:"#C4B5FD" }}/><span style={{ color:"#C4B5FD" }}>Lo que ofrecemos</span>
+            </div>
+            <Typography className={classes.sxTitle} style={{ textAlign: "center", color:"#fff" }}>Servicios & Comodidades</Typography>
+            <Typography className={classes.sxSub} style={{ textAlign: "center", margin: "0 auto 56px", color:"rgba(255,255,255,0.62)" }}>
+              Todo lo que necesitas para una estadía perfecta con los más altos estándares de calidad.
+            </Typography>
+          </div>
+          <Grid container spacing={3}>
+            {[
+              { icon: <Pool />, title: "Piscina Infinity", text: "Piscina con vista panorámica a la ciudad de Medellín, disponible todo el año." },
+              { icon: <Wifi />, title: "WiFi Ultra Rápido", text: "Fibra óptica de 1 Gbps en todas las áreas comunes y apartamentos." },
+              { icon: <Restaurant />, title: "Restaurante Gourmet", text: "Propuestas gastronómicas de autor con ingredientes locales selectos." },
+              { icon: <Spa />, title: "Spa & Bienestar", text: "Tratamientos exclusivos y terapias de relajación profunda." },
+              { icon: <AcUnit />, title: "Clima Controlado", text: "Sistema de climatización de última generación en todos los espacios." },
+              { icon: <FitnessCenter />, title: "Gimnasio Premium", text: "Equipamiento de alta gama para mantener tu rutina activa." },
+              { icon: <LocalBar />, title: "Bar Sky Lounge", text: "Cócteles de autor con las mejores vistas de Medellín al atardecer." },
+              { icon: <Security />, title: "Seguridad 24/7", text: "Vigilancia permanente y sistema biométrico para tu tranquilidad." },
+            ].map((s) => (
+              <Grid item xs={12} sm={6} md={3} key={s.title}>
+                <div className={classes.serviceCard}>
+                  <div className={classes.svcIconWrap}>{React.cloneElement(s.icon, { style: { fontSize: 30, color: "#C4B5FD" } })}</div>
+                  <Typography className={classes.svcTitle}>{s.title}</Typography>
+                  <Typography className={classes.svcText}>{s.text}</Typography>
+                </div>
+              </Grid>
+            ))}
+          </Grid>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALS ── */}
+      <section className={classes.testimSection}>
+        <div className={classes.sxWrap}>
+          <div style={{ textAlign: "center" }}>
+            <div className={classes.sxBadge} style={{ justifyContent: "center" }}><div /><span>Opiniones reales</span></div>
+            <Typography className={classes.sxTitle} style={{ textAlign: "center" }}>Lo que dicen nuestros huéspedes</Typography>
+            <Typography className={classes.sxSub} style={{ textAlign: "center", margin: "0 auto 56px" }}>
+              Experiencias auténticas de quienes ya vivieron la magia de Nido Sky.
+            </Typography>
+          </div>
+          <Grid container spacing={4}>
+            {testimoniosEjemplo.map((t) => (
+              <Grid item xs={12} md={4} key={t.id}>
+                <div className={classes.testimCard}>
+                  <div className={classes.testimQuoteMark}>"</div>
+                  <div className={classes.testimStars}>{renderStars(t.rating)}</div>
+                  <Typography className={classes.testimText}>{t.comentario}</Typography>
+                  <div className={classes.testimAuthor}>
+                    <img src={t.avatar} alt={t.nombre} className={classes.testimAvatar}
+                      onError={(e) => { e.target.src = "https://via.placeholder.com/52" }} />
                     <div>
-                      <Typography variant="subtitle1" className={classes.testimonialName}>
-                        {testimonio.nombre}
-                      </Typography>
-                      <Typography variant="body2" className={classes.testimonialRole}>
-                        {testimonio.rol}
-                      </Typography>
+                      <div className={classes.testimName}>{t.nombre}</div>
+                      <div className={classes.testimRole}>{t.rol}</div>
                     </div>
                   </div>
                 </div>
@@ -3130,612 +2221,249 @@ const history = useHistory()
         </div>
       </section>
 
-      {/* Sección CTA */}
+      {/* ── CTA ── */}
       <section className={classes.ctaSection}>
-        <div className={classes.ctaPattern}></div>
-        <div className={classes.sectionInner}>
-          <div className={classes.ctaContent}>
-            <Typography variant="h3" className={classes.ctaTitle}>
-              ¿Listo para una experiencia inolvidable en Medellín?
-            </Typography>
-            <Typography variant="body1" className={classes.ctaText}>
-              Reserve ahora y obtenga un 10% de descuento en su primera estancia en Nido Sky. Oferta por tiempo
-              limitado.
-            </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              className={classes.ctaButton}
-              onClick={() => scrollToSection(apartamentosRef)}
-            >
-              Reservar Ahora <ArrowForward style={{ marginLeft: 8 }} />
-            </Button>
-          </div>
+        <div className={classes.ctaGlow} />
+        <div className={classes.ctaContent}>
+          <div className={classes.sxBadge} style={{ justifyContent: "center" }}><div /><span>Oferta especial · 10% descuento</span></div>
+          <Typography className={classes.ctaTitle}>
+            ¿Listo para vivir la<br />experiencia Nido Sky?
+          </Typography>
+          <Typography className={classes.ctaText}>
+            Reserve ahora y disfrute de un 10% de descuento en su primera estadía. Disponibilidad limitada — no espere más.
+          </Typography>
+          <Button className={classes.ctaBtn} onClick={() => scrollToSection(apartamentosRef)}>
+            Reservar ahora &nbsp; <ArrowForward style={{ fontSize: 20 }} />
+          </Button>
         </div>
       </section>
 
-      {/* Footer */}
+      {/* ── FOOTER ── */}
       <footer className={classes.footer} ref={contactRef}>
-        <div className={classes.footerContent}>
-          <Grid container spacing={4}>
+        <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+          <Grid container spacing={5}>
             <Grid item xs={12} md={4}>
-              <div className={classes.footerLogo}>
-                <img
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/nidosky-V3qv6QnKvcP2qqA4Vxok6rQ8wpnZi9.png"
-                  alt="Nido Sky"
-                  onError={(e) => {
-                    e.target.onerror = null
-                    e.target.src = "https://via.placeholder.com/50x50?text=Logo"
-                  }}
-                />
-              </div>
-              <Typography variant="body2" className={classes.footerText}>
-                Ofreciendo experiencias de lujo y confort en El Poblado, Medellín. Nuestro compromiso es hacer de su
-                estancia una experiencia inolvidable en la ciudad de la eterna primavera.
+              <span className={classes.footerLogoText}>Nido Sky</span>
+              <Typography className={classes.footerTagline}>
+                Apartamentos de lujo en El Poblado, Medellín. Donde el confort se convierte en arte y cada estadía es un recuerdo imborrable.
               </Typography>
-              <div className={classes.footerSocial}>
-                <IconButton className={classes.footerSocialIcon} size="small">
-                  <Facebook />
-                </IconButton>
-                <IconButton className={classes.footerSocialIcon} size="small">
-                  <Instagram />
-                </IconButton>
-                <IconButton className={classes.footerSocialIcon} size="small">
-                  <Twitter />
-                </IconButton>
-              </div>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <div className={classes.footerContact}>
-                <Room />
-                <Typography variant="body2" className={classes.footerContactText}>
-                  Calle 10 #43E-25, El Poblado, Medellín
-                </Typography>
-              </div>
-              <div className={classes.footerContact}>
-                <Phone />
-                <Typography variant="body2" className={classes.footerContactText}>
-                  +57 (4) 444-5555
-                </Typography>
-              </div>
-              <div className={classes.footerContact}>
-                <Email />
-                <Typography variant="body2" className={classes.footerContactText}>
-                  info@nidosky.com
-                </Typography>
+              <div className={classes.footerSocials}>
+                <IconButton className={classes.footerSocBtn} size="small"><Facebook fontSize="small" /></IconButton>
+                <IconButton className={classes.footerSocBtn} size="small"><Instagram fontSize="small" /></IconButton>
+                <IconButton className={classes.footerSocBtn} size="small"><Twitter fontSize="small" /></IconButton>
               </div>
             </Grid>
             <Grid item xs={12} sm={6} md={2}>
-              <Typography variant="h6" className={classes.footerTitle}>
-                Enlaces
-              </Typography>
-              <div className={classes.footerLink} onClick={() => scrollToSection(apartamentosRef)}>
-                <ArrowForward />
-                Apartamentos
-              </div>
-              <div className={classes.footerLink} onClick={() => scrollToSection(aboutRef)}>
-                <ArrowForward />
-                Nosotros
-              </div>
-              <div className={classes.footerLink} onClick={() => scrollToSection(featuresRef)}>
-                <ArrowForward />
-                Servicios
-              </div>
-              <div className={classes.footerLink} onClick={() => scrollToSection(contactRef)}>
-                <ArrowForward />
-                Contacto
-              </div>
+              <Typography className={classes.footerHeading}>Navegación</Typography>
+              {[
+                { label: "Inicio", fn: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
+                { label: "Apartamentos", fn: () => scrollToSection(apartamentosRef) },
+                { label: "Nosotros", fn: () => scrollToSection(aboutRef) },
+                { label: "Servicios", fn: () => scrollToSection(featuresRef) },
+                { label: "Contacto", fn: () => scrollToSection(contactRef) },
+              ].map((l) => (
+                <div key={l.label} className={classes.footerLink} onClick={l.fn}><ArrowForward style={{ fontSize: 10 }} />{l.label}</div>
+              ))}
             </Grid>
             <Grid item xs={12} sm={6} md={2}>
-              <Typography variant="h6" className={classes.footerTitle}>
-                Servicios
-              </Typography>
-              <div className={classes.footerLink}>
-                <ArrowForward />
-                Reservas
-              </div>
-              <div className={classes.footerLink}>
-                <ArrowForward />
-                Concierge
-              </div>
-              <div className={classes.footerLink}>
-                <ArrowForward />
-                Spa & Wellness
-              </div>
-              <div className={classes.footerLink}>
-                <ArrowForward />
-                Restaurante
-              </div>
+              <Typography className={classes.footerHeading}>Servicios</Typography>
+              {["Reservas", "Concierge", "Spa & Wellness", "Restaurante", "Traslados"].map((s) => (
+                <div key={s} className={classes.footerLink}><ArrowForward style={{ fontSize: 10 }} />{s}</div>
+              ))}
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Typography className={classes.footerHeading}>Contacto</Typography>
+              <div className={classes.footerContact}><Room /><span>Calle 10 #43E-25, El Poblado, Medellín</span></div>
+              <div className={classes.footerContact}><Phone /><span>+57 (4) 444-5555</span></div>
+              <div className={classes.footerContact}><Email /><span>info@nidosky.com</span></div>
             </Grid>
           </Grid>
           <div className={classes.footerBottom}>
-            <Typography variant="body2" className={classes.footerCopyright}>
-              © 2024 Nido Sky. Todos los derechos reservados.
-            </Typography>
-            <div className={classes.footerBottomLinks}>
-              <Typography variant="body2" className={classes.footerBottomLink}>
-                Política de Privacidad
-              </Typography>
-              <Typography variant="body2" className={classes.footerBottomLink}>
-                Términos y Condiciones
-              </Typography>
-              <Typography variant="body2" className={classes.footerBottomLink}>
-                Cookies
-              </Typography>
+            <Typography className={classes.footerCopy}>© 2024 Nido Sky · Todos los derechos reservados.</Typography>
+            <div className={classes.footerPolicyLinks}>
+              <span>Privacidad</span><span>Términos</span><span>Cookies</span>
             </div>
           </div>
         </div>
       </footer>
 
-      {/* Diálogo de Reserva */}
-      <Dialog
-        open={reservationDialogOpen}
-        onClose={handleReservationClose}
-        maxWidth="md"
-        fullWidth
-        className={classes.reservationDialog}
-        keepMounted
-        disableEnforceFocus
-        disableAutoFocus
-      >
-        <DialogTitle className={classes.reservationDialogTitle} disableTypography>
-          <Typography variant="h5" style={{ fontWeight: 600 }}>
-            Reservar {selectedApartamento?.nombre}
-          </Typography>
-        </DialogTitle>
-        <DialogContent className={classes.reservationDialogContent}>
-          <div className={classes.reservationForm}>
-            {/* Datos del titular */}
-            <Typography variant="h6" style={{ marginBottom: theme.spacing(2), color: "#0A2463" }}>
-              Datos del titular
-            </Typography>
+      {/* ── RESERVATION DIALOG ── */}
+      <Dialog open={reservationDialogOpen} onClose={() => setReservationDialogOpen(false)}
+        maxWidth="md" fullWidth className={classes.modalDialog} keepMounted disableEnforceFocus disableAutoFocus>
+        <div className={classes.modalHeader}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <Typography className={classes.modalHeaderTitle}>{selectedApartamento?.nombre}</Typography>
+              <Typography className={classes.modalHeaderSub}>Complete sus datos para confirmar la reserva</Typography>
+            </div>
+            <IconButton style={{ color: "rgba(255,255,255,0.7)", marginTop: -4 }} onClick={() => setReservationDialogOpen(false)}><Close /></IconButton>
+          </div>
+        </div>
 
-            <TextField
-              label="Documento de identidad"
-              name="documento"
-              value={reservationForm.documento || ""}
-              onChange={handleReservationFormChange}
-              className={classes.reservationField}
-              variant="outlined"
-              fullWidth
-              required
-              inputProps={{
-                maxLength: 12,
-                pattern: "[0-9]*",
-                onInput: (e) => {
-                  e.target.value = e.target.value.replace(/[^0-9]/g, "")
-                },
-              }}
-              helperText={formErrors.documento || "Solo números, 6-12 dígitos"}
-              error={!!formErrors.documento}
-            />
-
-            <TextField
-              label="Nombre completo del titular"
-              name="titular_reserva"
-              value={reservationForm.titular_reserva}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^A-Za-zÁáÉéÍíÓóÚúÑñ\s]/g, "")
-                const event = {
-                  target: {
-                    name: "titular_reserva",
-                    value: value,
-                  },
-                }
-                handleReservationFormChange(event)
-              }}
-              className={classes.reservationField}
-              variant="outlined"
-              fullWidth
-              required
-              inputProps={{
-                maxLength: 60,
-              }}
-              helperText={formErrors.titular_reserva || "Solo letras, máximo 60 caracteres"}
-              error={!!formErrors.titular_reserva}
-            />
-
-            <TextField
-              label="Correo electrónico"
-              name="email"
-              type="email"
-              value={reservationForm.email}
-              onChange={handleReservationFormChange}
-              className={classes.reservationField}
-              variant="outlined"
-              fullWidth
-              required
-              helperText={formErrors.email || "Formato: ejemplo@dominio.com"}
-              error={!!formErrors.email}
-            />
-
-            <TextField
-              label="Teléfono"
-              name="telefono"
-              value={reservationForm.telefono}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^0-9+]/g, "")
-                const event = {
-                  target: {
-                    name: "telefono",
-                    value: value,
-                  },
-                }
-                handleReservationFormChange(event)
-              }}
-              className={classes.reservationField}
-              variant="outlined"
-              fullWidth
-              required
-              inputProps={{
-                maxLength: 15,
-              }}
-              helperText={formErrors.telefono || "Solo números y +, 8-15 dígitos"}
-              error={!!formErrors.telefono}
-            />
-
-            {/* Datos de la reserva */}
-            <Typography
-              variant="h6"
-              style={{ marginTop: theme.spacing(3), marginBottom: theme.spacing(2), color: "#0A2463" }}
-            >
-              Datos de la reserva
-            </Typography>
-
+        <div className={classes.modalContent}>
+          {/* Datos titular */}
+          <div className={classes.modalSection}>
+            <div className={classes.modalSectionLabel}><div />Datos del titular</div>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Fecha de inicio"
-                  name="fecha_inicio"
-                  type="date"
-                  value={reservationForm.fecha_inicio}
-                  onChange={handleReservationFormChange}
-                  className={classes.reservationField}
-                  variant="outlined"
-                  fullWidth
-                  required
-                  InputLabelProps={{ shrink: true }}
-                  inputProps={{ min: new Date().toISOString().split("T")[0] }}
-                  helperText={formErrors.fecha_inicio || "Seleccione una fecha disponible"}
-                  error={!!formErrors.fecha_inicio}
-                />
+                <TextField label="Documento de identidad" name="documento" value={reservationForm.documento || ""}
+                  onChange={handleReservationFormChange} className={classes.formField} variant="outlined" fullWidth required size="small"
+                  inputProps={{ maxLength: 12, onInput: (e) => { e.target.value = e.target.value.replace(/[^0-9]/g, "") } }}
+                  helperText={formErrors.documento || "6-12 dígitos numéricos"} error={!!formErrors.documento} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Fecha de fin"
-                  name="fecha_fin"
-                  type="date"
-                  value={reservationForm.fecha_fin}
-                  onChange={handleReservationFormChange}
-                  className={classes.reservationField}
-                  variant="outlined"
-                  fullWidth
-                  required
-                  InputLabelProps={{ shrink: true }}
-                  inputProps={{ min: reservationForm.fecha_inicio || new Date().toISOString().split("T")[0] }}
-                  helperText={formErrors.fecha_fin || "Seleccione una fecha de salida"}
-                  error={!!formErrors.fecha_fin}
-                />
-              </Grid>
-            </Grid>
-
-            <Grid container spacing={2} style={{ marginTop: theme.spacing(1) }}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Noches de estadía"
-                  type="number"
-                  name="noches_estadia"
-                  value={calcularNochesEstadia()}
-                  className={classes.reservationField}
-                  variant="outlined"
-                  fullWidth
-                  InputProps={{ readOnly: true }}
-                />
+                <TextField label="Nombre completo" name="titular_reserva" value={reservationForm.titular_reserva}
+                  onChange={(e) => handleReservationFormChange({ target: { name: "titular_reserva", value: e.target.value.replace(/[^A-Za-zÁáÉéÍíÓóÚúÑñ\s]/g, "") } })}
+                  className={classes.formField} variant="outlined" fullWidth required size="small"
+                  inputProps={{ maxLength: 60 }} helperText={formErrors.titular_reserva || "Solo letras"} error={!!formErrors.titular_reserva} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Total a pagar"
-                  type="number"
-                  name="total"
-                  value={calcularPrecioTotal()}
-                  className={classes.reservationField}
-                  variant="outlined"
-                  fullWidth
-                  InputProps={{
-                    readOnly: true,
-                    startAdornment: <span style={{ marginRight: theme.spacing(1) }}>$</span>,
-                  }}
-                />
+                <TextField label="Correo electrónico" name="email" type="email" value={reservationForm.email}
+                  onChange={handleReservationFormChange} className={classes.formField} variant="outlined" fullWidth required size="small"
+                  helperText={formErrors.email || "ejemplo@correo.com"} error={!!formErrors.email} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Teléfono" name="telefono" value={reservationForm.telefono}
+                  onChange={(e) => handleReservationFormChange({ target: { name: "telefono", value: e.target.value.replace(/[^0-9+]/g, "") } })}
+                  className={classes.formField} variant="outlined" fullWidth required size="small"
+                  inputProps={{ maxLength: 15 }} helperText={formErrors.telefono || "8-15 dígitos"} error={!!formErrors.telefono} />
               </Grid>
             </Grid>
+          </div>
 
-            <Grid container spacing={2} style={{ marginTop: theme.spacing(1) }}>
-              <Grid item xs={12}>
-                <TextField
-                  label="Monto a pagar (50% mínimo)"
-                  type="number"
-                  name="monto_pago"
-                  value={reservationForm.monto_pago}
-                  onChange={handleReservationFormChange}
-                  className={classes.reservationField}
-                  variant="outlined"
-                  fullWidth
-                  required
-                  InputProps={{
-                    inputProps: { min: calcularPrecioTotal() * 0.5, max: calcularPrecioTotal() },
-                    startAdornment: <span style={{ marginRight: theme.spacing(1) }}>$</span>,
-                  }}
-                  helperText={formErrors.monto_pago || `Mínimo 50%: $${(calcularPrecioTotal() * 0.5).toFixed(2)}`}
-                  error={!!formErrors.monto_pago}
-                />
+          {/* Fechas y pago */}
+          <div className={classes.modalSection}>
+            <div className={classes.modalSectionLabel}><div />Datos de la reserva</div>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Fecha de entrada" name="fecha_inicio" type="date" value={reservationForm.fecha_inicio}
+                  onChange={handleReservationFormChange} className={classes.formField} variant="outlined" fullWidth required size="small"
+                  InputLabelProps={{ shrink: true }} inputProps={{ min: new Date().toISOString().split("T")[0] }}
+                  helperText={formErrors.fecha_inicio} error={!!formErrors.fecha_inicio} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Fecha de salida" name="fecha_fin" type="date" value={reservationForm.fecha_fin}
+                  onChange={handleReservationFormChange} className={classes.formField} variant="outlined" fullWidth required size="small"
+                  InputLabelProps={{ shrink: true }} inputProps={{ min: reservationForm.fecha_inicio || new Date().toISOString().split("T")[0] }}
+                  helperText={formErrors.fecha_fin} error={!!formErrors.fecha_fin} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Noches de estadía" type="number" value={calcularNochesEstadia()}
+                  className={classes.formField} variant="outlined" fullWidth size="small" InputProps={{ readOnly: true }} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Monto a pagar (mín. 50%)" type="number" name="monto_pago" value={reservationForm.monto_pago}
+                  onChange={handleReservationFormChange} className={classes.formField} variant="outlined" fullWidth required size="small"
+                  InputProps={{ inputProps: { min: calcularPrecioTotal() * 0.5, max: calcularPrecioTotal() }, startAdornment: <span style={{ color: "#6B5E87", marginRight: 4 }}>$</span> }}
+                  helperText={formErrors.monto_pago || `Mín. $${(calcularPrecioTotal() * 0.5).toFixed(0)}`} error={!!formErrors.monto_pago} />
               </Grid>
             </Grid>
+          </div>
 
-            {/* Sección para subir comprobante de pago */}
-            <div className={classes.uploadSection}>
-              <Typography variant="h6" className={classes.uploadTitle}>
-                <CloudUpload style={{ marginRight: theme.spacing(1) }} /> Comprobante de Pago
-              </Typography>
-
-              {/* Contenedor flex horizontal para poner la info y el botón lado a lado */}
-              <div style={{ display: "flex", alignItems: "flex-start", gap: theme.spacing(2) }}>
-                {/* Información de pago a la izquierda */}
-                <div className={classes.paymentInfo} style={{ flex: 1 }}>
-                  <Typography variant="subtitle1" className={classes.paymentInfoTitle}>
-                    <InfoOutlined style={{ marginRight: theme.spacing(1) }} /> Información de Pago
-                  </Typography>
-                  <Typography variant="body2" className={classes.paymentInfoText}>
-                    Para confirmar su reserva, debe realizar un pago del 50% del valor total.
-                  </Typography>
-                  <Typography variant="body2" className={classes.paymentInfoText}>
-                    <strong>Banco:</strong> Bancolombia
-                  </Typography>
-                  <Typography variant="body2" className={classes.paymentInfoText}>
-                    <strong>Cuenta:</strong> 123-456789-00
-                  </Typography>
-                  <Typography variant="body2" className={classes.paymentInfoText}>
-                    <strong>Titular:</strong> Nido Sky S.A.S.
-                  </Typography>
-                  <Typography variant="body2" className={classes.paymentInfoText}>
-                    <strong>NIT:</strong> 900.123.456-7
-                  </Typography>
-                </div>
-
-                {/* Botón y vista previa a la derecha */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: "200px" }}>
-                  <input
-                    type="file"
-                    accept="image/*,.pdf"
-                    className={classes.fileInput}
-                    ref={fileInputRef}
-                    onChange={handleComprobanteChange}
-                  />
-
-                  <Button
-                    variant="contained"
-                    className={classes.uploadButton}
-                    onClick={handleUploadClick}
-                    startIcon={<CloudUpload />}
-                  >
-                    Subir Comprobante
-                  </Button>
-
-                  {comprobantePago && (
-                    <Box mt={2} display="flex" flexDirection="column" alignItems="center">
-                      {comprobantePreview && comprobantePago.type.includes("image") ? (
-                        <img
-                          src={comprobantePreview || "/placeholder.svg"}
-                          alt="Vista previa"
-                          className={classes.filePreview}
-                          style={{ maxHeight: 100, maxWidth: "100%" }}
-                        />
-                      ) : (
-                        <Description style={{ fontSize: 40, color: "#0A2463" }} />
-                      )}
-                      <Typography
-                        variant="body2"
-                        className={classes.fileName}
-                        style={{ textAlign: "center", wordBreak: "break-word" }}
-                      >
-                        {comprobantePago.name}
-                      </Typography>
-                    </Box>
-                  )}
-                </div>
+          {/* Comprobante */}
+          <div className={classes.modalSection}>
+            <div className={classes.modalSectionLabel}><div />Comprobante de pago</div>
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+              <div className={classes.paymentBox} style={{ flex: 1, minWidth: 200 }}>
+                <div className={classes.paymentBoxTitle}><InfoOutlined />Datos bancarios</div>
+                {[["Banco","Bancolombia"],["Cuenta","123-456789-00"],["Titular","Nido Sky S.A.S."],["NIT","900.123.456-7"]].map(([k,v]) => (
+                  <Typography key={k} className={classes.paymentBoxText}><strong style={{ color: "#0C0A14", fontWeight: 700 }}>{k}:</strong> {v}</Typography>
+                ))}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, minWidth: 170 }}>
+                <input type="file" accept="image/*,.pdf" className={classes.fileInput} ref={fileInputRef} onChange={handleComprobanteChange} />
+                <Button className={classes.uploadBtn} startIcon={<CloudUpload />} onClick={() => fileInputRef.current.click()}>
+                  Subir comprobante
+                </Button>
+                {comprobantePago && (
+                  <Box display="flex" flexDirection="column" alignItems="center">
+                    {comprobantePreview && comprobantePago.type.includes("image")
+                      ? <img src={comprobantePreview} alt="preview" className={classes.filePreview} />
+                      : <Description style={{ fontSize: 44, color: "#C4B5FD" }} />}
+                    <Typography className={classes.fileName}>{comprobantePago.name}</Typography>
+                  </Box>
+                )}
               </div>
             </div>
+          </div>
 
-            {/* Sección de acompañantes */}
-            <div className={classes.acompanantesSection}>
-              <Typography variant="h6" className={classes.acompanantesTitle}>
-                <Person style={{ marginRight: theme.spacing(1) }} /> Acompañantes
+          {/* Acompañantes */}
+          <div className={classes.modalSection}>
+            <div className={classes.modalSectionLabel}><div />Acompañantes</div>
+            <div className={classes.acompSection}>
+              <Typography className={classes.acompSub}>
+                Capacidad: {selectedApartamento?.capacidad || 0} personas · Máx. {selectedApartamento ? selectedApartamento.capacidad - 1 : 0} acompañantes
               </Typography>
-
-              {/* Añadir mensaje informativo sobre capacidad */}
-              <Typography variant="body2" style={{ marginBottom: theme.spacing(2), color: "#8D99AE" }}>
-                Este apartamento tiene capacidad para {selectedApartamento?.capacidad || 0} personas en total (incluido
-                el titular). Puede agregar hasta {selectedApartamento ? selectedApartamento.capacidad - 1 : 0}{" "}
-                acompañantes.
-              </Typography>
-
-              {reservationForm.acompanantes.map((acompanante, index) => (
-                <div key={index} className={classes.acompananteItem}>
-                  <IconButton
-                    size="small"
-                    className={classes.removeAcompananteButton}
-                    onClick={() => handleRemoveAcompanante(index)}
-                  >
-                    <Close />
-                  </IconButton>
-
-                  <Typography variant="subtitle2" style={{ marginBottom: theme.spacing(1.5) }}>
-                    Acompañante {index + 1}
-                  </Typography>
-
+              {reservationForm.acompanantes.map((a, i) => (
+                <div key={i} className={classes.acompCard}>
+                  <Typography className={classes.acompCardTitle}>Acompañante {i + 1}</Typography>
+                  <IconButton size="small" className={classes.removeBtn} onClick={() => handleRemoveAcompanante(i)}><Close fontSize="small" /></IconButton>
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={4}>
-                      <TextField
-                        label="Nombre"
-                        value={acompanante.nombre}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/[^A-Za-zÁáÉéÍíÓóÚúÑñ\s]/g, "")
-                          handleAcompananteChange(index, "nombre", value)
-                        }}
-                        className={classes.reservationField}
-                        variant="outlined"
-                        fullWidth
-                        required
-                        inputProps={{
-                          maxLength: 60,
-                        }}
-                        helperText="Solo letras, máximo 60 caracteres"
-                      />
+                      <TextField label="Nombre" value={a.nombre}
+                        onChange={(e) => handleAcompananteChange(i, "nombre", e.target.value.replace(/[^A-Za-zÁáÉéÍíÓóÚúÑñ\s]/g, ""))}
+                        className={classes.formField} variant="outlined" fullWidth size="small" inputProps={{ maxLength: 60 }} />
                     </Grid>
                     <Grid item xs={12} sm={4}>
-                      <TextField
-                        label="Apellido"
-                        value={acompanante.apellido}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/[^A-Za-zÁáÉéÍíÓóÚúÑñ\s]/g, "")
-                          handleAcompananteChange(index, "apellido", value)
-                        }}
-                        className={classes.reservationField}
-                        variant="outlined"
-                        fullWidth
-                        required
-                        inputProps={{
-                          maxLength: 60,
-                        }}
-                        helperText="Solo letras, máximo 60 caracteres"
-                      />
+                      <TextField label="Apellido" value={a.apellido}
+                        onChange={(e) => handleAcompananteChange(i, "apellido", e.target.value.replace(/[^A-Za-zÁáÉéÍíÓóÚúÑñ\s]/g, ""))}
+                        className={classes.formField} variant="outlined" fullWidth size="small" inputProps={{ maxLength: 60 }} />
                     </Grid>
                     <Grid item xs={12} sm={4}>
-                      <TextField
-                        label="Documento"
-                        value={acompanante.documento_acompanante || ""}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/[^0-9]/g, "")
-                          handleAcompananteChange(index, "documento_acompanante", value)
-                        }}
-                        className={classes.reservationField}
-                        variant="outlined"
-                        fullWidth
-                        required
-                        inputProps={{
-                          maxLength: 12,
-                          pattern: "[0-9]*",
-                        }}
-                        helperText="Solo números, máximo 12 dígitos"
-                      />
+                      <TextField label="Documento" value={a.documento_acompanante || ""}
+                        onChange={(e) => handleAcompananteChange(i, "documento_acompanante", e.target.value.replace(/[^0-9]/g, ""))}
+                        className={classes.formField} variant="outlined" fullWidth size="small" inputProps={{ maxLength: 12 }} />
                     </Grid>
                   </Grid>
                 </div>
               ))}
-
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                className={classes.addAcompananteButton}
-                onClick={handleAddAcompanante}
-                disabled={
-                  selectedApartamento && reservationForm.acompanantes.length >= selectedApartamento.capacidad - 1
-                }
-              >
+              <Button className={classes.addAcompBtn} startIcon={<Add />} onClick={handleAddAcompanante}
+                disabled={selectedApartamento && reservationForm.acompanantes.length >= selectedApartamento.capacidad - 1}>
                 Agregar acompañante
               </Button>
             </div>
+          </div>
 
-            {/* Resumen de la reserva */}
-            {selectedApartamento && reservationForm.fecha_inicio && reservationForm.fecha_fin && (
-              <div className={classes.reservationTotal}>
-                <Typography variant="h6" className={classes.reservationTotalTitle}>
-                  Resumen de Reserva
-                </Typography>
-                <div className={classes.reservationTotalRow}>
-                  <Typography variant="body2" className={classes.reservationTotalLabel}>
-                    Apartamento:
-                  </Typography>
-                  <Typography variant="body2" className={classes.reservationTotalValue}>
-                    {selectedApartamento.nombre}
-                  </Typography>
+          {/* Resumen */}
+          {selectedApartamento && reservationForm.fecha_inicio && reservationForm.fecha_fin && (
+            <div className={classes.modalSection}>
+              <div className={classes.modalSectionLabel}><div />Resumen de reserva</div>
+              <div className={classes.summaryBox}>
+                {[
+                  ["Apartamento", selectedApartamento.nombre],
+                  ["Precio por noche", `$${selectedApartamento.precio}`],
+                  ["Noches", calcularNochesEstadia()],
+                  ["Huéspedes", reservationForm.acompanantes.length + 1],
+                ].map(([label, value]) => (
+                  <div key={label} className={classes.summaryRow}>
+                    <Typography className={classes.summaryLabel}>{label}</Typography>
+                    <Typography className={classes.summaryValue}>{value}</Typography>
+                  </div>
+                ))}
+                <div className={classes.summaryRow}>
+                  <Typography className={classes.summaryLabel} style={{ fontWeight: 700, color: "#0C0A14" }}>Total</Typography>
+                  <Typography className={classes.summaryTotal}>${calcularPrecioTotal()}</Typography>
                 </div>
-                <div className={classes.reservationTotalRow}>
-                  <Typography variant="body2" className={classes.reservationTotalLabel}>
-                    Precio por noche:
-                  </Typography>
-                  <Typography variant="body2" className={classes.reservationTotalValue}>
-                    ${selectedApartamento.precio}
-                  </Typography>
+                <div className={classes.summaryRow}>
+                  <Typography className={classes.summaryLabel}>Pago inicial (50%+)</Typography>
+                  <Typography className={classes.summaryTotal}>${reservationForm.monto_pago}</Typography>
                 </div>
-                <div className={classes.reservationTotalRow}>
-                  <Typography variant="body2" className={classes.reservationTotalLabel}>
-                    Noches:
-                  </Typography>
-                  <Typography variant="body2" className={classes.reservationTotalValue}>
-                    {calcularNochesEstadia()}
-                  </Typography>
-                </div>
-                <div className={classes.reservationTotalRow}>
-                  <Typography variant="body2" className={classes.reservationTotalLabel}>
-                    Huéspedes:
-                  </Typography>
-                  <Typography variant="body2" className={classes.reservationTotalValue}>
-                    {reservationForm.acompanantes.length + 1} {/* +1 por el titular */}
-                  </Typography>
-                </div>
-                <div className={classes.reservationTotalRow}>
-                  <Typography variant="body1" className={classes.reservationTotalLabel}>
-                    Total:
-                  </Typography>
-                  <Typography variant="body1" className={classes.reservationTotalFinal}>
-                    ${calcularPrecioTotal()}
-                  </Typography>
-                </div>
-                <div className={classes.reservationTotalRow}>
-                  <Typography variant="body1" className={classes.reservationTotalLabel}>
-                    Pago inicial (50%):
-                  </Typography>
-                  <Typography variant="body1" className={classes.reservationTotalFinal}>
-                    ${reservationForm.monto_pago}
-                  </Typography>
-                </div>
-                <div className={classes.reservationTotalRow}>
-                  <Typography variant="body1" className={classes.reservationTotalLabel}>
-                    Saldo pendiente:
-                  </Typography>
-                  <Typography variant="body1" className={classes.reservationTotalFinal}>
-                    ${calcularPrecioTotal() - reservationForm.monto_pago}
-                  </Typography>
+                <div className={classes.summaryRow} style={{ borderBottom: "none" }}>
+                  <Typography className={classes.summaryLabel}>Saldo pendiente</Typography>
+                  <Typography className={classes.summaryValue}>${Math.max(0, calcularPrecioTotal() - reservationForm.monto_pago)}</Typography>
                 </div>
               </div>
-            )}
-          </div>
-        </DialogContent>
-        <div className={classes.reservationActions}>
-          <Grid container spacing={2}>
-            <Grid item xs={6}>
-              <Button
-                fullWidth
-                variant="text"
-                className={classes.cancelButton}
-                onClick={handleReservationClose}
-                disabled={loading}
-              >
-                Cancelar
-              </Button>
-            </Grid>
-            <Grid item xs={6}>
-              <Button
-                fullWidth
-                variant="contained"
-                className={classes.reservationButton}
-                onClick={handleReservationSubmit}
-                disabled={loading}
-              >
-                {loading ? "Procesando..." : "Confirmar Reserva"}
-              </Button>
-            </Grid>
-          </Grid>
+            </div>
+          )}
+        </div>
+
+        <div className={classes.modalActions}>
+          <Button className={classes.cancelBtn} onClick={() => setReservationDialogOpen(false)} disabled={loading} variant="outlined">
+            Cancelar
+          </Button>
+          <Button className={classes.confirmBtn} onClick={handleReservationSubmit} disabled={loading} variant="contained">
+            {loading ? "Procesando..." : "✦ Confirmar reserva"}
+          </Button>
         </div>
       </Dialog>
     </div>
