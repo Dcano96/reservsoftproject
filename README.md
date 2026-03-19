@@ -10,10 +10,12 @@
 
 <br/>
 
-[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://reactjs.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-Express-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-Latest-61DAFB?style=flat-square&logo=react&logoColor=black)](https://reactjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-20-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://mongodb.com/)
 [![JWT](https://img.shields.io/badge/Auth-JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind-CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Chart.js](https://img.shields.io/badge/Charts-Chart.js-FF6384?style=flat-square&logo=chartdotjs&logoColor=white)](https://www.chartjs.org/)
 [![Render](https://img.shields.io/badge/Deploy-Render-46E3B7?style=flat-square&logo=render&logoColor=white)](https://render.com/)
 
 <br/>
@@ -41,7 +43,7 @@
 
 **ReservSoft** es una aplicación web empresarial diseñada para centralizar y optimizar la gestión de un complejo hotelero. Permite administrar el ciclo completo de una reserva: desde la disponibilidad de apartamentos, la creación de reservas por clientes, hasta el seguimiento de pagos y la gestión del personal con control de acceso por roles.
 
-Construida con una arquitectura **cliente-servidor desacoplada** (SPA + REST API), garantiza escalabilidad, seguridad mediante **JWT** y una experiencia de usuario fluida.
+Construida con una arquitectura **cliente-servidor desacoplada** (SPA + REST API), garantiza escalabilidad, seguridad mediante **JWT** y una experiencia de usuario fluida con dashboard de métricas visualizadas con **Chart.js**.
 
 ---
 
@@ -52,12 +54,15 @@ Construida con una arquitectura **cliente-servidor desacoplada** (SPA + REST API
 | 🔐 **Autenticación** | Login seguro con JWT, rutas protegidas y expiración de sesión |
 | 👥 **Usuarios** | CRUD completo con validaciones estrictas y control de estado |
 | 🛡️ **Roles & Permisos** | Gestión de roles con asignación dinámica de permisos por módulo |
-| 🏨 **Apartamentos** | Inventario de unidades con tipos, tarifas y disponibilidad |
+| 🏠 **Tipo Apartamento** | Categorización de unidades por tipo con configuración de tarifas |
+| 🏨 **Apartamentos** | Inventario de unidades con tipo, estado y disponibilidad |
+| 🛋️ **Hospedaje** | Gestión de hospedajes activos vinculados a reservas |
+| 🪑 **Mobiliario** | Inventario de mobiliario por unidad con edición y detalles |
 | 👤 **Clientes** | Registro y administración de clientes con historial |
 | 📅 **Reservas** | Creación, edición y seguimiento de reservas con fechas y titulares |
 | 💳 **Pagos** | Registro de pagos parciales, estado y faltante por reserva |
 | 🏷️ **Descuentos** | Configuración de descuentos por tipo de apartamento y vigencia |
-| 📊 **Dashboard** | Panel con métricas y resumen general del sistema |
+| 📊 **Dashboard** | Panel con métricas y gráficas interactivas con Chart.js |
 | 🌐 **Landing Page** | Página pública de presentación con sistema de reservas en línea |
 
 ---
@@ -65,51 +70,76 @@ Construida con una arquitectura **cliente-servidor desacoplada** (SPA + REST API
 ## 🛠️ Tecnologías
 
 ### Frontend
-- **React** — Interfaz de usuario dinámica tipo SPA
-- **Material UI** — Componentes y sistema de diseño
-- **React Router** — Navegación y rutas protegidas
-- **Axios** — Cliente HTTP para consumo de la API
-- **SweetAlert2** — Alertas y confirmaciones elegantes
-- **Lucide React** — Iconografía moderna
+- **React** (última versión) — Interfaz de usuario dinámica tipo SPA
+- **Tailwind CSS** — Estilos utilitarios y diseño responsivo
+- **Material UI** — Componentes de interfaz complementarios
+- **Chart.js** — Gráficas y visualización de métricas en el dashboard
+- **React Router** — Navegación y rutas protegidas por rol
+- **Axios** — Cliente HTTP para consumo de la API REST
+- **SweetAlert2** — Alertas y confirmaciones con diseño personalizado
+- **Lucide React** — Iconografía moderna y consistente
 
 ### Backend
-- **Node.js + Express** — Servidor REST API
-- **Mongoose** — ODM para MongoDB
-- **JSON Web Tokens (JWT)** — Autenticación stateless
-- **Bcrypt** — Encriptación de contraseñas
-- **CORS** — Configuración de seguridad de origen cruzado
+- **Node.js 20 + Express** — Servidor REST API de alto rendimiento
+- **Mongoose** — ODM para modelado de datos en MongoDB
+- **JSON Web Tokens (JWT)** — Autenticación stateless y segura
+- **Bcrypt** — Hash y verificación de contraseñas
+- **CORS** — Configuración de acceso entre orígenes
+- **Middleware de permisos** — Control de acceso granular por rol y módulo
 
 ### Base de datos & Deploy
 - **MongoDB Atlas** — Base de datos NoSQL en la nube
-- **Render** — Hosting del backend y frontend
+- **Render** — Hosting continuo del backend y frontend
 
 ---
 
 ## 🏗️ Arquitectura
 
 ```
-reservsoft/
-├── frontend/                  # React SPA
-│   ├── src/
-│   │   ├── features/          # Módulos por dominio
-│   │   │   ├── usuarios/
-│   │   │   ├── clientes/
-│   │   │   ├── reservas/
-│   │   │   ├── pagos/
-│   │   │   ├── descuentos/
-│   │   │   ├── apartamentos/
-│   │   │   └── roles/
-│   │   ├── components/        # Componentes reutilizables
-│   │   ├── context/           # AuthContext (JWT)
-│   │   └── routes/            # Rutas protegidas
-│   └── package.json
+reservsoftproject/
 │
-└── backend/                   # Node.js REST API
-    ├── controllers/           # Lógica de negocio
-    ├── models/                # Esquemas Mongoose
-    ├── routes/                # Endpoints REST
-    ├── middleware/             # Auth, validación
-    └── server.js
+├── backend/                        # Node.js 20 + Express REST API
+│   ├── src/
+│   │   ├── features/               # Módulos organizados por dominio
+│   │   │   ├── apartamento/
+│   │   │   ├── auth/
+│   │   │   ├── clientes/
+│   │   │   ├── dashboard/
+│   │   │   ├── descuentos/
+│   │   │   ├── hospedaje/
+│   │   │   ├── landing/
+│   │   │   ├── mobiliarios/
+│   │   │   ├── pagos/
+│   │   │   ├── reservas/
+│   │   │   ├── roles/
+│   │   │   ├── tipoApartamento/
+│   │   │   └── usuarios/
+│   │   ├── middlewares/
+│   │   │   └── permisos.js         # Control de acceso por rol
+│   │   └── tests/
+│   ├── config/
+│   └── .env
+│
+└── frontend/                       # React SPA
+    ├── public/
+    └── src/
+        ├── features/               # Módulos espejo del backend
+        │   ├── apartamentos/
+        │   ├── auth/
+        │   ├── clientes/
+        │   ├── dashboard/
+        │   ├── descuentos/
+        │   ├── hospedaje/
+        │   ├── landing/
+        │   ├── mobiliarios/
+        │   ├── pagos/
+        │   ├── reservas/
+        │   ├── roles/
+        │   ├── tipoApartamentos/
+        │   └── usuarios/
+        ├── services/               # Llamadas centralizadas a la API
+        ├── utils/                  # Helpers y utilidades compartidas
+        └── lib/
 ```
 
 ---
@@ -118,9 +148,9 @@ reservsoft/
 
 ### Prerrequisitos
 
-- Node.js ≥ 16
-- npm ≥ 8
-- MongoDB Atlas (o instancia local)
+- Node.js ≥ 20
+- npm ≥ 10
+- Cuenta en MongoDB Atlas (o instancia local de MongoDB)
 
 ### 1. Clonar el repositorio
 
@@ -145,27 +175,25 @@ npm install
 
 ### 4. Configurar variables de entorno
 
-Crear un archivo `.env` en `/backend` con las variables indicadas en la sección siguiente.
+Crear un archivo `.env` en `/backend` con las variables de la sección siguiente.
 
 ### 5. Ejecutar en desarrollo
 
 ```bash
-# Terminal 1 — Backend
+# Terminal 1 — Backend (http://localhost:5000)
 cd backend
 npm run dev
 
-# Terminal 2 — Frontend
+# Terminal 2 — Frontend (http://localhost:3000)
 cd frontend
 npm start
 ```
-
-La aplicación estará disponible en `http://localhost:3000`
 
 ---
 
 ## 🔑 Variables de Entorno
 
-Crear el archivo `/backend/.env`:
+Crear `/backend/.env`:
 
 ```env
 # Servidor
@@ -201,6 +229,14 @@ FRONTEND_URL=http://localhost:3000
 
 ---
 
+### 🌐 Landing Page
+
+| Vista 1 | Vista 2 | Vista 3 |
+|---|---|---|
+| ![](screenshots/1%20landing%20page.JPG) | ![](screenshots/2%20landing%20page.JPG) | ![](screenshots/Captura%203%20landing%20page.JPG) |
+
+---
+
 ### 👥 Gestión de Usuarios
 
 | Lista | Crear | Editar | Detalles |
@@ -217,6 +253,14 @@ FRONTEND_URL=http://localhost:3000
 
 ---
 
+### 🏠 Tipo de Apartamento
+
+| Lista | Editar | Detalles |
+|---|---|---|
+| ![](screenshots/1%20tipo%20apartamentos.JPG) | ![](screenshots/Captura%203%20editar%20tipo%20apartamento.JPG) | ![](screenshots/Captura%204%20detalles%20tipo%20apartamento.JPG) |
+
+---
+
 ### 🏨 Apartamentos
 
 | Lista | Crear | Editar | Detalles |
@@ -225,11 +269,27 @@ FRONTEND_URL=http://localhost:3000
 
 ---
 
+### 🛋️ Hospedaje
+
+| Crear | Editar |
+|---|---|
+| ![](screenshots/crear%20hospedaje.JPG) | ![](screenshots/editar%20hospedaje.JPG) |
+
+---
+
+### 🪑 Mobiliario
+
+| Lista | Detalles | Editar |
+|---|---|---|
+| ![](screenshots/mobiliario.JPG) | ![](screenshots/detalles%20mobiliario.JPG) | ![](screenshots/editar%20mobiliario.JPG) |
+
+---
+
 ### 📅 Reservas
 
 | Lista | Crear | Detalles |
 |---|---|---|
-| ![](screenshots/1Reservas.JPG) | ![](screenshots/crear%20reserva.JPG) | ![](screenshots/detalles%20reserva.JPG) |
+| ![](screenshots/reservas.JPG) | ![](screenshots/crear%20reserva.JPG) | ![](screenshots/detalles%20reserva.JPG) |
 
 ---
 
