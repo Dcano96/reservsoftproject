@@ -20,7 +20,7 @@ import {
 import axios from "axios"
 import Swal from "sweetalert2"
 
-/* ─── API CONFIG (unchanged) ─────────────────────────────────────────────── */
+/* ─── API CONFIG ─────────────────────────────────────────────── */
 const API_BASE_URL = process.env.REACT_APP_API_URL || ""
 const API_ENDPOINTS = {
   apartamentos: API_BASE_URL ? `${API_BASE_URL}/api/apartamentos` : "/api/apartamentos",
@@ -36,14 +36,14 @@ const apiCall = async (url, options = {}) => {
   return response
 }
 
-/* ─── SAMPLE DATA (unchanged) ─────────────────────────────────────────────── */
+/* ─── SAMPLE DATA ─────────────────────────────────────────────── */
 const apartamentosEjemplo = [
-  { id:1, nombre:"Apartamento Tipo 1", tipo:"Tipo 1", ubicacion:"El Poblado, Medellín", precio:250, capacidad:2, camas:1, banos:1, tamano:45, caracteristicas:["Balcón","Vista ciudad","Cocina equipada","WiFi"], imagen:"https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80", disponible:true, tag:"Popular" },
-  { id:2, nombre:"Apartamento Tipo 2", tipo:"Tipo 2", ubicacion:"El Poblado, Medellín", precio:350, capacidad:4, camas:2, banos:2, tamano:75, caracteristicas:["Sala de estar","Comedor","Terraza","Smart TV"], imagen:"https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80", disponible:true, tag:"Familiar" },
-  { id:3, nombre:"Penthouse Exclusivo", tipo:"Penthouse", ubicacion:"El Poblado, Medellín", precio:550, capacidad:6, camas:3, banos:3, tamano:120, caracteristicas:["Terraza panorámica","Jacuzzi","Bar privado","Concierge"], imagen:"https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80", disponible:true, tag:"Lujo" },
-  { id:4, nombre:"Suite Ejecutiva", tipo:"Suite", ubicacion:"El Poblado, Medellín", precio:400, capacidad:2, camas:1, banos:1, tamano:60, caracteristicas:["Escritorio","Cafetera","Minibar","Caja fuerte"], imagen:"https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80", disponible:true, tag:"Ejecutivo" },
-  { id:5, nombre:"Apartamento Familiar", tipo:"Tipo 2", ubicacion:"El Poblado, Medellín", precio:380, capacidad:5, camas:2, banos:2, tamano:85, caracteristicas:["Cocina completa","Área juegos","Lavadora","Secadora"], imagen:"https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80", disponible:true, tag:"Familiar" },
-  { id:6, nombre:"Loft Moderno", tipo:"Loft", ubicacion:"El Poblado, Medellín", precio:320, capacidad:2, camas:1, banos:1, tamano:55, caracteristicas:["Diseño abierto","LED","Smart TV","Sonido"], imagen:"https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80", disponible:true, tag:"Moderno" },
+  { id:1, nombre:"Apartamento Tipo 1", tipo:"Tipo 1", ubicacion:"El Poblado, Medellín", precio:250, capacidad:2, camas:1, banos:1, tamano:45, caracteristicas:["Balcón","Vista ciudad","Cocina equipada","WiFi"], imagen:"https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&q=70&auto=format&fit=crop", disponible:true, tag:"Popular" },
+  { id:2, nombre:"Apartamento Tipo 2", tipo:"Tipo 2", ubicacion:"El Poblado, Medellín", precio:350, capacidad:4, camas:2, banos:2, tamano:75, caracteristicas:["Sala de estar","Comedor","Terraza","Smart TV"], imagen:"https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=70&auto=format&fit=crop", disponible:true, tag:"Familiar" },
+  { id:3, nombre:"Penthouse Exclusivo", tipo:"Penthouse", ubicacion:"El Poblado, Medellín", precio:550, capacidad:6, camas:3, banos:3, tamano:120, caracteristicas:["Terraza panorámica","Jacuzzi","Bar privado","Concierge"], imagen:"https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=70&auto=format&fit=crop", disponible:true, tag:"Lujo" },
+  { id:4, nombre:"Suite Ejecutiva", tipo:"Suite", ubicacion:"El Poblado, Medellín", precio:400, capacidad:2, camas:1, banos:1, tamano:60, caracteristicas:["Escritorio","Cafetera","Minibar","Caja fuerte"], imagen:"https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=70&auto=format&fit=crop", disponible:true, tag:"Ejecutivo" },
+  { id:5, nombre:"Apartamento Familiar", tipo:"Tipo 2", ubicacion:"El Poblado, Medellín", precio:380, capacidad:5, camas:2, banos:2, tamano:85, caracteristicas:["Cocina completa","Área juegos","Lavadora","Secadora"], imagen:"https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&q=70&auto=format&fit=crop", disponible:true, tag:"Familiar" },
+  { id:6, nombre:"Loft Moderno", tipo:"Loft", ubicacion:"El Poblado, Medellín", precio:320, capacidad:2, camas:1, banos:1, tamano:55, caracteristicas:["Diseño abierto","LED","Smart TV","Sonido"], imagen:"https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&q=70&auto=format&fit=crop", disponible:true, tag:"Moderno" },
 ]
 const testimoniosEjemplo = [
   { id:1, nombre:"María Rodríguez", comentario:"Una experiencia increíble. Las vistas desde nuestra habitación eran espectaculares y el servicio fue impecable. Definitivamente volveremos a Nido Sky.", rating:5, avatar:"https://randomuser.me/api/portraits/women/44.jpg", rol:"Huésped frecuente" },
@@ -56,14 +56,7 @@ const heroImages = [
   "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=1600&q=85",
 ]
 
-
-/* ─── STYLES — Paleta clara inspirada en UsuarioList ────────────────────── */
-/* Colores base:
-   Fondo: #F4F1FF (lila muy claro) / #FFFFFF
-   Texto: #0C0A14 (casi negro) / #2D2640 / #6B5E87
-   Acento: #6C3FFF → #C040FF (violeta)
-   Cards: rgba(255,255,255,0.82) con glassmorphism
-*/
+/* ─── STYLES ────────────────────────────────────────────────── */
 const useStyles = makeStyles((muiTheme) => ({
   root: {
     overflowX: "hidden",
@@ -95,12 +88,15 @@ const useStyles = makeStyles((muiTheme) => ({
       "0%,100%": { transform: "translateY(0) rotateX(0deg)" },
       "50%": { transform: "translateY(-6px) rotateX(2deg)" },
     },
+    "@keyframes fadeSlideIn": {
+      "0%": { opacity: 0, transform: "translateY(30px)" },
+      "100%": { opacity: 1, transform: "translateY(0)" },
+    },
     "*": { boxSizing: "border-box", scrollBehavior: "smooth" },
     "body,html": { margin: 0, padding: 0 },
     "::-webkit-scrollbar": { width: 6 },
     "::-webkit-scrollbar-track": { background: "#EDE9FF" },
     "::-webkit-scrollbar-thumb": { background: "linear-gradient(#6C3FFF,#C040FF)", borderRadius: 3 },
-    /* Swal toasts must appear above MUI Dialog (z-index 1300) */
     ".swal2-container": { zIndex: "9999 !important" },
     ".swal2-toast": { fontFamily: "'Outfit',sans-serif !important", borderRadius: "14px !important", boxShadow: "0 8px 32px rgba(108,63,255,0.20) !important", border: "1px solid rgba(108,63,255,0.18) !important" },
     ".swal2-popup.swal2-toast .swal2-title": { fontSize: "0.88rem !important", fontWeight: "700 !important", color: "#0C0A14 !important" },
@@ -251,7 +247,7 @@ const useStyles = makeStyles((muiTheme) => ({
     boxShadow: "0 5px 18px rgba(108,63,255,0.38)",
   },
 
-  /* ── HERO — mantiene fondo oscuro porque es sobre fotos ── */
+  /* ── HERO ── */
   heroSection: {
     position: "relative",
     height: "100vh",
@@ -597,7 +593,7 @@ const useStyles = makeStyles((muiTheme) => ({
     maxWidth: 600,
   },
 
-  /* ── APARTMENTS ── */
+  /* ── APARTMENTS — REDISEÑO ── */
   aptSection: {
     background: "linear-gradient(180deg, #F4F1FF 0%, #EDE9FF 50%, #F4F1FF 100%)",
     padding: "100px 0",
@@ -611,134 +607,188 @@ const useStyles = makeStyles((muiTheme) => ({
       background: "linear-gradient(90deg, transparent, rgba(108,63,255,0.3), transparent)",
     },
   },
+  /* Grid asimétrico editorial */
   aptGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",
-    gap: 28,
-    [muiTheme.breakpoints.down("md")]: { gridTemplateColumns: "repeat(2, 1fr)" },
-    [muiTheme.breakpoints.down("sm")]: { gridTemplateColumns: "1fr" },
+    gridAutoRows: "320px",
+    gap: 20,
+    [muiTheme.breakpoints.down("md")]: { gridTemplateColumns: "repeat(2, 1fr)", gridAutoRows: "280px" },
+    [muiTheme.breakpoints.down("sm")]: { gridTemplateColumns: "1fr", gridAutoRows: "260px" },
+  },
+  /* Card featured (primera): ocupa 2 columnas y 2 filas */
+  aptCardFeatured: {
+    gridColumn: "span 2",
+    gridRow: "span 2",
+    [muiTheme.breakpoints.down("sm")]: { gridColumn: "span 1", gridRow: "span 1" },
   },
   aptCard: {
     borderRadius: 22,
     overflow: "hidden",
-    background: "rgba(255,255,255,0.88)",
-    backdropFilter: "blur(22px) saturate(180%)",
-    border: "1px solid rgba(255,255,255,0.90)",
-    transition: "all 0.5s cubic-bezier(.4,0,.2,1)",
+    position: "relative",
     cursor: "pointer",
-    boxShadow: "0 5px 22px rgba(108,63,255,0.12)",
+    boxShadow: "0 8px 32px rgba(108,63,255,0.14)",
+    transition: "transform 0.45s cubic-bezier(.4,0,.2,1), box-shadow 0.45s",
+    background: "#1a1028",
     "&:hover": {
-      transform: "translateY(-12px)",
-      border: "1px solid rgba(108,63,255,0.30)",
-      boxShadow: "0 24px 64px rgba(108,63,255,0.22)",
+      transform: "translateY(-6px) scale(1.01)",
+      boxShadow: "0 28px 70px rgba(108,63,255,0.30)",
     },
-    "&:hover $aptImg": { transform: "scale(1.08)" },
-    "&:hover $aptReserveBtn": {
-      background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
-      color: "#fff",
-      boxShadow: "0 6px 20px rgba(108,63,255,0.42)",
+    "&:hover $aptOverlayPanel": {
+      transform: "translateY(0)",
+      opacity: 1,
     },
+    "&:hover $aptImg": { transform: "scale(1.07)" },
+    "&:hover $aptBaseInfo": { opacity: 0, transform: "translateY(10px)" },
   },
   aptImgWrap: {
-    position: "relative",
-    height: 260,
+    position: "absolute",
+    inset: 0,
     overflow: "hidden",
   },
   aptImg: {
     width: "100%",
     height: "100%",
     objectFit: "cover",
-    transition: "transform 0.7s cubic-bezier(.4,0,.2,1)",
+    transition: "transform 0.65s cubic-bezier(.4,0,.2,1)",
+    display: "block",
   },
-  aptImgOverlay: {
+  aptGradient: {
     position: "absolute",
     inset: 0,
-    background: "linear-gradient(to top, rgba(12,10,20,0.75) 0%, transparent 55%)",
+    background: "linear-gradient(to top, rgba(12,10,20,0.92) 0%, rgba(12,10,20,0.35) 50%, rgba(12,10,20,0.10) 100%)",
   },
   aptTag: {
     position: "absolute",
-    top: 16,
-    left: 16,
+    top: 18,
+    left: 18,
     background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
     color: "#fff",
     padding: "5px 14px",
     borderRadius: 100,
-    fontSize: "0.7rem",
+    fontSize: "0.68rem",
     fontWeight: 700,
-    letterSpacing: "0.10em",
+    letterSpacing: "0.12em",
     textTransform: "uppercase",
     fontFamily: "'Outfit', sans-serif",
-    boxShadow: "0 3px 10px rgba(108,63,255,0.40)",
+    boxShadow: "0 3px 12px rgba(108,63,255,0.45)",
+    zIndex: 3,
   },
   aptTagLux: {
     background: "linear-gradient(135deg, #F59E0B, #EF4444)",
-    boxShadow: "0 3px 10px rgba(245,158,11,0.40)",
+    boxShadow: "0 3px 10px rgba(245,158,11,0.45)",
   },
-  aptPrice: {
+  /* Info siempre visible abajo */
+  aptBaseInfo: {
     position: "absolute",
-    bottom: 16,
-    right: 16,
-    background: "rgba(255,255,255,0.92)",
-    backdropFilter: "blur(12px)",
-    border: "1px solid rgba(108,63,255,0.20)",
-    color: "#0C0A14",
-    padding: "6px 14px",
-    borderRadius: 12,
-    fontSize: "0.82rem",
-    fontFamily: "'Outfit', sans-serif",
-    fontWeight: 600,
-    "& strong": { color: "#6C3FFF", fontSize: "1rem" },
-  },
-  aptBody: {
-    padding: "22px 22px 20px",
-    background: "#fff",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: "22px 24px",
+    zIndex: 3,
+    transition: "opacity 0.35s, transform 0.35s",
   },
   aptTitle: {
     fontFamily: "'Outfit', sans-serif",
-    fontWeight: 700,
-    fontSize: "1.2rem",
-    color: "#0C0A14",
-    marginBottom: 6,
+    fontWeight: 800,
+    fontSize: "1.1rem",
+    color: "#fff",
+    marginBottom: 5,
+    lineHeight: 1.2,
+    textShadow: "0 2px 10px rgba(0,0,0,0.5)",
+  },
+  aptTitleFeatured: {
+    fontSize: "1.65rem",
+    [muiTheme.breakpoints.down("sm")]: { fontSize: "1.2rem" },
   },
   aptLoc: {
     display: "flex",
     alignItems: "center",
     gap: 4,
-    color: "#6B5E87",
-    fontSize: "0.8rem",
-    marginBottom: 14,
+    color: "rgba(255,255,255,0.65)",
+    fontSize: "0.76rem",
     fontFamily: "'Outfit', sans-serif",
-    "& svg": { fontSize: 14, color: "#6C3FFF" },
+    marginBottom: 10,
+    "& svg": { fontSize: 13, color: "#C4B5FD" },
+  },
+  aptPriceBadge: {
+    display: "inline-flex",
+    alignItems: "baseline",
+    gap: 3,
+    background: "rgba(12,10,20,0.60)",
+    backdropFilter: "blur(12px)",
+    border: "1px solid rgba(196,181,253,0.22)",
+    borderRadius: 10,
+    padding: "5px 13px",
+  },
+  aptPriceNum: {
+    fontFamily: "'Outfit', sans-serif",
+    fontWeight: 900,
+    fontSize: "1.05rem",
+    color: "#C4B5FD",
+  },
+  aptPriceLabel: {
+    fontSize: "0.72rem",
+    color: "rgba(255,255,255,0.55)",
+    fontFamily: "'Outfit', sans-serif",
+  },
+  /* Panel que sube al hacer hover */
+  aptOverlayPanel: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    background: "rgba(12,10,20,0.93)",
+    backdropFilter: "blur(22px)",
+    borderTop: "1px solid rgba(108,63,255,0.38)",
+    padding: "20px 22px",
+    zIndex: 4,
+    transform: "translateY(100%)",
+    opacity: 0,
+    transition: "transform 0.42s cubic-bezier(.4,0,.2,1), opacity 0.38s",
+  },
+  aptPanelTitle: {
+    fontFamily: "'Outfit', sans-serif",
+    fontWeight: 800,
+    fontSize: "1rem",
+    color: "#fff",
+    marginBottom: 4,
+  },
+  aptPanelPrice: {
+    fontFamily: "'Outfit', sans-serif",
+    fontWeight: 900,
+    fontSize: "0.9rem",
+    color: "#C4B5FD",
+    marginBottom: 12,
   },
   aptFeatures: {
     display: "flex",
-    gap: 16,
-    paddingTop: 14,
-    borderTop: "1px solid rgba(108,63,255,0.08)",
-    marginBottom: 14,
+    gap: 14,
+    marginBottom: 12,
+    flexWrap: "wrap",
   },
   aptFeature: {
     display: "flex",
     alignItems: "center",
     gap: 5,
-    fontSize: "0.78rem",
-    color: "#6B5E87",
+    fontSize: "0.75rem",
+    color: "rgba(255,255,255,0.75)",
     fontFamily: "'Outfit', sans-serif",
-    "& svg": { fontSize: 15, color: "#6C3FFF" },
+    "& svg": { fontSize: 14, color: "#C4B5FD" },
   },
   aptChips: {
     display: "flex",
     flexWrap: "wrap",
-    gap: 6,
-    marginBottom: 18,
+    gap: 5,
+    marginBottom: 14,
   },
   aptChip: {
-    height: 22,
-    backgroundColor: "rgba(108,63,255,0.10)",
-    border: "1px solid rgba(108,63,255,0.18)",
-    color: "#5929d9",
-    borderRadius: 6,
-    fontSize: "0.68rem",
+    height: 20,
+    backgroundColor: "rgba(108,63,255,0.22)",
+    border: "1px solid rgba(196,181,253,0.22)",
+    color: "#C4B5FD",
+    borderRadius: 5,
+    fontSize: "0.65rem",
     fontFamily: "'Outfit', sans-serif",
     fontWeight: 600,
     "& .MuiChip-label": { padding: "0 8px" },
@@ -747,60 +797,44 @@ const useStyles = makeStyles((muiTheme) => ({
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingTop: 14,
-    borderTop: "1px solid rgba(108,63,255,0.08)",
   },
   aptReserveBtn: {
     borderRadius: 50,
     textTransform: "none",
     fontWeight: 700,
-    fontSize: "0.84rem",
+    fontSize: "0.82rem",
     fontFamily: "'Outfit', sans-serif",
-    background: "rgba(108,63,255,0.10)",
-    border: "1px solid rgba(108,63,255,0.25)",
-    color: "#6C3FFF",
+    background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
+    color: "#fff",
     padding: "8px 20px",
-    transition: "all 0.35s",
-    "&:hover": { color: "#fff" },
+    boxShadow: "0 4px 16px rgba(108,63,255,0.45)",
+    transition: "all 0.3s",
+    "&:hover": {
+      transform: "translateY(-2px)",
+      boxShadow: "0 8px 24px rgba(108,63,255,0.62)",
+    },
   },
   aptFavBtn: {
-    color: "rgba(107,94,135,0.5)",
+    color: "rgba(255,255,255,0.40)",
     transition: "all 0.3s",
     "&:hover": { color: "#EC4899", transform: "scale(1.2)" },
   },
   aptFavActive: { color: "#EC4899 !important" },
   videoBtn: {
     position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%,-50%)",
-    width: 52,
-    height: 52,
+    top: 18,
+    right: 18,
+    width: 42,
+    height: 42,
     borderRadius: "50%",
-    background: "rgba(108,63,255,0.85)",
+    background: "rgba(108,63,255,0.75)",
     backdropFilter: "blur(12px)",
+    border: "1px solid rgba(196,181,253,0.25)",
     color: "#fff",
+    zIndex: 3,
     transition: "all 0.3s",
-    "&:hover": { transform: "translate(-50%,-50%) scale(1.15)", background: "#6C3FFF" },
-    "& svg": { fontSize: 22 },
-  },
-  viewBtn: {
-    position: "absolute",
-    bottom: 16,
-    left: 16,
-    background: "rgba(255,255,255,0.88)",
-    backdropFilter: "blur(8px)",
-    color: "#2D2640",
-    border: "1px solid rgba(255,255,255,0.7)",
-    borderRadius: 8,
-    padding: "4px 12px",
-    fontSize: "0.7rem",
-    fontFamily: "'Outfit', sans-serif",
-    display: "flex",
-    alignItems: "center",
-    gap: 4,
-    "&:hover": { borderColor: "#6C3FFF", color: "#6C3FFF" },
-    "& svg": { fontSize: 13 },
+    "&:hover": { background: "#6C3FFF", transform: "scale(1.12)" },
+    "& svg": { fontSize: 19 },
   },
   filterRow: {
     display: "flex",
@@ -844,7 +878,7 @@ const useStyles = makeStyles((muiTheme) => ({
     },
   },
 
-  /* ── ABOUT — oscura como el footer ── */
+  /* ── ABOUT ── */
   aboutSection: {
     background: "linear-gradient(135deg, #0C0A14 0%, #1A0F3A 50%, #0C0A14 100%)",
     padding: "100px 72px",
@@ -951,7 +985,7 @@ const useStyles = makeStyles((muiTheme) => ({
     "& span": { fontSize: "0.82rem", color: "rgba(255,255,255,0.85)", fontFamily: "'Outfit', sans-serif", fontWeight: 600 },
   },
 
-  /* ── SERVICES — oscura ── */
+  /* ── SERVICES ── */
   servicesSection: {
     background: "linear-gradient(180deg, #0C0A14 0%, #1A0F3A 100%)",
     padding: "100px 72px",
@@ -1025,7 +1059,7 @@ const useStyles = makeStyles((muiTheme) => ({
     fontWeight: 400,
   },
 
-  /* ── TESTIMONIALS — lavanda medio ── */
+  /* ── TESTIMONIALS ── */
   testimSection: {
     background: "linear-gradient(135deg, #EDE9FF 0%, #E4DEFF 50%, #EDE9FF 100%)",
     padding: "100px 72px",
@@ -1104,7 +1138,7 @@ const useStyles = makeStyles((muiTheme) => ({
     fontFamily: "'Outfit', sans-serif",
   },
 
-  /* ── CTA — mantiene fondo oscuro/foto ── */
+  /* ── CTA ── */
   ctaSection: {
     position: "relative",
     padding: "120px 72px",
@@ -1281,7 +1315,7 @@ const useStyles = makeStyles((muiTheme) => ({
     },
   },
 
-  /* ── MODAL — paleta clara como UsuarioList ── */
+  /* ── MODAL ── */
   modalDialog: {
     "& .MuiDialog-paper": {
       borderRadius: 26,
@@ -1550,6 +1584,7 @@ const useStyles = makeStyles((muiTheme) => ({
     "&:disabled": { opacity: 0.4 },
   },
 }))
+
 /* ═══════════════════════════════════════════════════════════════════════════ */
 function Landing() {
   const history = useHistory()
@@ -1559,7 +1594,7 @@ function Landing() {
   const fileInputRef = useRef(null)
   const canvasRef = useRef(null)
 
-  /* ── STATE (unchanged) ── */
+  /* ── STATE ── */
   const [loading, setLoading] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [currentHeroSlide, setCurrentHeroSlide] = useState(0)
@@ -1591,7 +1626,7 @@ function Landing() {
   const featuresRef = useRef(null)
   const contactRef = useRef(null)
 
-  /* ── PARTICLE CANVAS (unchanged) ── */
+  /* ── PARTICLE CANVAS ── */
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -1631,7 +1666,7 @@ function Landing() {
     return () => { cancelAnimationFrame(animId); window.removeEventListener("resize", handleResize) }
   }, [])
 
-  /* ── ALL BUSINESS LOGIC UNCHANGED ── */
+  /* ── BUSINESS LOGIC ── */
   const fetchReservedDates = async (aptId) => {
     try {
       const res = await apiCall(API_ENDPOINTS.fechasReservadas(aptId))
@@ -1674,10 +1709,10 @@ function Landing() {
               capacidad: 4, camas: 2, banos: 1, tamano: 75,
               caracteristicas: ["Balcón", "Vista ciudad", "Cocina equipada", "WiFi"],
               imagen: apt.Tipo === "Penthouse"
-                ? "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80"
+                ? "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=70&auto=format&fit=crop"
                 : apt.Tipo === "Tipo 2"
-                ? "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80"
-                : "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80",
+                ? "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=70&auto=format&fit=crop"
+                : "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&q=70&auto=format&fit=crop",
               estado: apt.Estado ? "disponible" : "no disponible", disponible: apt.Estado,
               tag: apt.Tipo === "Penthouse" ? "Lujo" : apt.Tipo === "Tipo 2" ? "Familiar" : "Popular",
             }))
@@ -1888,7 +1923,6 @@ function Landing() {
       {/* ── NAVBAR ── */}
       <AppBar position="fixed" className={`${classes.appBar} ${scrolled ? classes.appBarScrolled : ""}`}>
         <Toolbar className={classes.toolbar}>
-          {/* ── LOGO: solo imagen, sin texto duplicado ── */}
           <div className={classes.logoWrap} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
             {logoLoaded && (
               <img
@@ -1944,7 +1978,6 @@ function Landing() {
         ))}
         <div className={classes.heroGlowOrb1} />
         <div className={classes.heroGlowOrb2} />
-
         <div className={classes.heroContent}>
           <div className={classes.heroBadge}>
             <LocationOn /><span>El Poblado · Medellín · Colombia</span>
@@ -1964,7 +1997,6 @@ function Landing() {
             </Button>
           </div>
         </div>
-
         <div className={classes.heroDots}>
           {heroImages.map((_, i) => (
             <div key={i} className={`${classes.heroDot} ${i === currentHeroSlide ? classes.heroDotActive : ""}`} onClick={() => setCurrentHeroSlide(i)} />
@@ -2028,7 +2060,7 @@ function Landing() {
         ))}
       </div>
 
-      {/* ── APARTMENTS ── */}
+      {/* ── APARTMENTS — NUEVO DISEÑO EDITORIAL ── */}
       <section className={classes.aptSection} ref={apartamentosRef}>
         <div className={classes.sxWrap}>
           <div className={classes.sxBadge}><div /><span>Alojamiento exclusivo</span></div>
@@ -2040,52 +2072,87 @@ function Landing() {
               </Typography>
             </div>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-              <TextField className={classes.searchInput} variant="outlined" size="small"
+              <TextField
+                className={classes.searchInput}
+                variant="outlined"
+                size="small"
                 placeholder="Buscar por tipo o característica..."
-                value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{ startAdornment: <Search style={{ color: "rgba(196,181,253,0.7)", marginRight: 8, fontSize: 18 }} /> }} />
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{ startAdornment: <Search style={{ color: "rgba(108,63,255,0.5)", marginRight: 8, fontSize: 18 }} /> }}
+              />
               <Button className={classes.showAllBtn} onClick={toggleShowAllApartments}>
                 {showAllApartments ? "Ver menos" : "Ver todos"}
               </Button>
             </div>
           </div>
 
+          {/* Grid asimétrico editorial */}
           <div className={classes.aptGrid}>
-            {filteredApartamentos.length > 0 ? filteredApartamentos.map((apt) => (
-              <Zoom in timeout={400} key={apt.id}>
-                <div className={classes.aptCard}>
+            {filteredApartamentos.length > 0 ? filteredApartamentos.map((apt, index) => (
+              <Zoom in timeout={300 + index * 60} key={apt.id}>
+                <div className={`${classes.aptCard} ${index === 0 ? classes.aptCardFeatured : ""}`}>
+
+                  {/* Imagen con lazy loading nativo */}
                   <div className={classes.aptImgWrap}>
-                    <img className={classes.aptImg} src={apt.imagen || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80"}
+                    <img
+                      className={classes.aptImg}
+                      src={apt.imagen || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&q=70&auto=format&fit=crop"}
                       alt={apt.nombre}
-                      onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80" }}
-                      data-apartment-type={apt.tipo} data-apartment-tag={apt.tag} />
-                    <div className={classes.aptImgOverlay} />
-                    <div className={`${classes.aptTag} ${apt.tipo === "Penthouse" ? classes.aptTagLux : ""}`}>{apt.tag || apt.tipo}</div>
-                    <div className={classes.aptPrice}><strong>${apt.precio}</strong> / noche</div>
-                    <IconButton className={classes.videoBtn}><PlayArrow /></IconButton>
-                    <Button className={classes.viewBtn} startIcon={<Visibility />}>Tour 360°</Button>
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&q=70&auto=format&fit=crop" }}
+                    />
+                    <div className={classes.aptGradient} />
                   </div>
-                  <div className={classes.aptBody}>
-                    <Typography className={classes.aptTitle}>{apt.nombre}</Typography>
+
+                  {/* Badge tipo */}
+                  <div className={`${classes.aptTag} ${apt.tipo === "Penthouse" ? classes.aptTagLux : ""}`}>
+                    {apt.tag || apt.tipo}
+                  </div>
+
+                  {/* Botón reproducir */}
+                  <IconButton className={classes.videoBtn}><PlayArrow /></IconButton>
+
+                  {/* Info base visible por defecto */}
+                  <div className={classes.aptBaseInfo}>
+                    <Typography className={`${classes.aptTitle} ${index === 0 ? classes.aptTitleFeatured : ""}`}>
+                      {apt.nombre}
+                    </Typography>
                     <div className={classes.aptLoc}><LocationOn /><span>{apt.ubicacion}</span></div>
+                    <div className={classes.aptPriceBadge}>
+                      <span className={classes.aptPriceNum}>${apt.precio}</span>
+                      <span className={classes.aptPriceLabel}>&nbsp;/ noche</span>
+                    </div>
+                  </div>
+
+                  {/* Panel hover — sube desde abajo */}
+                  <div className={classes.aptOverlayPanel}>
+                    <Typography className={classes.aptPanelTitle}>{apt.nombre}</Typography>
+                    <Typography className={classes.aptPanelPrice}>${apt.precio} / noche</Typography>
                     <div className={classes.aptFeatures}>
                       <div className={classes.aptFeature}><Person /><span>{apt.capacidad} huésp.</span></div>
                       <div className={classes.aptFeature}><LocalHotel /><span>{apt.camas} cama{apt.camas > 1 ? "s" : ""}</span></div>
                       <div className={classes.aptFeature}><Bathtub /><span>{apt.banos} baño{apt.banos > 1 ? "s" : ""}</span></div>
                     </div>
                     <div className={classes.aptChips}>
-                      {apt.caracteristicas?.slice(0, 3).map((c, i) => <Chip key={i} label={c} size="small" className={classes.aptChip} />)}
+                      {apt.caracteristicas?.slice(0, 4).map((c, i) => (
+                        <Chip key={i} label={c} size="small" className={classes.aptChip} />
+                      ))}
                     </div>
                     <div className={classes.aptActions}>
                       <Button className={classes.aptReserveBtn} onClick={() => handleReservationOpen(apt)}>
                         Reservar ahora
                       </Button>
-                      <IconButton className={`${classes.aptFavBtn} ${favorites.includes(apt.id) ? classes.aptFavActive : ""}`}
-                        onClick={() => handleFavoriteToggle(apt.id)}>
+                      <IconButton
+                        className={`${classes.aptFavBtn} ${favorites.includes(apt.id) ? classes.aptFavActive : ""}`}
+                        onClick={() => handleFavoriteToggle(apt.id)}
+                      >
                         {favorites.includes(apt.id) ? <Favorite /> : <FavoriteBorder />}
                       </IconButton>
                     </div>
                   </div>
+
                 </div>
               </Zoom>
             )) : (
@@ -2105,9 +2172,14 @@ function Landing() {
           <Grid container spacing={8} alignItems="center">
             <Grid item xs={12} md={5}>
               <div className={classes.aboutImgWrap}>
-                <img src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&q=80" alt="Nido Sky lobby"
+                <img
+                  src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&q=80"
+                  alt="Nido Sky lobby"
+                  loading="lazy"
+                  decoding="async"
                   style={{ width: "100%", borderRadius: 22, display: "block", filter: "brightness(0.92)" }}
-                  onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80" }} />
+                  onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80" }}
+                />
                 <div className={classes.aboutFloatCard}>
                   <span className="big">12+</span>
                   <span className="small">Años de excelencia</span>
@@ -2208,6 +2280,7 @@ function Landing() {
                   <Typography className={classes.testimText}>{t.comentario}</Typography>
                   <div className={classes.testimAuthor}>
                     <img src={t.avatar} alt={t.nombre} className={classes.testimAvatar}
+                      loading="lazy" decoding="async"
                       onError={(e) => { e.target.src = "https://via.placeholder.com/52" }} />
                     <div>
                       <div className={classes.testimName}>{t.nombre}</div>
