@@ -56,15 +56,32 @@ const heroImages = [
   "https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
 ]
 
-/* ─── IMAGEN POR TIPO (fallback cuando viene del API) ─────────── */
+/* ─── IMAGEN POR TIPO (URLs online para producción) ───────────── */
+// Tipo 1: apartamento estándar moderno
+const IMAGEN_TIPO_1 =
+  "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
+// Tipo 2: apartamento familiar/amplio
+const IMAGEN_TIPO_2 =
+  "https://images.pexels.com/photos/1648776/pexels-photo-1648776.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
+// Penthouse: suite de lujo
+const IMAGEN_PENTHOUSE =
+  "https://images.pexels.com/photos/2029694/pexels-photo-2029694.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
+// Fallback genérico
+const IMAGEN_FALLBACK = IMAGEN_TIPO_1
+
 const getImagenPorTipo = (tipo) => {
-  switch (tipo) {
-    case "Penthouse":
-      return "https://images.pexels.com/photos/2029694/pexels-photo-2029694.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
-    case "Tipo 2":
-      return "https://images.pexels.com/photos/1648776/pexels-photo-1648776.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
+  const tipoNormalizado = tipo ? tipo.trim().toLowerCase() : ""
+  switch (tipoNormalizado) {
+    case "penthouse":
+      return IMAGEN_PENTHOUSE
+    case "tipo 2":
+    case "tipo2":
+      return IMAGEN_TIPO_2
+    case "tipo 1":
+    case "tipo1":
+      return IMAGEN_TIPO_1
     default:
-      return "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
+      return IMAGEN_FALLBACK
   }
 }
 
@@ -2105,11 +2122,11 @@ function Landing() {
                   <div className={classes.aptImgWrap}>
                     <img
                       className={classes.aptImg}
-                      src={apt.imagen || "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"}
+                      src={apt.imagen || IMAGEN_FALLBACK}
                       alt={apt.nombre}
                       loading="lazy"
                       decoding="async"
-                      onError={(e) => { e.target.src = "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop" }}
+                      onError={(e) => { e.target.src = IMAGEN_FALLBACK }}
                     />
                     <div className={classes.aptGradient} />
                   </div>

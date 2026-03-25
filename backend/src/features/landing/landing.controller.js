@@ -362,27 +362,37 @@ exports.getFeaturedApartments = async (req, res) => {
 
     console.log(`Se encontraron ${apartamentos.length} apartamentos`)
 
+    // ── IMÁGENES POR TIPO (URLs online para producción) ──────────────────────
+    // Tipo 1: apartamento estándar moderno
+    const IMAGEN_TIPO_1 =
+      "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
+    // Tipo 2: apartamento familiar/amplio
+    const IMAGEN_TIPO_2 =
+      "https://images.pexels.com/photos/1648776/pexels-photo-1648776.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
+    // Penthouse: suite de lujo
+    const IMAGEN_PENTHOUSE =
+      "https://images.pexels.com/photos/2029694/pexels-photo-2029694.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
+
     // Transformar los datos para que coincidan con lo que espera el componente Landing
     const apartamentosFormateados = apartamentos.map((apt) => {
       // Añadir logging para depuración
       console.log(`Procesando apartamento: ID=${apt._id}, Tipo=${apt.Tipo}, NumeroApto=${apt.NumeroApto}`)
 
-      // Asignar imagen según el tipo de apartamento
-      let imagen = "/imagen-1.png" // Por defecto
-
       // Normalizar el tipo para comparación (eliminar espacios y convertir a minúsculas)
       const tipoNormalizado = apt.Tipo ? apt.Tipo.trim().toLowerCase() : ""
       console.log(`Tipo normalizado: "${tipoNormalizado}"`)
 
+      let imagen = IMAGEN_TIPO_1 // Por defecto
+
       if (tipoNormalizado === "tipo 1" || tipoNormalizado === "tipo1") {
-        console.log(`Asignando imagen-1.png para apartamento tipo 1: ${apt._id}`)
-        imagen = "/imagen-1.png"
+        console.log(`Asignando imagen Tipo 1 para apartamento: ${apt._id}`)
+        imagen = IMAGEN_TIPO_1
       } else if (tipoNormalizado === "tipo 2" || tipoNormalizado === "tipo2") {
-        console.log(`Asignando imagen-2.png para apartamento tipo 2: ${apt._id}`)
-        imagen = "/imagen-2.png"
+        console.log(`Asignando imagen Tipo 2 para apartamento: ${apt._id}`)
+        imagen = IMAGEN_TIPO_2
       } else if (tipoNormalizado === "penthouse") {
-        console.log(`Asignando imagen-3.png para apartamento penthouse: ${apt._id}`)
-        imagen = "/imagen-3.png"
+        console.log(`Asignando imagen Penthouse para apartamento: ${apt._id}`)
+        imagen = IMAGEN_PENTHOUSE
       } else {
         console.log(`Tipo no reconocido: "${apt.Tipo}", usando imagen por defecto`)
       }
@@ -401,7 +411,7 @@ exports.getFeaturedApartments = async (req, res) => {
         tamano: 75,
         caracteristicas: ["Balcón", "Vista a la ciudad", "Cocina equipada", "WiFi de alta velocidad"],
         imagenes: ["/images/apartment-1.jpg", "/images/apartment-2.jpg", "/images/apartment-3.jpg"],
-        imagen: imagen, // Usar la imagen asignada según el tipo
+        imagen: imagen, // URL online según tipo
         estado: apt.Estado ? "disponible" : "no disponible",
         disponible: apt.Estado,
         tag: apt.Tipo === "Penthouse" ? "Lujo" : apt.Tipo === "Tipo 2" ? "Familiar" : "Popular",
