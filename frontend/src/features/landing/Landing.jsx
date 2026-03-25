@@ -38,12 +38,12 @@ const apiCall = async (url, options = {}) => {
 
 /* ─── SAMPLE DATA ─────────────────────────────────────────────── */
 const apartamentosEjemplo = [
-  { id:1, nombre:"Apartamento Tipo 1", tipo:"Tipo 1", ubicacion:"El Poblado, Medellín", precio:250, capacidad:2, camas:1, banos:1, tamano:45, caracteristicas:["Balcón","Vista ciudad","Cocina equipada","WiFi"], imagen:"https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&q=70&auto=format&fit=crop", disponible:true, tag:"Popular" },
-  { id:2, nombre:"Apartamento Tipo 2", tipo:"Tipo 2", ubicacion:"El Poblado, Medellín", precio:350, capacidad:4, camas:2, banos:2, tamano:75, caracteristicas:["Sala de estar","Comedor","Terraza","Smart TV"], imagen:"https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=70&auto=format&fit=crop", disponible:true, tag:"Familiar" },
-  { id:3, nombre:"Penthouse Exclusivo", tipo:"Penthouse", ubicacion:"El Poblado, Medellín", precio:550, capacidad:6, camas:3, banos:3, tamano:120, caracteristicas:["Terraza panorámica","Jacuzzi","Bar privado","Concierge"], imagen:"https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=70&auto=format&fit=crop", disponible:true, tag:"Lujo" },
-  { id:4, nombre:"Suite Ejecutiva", tipo:"Suite", ubicacion:"El Poblado, Medellín", precio:400, capacidad:2, camas:1, banos:1, tamano:60, caracteristicas:["Escritorio","Cafetera","Minibar","Caja fuerte"], imagen:"https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=70&auto=format&fit=crop", disponible:true, tag:"Ejecutivo" },
-  { id:5, nombre:"Apartamento Familiar", tipo:"Tipo 2", ubicacion:"El Poblado, Medellín", precio:380, capacidad:5, camas:2, banos:2, tamano:85, caracteristicas:["Cocina completa","Área juegos","Lavadora","Secadora"], imagen:"https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&q=70&auto=format&fit=crop", disponible:true, tag:"Familiar" },
-  { id:6, nombre:"Loft Moderno", tipo:"Loft", ubicacion:"El Poblado, Medellín", precio:320, capacidad:2, camas:1, banos:1, tamano:55, caracteristicas:["Diseño abierto","LED","Smart TV","Sonido"], imagen:"https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&q=70&auto=format&fit=crop", disponible:true, tag:"Moderno" },
+  { id:1, nombre:"Apartamento Tipo 1", tipo:"Tipo 1", ubicacion:"El Poblado, Medellín", precio:250, capacidad:2, camas:1, banos:1, tamano:45, caracteristicas:["Balcón","Vista ciudad","Cocina equipada","WiFi"], imagen:"https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop", disponible:true, tag:"Popular" },
+  { id:2, nombre:"Apartamento Tipo 2", tipo:"Tipo 2", ubicacion:"El Poblado, Medellín", precio:350, capacidad:4, camas:2, banos:2, tamano:75, caracteristicas:["Sala de estar","Comedor","Terraza","Smart TV"], imagen:"https://images.pexels.com/photos/1648776/pexels-photo-1648776.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop", disponible:true, tag:"Familiar" },
+  { id:3, nombre:"Penthouse Exclusivo", tipo:"Penthouse", ubicacion:"El Poblado, Medellín", precio:550, capacidad:6, camas:3, banos:3, tamano:120, caracteristicas:["Terraza panorámica","Jacuzzi","Bar privado","Concierge"], imagen:"https://images.pexels.com/photos/2029694/pexels-photo-2029694.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop", disponible:true, tag:"Lujo" },
+  { id:4, nombre:"Suite Ejecutiva", tipo:"Suite", ubicacion:"El Poblado, Medellín", precio:400, capacidad:2, camas:1, banos:1, tamano:60, caracteristicas:["Escritorio","Cafetera","Minibar","Caja fuerte"], imagen:"https://images.pexels.com/photos/3144580/pexels-photo-3144580.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop", disponible:true, tag:"Ejecutivo" },
+  { id:5, nombre:"Apartamento Familiar", tipo:"Tipo 2", ubicacion:"El Poblado, Medellín", precio:380, capacidad:5, camas:2, banos:2, tamano:85, caracteristicas:["Cocina completa","Área juegos","Lavadora","Secadora"], imagen:"https://images.pexels.com/photos/1743231/pexels-photo-1743231.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop", disponible:true, tag:"Familiar" },
+  { id:6, nombre:"Loft Moderno", tipo:"Loft", ubicacion:"El Poblado, Medellín", precio:320, capacidad:2, camas:1, banos:1, tamano:55, caracteristicas:["Diseño abierto","LED","Smart TV","Sonido"], imagen:"https://images.pexels.com/photos/1918291/pexels-photo-1918291.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop", disponible:true, tag:"Moderno" },
 ]
 const testimoniosEjemplo = [
   { id:1, nombre:"María Rodríguez", comentario:"Una experiencia increíble. Las vistas desde nuestra habitación eran espectaculares y el servicio fue impecable. Definitivamente volveremos a Nido Sky.", rating:5, avatar:"https://randomuser.me/api/portraits/women/44.jpg", rol:"Huésped frecuente" },
@@ -51,10 +51,22 @@ const testimoniosEjemplo = [
   { id:3, nombre:"Ana Gómez", comentario:"Nido Sky superó todas nuestras expectativas. El spa es increíble y la comida del restaurante es deliciosa. La ubicación en El Poblado es perfecta.", rating:5, avatar:"https://randomuser.me/api/portraits/women/68.jpg", rol:"Turista internacional" },
 ]
 const heroImages = [
-  "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1600&q=85",
-  "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1600&q=85",
-  "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=1600&q=85",
+  "https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+  "https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+  "https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
 ]
+
+/* ─── IMAGEN POR TIPO (fallback cuando viene del API) ─────────── */
+const getImagenPorTipo = (tipo) => {
+  switch (tipo) {
+    case "Penthouse":
+      return "https://images.pexels.com/photos/2029694/pexels-photo-2029694.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
+    case "Tipo 2":
+      return "https://images.pexels.com/photos/1648776/pexels-photo-1648776.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
+    default:
+      return "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
+  }
+}
 
 /* ─── STYLES ────────────────────────────────────────────────── */
 const useStyles = makeStyles((muiTheme) => ({
@@ -1149,7 +1161,7 @@ const useStyles = makeStyles((muiTheme) => ({
       content: '""',
       position: "absolute",
       inset: 0,
-      backgroundImage: "url('https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1600&q=80')",
+      backgroundImage: "url('https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop')",
       backgroundSize: "cover",
       backgroundPosition: "center",
       opacity: 0.20,
@@ -1708,11 +1720,7 @@ function Landing() {
               tipo: apt.Tipo, ubicacion: "El Poblado, Medellín", precio: apt.Tarifa,
               capacidad: 4, camas: 2, banos: 1, tamano: 75,
               caracteristicas: ["Balcón", "Vista ciudad", "Cocina equipada", "WiFi"],
-              imagen: apt.Tipo === "Penthouse"
-                ? "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=70&auto=format&fit=crop"
-                : apt.Tipo === "Tipo 2"
-                ? "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=70&auto=format&fit=crop"
-                : "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&q=70&auto=format&fit=crop",
+              imagen: getImagenPorTipo(apt.Tipo),
               estado: apt.Estado ? "disponible" : "no disponible", disponible: apt.Estado,
               tag: apt.Tipo === "Penthouse" ? "Lujo" : apt.Tipo === "Tipo 2" ? "Familiar" : "Popular",
             }))
@@ -2097,11 +2105,11 @@ function Landing() {
                   <div className={classes.aptImgWrap}>
                     <img
                       className={classes.aptImg}
-                      src={apt.imagen || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&q=70&auto=format&fit=crop"}
+                      src={apt.imagen || "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"}
                       alt={apt.nombre}
                       loading="lazy"
                       decoding="async"
-                      onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&q=70&auto=format&fit=crop" }}
+                      onError={(e) => { e.target.src = "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop" }}
                     />
                     <div className={classes.aptGradient} />
                   </div>
@@ -2173,12 +2181,12 @@ function Landing() {
             <Grid item xs={12} md={5}>
               <div className={classes.aboutImgWrap}>
                 <img
-                  src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&q=80"
+                  src="https://images.pexels.com/photos/1579739/pexels-photo-1579739.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop"
                   alt="Nido Sky lobby"
                   loading="lazy"
                   decoding="async"
                   style={{ width: "100%", borderRadius: 22, display: "block", filter: "brightness(0.92)" }}
-                  onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80" }}
+                  onError={(e) => { e.target.src = "https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop" }}
                 />
                 <div className={classes.aboutFloatCard}>
                   <span className="big">12+</span>
