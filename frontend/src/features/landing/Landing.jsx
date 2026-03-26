@@ -36,54 +36,91 @@ const apiCall = async (url, options = {}) => {
   return response
 }
 
-/* ─── SAMPLE DATA ─────────────────────────────────────────────── */
-const apartamentosEjemplo = [
-  { id:1, nombre:"Apartamento Tipo 1", tipo:"Tipo 1", ubicacion:"El Poblado, Medellín", precio:250, capacidad:2, camas:1, banos:1, tamano:45, caracteristicas:["Balcón","Vista ciudad","Cocina equipada","WiFi"], imagen:"https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop", disponible:true, tag:"Popular" },
-  { id:2, nombre:"Apartamento Tipo 2", tipo:"Tipo 2", ubicacion:"El Poblado, Medellín", precio:350, capacidad:4, camas:2, banos:2, tamano:75, caracteristicas:["Sala de estar","Comedor","Terraza","Smart TV"], imagen:"https://images.pexels.com/photos/1648776/pexels-photo-1648776.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop", disponible:true, tag:"Familiar" },
-  { id:3, nombre:"Penthouse Exclusivo", tipo:"Penthouse", ubicacion:"El Poblado, Medellín", precio:550, capacidad:6, camas:3, banos:3, tamano:120, caracteristicas:["Terraza panorámica","Jacuzzi","Bar privado","Concierge"], imagen:"https://images.pexels.com/photos/2029694/pexels-photo-2029694.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop", disponible:true, tag:"Lujo" },
-  { id:4, nombre:"Suite Ejecutiva", tipo:"Suite", ubicacion:"El Poblado, Medellín", precio:400, capacidad:2, camas:1, banos:1, tamano:60, caracteristicas:["Escritorio","Cafetera","Minibar","Caja fuerte"], imagen:"https://images.pexels.com/photos/3144580/pexels-photo-3144580.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop", disponible:true, tag:"Ejecutivo" },
-  { id:5, nombre:"Apartamento Familiar", tipo:"Tipo 2", ubicacion:"El Poblado, Medellín", precio:380, capacidad:5, camas:2, banos:2, tamano:85, caracteristicas:["Cocina completa","Área juegos","Lavadora","Secadora"], imagen:"https://images.pexels.com/photos/1743231/pexels-photo-1743231.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop", disponible:true, tag:"Familiar" },
-  { id:6, nombre:"Loft Moderno", tipo:"Loft", ubicacion:"El Poblado, Medellín", precio:320, capacidad:2, camas:1, banos:1, tamano:55, caracteristicas:["Diseño abierto","LED","Smart TV","Sonido"], imagen:"https://images.pexels.com/photos/1918291/pexels-photo-1918291.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop", disponible:true, tag:"Moderno" },
-]
-const testimoniosEjemplo = [
-  { id:1, nombre:"María Rodríguez", comentario:"Una experiencia increíble. Las vistas desde nuestra habitación eran espectaculares y el servicio fue impecable. Definitivamente volveremos a Nido Sky.", rating:5, avatar:"https://randomuser.me/api/portraits/women/44.jpg", rol:"Huésped frecuente" },
-  { id:2, nombre:"Carlos Mendoza", comentario:"El mejor hotel en El Poblado. La atención al detalle es extraordinaria y las instalaciones son de primera clase. El penthouse es simplemente espectacular.", rating:5, avatar:"https://randomuser.me/api/portraits/men/32.jpg", rol:"Viajero de negocios" },
-  { id:3, nombre:"Ana Gómez", comentario:"Nido Sky superó todas nuestras expectativas. El spa es increíble y la comida del restaurante es deliciosa. La ubicación en El Poblado es perfecta.", rating:5, avatar:"https://randomuser.me/api/portraits/women/68.jpg", rol:"Turista internacional" },
-]
-const heroImages = [
-  "https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
-  "https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
-  "https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
-]
-
-/* ─── IMAGEN POR TIPO (URLs online para producción) ───────────── */
-// Tipo 1: apartamento estándar moderno
+/* ─── IMÁGENES CDN CONFIABLES (Unsplash — sin restricción de referrer) ──────
+   FIX: Pexels bloquea hotlinking desde dominios de producción (ej. Render).
+   Unsplash permite solicitudes cross-origin desde cualquier dominio.
+   Se añade referrerPolicy="no-referrer" en cada <img> como capa extra de
+   compatibilidad para cualquier CDN futuro.                                  */
 const IMAGEN_TIPO_1 =
-  "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
-// Tipo 2: apartamento familiar/amplio
+  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&h=400&fit=crop&auto=format"
 const IMAGEN_TIPO_2 =
-  "https://images.pexels.com/photos/1648776/pexels-photo-1648776.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
-// Penthouse: suite de lujo
+  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&h=400&fit=crop&auto=format"
 const IMAGEN_PENTHOUSE =
-  "https://images.pexels.com/photos/2029694/pexels-photo-2029694.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop"
-// Fallback genérico
+  "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&h=400&fit=crop&auto=format"
 const IMAGEN_FALLBACK = IMAGEN_TIPO_1
+
+// Hero slides — también migradas a Unsplash
+const heroImages = [
+  "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1600&h=900&fit=crop&auto=format",
+  "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1600&h=900&fit=crop&auto=format",
+  "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1600&h=900&fit=crop&auto=format",
+]
 
 const getImagenPorTipo = (tipo) => {
   const tipoNormalizado = tipo ? tipo.trim().toLowerCase() : ""
   switch (tipoNormalizado) {
-    case "penthouse":
-      return IMAGEN_PENTHOUSE
+    case "penthouse":   return IMAGEN_PENTHOUSE
     case "tipo 2":
-    case "tipo2":
-      return IMAGEN_TIPO_2
+    case "tipo2":       return IMAGEN_TIPO_2
     case "tipo 1":
-    case "tipo1":
-      return IMAGEN_TIPO_1
-    default:
-      return IMAGEN_FALLBACK
+    case "tipo1":       return IMAGEN_TIPO_1
+    default:            return IMAGEN_FALLBACK
   }
 }
+
+/* ─── SAMPLE DATA ─────────────────────────────────────────────── */
+const apartamentosEjemplo = [
+  {
+    id: 1, nombre: "Apartamento Tipo 1", tipo: "Tipo 1",
+    ubicacion: "El Poblado, Medellín", precio: 250,
+    capacidad: 2, camas: 1, banos: 1, tamano: 45,
+    caracteristicas: ["Balcón", "Vista ciudad", "Cocina equipada", "WiFi"],
+    imagen: IMAGEN_TIPO_1, disponible: true, tag: "Popular",
+  },
+  {
+    id: 2, nombre: "Apartamento Tipo 2", tipo: "Tipo 2",
+    ubicacion: "El Poblado, Medellín", precio: 350,
+    capacidad: 4, camas: 2, banos: 2, tamano: 75,
+    caracteristicas: ["Sala de estar", "Comedor", "Terraza", "Smart TV"],
+    imagen: IMAGEN_TIPO_2, disponible: true, tag: "Familiar",
+  },
+  {
+    id: 3, nombre: "Penthouse Exclusivo", tipo: "Penthouse",
+    ubicacion: "El Poblado, Medellín", precio: 550,
+    capacidad: 6, camas: 3, banos: 3, tamano: 120,
+    caracteristicas: ["Terraza panorámica", "Jacuzzi", "Bar privado", "Concierge"],
+    imagen: IMAGEN_PENTHOUSE, disponible: true, tag: "Lujo",
+  },
+  {
+    id: 4, nombre: "Suite Ejecutiva", tipo: "Suite",
+    ubicacion: "El Poblado, Medellín", precio: 400,
+    capacidad: 2, camas: 1, banos: 1, tamano: 60,
+    caracteristicas: ["Escritorio", "Cafetera", "Minibar", "Caja fuerte"],
+    imagen: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop&auto=format",
+    disponible: true, tag: "Ejecutivo",
+  },
+  {
+    id: 5, nombre: "Apartamento Familiar", tipo: "Tipo 2",
+    ubicacion: "El Poblado, Medellín", precio: 380,
+    capacidad: 5, camas: 2, banos: 2, tamano: 85,
+    caracteristicas: ["Cocina completa", "Área juegos", "Lavadora", "Secadora"],
+    imagen: IMAGEN_TIPO_2, disponible: true, tag: "Familiar",
+  },
+  {
+    id: 6, nombre: "Loft Moderno", tipo: "Loft",
+    ubicacion: "El Poblado, Medellín", precio: 320,
+    capacidad: 2, camas: 1, banos: 1, tamano: 55,
+    caracteristicas: ["Diseño abierto", "LED", "Smart TV", "Sonido"],
+    imagen: "https://images.unsplash.com/photo-1554995207-c18c203602cb?w=600&h=400&fit=crop&auto=format",
+    disponible: true, tag: "Moderno",
+  },
+]
+
+const testimoniosEjemplo = [
+  { id: 1, nombre: "María Rodríguez", comentario: "Una experiencia increíble. Las vistas desde nuestra habitación eran espectaculares y el servicio fue impecable. Definitivamente volveremos a Nido Sky.", rating: 5, avatar: "https://randomuser.me/api/portraits/women/44.jpg", rol: "Huésped frecuente" },
+  { id: 2, nombre: "Carlos Mendoza", comentario: "El mejor hotel en El Poblado. La atención al detalle es extraordinaria y las instalaciones son de primera clase. El penthouse es simplemente espectacular.", rating: 5, avatar: "https://randomuser.me/api/portraits/men/32.jpg", rol: "Viajero de negocios" },
+  { id: 3, nombre: "Ana Gómez", comentario: "Nido Sky superó todas nuestras expectativas. El spa es increíble y la comida del restaurante es deliciosa. La ubicación en El Poblado es perfecta.", rating: 5, avatar: "https://randomuser.me/api/portraits/women/68.jpg", rol: "Turista internacional" },
+]
 
 /* ─── STYLES ────────────────────────────────────────────────── */
 const useStyles = makeStyles((muiTheme) => ({
@@ -132,7 +169,6 @@ const useStyles = makeStyles((muiTheme) => ({
     ".swal2-popup.swal2-toast .swal2-html-container": { fontSize: "0.80rem !important", color: "#6B5E87 !important" },
   },
 
-  /* ── PARTICLES CANVAS ── */
   particleCanvas: {
     position: "fixed",
     inset: 0,
@@ -168,10 +204,7 @@ const useStyles = makeStyles((muiTheme) => ({
     alignItems: "center",
     gap: 10,
     cursor: "pointer",
-    "& img": {
-      height: 46,
-      filter: "drop-shadow(0 0 10px rgba(108,63,255,0.5))",
-    },
+    "& img": { height: 46, filter: "drop-shadow(0 0 10px rgba(108,63,255,0.5))" },
   },
   navLinks: {
     display: "flex",
@@ -188,17 +221,11 @@ const useStyles = makeStyles((muiTheme) => ({
     padding: "6px 16px",
     borderRadius: 8,
     transition: "all 0.3s",
-    "&:hover": {
-      color: "#fff",
-      backgroundColor: "rgba(255,255,255,0.12)",
-    },
+    "&:hover": { color: "#fff", backgroundColor: "rgba(255,255,255,0.12)" },
   },
   navLinkScrolled: {
     color: "#fff !important",
-    "&:hover": {
-      color: "#C4B5FD !important",
-      backgroundColor: "rgba(108,63,255,0.20) !important",
-    },
+    "&:hover": { color: "#C4B5FD !important", backgroundColor: "rgba(108,63,255,0.20) !important" },
   },
   activeNavLink: { color: "#C4B5FD !important" },
   loginButton: {
@@ -213,10 +240,7 @@ const useStyles = makeStyles((muiTheme) => ({
     fontFamily: "'Outfit', sans-serif",
     boxShadow: "0 5px 18px rgba(108,63,255,0.40)",
     transition: "all 0.35s",
-    "&:hover": {
-      transform: "translateY(-2px) scale(1.03)",
-      boxShadow: "0 9px 26px rgba(108,63,255,0.55)",
-    },
+    "&:hover": { transform: "translateY(-2px) scale(1.03)", boxShadow: "0 9px 26px rgba(108,63,255,0.55)" },
   },
   menuButton: {
     display: "none",
@@ -253,15 +277,8 @@ const useStyles = makeStyles((muiTheme) => ({
   drawerItem: {
     padding: "12px 24px",
     transition: "all 0.2s",
-    "&:hover": {
-      backgroundColor: "rgba(108,63,255,0.07)",
-      paddingLeft: 32,
-    },
-    "& span": {
-      color: "#2D2640",
-      fontFamily: "'Outfit', sans-serif",
-      fontSize: "0.95rem",
-    },
+    "&:hover": { backgroundColor: "rgba(108,63,255,0.07)", paddingLeft: 32 },
+    "& span": { color: "#2D2640", fontFamily: "'Outfit', sans-serif", fontSize: "0.95rem" },
   },
   drawerLoginBtn: {
     margin: "16px 24px",
@@ -301,27 +318,21 @@ const useStyles = makeStyles((muiTheme) => ({
   },
   heroGlowOrb1: {
     position: "absolute",
-    width: 600,
-    height: 600,
+    width: 600, height: 600,
     borderRadius: "50%",
     background: "radial-gradient(circle, rgba(108,63,255,0.30) 0%, transparent 70%)",
-    top: -100,
-    right: -100,
+    top: -100, right: -100,
     animation: "$floatY 8s ease-in-out infinite",
-    pointerEvents: "none",
-    zIndex: 1,
+    pointerEvents: "none", zIndex: 1,
   },
   heroGlowOrb2: {
     position: "absolute",
-    width: 400,
-    height: 400,
+    width: 400, height: 400,
     borderRadius: "50%",
     background: "radial-gradient(circle, rgba(192,64,255,0.22) 0%, transparent 70%)",
-    bottom: -50,
-    left: -50,
+    bottom: -50, left: -50,
     animation: "$floatY 10s ease-in-out infinite reverse",
-    pointerEvents: "none",
-    zIndex: 1,
+    pointerEvents: "none", zIndex: 1,
   },
   heroContent: {
     position: "relative",
@@ -342,14 +353,7 @@ const useStyles = makeStyles((muiTheme) => ({
     marginBottom: 24,
     backdropFilter: "blur(12px)",
     "& svg": { fontSize: 16, color: "#fff" },
-    "& span": {
-      fontSize: "0.78rem",
-      fontWeight: 600,
-      letterSpacing: "0.12em",
-      textTransform: "uppercase",
-      color: "#fff",
-      fontFamily: "'Outfit', sans-serif",
-    },
+    "& span": { fontSize: "0.78rem", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#fff", fontFamily: "'Outfit', sans-serif" },
   },
   heroTitle: {
     fontFamily: "'Outfit', sans-serif",
@@ -378,12 +382,7 @@ const useStyles = makeStyles((muiTheme) => ({
     lineHeight: 1.75,
     fontFamily: "'Outfit', sans-serif",
   },
-  heroButtons: {
-    display: "flex",
-    gap: 16,
-    justifyContent: "center",
-    flexWrap: "wrap",
-  },
+  heroButtons: { display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" },
   heroPrimBtn: {
     background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
     backgroundSize: "200% auto",
@@ -396,11 +395,7 @@ const useStyles = makeStyles((muiTheme) => ({
     fontFamily: "'Outfit', sans-serif",
     boxShadow: "0 8px 32px rgba(108,63,255,0.52)",
     transition: "all 0.4s",
-    "&:hover": {
-      backgroundPosition: "right center",
-      transform: "translateY(-3px) scale(1.04)",
-      boxShadow: "0 16px 48px rgba(108,63,255,0.68)",
-    },
+    "&:hover": { backgroundPosition: "right center", transform: "translateY(-3px) scale(1.04)", boxShadow: "0 16px 48px rgba(108,63,255,0.68)" },
   },
   heroSecBtn: {
     backgroundColor: "transparent",
@@ -413,11 +408,7 @@ const useStyles = makeStyles((muiTheme) => ({
     fontFamily: "'Outfit', sans-serif",
     border: "1.5px solid rgba(255,255,255,0.55)",
     transition: "all 0.3s",
-    "&:hover": {
-      borderColor: "#fff",
-      backgroundColor: "rgba(255,255,255,0.15)",
-      transform: "translateY(-2px)",
-    },
+    "&:hover": { borderColor: "#fff", backgroundColor: "rgba(255,255,255,0.15)", transform: "translateY(-2px)" },
   },
   heroNavBtns: {
     position: "absolute",
@@ -429,18 +420,14 @@ const useStyles = makeStyles((muiTheme) => ({
     zIndex: 3,
   },
   heroNavBtn: {
-    width: 46,
-    height: 46,
+    width: 46, height: 46,
     borderRadius: "50%",
     backgroundColor: "rgba(255,255,255,0.18)",
     border: "1.5px solid rgba(255,255,255,0.40)",
     color: "#fff",
     backdropFilter: "blur(8px)",
     transition: "all 0.3s",
-    "&:hover": {
-      backgroundColor: "rgba(255,255,255,0.30)",
-      transform: "scale(1.1)",
-    },
+    "&:hover": { backgroundColor: "rgba(255,255,255,0.30)", transform: "scale(1.1)" },
   },
   heroDots: {
     position: "absolute",
@@ -452,18 +439,13 @@ const useStyles = makeStyles((muiTheme) => ({
     zIndex: 3,
   },
   heroDot: {
-    width: 8,
-    height: 8,
+    width: 8, height: 8,
     borderRadius: 4,
     backgroundColor: "rgba(255,255,255,0.40)",
     cursor: "pointer",
     transition: "all 0.4s cubic-bezier(.4,0,.2,1)",
   },
-  heroDotActive: {
-    width: 28,
-    backgroundColor: "#fff",
-    boxShadow: "0 0 12px rgba(255,255,255,0.6)",
-  },
+  heroDotActive: { width: 28, backgroundColor: "#fff", boxShadow: "0 0 12px rgba(255,255,255,0.6)" },
 
   /* ── BOOKING BAR ── */
   bookingWrap: {
@@ -523,10 +505,7 @@ const useStyles = makeStyles((muiTheme) => ({
     color: "#fff",
     boxShadow: "0 6px 24px rgba(108,63,255,0.42)",
     transition: "all 0.35s",
-    "&:hover": {
-      transform: "translateY(-2px)",
-      boxShadow: "0 12px 36px rgba(108,63,255,0.58)",
-    },
+    "&:hover": { transform: "translateY(-2px)", boxShadow: "0 12px 36px rgba(108,63,255,0.58)" },
     [muiTheme.breakpoints.down("sm")]: { width: "100%" },
   },
 
@@ -542,10 +521,7 @@ const useStyles = makeStyles((muiTheme) => ({
     borderRadius: 18,
     overflow: "hidden",
     boxShadow: "0 5px 22px rgba(108,63,255,0.10)",
-    [muiTheme.breakpoints.down("sm")]: {
-      gridTemplateColumns: "repeat(2, 1fr)",
-      margin: "40px 16px 0",
-    },
+    [muiTheme.breakpoints.down("sm")]: { gridTemplateColumns: "repeat(2, 1fr)", margin: "40px 16px 0" },
   },
   statItem: {
     padding: "32px 24px",
@@ -593,14 +569,7 @@ const useStyles = makeStyles((muiTheme) => ({
     borderRadius: 100,
     padding: "5px 18px",
     marginBottom: 16,
-    "& span": {
-      fontSize: "0.72rem",
-      fontWeight: 700,
-      letterSpacing: "0.14em",
-      textTransform: "uppercase",
-      color: "#6C3FFF",
-      fontFamily: "'Outfit', sans-serif",
-    },
+    "& span": { fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6C3FFF", fontFamily: "'Outfit', sans-serif" },
     "& div": { width: 6, height: 6, borderRadius: "50%", backgroundColor: "#6C3FFF", animation: "$pulse 2s infinite" },
   },
   sxTitle: {
@@ -622,7 +591,7 @@ const useStyles = makeStyles((muiTheme) => ({
     maxWidth: 600,
   },
 
-  /* ── APARTMENTS — REDISEÑO ── */
+  /* ── APARTMENTS ── */
   aptSection: {
     background: "linear-gradient(180deg, #F4F1FF 0%, #EDE9FF 50%, #F4F1FF 100%)",
     padding: "100px 0",
@@ -636,7 +605,6 @@ const useStyles = makeStyles((muiTheme) => ({
       background: "linear-gradient(90deg, transparent, rgba(108,63,255,0.3), transparent)",
     },
   },
-  /* Grid asimétrico editorial */
   aptGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",
@@ -645,7 +613,6 @@ const useStyles = makeStyles((muiTheme) => ({
     [muiTheme.breakpoints.down("md")]: { gridTemplateColumns: "repeat(2, 1fr)", gridAutoRows: "280px" },
     [muiTheme.breakpoints.down("sm")]: { gridTemplateColumns: "1fr", gridAutoRows: "260px" },
   },
-  /* Card featured (primera): ocupa 2 columnas y 2 filas */
   aptCardFeatured: {
     gridColumn: "span 2",
     gridRow: "span 2",
@@ -663,18 +630,11 @@ const useStyles = makeStyles((muiTheme) => ({
       transform: "translateY(-6px) scale(1.01)",
       boxShadow: "0 28px 70px rgba(108,63,255,0.30)",
     },
-    "&:hover $aptOverlayPanel": {
-      transform: "translateY(0)",
-      opacity: 1,
-    },
+    "&:hover $aptOverlayPanel": { transform: "translateY(0)", opacity: 1 },
     "&:hover $aptImg": { transform: "scale(1.07)" },
     "&:hover $aptBaseInfo": { opacity: 0, transform: "translateY(10px)" },
   },
-  aptImgWrap: {
-    position: "absolute",
-    inset: 0,
-    overflow: "hidden",
-  },
+  aptImgWrap: { position: "absolute", inset: 0, overflow: "hidden" },
   aptImg: {
     width: "100%",
     height: "100%",
@@ -689,8 +649,7 @@ const useStyles = makeStyles((muiTheme) => ({
   },
   aptTag: {
     position: "absolute",
-    top: 18,
-    left: 18,
+    top: 18, left: 18,
     background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
     color: "#fff",
     padding: "5px 14px",
@@ -703,16 +662,10 @@ const useStyles = makeStyles((muiTheme) => ({
     boxShadow: "0 3px 12px rgba(108,63,255,0.45)",
     zIndex: 3,
   },
-  aptTagLux: {
-    background: "linear-gradient(135deg, #F59E0B, #EF4444)",
-    boxShadow: "0 3px 10px rgba(245,158,11,0.45)",
-  },
-  /* Info siempre visible abajo */
+  aptTagLux: { background: "linear-gradient(135deg, #F59E0B, #EF4444)", boxShadow: "0 3px 10px rgba(245,158,11,0.45)" },
   aptBaseInfo: {
     position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
+    bottom: 0, left: 0, right: 0,
     padding: "22px 24px",
     zIndex: 3,
     transition: "opacity 0.35s, transform 0.35s",
@@ -750,23 +703,11 @@ const useStyles = makeStyles((muiTheme) => ({
     borderRadius: 10,
     padding: "5px 13px",
   },
-  aptPriceNum: {
-    fontFamily: "'Outfit', sans-serif",
-    fontWeight: 900,
-    fontSize: "1.05rem",
-    color: "#C4B5FD",
-  },
-  aptPriceLabel: {
-    fontSize: "0.72rem",
-    color: "rgba(255,255,255,0.55)",
-    fontFamily: "'Outfit', sans-serif",
-  },
-  /* Panel que sube al hacer hover */
+  aptPriceNum: { fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: "1.05rem", color: "#C4B5FD" },
+  aptPriceLabel: { fontSize: "0.72rem", color: "rgba(255,255,255,0.55)", fontFamily: "'Outfit', sans-serif" },
   aptOverlayPanel: {
     position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
+    bottom: 0, left: 0, right: 0,
     background: "rgba(12,10,20,0.93)",
     backdropFilter: "blur(22px)",
     borderTop: "1px solid rgba(108,63,255,0.38)",
@@ -776,26 +717,9 @@ const useStyles = makeStyles((muiTheme) => ({
     opacity: 0,
     transition: "transform 0.42s cubic-bezier(.4,0,.2,1), opacity 0.38s",
   },
-  aptPanelTitle: {
-    fontFamily: "'Outfit', sans-serif",
-    fontWeight: 800,
-    fontSize: "1rem",
-    color: "#fff",
-    marginBottom: 4,
-  },
-  aptPanelPrice: {
-    fontFamily: "'Outfit', sans-serif",
-    fontWeight: 900,
-    fontSize: "0.9rem",
-    color: "#C4B5FD",
-    marginBottom: 12,
-  },
-  aptFeatures: {
-    display: "flex",
-    gap: 14,
-    marginBottom: 12,
-    flexWrap: "wrap",
-  },
+  aptPanelTitle: { fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1rem", color: "#fff", marginBottom: 4 },
+  aptPanelPrice: { fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: "0.9rem", color: "#C4B5FD", marginBottom: 12 },
+  aptFeatures: { display: "flex", gap: 14, marginBottom: 12, flexWrap: "wrap" },
   aptFeature: {
     display: "flex",
     alignItems: "center",
@@ -805,12 +729,7 @@ const useStyles = makeStyles((muiTheme) => ({
     fontFamily: "'Outfit', sans-serif",
     "& svg": { fontSize: 14, color: "#C4B5FD" },
   },
-  aptChips: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: 5,
-    marginBottom: 14,
-  },
+  aptChips: { display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 14 },
   aptChip: {
     height: 20,
     backgroundColor: "rgba(108,63,255,0.22)",
@@ -822,11 +741,7 @@ const useStyles = makeStyles((muiTheme) => ({
     fontWeight: 600,
     "& .MuiChip-label": { padding: "0 8px" },
   },
-  aptActions: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
+  aptActions: { display: "flex", justifyContent: "space-between", alignItems: "center" },
   aptReserveBtn: {
     borderRadius: 50,
     textTransform: "none",
@@ -838,10 +753,7 @@ const useStyles = makeStyles((muiTheme) => ({
     padding: "8px 20px",
     boxShadow: "0 4px 16px rgba(108,63,255,0.45)",
     transition: "all 0.3s",
-    "&:hover": {
-      transform: "translateY(-2px)",
-      boxShadow: "0 8px 24px rgba(108,63,255,0.62)",
-    },
+    "&:hover": { transform: "translateY(-2px)", boxShadow: "0 8px 24px rgba(108,63,255,0.62)" },
   },
   aptFavBtn: {
     color: "rgba(255,255,255,0.40)",
@@ -851,10 +763,8 @@ const useStyles = makeStyles((muiTheme) => ({
   aptFavActive: { color: "#EC4899 !important" },
   videoBtn: {
     position: "absolute",
-    top: 18,
-    right: 18,
-    width: 42,
-    height: 42,
+    top: 18, right: 18,
+    width: 42, height: 42,
     borderRadius: "50%",
     background: "rgba(108,63,255,0.75)",
     backdropFilter: "blur(12px)",
@@ -899,12 +809,7 @@ const useStyles = makeStyles((muiTheme) => ({
     fontFamily: "'Outfit', sans-serif",
     padding: "10px 24px",
     transition: "all 0.3s",
-    "&:hover": {
-      background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
-      color: "#fff",
-      border: "1px solid transparent",
-      boxShadow: "0 5px 18px rgba(108,63,255,0.38)",
-    },
+    "&:hover": { background: "linear-gradient(135deg, #6C3FFF, #C040FF)", color: "#fff", border: "1px solid transparent", boxShadow: "0 5px 18px rgba(108,63,255,0.38)" },
   },
 
   /* ── ABOUT ── */
@@ -934,18 +839,11 @@ const useStyles = makeStyles((muiTheme) => ({
       borderRadius: 26,
       zIndex: -1,
     },
-    "& img": {
-      width: "100%",
-      borderRadius: 22,
-      display: "block",
-      position: "relative",
-      zIndex: 1,
-    },
+    "& img": { width: "100%", borderRadius: 22, display: "block", position: "relative", zIndex: 1 },
   },
   aboutFloatCard: {
     position: "absolute",
-    bottom: -20,
-    right: -20,
+    bottom: -20, right: -20,
     background: "rgba(12,10,20,0.92)",
     backdropFilter: "blur(20px)",
     border: "1px solid rgba(108,63,255,0.40)",
@@ -964,14 +862,7 @@ const useStyles = makeStyles((muiTheme) => ({
       WebkitTextFillColor: "transparent",
       backgroundClip: "text",
     },
-    "& .small": {
-      fontSize: "0.75rem",
-      color: "rgba(255,255,255,0.55)",
-      fontFamily: "'Outfit', sans-serif",
-      letterSpacing: "0.08em",
-      textTransform: "uppercase",
-      fontWeight: 700,
-    },
+    "& .small": { fontSize: "0.75rem", color: "rgba(255,255,255,0.55)", fontFamily: "'Outfit', sans-serif", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 700 },
   },
   aboutBody: {
     fontSize: "0.96rem",
@@ -987,19 +878,9 @@ const useStyles = makeStyles((muiTheme) => ({
     gap: 12,
     marginBottom: 14,
     "& svg": { color: "#C4B5FD", fontSize: 18 },
-    "& span": {
-      fontSize: "0.92rem",
-      color: "rgba(255,255,255,0.88)",
-      fontFamily: "'Outfit', sans-serif",
-      fontWeight: 500,
-    },
+    "& span": { fontSize: "0.92rem", color: "rgba(255,255,255,0.88)", fontFamily: "'Outfit', sans-serif", fontWeight: 500 },
   },
-  pillRow: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: 10,
-    marginTop: 28,
-  },
+  pillRow: { display: "flex", flexWrap: "wrap", gap: 10, marginTop: 28 },
   pill: {
     display: "flex",
     alignItems: "center",
@@ -1050,18 +931,12 @@ const useStyles = makeStyles((muiTheme) => ({
       transition: "transform 0.4s",
       transformOrigin: "left",
     },
-    "&:hover": {
-      transform: "translateY(-10px)",
-      border: "1px solid rgba(196,181,253,0.40)",
-      background: "rgba(108,63,255,0.12)",
-      boxShadow: "0 24px 64px rgba(108,63,255,0.30)",
-    },
+    "&:hover": { transform: "translateY(-10px)", border: "1px solid rgba(196,181,253,0.40)", background: "rgba(108,63,255,0.12)", boxShadow: "0 24px 64px rgba(108,63,255,0.30)" },
     "&:hover::before": { transform: "scaleX(1)" },
     "&:hover $svcIconWrap": { transform: "rotateY(180deg)" },
   },
   svcIconWrap: {
-    width: 72,
-    height: 72,
+    width: 72, height: 72,
     borderRadius: "50%",
     background: "linear-gradient(135deg, rgba(108,63,255,0.30), rgba(192,64,255,0.20))",
     border: "1.5px solid rgba(196,181,253,0.30)",
@@ -1073,20 +948,8 @@ const useStyles = makeStyles((muiTheme) => ({
     transformStyle: "preserve-3d",
     "& svg": { fontSize: 30, color: "#C4B5FD" },
   },
-  svcTitle: {
-    fontFamily: "'Outfit', sans-serif",
-    fontWeight: 700,
-    fontSize: "1.1rem",
-    color: "#fff",
-    marginBottom: 10,
-  },
-  svcText: {
-    fontSize: "0.84rem",
-    color: "rgba(255,255,255,0.62)",
-    lineHeight: 1.7,
-    fontFamily: "'Outfit', sans-serif",
-    fontWeight: 400,
-  },
+  svcTitle: { fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: "1.1rem", color: "#fff", marginBottom: 10 },
+  svcText: { fontSize: "0.84rem", color: "rgba(255,255,255,0.62)", lineHeight: 1.7, fontFamily: "'Outfit', sans-serif", fontWeight: 400 },
 
   /* ── TESTIMONIALS ── */
   testimSection: {
@@ -1111,61 +974,15 @@ const useStyles = makeStyles((muiTheme) => ({
     height: "100%",
     boxShadow: "0 5px 22px rgba(108,63,255,0.10)",
     transition: "all 0.4s",
-    "&:hover": {
-      transform: "translateY(-8px)",
-      border: "1px solid rgba(108,63,255,0.30)",
-      boxShadow: "0 24px 60px rgba(108,63,255,0.20)",
-    },
+    "&:hover": { transform: "translateY(-8px)", border: "1px solid rgba(108,63,255,0.30)", boxShadow: "0 24px 60px rgba(108,63,255,0.20)" },
   },
-  testimQuoteMark: {
-    fontFamily: "'Playfair Display', serif",
-    fontSize: "4rem",
-    lineHeight: 0.7,
-    color: "#6C3FFF",
-    opacity: 0.45,
-    marginBottom: 12,
-  },
-  testimStars: {
-    display: "flex",
-    gap: 2,
-    marginBottom: 16,
-    "& svg": { fontSize: 16, color: "#F59E0B" },
-  },
-  testimText: {
-    fontSize: "0.93rem",
-    fontWeight: 400,
-    color: "#2D2640",
-    fontFamily: "'Outfit', sans-serif",
-    lineHeight: 1.8,
-    fontStyle: "italic",
-    marginBottom: 24,
-  },
-  testimAuthor: {
-    display: "flex",
-    alignItems: "center",
-    gap: 14,
-    paddingTop: 20,
-    borderTop: "1px solid rgba(108,63,255,0.12)",
-  },
-  testimAvatar: {
-    width: 52,
-    height: 52,
-    borderRadius: "50%",
-    objectFit: "cover",
-    border: "2.5px solid rgba(108,63,255,0.30)",
-    boxShadow: "0 4px 14px rgba(108,63,255,0.18)",
-  },
-  testimName: {
-    fontWeight: 700,
-    fontSize: "0.92rem",
-    color: "#0C0A14",
-    fontFamily: "'Outfit', sans-serif",
-  },
-  testimRole: {
-    fontSize: "0.78rem",
-    color: "#6B5E87",
-    fontFamily: "'Outfit', sans-serif",
-  },
+  testimQuoteMark: { fontFamily: "'Playfair Display', serif", fontSize: "4rem", lineHeight: 0.7, color: "#6C3FFF", opacity: 0.45, marginBottom: 12 },
+  testimStars: { display: "flex", gap: 2, marginBottom: 16, "& svg": { fontSize: 16, color: "#F59E0B" } },
+  testimText: { fontSize: "0.93rem", fontWeight: 400, color: "#2D2640", fontFamily: "'Outfit', sans-serif", lineHeight: 1.8, fontStyle: "italic", marginBottom: 24 },
+  testimAuthor: { display: "flex", alignItems: "center", gap: 14, paddingTop: 20, borderTop: "1px solid rgba(108,63,255,0.12)" },
+  testimAvatar: { width: 52, height: 52, borderRadius: "50%", objectFit: "cover", border: "2.5px solid rgba(108,63,255,0.30)", boxShadow: "0 4px 14px rgba(108,63,255,0.18)" },
+  testimName: { fontWeight: 700, fontSize: "0.92rem", color: "#0C0A14", fontFamily: "'Outfit', sans-serif" },
+  testimRole: { fontSize: "0.78rem", color: "#6B5E87", fontFamily: "'Outfit', sans-serif" },
 
   /* ── CTA ── */
   ctaSection: {
@@ -1178,7 +995,7 @@ const useStyles = makeStyles((muiTheme) => ({
       content: '""',
       position: "absolute",
       inset: 0,
-      backgroundImage: "url('https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop')",
+      backgroundImage: "url('https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1600&h=900&fit=crop&auto=format')",
       backgroundSize: "cover",
       backgroundPosition: "center",
       opacity: 0.20,
@@ -1190,27 +1007,9 @@ const useStyles = makeStyles((muiTheme) => ({
       background: "linear-gradient(135deg, rgba(108,63,255,0.88) 0%, rgba(192,64,255,0.80) 100%)",
     },
   },
-  ctaContent: {
-    position: "relative",
-    zIndex: 1,
-  },
-  ctaTitle: {
-    fontFamily: "'Outfit', sans-serif",
-    fontWeight: 900,
-    fontSize: "3.5rem",
-    color: "#fff",
-    marginBottom: 20,
-    [muiTheme.breakpoints.down("sm")]: { fontSize: "2.2rem" },
-  },
-  ctaText: {
-    fontSize: "1rem",
-    fontWeight: 300,
-    color: "rgba(255,255,255,0.88)",
-    fontFamily: "'Outfit', sans-serif",
-    maxWidth: 560,
-    margin: "0 auto 44px",
-    lineHeight: 1.7,
-  },
+  ctaContent: { position: "relative", zIndex: 1 },
+  ctaTitle: { fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: "3.5rem", color: "#fff", marginBottom: 20, [muiTheme.breakpoints.down("sm")]: { fontSize: "2.2rem" } },
+  ctaText: { fontSize: "1rem", fontWeight: 300, color: "rgba(255,255,255,0.88)", fontFamily: "'Outfit', sans-serif", maxWidth: 560, margin: "0 auto 44px", lineHeight: 1.7 },
   ctaBtn: {
     background: "#fff",
     color: "#6C3FFF",
@@ -1222,23 +1021,16 @@ const useStyles = makeStyles((muiTheme) => ({
     fontFamily: "'Outfit', sans-serif",
     boxShadow: "0 8px 36px rgba(0,0,0,0.25)",
     transition: "all 0.4s",
-    "&:hover": {
-      transform: "translateY(-3px) scale(1.04)",
-      boxShadow: "0 16px 56px rgba(0,0,0,0.35)",
-      background: "#f4f1ff",
-    },
+    "&:hover": { transform: "translateY(-3px) scale(1.04)", boxShadow: "0 16px 56px rgba(0,0,0,0.35)", background: "#f4f1ff" },
   },
   ctaGlow: {
     position: "absolute",
-    width: 500,
-    height: 500,
+    width: 500, height: 500,
     borderRadius: "50%",
     background: "radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)",
-    top: "50%",
-    left: "50%",
+    top: "50%", left: "50%",
     transform: "translate(-50%,-50%)",
-    zIndex: 0,
-    pointerEvents: "none",
+    zIndex: 0, pointerEvents: "none",
   },
 
   /* ── FOOTER ── */
@@ -1261,40 +1053,17 @@ const useStyles = makeStyles((muiTheme) => ({
     display: "block",
     marginBottom: 16,
   },
-  footerTagline: {
-    fontSize: "0.85rem",
-    fontWeight: 300,
-    color: "rgba(255,255,255,0.50)",
-    lineHeight: 1.7,
-    fontFamily: "'Outfit', sans-serif",
-    marginBottom: 24,
-  },
+  footerTagline: { fontSize: "0.85rem", fontWeight: 300, color: "rgba(255,255,255,0.50)", lineHeight: 1.7, fontFamily: "'Outfit', sans-serif", marginBottom: 24 },
   footerSocials: { display: "flex", gap: 8 },
   footerSocBtn: {
-    width: 36,
-    height: 36,
+    width: 36, height: 36,
     borderRadius: "50%",
     border: "1px solid rgba(108,63,255,0.35)",
     color: "rgba(255,255,255,0.50)",
     transition: "all 0.3s",
-    "&:hover": {
-      borderColor: "#C4B5FD",
-      color: "#C4B5FD",
-      background: "rgba(108,63,255,0.18)",
-      transform: "translateY(-2px)",
-    },
+    "&:hover": { borderColor: "#C4B5FD", color: "#C4B5FD", background: "rgba(108,63,255,0.18)", transform: "translateY(-2px)" },
   },
-  footerHeading: {
-    fontFamily: "'Outfit', sans-serif",
-    fontWeight: 700,
-    fontSize: "0.88rem",
-    color: "#fff",
-    marginBottom: 20,
-    textTransform: "uppercase",
-    letterSpacing: "0.12em",
-    paddingBottom: 12,
-    borderBottom: "1px solid rgba(108,63,255,0.25)",
-  },
+  footerHeading: { fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: "0.88rem", color: "#fff", marginBottom: 20, textTransform: "uppercase", letterSpacing: "0.12em", paddingBottom: 12, borderBottom: "1px solid rgba(108,63,255,0.25)" },
   footerLink: {
     display: "flex",
     alignItems: "center",
@@ -1316,33 +1085,9 @@ const useStyles = makeStyles((muiTheme) => ({
     "& svg": { fontSize: 16, color: "#C4B5FD", marginTop: 2 },
     "& span": { fontSize: "0.84rem", color: "rgba(255,255,255,0.50)", fontFamily: "'Outfit', sans-serif", lineHeight: 1.5 },
   },
-  footerBottom: {
-    borderTop: "1px solid rgba(255,255,255,0.07)",
-    marginTop: 48,
-    paddingTop: 24,
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    flexWrap: "wrap",
-    gap: 12,
-  },
-  footerCopy: {
-    fontSize: "0.78rem",
-    color: "rgba(255,255,255,0.32)",
-    fontFamily: "'Outfit', sans-serif",
-  },
-  footerPolicyLinks: {
-    display: "flex",
-    gap: 20,
-    "& span": {
-      fontSize: "0.78rem",
-      color: "rgba(255,255,255,0.32)",
-      fontFamily: "'Outfit', sans-serif",
-      cursor: "pointer",
-      transition: "color 0.2s",
-      "&:hover": { color: "#C4B5FD" },
-    },
-  },
+  footerBottom: { borderTop: "1px solid rgba(255,255,255,0.07)", marginTop: 48, paddingTop: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 },
+  footerCopy: { fontSize: "0.78rem", color: "rgba(255,255,255,0.32)", fontFamily: "'Outfit', sans-serif" },
+  footerPolicyLinks: { display: "flex", gap: 20, "& span": { fontSize: "0.78rem", color: "rgba(255,255,255,0.32)", fontFamily: "'Outfit', sans-serif", cursor: "pointer", transition: "color 0.2s", "&:hover": { color: "#C4B5FD" } } },
 
   /* ── MODAL ── */
   modalDialog: {
@@ -1355,47 +1100,19 @@ const useStyles = makeStyles((muiTheme) => ({
       overflow: "hidden",
       color: "#0C0A14",
       position: "relative",
-      "&::before": {
-        content: '""',
-        position: "absolute",
-        top: 0, left: 0, right: 0,
-        height: 3,
-        background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
-        zIndex: 10,
-      },
+      "&::before": { content: '""', position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "linear-gradient(135deg, #6C3FFF, #C040FF)", zIndex: 10 },
     },
-    "& .MuiBackdrop-root": {
-      backdropFilter: "blur(8px)",
-      background: "rgba(12,10,20,0.55)",
-    },
+    "& .MuiBackdrop-root": { backdropFilter: "blur(8px)", background: "rgba(12,10,20,0.55)" },
   },
   modalHeader: {
     background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
     padding: "22px 28px",
     position: "relative",
     overflow: "hidden",
-    "&::before": {
-      content: '""',
-      position: "absolute",
-      top: -50, right: -50,
-      width: 180, height: 180,
-      borderRadius: "50%",
-      background: "rgba(255,255,255,0.08)",
-    },
+    "&::before": { content: '""', position: "absolute", top: -50, right: -50, width: 180, height: 180, borderRadius: "50%", background: "rgba(255,255,255,0.08)" },
   },
-  modalHeaderTitle: {
-    fontFamily: "'Outfit', sans-serif",
-    fontWeight: 800,
-    fontSize: "1.25rem",
-    color: "#fff",
-    lineHeight: 1.2,
-  },
-  modalHeaderSub: {
-    fontSize: "0.78rem",
-    color: "rgba(255,255,255,0.78)",
-    fontFamily: "'Outfit', sans-serif",
-    marginTop: 3,
-  },
+  modalHeaderTitle: { fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.25rem", color: "#fff", lineHeight: 1.2 },
+  modalHeaderSub: { fontSize: "0.78rem", color: "rgba(255,255,255,0.78)", fontFamily: "'Outfit', sans-serif", marginTop: 3 },
   modalContent: {
     padding: "24px 28px",
     maxHeight: "66vh",
@@ -1438,56 +1155,14 @@ const useStyles = makeStyles((muiTheme) => ({
     "& .MuiFormHelperText-root": { color: "#6B5E87", fontFamily: "'Outfit', sans-serif", fontSize: "0.74rem" },
     "& .MuiFormHelperText-root.Mui-error": { color: "#EF4444" },
   },
-  summaryBox: {
-    background: "rgba(108,63,255,0.06)",
-    border: "1px solid rgba(108,63,255,0.15)",
-    borderRadius: 18,
-    padding: "20px 22px",
-  },
-  summaryRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    padding: "8px 0",
-    borderBottom: "1px solid rgba(108,63,255,0.07)",
-    "&:last-child": { borderBottom: "none", paddingTop: 14 },
-  },
+  summaryBox: { background: "rgba(108,63,255,0.06)", border: "1px solid rgba(108,63,255,0.15)", borderRadius: 18, padding: "20px 22px" },
+  summaryRow: { display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid rgba(108,63,255,0.07)", "&:last-child": { borderBottom: "none", paddingTop: 14 } },
   summaryLabel: { fontSize: "0.84rem", color: "#6B5E87", fontFamily: "'Outfit', sans-serif" },
   summaryValue: { fontSize: "0.84rem", color: "#0C0A14", fontWeight: 700, fontFamily: "'Outfit', sans-serif" },
-  summaryTotal: {
-    fontSize: "1rem",
-    fontWeight: 800,
-    background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-    backgroundClip: "text",
-    fontFamily: "'Outfit', sans-serif",
-  },
-  paymentBox: {
-    background: "rgba(108,63,255,0.06)",
-    border: "1px solid rgba(108,63,255,0.18)",
-    borderRadius: 14,
-    padding: "18px 20px",
-    borderLeft: "3px solid #6C3FFF",
-  },
-  paymentBoxTitle: {
-    fontSize: "0.82rem",
-    fontWeight: 700,
-    color: "#6C3FFF",
-    fontFamily: "'Outfit', sans-serif",
-    marginBottom: 10,
-    display: "flex",
-    alignItems: "center",
-    gap: 6,
-    "& svg": { fontSize: 16 },
-  },
-  paymentBoxText: {
-    fontSize: "0.84rem",
-    color: "#2D2640",
-    fontFamily: "'Outfit', sans-serif",
-    marginBottom: 5,
-    lineHeight: 1.6,
-    fontWeight: 400,
-  },
+  summaryTotal: { fontSize: "1rem", fontWeight: 800, background: "linear-gradient(135deg, #6C3FFF, #C040FF)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", fontFamily: "'Outfit', sans-serif" },
+  paymentBox: { background: "rgba(108,63,255,0.06)", border: "1px solid rgba(108,63,255,0.18)", borderRadius: 14, padding: "18px 20px", borderLeft: "3px solid #6C3FFF" },
+  paymentBoxTitle: { fontSize: "0.82rem", fontWeight: 700, color: "#6C3FFF", fontFamily: "'Outfit', sans-serif", marginBottom: 10, display: "flex", alignItems: "center", gap: 6, "& svg": { fontSize: 16 } },
+  paymentBoxText: { fontSize: "0.84rem", color: "#2D2640", fontFamily: "'Outfit', sans-serif", marginBottom: 5, lineHeight: 1.6, fontWeight: 400 },
   uploadBtn: {
     background: "rgba(108,63,255,0.10)",
     border: "1px solid rgba(108,63,255,0.25)",
@@ -1499,58 +1174,15 @@ const useStyles = makeStyles((muiTheme) => ({
     fontWeight: 700,
     padding: "10px 22px",
     transition: "all 0.3s",
-    "&:hover": {
-      background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
-      color: "#fff",
-      border: "1px solid transparent",
-      boxShadow: "0 5px 18px rgba(108,63,255,0.38)",
-    },
+    "&:hover": { background: "linear-gradient(135deg, #6C3FFF, #C040FF)", color: "#fff", border: "1px solid transparent", boxShadow: "0 5px 18px rgba(108,63,255,0.38)" },
   },
   fileInput: { display: "none" },
-  filePreview: {
-    maxWidth: "100%",
-    maxHeight: 100,
-    borderRadius: 10,
-    border: "1px solid rgba(108,63,255,0.22)",
-    marginTop: 10,
-  },
-  fileName: {
-    fontSize: "0.75rem",
-    color: "#6B5E87",
-    fontFamily: "'Outfit', sans-serif",
-    marginTop: 6,
-  },
-  acompSection: {
-    background: "rgba(244,241,255,0.50)",
-    border: "1px solid rgba(108,63,255,0.14)",
-    borderRadius: 16,
-    padding: "20px",
-  },
-  acompSub: {
-    fontSize: "0.80rem",
-    color: "#6B5E87",
-    fontFamily: "'Outfit', sans-serif",
-    marginBottom: 16,
-    fontWeight: 500,
-  },
-  acompCard: {
-    background: "rgba(255,255,255,0.90)",
-    border: "1px solid rgba(108,63,255,0.14)",
-    borderRadius: 14,
-    padding: "16px",
-    marginBottom: 12,
-    position: "relative",
-    boxShadow: "0 2px 10px rgba(108,63,255,0.07)",
-  },
-  acompCardTitle: {
-    fontSize: "0.72rem",
-    fontWeight: 700,
-    letterSpacing: "0.10em",
-    textTransform: "uppercase",
-    color: "#6C3FFF",
-    fontFamily: "'Outfit', sans-serif",
-    marginBottom: 12,
-  },
+  filePreview: { maxWidth: "100%", maxHeight: 100, borderRadius: 10, border: "1px solid rgba(108,63,255,0.22)", marginTop: 10 },
+  fileName: { fontSize: "0.75rem", color: "#6B5E87", fontFamily: "'Outfit', sans-serif", marginTop: 6 },
+  acompSection: { background: "rgba(244,241,255,0.50)", border: "1px solid rgba(108,63,255,0.14)", borderRadius: 16, padding: "20px" },
+  acompSub: { fontSize: "0.80rem", color: "#6B5E87", fontFamily: "'Outfit', sans-serif", marginBottom: 16, fontWeight: 500 },
+  acompCard: { background: "rgba(255,255,255,0.90)", border: "1px solid rgba(108,63,255,0.14)", borderRadius: 14, padding: "16px", marginBottom: 12, position: "relative", boxShadow: "0 2px 10px rgba(108,63,255,0.07)" },
+  acompCardTitle: { fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase", color: "#6C3FFF", fontFamily: "'Outfit', sans-serif", marginBottom: 12 },
   addAcompBtn: {
     background: "rgba(108,63,255,0.10)",
     border: "1px solid rgba(108,63,255,0.22)",
@@ -1565,24 +1197,8 @@ const useStyles = makeStyles((muiTheme) => ({
     "&:hover": { background: "rgba(108,63,255,0.18)", transform: "translateY(-1px)" },
     "&:disabled": { opacity: 0.4 },
   },
-  removeBtn: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    minWidth: "auto",
-    width: 28,
-    height: 28,
-    padding: 0,
-    color: "rgba(107,94,135,0.5)",
-    "&:hover": { color: "#EF4444" },
-  },
-  modalActions: {
-    padding: "14px 28px 22px",
-    display: "flex",
-    gap: 12,
-    borderTop: "1px solid rgba(108,63,255,0.10)",
-    background: "#fff",
-  },
+  removeBtn: { position: "absolute", top: 10, right: 10, minWidth: "auto", width: 28, height: 28, padding: 0, color: "rgba(107,94,135,0.5)", "&:hover": { color: "#EF4444" } },
+  modalActions: { padding: "14px 28px 22px", display: "flex", gap: 12, borderTop: "1px solid rgba(108,63,255,0.10)", background: "#fff" },
   cancelBtn: {
     flex: 1,
     background: "transparent",
@@ -1606,10 +1222,7 @@ const useStyles = makeStyles((muiTheme) => ({
     letterSpacing: "0.04em",
     boxShadow: "0 5px 18px rgba(108,63,255,0.40)",
     transition: "all 0.35s",
-    "&:hover": {
-      transform: "translateY(-2px)",
-      boxShadow: "0 9px 26px rgba(108,63,255,0.55)",
-    },
+    "&:hover": { transform: "translateY(-2px)", boxShadow: "0 9px 26px rgba(108,63,255,0.55)" },
     "&:disabled": { opacity: 0.4 },
   },
 }))
@@ -1718,46 +1331,69 @@ function Landing() {
     })
   }
 
+  // FIX: fetch robusto — si la API devuelve array vacío o falla,
+  // siempre cae al fallback de datos de ejemplo para garantizar
+  // que las cards se muestren en producción (Render).
   useEffect(() => {
     const fetchApartamentos = async () => {
+      let loaded = false
+
+      // Intento 1: endpoint de apartamentos destacados
       try {
-        try {
-          const r = await apiCall(API_ENDPOINTS.apartamentosDestacados)
-          if (r.data?.length > 0) {
-            setAllApartamentos(r.data); const lim = r.data.slice(0, 6)
-            setApartamentos(lim); setFilteredApartamentos(lim); return
-          }
-        } catch {}
+        const r = await apiCall(API_ENDPOINTS.apartamentosDestacados)
+        if (r.data && Array.isArray(r.data) && r.data.length > 0) {
+          const data = r.data
+          setAllApartamentos(data)
+          const lim = data.slice(0, 6)
+          setApartamentos(lim)
+          setFilteredApartamentos(lim)
+          loaded = true
+        }
+      } catch (_) { /* silencioso — continuamos al siguiente intento */ }
+
+      // Intento 2: endpoint general de apartamentos
+      if (!loaded) {
         try {
           const r = await apiCall(API_ENDPOINTS.apartamentos)
-          if (r.data?.length > 0) {
+          if (r.data && Array.isArray(r.data) && r.data.length > 0) {
             const fmt = r.data.map((apt) => ({
-              _id: apt._id, id: apt._id,
+              _id: apt._id,
+              id: apt._id,
               nombre: `Apartamento ${apt.NumeroApto} - ${apt.Tipo}`,
-              tipo: apt.Tipo, ubicacion: "El Poblado, Medellín", precio: apt.Tarifa,
+              tipo: apt.Tipo,
+              ubicacion: "El Poblado, Medellín",
+              precio: apt.Tarifa,
               capacidad: 4, camas: 2, banos: 1, tamano: 75,
               caracteristicas: ["Balcón", "Vista ciudad", "Cocina equipada", "WiFi"],
               imagen: getImagenPorTipo(apt.Tipo),
-              estado: apt.Estado ? "disponible" : "no disponible", disponible: apt.Estado,
+              estado: apt.Estado ? "disponible" : "no disponible",
+              disponible: apt.Estado,
               tag: apt.Tipo === "Penthouse" ? "Lujo" : apt.Tipo === "Tipo 2" ? "Familiar" : "Popular",
             }))
-            setAllApartamentos(fmt); const lim = fmt.slice(0, 6)
-            setApartamentos(lim); setFilteredApartamentos(lim); return
+            setAllApartamentos(fmt)
+            const lim = fmt.slice(0, 6)
+            setApartamentos(lim)
+            setFilteredApartamentos(lim)
+            loaded = true
           }
-        } catch {}
+        } catch (_) { /* silencioso */ }
+      }
+
+      // Fallback garantizado: siempre muestra las cards de ejemplo
+      if (!loaded) {
         setAllApartamentos(apartamentosEjemplo)
-        setApartamentos(apartamentosEjemplo.slice(0, 6))
-        setFilteredApartamentos(apartamentosEjemplo.slice(0, 6))
-      } catch {
         setApartamentos(apartamentosEjemplo.slice(0, 6))
         setFilteredApartamentos(apartamentosEjemplo.slice(0, 6))
       }
     }
+
     fetchApartamentos()
+
     document.body.style.overflow = "auto"
     const img = new Image()
     img.src = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/nidosky-V3qv6QnKvcP2qqA4Vxok6rQ8wpnZi9.png"
-    img.onload = () => setLogoLoaded(true); img.onerror = () => setLogoLoaded(true)
+    img.onload = () => setLogoLoaded(true)
+    img.onerror = () => setLogoLoaded(true)
     heroImages.forEach((src) => { const i = new Image(); i.src = src })
     const onScroll = () => setScrolled(window.scrollY > 50)
     window.addEventListener("scroll", onScroll)
@@ -1770,33 +1406,43 @@ function Landing() {
     if (searchTerm) {
       const t = searchTerm.toLowerCase()
       setFilteredApartamentos(base.filter((a) =>
-        a.nombre.toLowerCase().includes(t) || a.tipo.toLowerCase().includes(t) ||
+        a.nombre.toLowerCase().includes(t) ||
+        a.tipo.toLowerCase().includes(t) ||
         a.caracteristicas?.some((c) => c.toLowerCase().includes(t))
       ))
-    } else setFilteredApartamentos(base)
+    } else {
+      setFilteredApartamentos(base)
+    }
   }, [searchTerm, apartamentos])
 
   const toggleShowAllApartments = () => {
     if (showAllApartments) {
       const lim = allApartamentos.slice(0, 6)
-      setApartamentos(lim); setFilteredApartamentos(lim)
+      setApartamentos(lim)
+      setFilteredApartamentos(lim)
     } else {
-      setApartamentos(allApartamentos); setFilteredApartamentos(allApartamentos)
+      setApartamentos(allApartamentos)
+      setFilteredApartamentos(allApartamentos)
     }
     setShowAllApartments(!showAllApartments)
   }
 
   const handleReservationOpen = async (apt) => {
-    setSelectedApartamento(apt); setReservationDialogOpen(true)
+    setSelectedApartamento(apt)
+    setReservationDialogOpen(true)
     const today = new Date().toISOString().split("T")[0]
     setReservationForm({
-      titular_reserva: "", email: "", telefono: "", fecha_inicio: today,
-      fecha_fin: "", apartamentos: apt ? [apt.id] : [],
-      noches_estadia: 1, total: apt ? apt.precio : 0,
-      monto_pago: apt ? apt.precio * 0.5 : 0, acompanantes: [], documento: "",
+      titular_reserva: "", email: "", telefono: "",
+      fecha_inicio: today, fecha_fin: "",
+      apartamentos: apt ? [apt.id] : [],
+      noches_estadia: 1,
+      total: apt ? apt.precio : 0,
+      monto_pago: apt ? apt.precio * 0.5 : 0,
+      acompanantes: [], documento: "",
     })
     setFormErrors({ titular_reserva: "", email: "", telefono: "", fecha_inicio: "", fecha_fin: "", monto_pago: "", documento: "" })
-    setComprobantePago(null); setComprobantePreview("")
+    setComprobantePago(null)
+    setComprobantePreview("")
     if (apt?.id) await fetchReservedDates(apt.id)
   }
 
@@ -1818,7 +1464,7 @@ function Landing() {
         else if (!/^\+?[0-9]{8,15}$/.test(value)) e = "Número inválido (8-15 dígitos)"
         break
       case "fecha_inicio":
-        const td = new Date(); td.setHours(0,0,0,0)
+        const td = new Date(); td.setHours(0, 0, 0, 0)
         if (!value) e = "Fecha de entrada obligatoria"
         else if (new Date(value) < td) e = "Debe ser hoy o posterior"
         break
@@ -1829,7 +1475,7 @@ function Landing() {
       case "monto_pago":
         const total = calcularPrecioTotal()
         if (!value) e = "Monto obligatorio"
-        else if (Number(value) < total * 0.5) e = `Mínimo 50%: $${(total*0.5).toFixed(0)}`
+        else if (Number(value) < total * 0.5) e = `Mínimo 50%: $${(total * 0.5).toFixed(0)}`
         else if (Number(value) > total) e = "No puede superar el total"
         break
       case "documento":
@@ -1859,30 +1505,40 @@ function Landing() {
 
   const handleReservationSubmit = async () => {
     const newErrors = Object.fromEntries(
-      ["titular_reserva","email","telefono","fecha_inicio","fecha_fin","monto_pago","documento"]
+      ["titular_reserva", "email", "telefono", "fecha_inicio", "fecha_fin", "monto_pago", "documento"]
         .map((k) => [k, validateField(k, reservationForm[k])])
     )
     setFormErrors(newErrors)
     if (Object.values(newErrors).some((e) => e !== "")) {
-      Swal.fire({ title: "Formulario incompleto", text: "Corrija los errores antes de continuar", icon: "warning", toast: true, position: "top", showConfirmButton: false, timer: 3500, timerProgressBar: true, background: "#fff", color: "#0C0A14" }); return
+      Swal.fire({ title: "Formulario incompleto", text: "Corrija los errores antes de continuar", icon: "warning", toast: true, position: "top", showConfirmButton: false, timer: 3500, timerProgressBar: true, background: "#fff", color: "#0C0A14" })
+      return
     }
     if (!comprobantePago) {
-      Swal.fire({ title: "Comprobante requerido", text: "Suba el comprobante de pago para continuar", icon: "warning", toast: true, position: "top", showConfirmButton: false, timer: 3500, timerProgressBar: true, background: "#fff", color: "#0C0A14" }); return
+      Swal.fire({ title: "Comprobante requerido", text: "Suba el comprobante de pago para continuar", icon: "warning", toast: true, position: "top", showConfirmButton: false, timer: 3500, timerProgressBar: true, background: "#fff", color: "#0C0A14" })
+      return
     }
     setLoading(true)
     try {
       const data = {
-        titular_reserva: reservationForm.titular_reserva, email: reservationForm.email,
-        telefono: reservationForm.telefono, fecha_inicio: reservationForm.fecha_inicio,
-        fecha_fin: reservationForm.fecha_fin, apartamento_id: selectedApartamento.id,
-        huespedes: reservationForm.acompanantes.length + 1, documento: reservationForm.documento,
+        titular_reserva: reservationForm.titular_reserva,
+        email: reservationForm.email,
+        telefono: reservationForm.telefono,
+        fecha_inicio: reservationForm.fecha_inicio,
+        fecha_fin: reservationForm.fecha_fin,
+        apartamento_id: selectedApartamento.id,
+        huespedes: reservationForm.acompanantes.length + 1,
+        documento: reservationForm.documento,
         monto_pago: reservationForm.monto_pago,
-        acompanantes: reservationForm.acompanantes.map((a) => ({ nombre: a.nombre, apellido: a.apellido, documento: a.documento_acompanante })),
+        acompanantes: reservationForm.acompanantes.map((a) => ({
+          nombre: a.nombre, apellido: a.apellido, documento: a.documento_acompanante,
+        })),
       }
       const res = await axios.post(API_ENDPOINTS.reservasPublica, data)
       Swal.fire({
         title: res.data.clienteExistente ? "Cliente ya registrado" : "¡Reserva realizada!",
-        text: res.data.clienteExistente ? "Hemos encontrado tus datos. Reserva registrada." : "Hemos recibido tu reserva. Te enviaremos un correo.",
+        text: res.data.clienteExistente
+          ? "Hemos encontrado tus datos. Reserva registrada."
+          : "Hemos recibido tu reserva. Te enviaremos un correo.",
         icon: res.data.clienteExistente ? "info" : "success",
         confirmButtonText: "¡Perfecto!",
         background: "#fff",
@@ -1893,7 +1549,8 @@ function Landing() {
       })
       setReservationDialogOpen(false)
       setReservationForm({ titular_reserva: "", email: "", telefono: "", fecha_inicio: "", fecha_fin: "", apartamentos: [], noches_estadia: 1, total: 0, monto_pago: 0, acompanantes: [], documento: "" })
-      setComprobantePago(null); setComprobantePreview("")
+      setComprobantePago(null)
+      setComprobantePreview("")
     } catch (err) {
       let msg = "Error al procesar la reserva."
       if (err.response?.data?.msg || err.response?.data?.message) msg = err.response.data.msg || err.response.data.message
@@ -1913,7 +1570,9 @@ function Landing() {
   const handleFavoriteToggle = (id) =>
     setFavorites((p) => p.includes(id) ? p.filter((f) => f !== id) : [...p, id])
   const scrollToSection = (ref) => ref.current?.scrollIntoView({ behavior: "smooth" })
-  const renderStars = (n) => Array(5).fill(0).map((_, i) => <Star key={i} style={{ color: i < n ? "#F59E0B" : "rgba(255,255,255,0.2)", fontSize: 16 }} />)
+  const renderStars = (n) => Array(5).fill(0).map((_, i) => (
+    <Star key={i} style={{ color: i < n ? "#F59E0B" : "rgba(255,255,255,0.2)", fontSize: 16 }} />
+  ))
 
   const handleComprobanteChange = (e) => {
     const file = e.target.files[0]
@@ -1927,16 +1586,21 @@ function Landing() {
 
   const handleAddAcompanante = () => {
     if (selectedApartamento && reservationForm.acompanantes.length >= selectedApartamento.capacidad - 1) {
-      Swal.fire({ title: "Límite", text: `Capacidad máx: ${selectedApartamento.capacidad} personas.`, icon: "warning", toast: true, position: "top-end", showConfirmButton: false, timer: 3000 }); return
+      Swal.fire({ title: "Límite", text: `Capacidad máx: ${selectedApartamento.capacidad} personas.`, icon: "warning", toast: true, position: "top-end", showConfirmButton: false, timer: 3000 })
+      return
     }
-    setReservationForm((p) => ({ ...p, acompanantes: [...p.acompanantes, { nombre: "", apellido: "", documento_acompanante: "" }] }))
+    setReservationForm((p) => ({
+      ...p, acompanantes: [...p.acompanantes, { nombre: "", apellido: "", documento_acompanante: "" }],
+    }))
   }
   const handleRemoveAcompanante = (i) => {
-    const a = [...reservationForm.acompanantes]; a.splice(i, 1)
+    const a = [...reservationForm.acompanantes]
+    a.splice(i, 1)
     setReservationForm((p) => ({ ...p, acompanantes: a }))
   }
   const handleAcompananteChange = (i, field, value) => {
-    const a = [...reservationForm.acompanantes]; a[i] = { ...a[i], [field]: value }
+    const a = [...reservationForm.acompanantes]
+    a[i] = { ...a[i], [field]: value }
     setReservationForm((p) => ({ ...p, acompanantes: a }))
   }
 
@@ -1953,6 +1617,7 @@ function Landing() {
               <img
                 src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/nidosky-V3qv6QnKvcP2qqA4Vxok6rQ8wpnZi9.png"
                 alt="Nido Sky"
+                referrerPolicy="no-referrer"
                 style={{ height: 44, filter: "drop-shadow(0 0 10px rgba(196,181,253,0.8))" }}
               />
             )}
@@ -1999,7 +1664,11 @@ function Landing() {
       {/* ── HERO ── */}
       <section className={classes.heroSection}>
         {heroImages.map((img, i) => (
-          <div key={i} className={classes.heroBg} style={{ backgroundImage: `url(${img})`, opacity: currentHeroSlide === i ? 1 : 0 }} />
+          <div
+            key={i}
+            className={classes.heroBg}
+            style={{ backgroundImage: `url(${img})`, opacity: currentHeroSlide === i ? 1 : 0 }}
+          />
         ))}
         <div className={classes.heroGlowOrb1} />
         <div className={classes.heroGlowOrb2} />
@@ -2024,7 +1693,11 @@ function Landing() {
         </div>
         <div className={classes.heroDots}>
           {heroImages.map((_, i) => (
-            <div key={i} className={`${classes.heroDot} ${i === currentHeroSlide ? classes.heroDotActive : ""}`} onClick={() => setCurrentHeroSlide(i)} />
+            <div
+              key={i}
+              className={`${classes.heroDot} ${i === currentHeroSlide ? classes.heroDotActive : ""}`}
+              onClick={() => setCurrentHeroSlide(i)}
+            />
           ))}
         </div>
         <div className={classes.heroNavBtns}>
@@ -2085,7 +1758,7 @@ function Landing() {
         ))}
       </div>
 
-      {/* ── APARTMENTS — NUEVO DISEÑO EDITORIAL ── */}
+      {/* ── APARTMENTS ── */}
       <section className={classes.aptSection} ref={apartamentosRef}>
         <div className={classes.sxWrap}>
           <div className={classes.sxBadge}><div /><span>Alojamiento exclusivo</span></div>
@@ -2112,34 +1785,43 @@ function Landing() {
             </div>
           </div>
 
-          {/* Grid asimétrico editorial */}
           <div className={classes.aptGrid}>
             {filteredApartamentos.length > 0 ? filteredApartamentos.map((apt, index) => (
-              <Zoom in timeout={300 + index * 60} key={apt.id}>
+              <Zoom in timeout={300 + index * 60} key={apt.id || apt._id}>
                 <div className={`${classes.aptCard} ${index === 0 ? classes.aptCardFeatured : ""}`}>
 
-                  {/* Imagen con lazy loading nativo */}
                   <div className={classes.aptImgWrap}>
+                    {/* FIX: referrerPolicy="no-referrer" evita que el servidor
+                        de imágenes rechace la petición por referrer header.
+                        crossOrigin="anonymous" permite carga desde cualquier CDN. */}
                     <img
                       className={classes.aptImg}
                       src={apt.imagen || IMAGEN_FALLBACK}
                       alt={apt.nombre}
                       loading="lazy"
                       decoding="async"
-                      onError={(e) => { e.target.src = IMAGEN_FALLBACK }}
+                      referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
+                      onError={(e) => {
+                        // Doble fallback: si Unsplash también falla, usar placeholder SVG inline
+                        if (e.target.src !== IMAGEN_FALLBACK) {
+                          e.target.src = IMAGEN_FALLBACK
+                        } else {
+                          e.target.style.display = "none"
+                          e.target.parentElement.style.background =
+                            "linear-gradient(135deg, #1a1028 0%, #2d1f4a 50%, #1a1028 100%)"
+                        }
+                      }}
                     />
                     <div className={classes.aptGradient} />
                   </div>
 
-                  {/* Badge tipo */}
                   <div className={`${classes.aptTag} ${apt.tipo === "Penthouse" ? classes.aptTagLux : ""}`}>
                     {apt.tag || apt.tipo}
                   </div>
 
-                  {/* Botón reproducir */}
                   <IconButton className={classes.videoBtn}><PlayArrow /></IconButton>
 
-                  {/* Info base visible por defecto */}
                   <div className={classes.aptBaseInfo}>
                     <Typography className={`${classes.aptTitle} ${index === 0 ? classes.aptTitleFeatured : ""}`}>
                       {apt.nombre}
@@ -2151,7 +1833,6 @@ function Landing() {
                     </div>
                   </div>
 
-                  {/* Panel hover — sube desde abajo */}
                   <div className={classes.aptOverlayPanel}>
                     <Typography className={classes.aptPanelTitle}>{apt.nombre}</Typography>
                     <Typography className={classes.aptPanelPrice}>${apt.precio} / noche</Typography>
@@ -2198,12 +1879,15 @@ function Landing() {
             <Grid item xs={12} md={5}>
               <div className={classes.aboutImgWrap}>
                 <img
-                  src="https://images.pexels.com/photos/1579739/pexels-photo-1579739.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop"
+                  src="https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&h=600&fit=crop&auto=format"
                   alt="Nido Sky lobby"
                   loading="lazy"
                   decoding="async"
+                  referrerPolicy="no-referrer"
                   style={{ width: "100%", borderRadius: 22, display: "block", filter: "brightness(0.92)" }}
-                  onError={(e) => { e.target.src = "https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop" }}
+                  onError={(e) => {
+                    e.target.src = "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop&auto=format"
+                  }}
                 />
                 <div className={classes.aboutFloatCard}>
                   <span className="big">12+</span>
@@ -2212,10 +1896,10 @@ function Landing() {
               </div>
             </Grid>
             <Grid item xs={12} md={7}>
-              <div className={classes.sxBadge} style={{ backgroundColor:"rgba(196,181,253,0.15)", borderColor:"rgba(196,181,253,0.35)" }}>
-                <div style={{ backgroundColor:"#C4B5FD" }}/><span style={{ color:"#C4B5FD" }}>Nuestra historia</span>
+              <div className={classes.sxBadge} style={{ backgroundColor: "rgba(196,181,253,0.15)", borderColor: "rgba(196,181,253,0.35)" }}>
+                <div style={{ backgroundColor: "#C4B5FD" }} /><span style={{ color: "#C4B5FD" }}>Nuestra historia</span>
               </div>
-              <Typography className={classes.sxTitle} style={{ color:"#fff" }}>
+              <Typography className={classes.sxTitle} style={{ color: "#fff" }}>
                 El arte de vivir<br />en las alturas
               </Typography>
               <Typography className={classes.aboutBody}>
@@ -2255,11 +1939,11 @@ function Landing() {
       <section className={classes.servicesSection} ref={featuresRef}>
         <div className={classes.sxWrap}>
           <div style={{ textAlign: "center" }}>
-            <div className={classes.sxBadge} style={{ justifyContent:"center", backgroundColor:"rgba(196,181,253,0.15)", borderColor:"rgba(196,181,253,0.35)" }}>
-              <div style={{ backgroundColor:"#C4B5FD" }}/><span style={{ color:"#C4B5FD" }}>Lo que ofrecemos</span>
+            <div className={classes.sxBadge} style={{ justifyContent: "center", backgroundColor: "rgba(196,181,253,0.15)", borderColor: "rgba(196,181,253,0.35)" }}>
+              <div style={{ backgroundColor: "#C4B5FD" }} /><span style={{ color: "#C4B5FD" }}>Lo que ofrecemos</span>
             </div>
-            <Typography className={classes.sxTitle} style={{ textAlign: "center", color:"#fff" }}>Servicios & Comodidades</Typography>
-            <Typography className={classes.sxSub} style={{ textAlign: "center", margin: "0 auto 56px", color:"rgba(255,255,255,0.62)" }}>
+            <Typography className={classes.sxTitle} style={{ textAlign: "center", color: "#fff" }}>Servicios & Comodidades</Typography>
+            <Typography className={classes.sxSub} style={{ textAlign: "center", margin: "0 auto 56px", color: "rgba(255,255,255,0.62)" }}>
               Todo lo que necesitas para una estadía perfecta con los más altos estándares de calidad.
             </Typography>
           </div>
@@ -2304,9 +1988,15 @@ function Landing() {
                   <div className={classes.testimStars}>{renderStars(t.rating)}</div>
                   <Typography className={classes.testimText}>{t.comentario}</Typography>
                   <div className={classes.testimAuthor}>
-                    <img src={t.avatar} alt={t.nombre} className={classes.testimAvatar}
-                      loading="lazy" decoding="async"
-                      onError={(e) => { e.target.src = "https://via.placeholder.com/52" }} />
+                    <img
+                      src={t.avatar}
+                      alt={t.nombre}
+                      className={classes.testimAvatar}
+                      loading="lazy"
+                      decoding="async"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => { e.target.src = "https://via.placeholder.com/52" }}
+                    />
                     <div>
                       <div className={classes.testimName}>{t.nombre}</div>
                       <div className={classes.testimRole}>{t.rol}</div>
@@ -2464,7 +2154,7 @@ function Landing() {
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
               <div className={classes.paymentBox} style={{ flex: 1, minWidth: 200 }}>
                 <div className={classes.paymentBoxTitle}><InfoOutlined />Datos bancarios</div>
-                {[["Banco","Bancolombia"],["Cuenta","123-456789-00"],["Titular","Nido Sky S.A.S."],["NIT","900.123.456-7"]].map(([k,v]) => (
+                {[["Banco", "Bancolombia"], ["Cuenta", "123-456789-00"], ["Titular", "Nido Sky S.A.S."], ["NIT", "900.123.456-7"]].map(([k, v]) => (
                   <Typography key={k} className={classes.paymentBoxText}><strong style={{ color: "#0C0A14", fontWeight: 700 }}>{k}:</strong> {v}</Typography>
                 ))}
               </div>

@@ -23,7 +23,6 @@ import {
   Tabs,
   Tab,
   Switch,
-  Chip,
   Tooltip,
 } from "@material-ui/core"
 import {
@@ -42,8 +41,11 @@ import {
   Key,
   ArrowLeft,
   ArrowRight,
-  Users,
   Check,
+  AlertTriangle,
+  Info,
+  CheckSquare,
+  AlertCircle,
 } from "lucide-react"
 import Swal from "sweetalert2"
 import axios from "axios"
@@ -59,7 +61,7 @@ const availableModules = [
 const noDeleteModules = ["apartamentos","tipoApartamento","mobiliarios"]
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   DESIGN TOKENS — idénticos a UsuariosList
+   DESIGN TOKENS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 const T = {
   ink:"#0C0A14", ink2:"#2D2640", ink3:"#6B5E87", ink4:"#B0A5C8",
@@ -78,7 +80,7 @@ const AV_GRADS = [T.gv, T.ge, T.gt, T.gb,
 const avGrad = i => AV_GRADS[i % AV_GRADS.length]
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   SWAL INJECT — mismo que UsuariosList
+   SWAL INJECT — estilos globales
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 if (typeof document !== "undefined" && !document.getElementById("rs-swal")) {
   const s = document.createElement("style"); s.id = "rs-swal"
@@ -89,6 +91,7 @@ if (typeof document !== "undefined" && !document.getElementById("rs-swal")) {
       box-shadow:0 24px 64px rgba(108,63,255,.22)!important;position:relative!important;overflow:hidden!important;}
     .rs-pop::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(135deg,#6C3FFF,#C040FF);}
     .rs-pop.rs-danger::before{background:linear-gradient(135deg,#FF3B82,#FF7B2C);}
+    .rs-pop.rs-warn::before{background:linear-gradient(135deg,#FF7B2C,#F5C518);}
     .rs-ttl{font-family:'Syne',sans-serif!important;font-weight:800!important;font-size:1.18rem!important;color:#0C0A14!important;letter-spacing:-.3px!important;}
     .rs-bod{font-size:.88rem!important;color:#6B5E87!important;line-height:1.6!important;}
     .rs-ok{background:linear-gradient(135deg,#6C3FFF,#C040FF)!important;color:#fff!important;border:none!important;
@@ -97,6 +100,7 @@ if (typeof document !== "undefined" && !document.getElementById("rs-swal")) {
       cursor:pointer!important;transition:all .2s!important;}
     .rs-ok:hover{transform:translateY(-2px)!important;box-shadow:0 8px 24px rgba(108,63,255,.50)!important;}
     .rs-pop.rs-danger .rs-ok{background:linear-gradient(135deg,#FF3B82,#FF7B2C)!important;box-shadow:0 4px 16px rgba(255,59,130,.34)!important;}
+    .rs-pop.rs-warn .rs-ok{background:linear-gradient(135deg,#FF7B2C,#F5C518)!important;box-shadow:0 4px 16px rgba(255,123,44,.30)!important;}
     .rs-cn{background:rgba(108,63,255,.07)!important;color:#6B5E87!important;border:1px solid rgba(108,63,255,.16)!important;
       border-radius:50px!important;font-family:'DM Sans',sans-serif!important;font-weight:600!important;
       font-size:.82rem!important;padding:10px 28px!important;cursor:pointer!important;transition:all .2s!important;}
@@ -109,14 +113,47 @@ if (typeof document !== "undefined" && !document.getElementById("rs-swal")) {
     .swal2-icon.swal2-error{border-color:#FF3B82!important;color:#FF3B82!important;}
     .swal2-icon.swal2-error [class^=swal2-x-mark-line]{background:#FF3B82!important;}
     .swal2-timer-progress-bar{background:linear-gradient(90deg,#6C3FFF,#C040FF)!important;}
+    /* ── Swal dentro del modal: z-index alto ── */
+    .swal2-container.swal2-backdrop-show{z-index:9999!important;}
+    .swal2-container .swal2-popup{z-index:10000!important;}
   `
   document.head.appendChild(s)
 }
+
+/* ── Helpers de Swal por variante ── */
 const SW  = { customClass:{ popup:"rs-pop", title:"rs-ttl", htmlContainer:"rs-bod", confirmButton:"rs-ok", cancelButton:"rs-cn" }, buttonsStyling:false }
 const SWD = { ...SW, customClass:{ ...SW.customClass, popup:"rs-pop rs-danger" } }
+const SWW = { ...SW, customClass:{ ...SW.customClass, popup:"rs-pop rs-warn" } }
+
+/**
+ * Muestra un Swal sin congelar el modal de Material-UI.
+ * Guarda y restaura el overflow del body para que el scroll
+ * del Dialog no se rompa al cerrar el Swal.
+ */
+const swalInModal = async (options) => {
+  // MUI pone overflow:hidden en body al abrir el Dialog;
+  // Swal también lo hace → al cerrar Swal quedaría hidden.
+  // Guardamos el valor actual y lo restauramos después.
+  const bodyOverflow = document.body.style.overflow
+  const bodyPadding  = document.body.style.paddingRight
+
+  const result = await Swal.fire({
+    ...options,
+    // Para que el Swal quede por encima del Dialog de MUI
+    didOpen: () => {
+      if (options.didOpen) options.didOpen()
+    },
+  })
+
+  // Restaurar para que el Dialog siga funcionando bien
+  document.body.style.overflow    = bodyOverflow
+  document.body.style.paddingRight = bodyPadding
+
+  return result
+}
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   TABLE CELLS — idénticos a UsuariosList
+   TABLE CELLS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 const HCell = withStyles(() => ({
   head: {
@@ -147,7 +184,7 @@ const NCell = withStyles(() => ({
 }))(TableCell)
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   BOTÓN NATIVO — igual que TipoApartamentoList
+   BOTÓN NATIVO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 const btnAddStyle = {
   display:"flex", alignItems:"center", gap:8,
@@ -163,7 +200,7 @@ const btnAddStyle = {
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   STYLES — copiados 1:1 de UsuariosList
+   STYLES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 const useStyles = makeStyles(theme => ({
   root:{
@@ -407,7 +444,6 @@ const useStyles = makeStyles(theme => ({
   },
   detName:{ fontFamily:"'Syne',sans-serif !important", fontSize:"1.20rem !important", fontWeight:"800 !important", color:`${T.ink} !important`, marginBottom:4, textAlign:"center" },
   detStatusChip:{ marginTop:4 },
-  /* Chips detalles */
   detPermChip:{
     fontFamily:"'DM Sans',sans-serif", fontWeight:700,
     fontSize:".74rem", padding:"6px 14px", borderRadius:20,
@@ -423,7 +459,6 @@ const useStyles = makeStyles(theme => ({
 const RolesList = () => {
   const cls = useStyles()
 
-  /* ── state — idéntico al original ── */
   const [roles,         setRoles]         = useState([])
   const [open,          setOpen]          = useState(false)
   const [editingId,     setEditingId]     = useState(null)
@@ -437,12 +472,16 @@ const RolesList = () => {
   const [formErrors,    setFormErrors]    = useState({ nombre:"", nombrePersonalizado:"", permisos:"" })
   const [isFormValid,   setIsFormValid]   = useState(false)
 
-  /* ── lógica original — sin cambios ── */
   const getTokenHeader = () => ({ Authorization:`Bearer ${localStorage.getItem("token")}` })
 
   const fetchRoles = async () => {
-    try { const r = await axios.get("http://localhost:5000/api/roles",{ headers:getTokenHeader() }); setRoles(r.data) }
-    catch(e) { console.error(e); Swal.fire({...SW,icon:"error",title:"Error",text:"No se pudieron cargar los roles."}) }
+    try {
+      const r = await axios.get("http://localhost:5000/api/roles", { headers:getTokenHeader() })
+      setRoles(r.data)
+    } catch(e) {
+      console.error(e)
+      await swalInModal({ ...SW, icon:"error", title:"Error", text:"No se pudieron cargar los roles." })
+    }
   }
   useEffect(() => { fetchRoles() }, [])
 
@@ -474,7 +513,10 @@ const RolesList = () => {
     }
     setOpen(true); setTabValue(0)
   }
-  const handleClose = () => { setOpen(false); setFormErrors({ nombre:"", nombrePersonalizado:"", permisos:"" }) }
+  const handleClose = () => {
+    setOpen(false)
+    setFormErrors({ nombre:"", nombrePersonalizado:"", permisos:"" })
+  }
 
   const handleDetails = role => {
     let permisos = role.permisos||[]
@@ -489,6 +531,7 @@ const RolesList = () => {
     setFormData({...formData,[name]:value})
     validateField(name,value)
   }
+
   const validateField = (name,value) => {
     let err=""
     if (name==="nombre"){ if(editingId) return true }
@@ -503,44 +546,62 @@ const RolesList = () => {
     setTimeout(()=>validateForm({...formData,[name]:value}),0)
     return !err
   }
+
   const validateForm = data => {
-    const hasPerms = data.permisos.some(p=>p.acciones.crear||p.acciones.leer||p.acciones.actualizar||p.acciones.eliminar)
     if(!editingId){
-      setIsFormValid(
+      // Crear: nombre requerido y válido + al menos un permiso activo
+      const nombreOk =
         !!data.nombrePersonalizado&&data.nombrePersonalizado.trim()!==""&&
         data.nombrePersonalizado.length>=6&&data.nombrePersonalizado.length<=30&&
         /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(data.nombrePersonalizado)&&
-        !checkRoleExists(data.nombrePersonalizado.trim(),editingId)&&hasPerms
+        !checkRoleExists(data.nombrePersonalizado.trim(),editingId)
+      const permisosOk = (data.permisos||[]).some(p=>
+        p.acciones.crear||p.acciones.leer||p.acciones.actualizar||p.acciones.eliminar
       )
-    } else { setIsFormValid(hasPerms) }
+      setIsFormValid(nombreOk && permisosOk)
+    } else {
+      // Editar: siempre habilitado (no requiere permisos)
+      setIsFormValid(true)
+    }
   }
 
   const handlePermissionChange = (idx,accion,checked) => {
     const up=[...formData.permisos]; up[idx].acciones[accion]=checked
-    setFormData({...formData,permisos:up})
+    const updated = {...formData,permisos:up}
+    setFormData(updated)
+    // Re-validar botón al cambiar permisos
+    validateForm(updated)
   }
   const handleSelectAllForModule = idx => {
     const up=[...formData.permisos]; const m=up[idx].modulo
     up[idx].acciones = m==="dashboard"
       ? {crear:false,leer:true,actualizar:false,eliminar:false}
       : {crear:true,leer:true,actualizar:true,eliminar:!noDeleteModules.includes(m)}
-    setFormData({...formData,permisos:up})
+    const updated = {...formData,permisos:up}
+    setFormData(updated)
+    validateForm(updated)
   }
   const handleRemoveAllForModule = idx => {
     const up=[...formData.permisos]
     up[idx].acciones={crear:false,leer:false,actualizar:false,eliminar:false}
-    setFormData({...formData,permisos:up})
+    const updated = {...formData,permisos:up}
+    setFormData(updated)
+    validateForm(updated)
   }
   const handleSelectAllPermissions = () => {
-    setFormData({...formData,permisos:formData.permisos.map(p=>({
+    const updated = {...formData,permisos:formData.permisos.map(p=>({
       ...p,
       acciones:p.modulo==="dashboard"
         ?{crear:false,leer:true,actualizar:false,eliminar:false}
         :{crear:true,leer:true,actualizar:true,eliminar:!noDeleteModules.includes(p.modulo)}
-    }))})
+    }))}
+    setFormData(updated)
+    validateForm(updated)
   }
   const handleRemoveAllPermissions = () => {
-    setFormData({...formData,permisos:formData.permisos.map(p=>({...p,acciones:{crear:false,leer:false,actualizar:false,eliminar:false}}))})
+    const updated = {...formData,permisos:formData.permisos.map(p=>({...p,acciones:{crear:false,leer:false,actualizar:false,eliminar:false}}))}
+    setFormData(updated)
+    validateForm(updated)
   }
 
   const prepareFormData = () => {
@@ -551,51 +612,151 @@ const RolesList = () => {
     return f
   }
 
+  /* ── SUBMIT: Swal dentro del modal ── */
   const handleSubmit = async () => {
     const tempErrors={}
+
     if(!editingId){
-      if(!formData.nombrePersonalizado||!formData.nombrePersonalizado.trim()) tempErrors.nombrePersonalizado="El nombre del rol es obligatorio"
-      else if(checkRoleExists(formData.nombrePersonalizado.trim(),editingId)) tempErrors.nombrePersonalizado="Ya existe un rol con este nombre"
+      if(!formData.nombrePersonalizado||!formData.nombrePersonalizado.trim())
+        tempErrors.nombrePersonalizado="El nombre del rol es obligatorio"
+      else if(checkRoleExists(formData.nombrePersonalizado.trim(),editingId))
+        tempErrors.nombrePersonalizado="Ya existe un rol con este nombre"
+
+      // Crear: exigir al menos un permiso activo
+      const tienePermisos = (formData.permisos||[]).some(p=>
+        p.acciones.crear||p.acciones.leer||p.acciones.actualizar||p.acciones.eliminar
+      )
+      if(!tienePermisos)
+        tempErrors.permisos="Debes asignar al menos un permiso para crear el rol."
     }
-    const hasPerms=formData.permisos.some(p=>p.acciones.crear||p.acciones.leer||p.acciones.actualizar||p.acciones.eliminar)
-    if(!hasPerms) tempErrors.permisos="Debe seleccionar al menos un permiso"
+    // Editar: no se valida permisos
+
     if(Object.keys(tempErrors).length>0){
       setFormErrors(tempErrors)
-      let title="Error de validación", text=""
-      if(tempErrors.nombrePersonalizado?.includes("Ya existe")) { title="Rol duplicado"; text=`Ya existe un rol con el nombre "${formData.nombrePersonalizado}".` }
-      else if(tempErrors.permisos) { title="Permisos requeridos"; text="Debe seleccionar al menos un permiso para el rol." }
-      else text=Object.values(tempErrors)[0]
-      Swal.fire({...SW,icon:"error",title,text}); return
+      if(tempErrors.nombrePersonalizado?.includes("Ya existe")){
+        await swalInModal({
+          ...SWD,
+          icon:"error",
+          title:"Rol duplicado",
+          text:`Ya existe un rol con el nombre "${formData.nombrePersonalizado}".`,
+        })
+      } else if(tempErrors.permisos){
+        await swalInModal({
+          ...SWW,
+          icon:"warning",
+          title:"Sin permisos asignados",
+          text:"Debes asignar al menos un permiso antes de crear el rol.",
+        })
+      } else {
+        await swalInModal({
+          ...SWD,
+          icon:"error",
+          title:"Error de validación",
+          text:Object.values(tempErrors)[0],
+        })
+      }
+      return
     }
+
     try {
       const d=prepareFormData()
       if(editingId){
         await axios.put(`http://localhost:5000/api/roles/${editingId}`,d,{headers:getTokenHeader()})
-        Swal.fire({...SW,icon:"success",title:"Actualizado",text:"El rol se actualizó correctamente.",timer:2200,timerProgressBar:true,showConfirmButton:false})
+        handleClose()
+        await swalInModal({
+          ...SW,
+          icon:"success",
+          title:"Rol actualizado",
+          text:"Los cambios se guardaron correctamente.",
+          timer:2200,
+          timerProgressBar:true,
+          showConfirmButton:false,
+        })
+        fetchRoles()
       } else {
         await axios.post("http://localhost:5000/api/roles",d,{headers:getTokenHeader()})
-        Swal.fire({...SW,icon:"success",title:"Creado",text:"El rol se creó correctamente.",timer:2200,timerProgressBar:true,showConfirmButton:false})
+        handleClose()
+        await swalInModal({
+          ...SW,
+          icon:"success",
+          title:"Rol creado",
+          text:"El nuevo rol se registró correctamente.",
+          timer:2200,
+          timerProgressBar:true,
+          showConfirmButton:false,
+        })
+        fetchRoles()
       }
-      fetchRoles(); handleClose()
     } catch(e){
       console.error(e)
       let msg="Ocurrió un error al guardar el rol."
       if(e.response?.data?.msg){
         const s=e.response.data.msg
-        if(s.includes("ya existe")||s.includes("duplicate")) msg=`No se puede crear el rol "${formData.nombrePersonalizado||formData.nombre}" porque ya existe.`
+        if(s.includes("ya existe")||s.includes("duplicate"))
+          msg=`No se puede ${editingId?"actualizar":"crear"} el rol porque ya existe uno con ese nombre.`
         else msg=s
       }
-      Swal.fire({...SW,icon:"error",title:"Error",text:msg})
+      await swalInModal({
+        ...SWD,
+        icon:"error",
+        title:"Error al guardar",
+        text:msg,
+      })
     }
   }
 
+  /* ── DELETE: bloquear activos, Swal externo (no hay modal abierto) ── */
   const handleDelete = async id => {
     const role=roles.find(r=>r._id===id)
-    if(role?.nombre.toLowerCase()==="administrador"){ Swal.fire({...SW,icon:"error",title:"Acción no permitida",text:"El rol de administrador no puede ser eliminado"}); return }
-    const r=await Swal.fire({...SWD,title:"¿Eliminar rol?",text:"Esta acción no se puede deshacer",icon:"question",showCancelButton:true,confirmButtonText:"Sí, eliminar",cancelButtonText:"Cancelar"})
+    if(role?.nombre.toLowerCase()==="administrador"){
+      await swalInModal({
+        ...SW,
+        icon:"error",
+        title:"Acción no permitida",
+        text:"El rol de administrador no puede ser eliminado",
+      })
+      return
+    }
+    // Bloquear eliminación de roles activos
+    if(role?.estado){
+      await swalInModal({
+        ...SWW,
+        icon:"warning",
+        title:"Rol activo",
+        text:"No puedes eliminar un rol activo. Desactívalo primero para poder eliminarlo.",
+      })
+      return
+    }
+    const r=await swalInModal({
+      ...SWD,
+      title:"¿Eliminar rol?",
+      text:"Esta acción no se puede deshacer",
+      icon:"question",
+      showCancelButton:true,
+      confirmButtonText:"Sí, eliminar",
+      cancelButtonText:"Cancelar",
+    })
     if(r.isConfirmed){
-      try { await axios.delete(`http://localhost:5000/api/roles/${id}`,{headers:getTokenHeader()}); Swal.fire({...SW,icon:"success",title:"Eliminado",text:"El rol se eliminó correctamente.",timer:2000,timerProgressBar:true,showConfirmButton:false}); fetchRoles() }
-      catch(e){ Swal.fire({...SW,icon:"error",title:"Error",text:e.response?.data?.msg||"Ocurrió un error al eliminar el rol."}) }
+      try {
+        await axios.delete(`http://localhost:5000/api/roles/${id}`,{headers:getTokenHeader()})
+        await swalInModal({
+          ...SW,
+          icon:"success",
+          title:"Eliminado",
+          text:"El rol se eliminó correctamente.",
+          timer:2000,
+          timerProgressBar:true,
+          showConfirmButton:false,
+        })
+        fetchRoles()
+      } catch(e){
+        await swalInModal({
+          ...SW,
+          icon:"error",
+          title:"Error",
+          text:e.response?.data?.msg||"Ocurrió un error al eliminar el rol.",
+        })
+      }
     }
   }
 
@@ -617,15 +778,6 @@ const RolesList = () => {
       case "roles":       return <Shield    size={15} color={T.v1}/>
       case "clientes":    return <User      size={15} color={T.v1}/>
       default:            return <Settings  size={15} color={T.v1}/>
-    }
-  }
-  const getActionIcon = a => {
-    switch(a){
-      case "crear":     return <PenTool size={15} color={T.v1}/>
-      case "leer":      return <Eye     size={15} color={T.v1}/>
-      case "actualizar":return <Edit2   size={15} color={T.v1}/>
-      case "eliminar":  return <Trash2  size={15} color={T.e1}/>
-      default:          return <Settings size={15} color={T.v1}/>
     }
   }
 
@@ -777,7 +929,6 @@ const RolesList = () => {
             value={searchTerm} onChange={e=>{ setSearchTerm(e.target.value); setPage(0) }}/>
           <span className={cls.kbd}>⌘K</span>
         </Box>
-        {/* Botón nativo — mismo patrón que UsuariosList/TipoApartamentoList */}
         <button
           onClick={() => handleOpen(null)}
           style={btnAddStyle}
@@ -841,11 +992,17 @@ const RolesList = () => {
                         </button>
                       </Tooltip>
                       {role.nombre.toLowerCase()!=="administrador"
-                        ? <Tooltip title="Eliminar" placement="top">
-                            <button className={`${cls.actBtn} ${cls.bDel}`} onClick={()=>handleDelete(role._id)}>
+                        ? (
+                          <Tooltip title={role.estado ? "Desactiva el rol para eliminar" : "Eliminar"} placement="top">
+                            <button
+                              className={`${cls.actBtn} ${cls.bDel}`}
+                              onClick={()=>handleDelete(role._id)}
+                              style={ role.estado ? { opacity:0.42, cursor:"not-allowed" } : {} }
+                            >
                               <Trash2 size={14} strokeWidth={2.2}/>
                             </button>
                           </Tooltip>
+                        )
                         : <button className={`${cls.actBtn} ${cls.bGhost}`} disabled><Trash2 size={14}/></button>
                       }
                     </Box>
@@ -944,9 +1101,19 @@ const RolesList = () => {
                 <Lock size={13} color={T.e1} strokeWidth={2.5}/>
               </Box>
               Configuración de Permisos
+              {/* Indicador visual cuando no hay permisos seleccionados en modo crear */}
+              {!editingId && !(formData.permisos||[]).some(p=>p.acciones.crear||p.acciones.leer||p.acciones.actualizar||p.acciones.eliminar) && (
+                <Box component="span" style={{
+                  marginLeft:"auto", display:"inline-flex", alignItems:"center", gap:5,
+                  fontSize:".72rem", fontWeight:600, color:"#cc2060",
+                  background:"rgba(255,59,130,.09)", border:"1px solid rgba(255,59,130,.22)",
+                  borderRadius:20, padding:"3px 10px",
+                }}>
+                  <AlertTriangle size={11} strokeWidth={2.5}/> Mínimo un permiso requerido
+                </Box>
+              )}
             </Box>
 
-            {/* Botones globales */}
             <Box className={cls.globalBtns}>
               <Button size="small" className={cls.btnAssignAll} onClick={handleSelectAllPermissions}>
                 <CheckCircle size={13} strokeWidth={2.5}/> Asignar todos
@@ -956,7 +1123,6 @@ const RolesList = () => {
               </Button>
             </Box>
 
-            {/* Tabs */}
             <Tabs value={tabValue} onChange={handleTabChange} className={cls.tabsRoot}>
               <Tab label="Administración" className={cls.tabItem} icon={<Settings size={15}/>}/>
               <Tab label="Gestión"        className={cls.tabItem} icon={<User     size={15}/>}/>
@@ -1007,7 +1173,6 @@ const RolesList = () => {
 
               <Box style={{ height:1, background:T.bL, margin:"14px 0" }}/>
 
-              {/* Sección permisos */}
               <Box className={cls.fmSectionLbl}>
                 <Box className={cls.fmSectionIco} style={{ background:"rgba(108,63,255,.12)" }}>
                   <Shield size={13} color={T.v1} strokeWidth={2.5}/>
