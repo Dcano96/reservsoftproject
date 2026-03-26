@@ -113,9 +113,13 @@ if (typeof document !== "undefined" && !document.getElementById("rs-swal")) {
     .swal2-icon.swal2-error{border-color:#FF3B82!important;color:#FF3B82!important;}
     .swal2-icon.swal2-error [class^=swal2-x-mark-line]{background:#FF3B82!important;}
     .swal2-timer-progress-bar{background:linear-gradient(90deg,#6C3FFF,#C040FF)!important;}
-    /* ── Swal dentro del modal: z-index alto ── */
-    .swal2-container.swal2-backdrop-show{z-index:9999!important;}
-    .swal2-container .swal2-popup{z-index:10000!important;}
+
+    /* ── Swal encima de TODO — z-index máximo ── */
+    .swal2-container { z-index: 99999 !important; }
+    .swal2-popup    { z-index: 100000 !important; }
+
+    /* ── Backdrop del Swal encima del Dialog de MUI ── */
+    .swal2-backdrop-show { z-index: 99998 !important; }
   `
   document.head.appendChild(s)
 }
@@ -126,28 +130,57 @@ const SWD = { ...SW, customClass:{ ...SW.customClass, popup:"rs-pop rs-danger" }
 const SWW = { ...SW, customClass:{ ...SW.customClass, popup:"rs-pop rs-warn" } }
 
 /**
- * Muestra un Swal sin congelar el modal de Material-UI.
- * Guarda y restaura el overflow del body para que el scroll
- * del Dialog no se rompa al cerrar el Swal.
+ * Muestra un Swal correctamente encima del Dialog de Material-UI.
+ *
+ * Estrategia:
+ * 1. Monta el contenedor del Swal como hijo DIRECTO del <body> con
+ *    un z-index altísimo, para que quede por encima del portal del Dialog.
+ * 2. Restaura overflow/paddingRight del body que MUI altera, para que
+ *    el modal siga funcionando después de cerrar el Swal.
+ * 3. Usa `backdrop: false` propio y pone un overlay manual encima del Dialog
+ *    pero debajo del popup del Swal, evitando el conflicto de z-index.
  */
 const swalInModal = async (options) => {
-  // MUI pone overflow:hidden en body al abrir el Dialog;
-  // Swal también lo hace → al cerrar Swal quedaría hidden.
-  // Guardamos el valor actual y lo restauramos después.
-  const bodyOverflow = document.body.style.overflow
-  const bodyPadding  = document.body.style.paddingRight
+  // Guardar estado del body que MUI modifica
+  const bodyOverflow    = document.body.style.overflow
+  const bodyPaddingRight = document.body.style.paddingRight
+
+  // Crear un contenedor auxiliar en el body con z-index máximo
+  const container = document.createElement("div")
+  container.style.cssText = [
+    "position:fixed",
+    "inset:0",
+    "z-index:99999",
+    "display:flex",
+    "align-items:center",
+    "justify-content:center",
+    "pointer-events:none",         // el fondo no captura clicks…
+  ].join(";")
+  document.body.appendChild(container)
 
   const result = await Swal.fire({
     ...options,
-    // Para que el Swal quede por encima del Dialog de MUI
-    didOpen: () => {
-      if (options.didOpen) options.didOpen()
+    target: container,             // ← montamos el Swal dentro del contenedor
+    backdrop: true,                // Swal dibuja su propio backdrop dentro del target
+    allowOutsideClick: options.showCancelButton ? true : false,
+    didOpen: (popup) => {
+      // Hacer que el contenedor capture eventos (necesario para los botones)
+      container.style.pointerEvents = "auto"
+      if (options.didOpen) options.didOpen(popup)
+    },
+    willClose: () => {
+      container.style.pointerEvents = "none"
     },
   })
 
-  // Restaurar para que el Dialog siga funcionando bien
-  document.body.style.overflow    = bodyOverflow
-  document.body.style.paddingRight = bodyPadding
+  // Limpiar el contenedor auxiliar
+  if (document.body.contains(container)) {
+    document.body.removeChild(container)
+  }
+
+  // Restaurar el body para que el Dialog de MUI siga funcionando
+  document.body.style.overflow     = bodyOverflow
+  document.body.style.paddingRight = bodyPaddingRight
 
   return result
 }
@@ -549,7 +582,6 @@ const RolesList = () => {
 
   const validateForm = data => {
     if(!editingId){
-      // Crear: nombre requerido y válido + al menos un permiso activo
       const nombreOk =
         !!data.nombrePersonalizado&&data.nombrePersonalizado.trim()!==""&&
         data.nombrePersonalizado.length>=6&&data.nombrePersonalizado.length<=30&&
@@ -560,7 +592,6 @@ const RolesList = () => {
       )
       setIsFormValid(nombreOk && permisosOk)
     } else {
-      // Editar: siempre habilitado (no requiere permisos)
       setIsFormValid(true)
     }
   }
@@ -569,7 +600,6 @@ const RolesList = () => {
     const up=[...formData.permisos]; up[idx].acciones[accion]=checked
     const updated = {...formData,permisos:up}
     setFormData(updated)
-    // Re-validar botón al cambiar permisos
     validateForm(updated)
   }
   const handleSelectAllForModule = idx => {
@@ -612,7 +642,7 @@ const RolesList = () => {
     return f
   }
 
-  /* ── SUBMIT: Swal dentro del modal ── */
+  /* ── SUBMIT ── */
   const handleSubmit = async () => {
     const tempErrors={}
 
@@ -622,14 +652,12 @@ const RolesList = () => {
       else if(checkRoleExists(formData.nombrePersonalizado.trim(),editingId))
         tempErrors.nombrePersonalizado="Ya existe un rol con este nombre"
 
-      // Crear: exigir al menos un permiso activo
       const tienePermisos = (formData.permisos||[]).some(p=>
         p.acciones.crear||p.acciones.leer||p.acciones.actualizar||p.acciones.eliminar
       )
       if(!tienePermisos)
         tempErrors.permisos="Debes asignar al menos un permiso para crear el rol."
     }
-    // Editar: no se valida permisos
 
     if(Object.keys(tempErrors).length>0){
       setFormErrors(tempErrors)
@@ -705,7 +733,7 @@ const RolesList = () => {
     }
   }
 
-  /* ── DELETE: bloquear activos, Swal externo (no hay modal abierto) ── */
+  /* ── DELETE ── */
   const handleDelete = async id => {
     const role=roles.find(r=>r._id===id)
     if(role?.nombre.toLowerCase()==="administrador"){
@@ -717,7 +745,6 @@ const RolesList = () => {
       })
       return
     }
-    // Bloquear eliminación de roles activos
     if(role?.estado){
       await swalInModal({
         ...SWW,
@@ -1101,7 +1128,6 @@ const RolesList = () => {
                 <Lock size={13} color={T.e1} strokeWidth={2.5}/>
               </Box>
               Configuración de Permisos
-              {/* Indicador visual cuando no hay permisos seleccionados en modo crear */}
               {!editingId && !(formData.permisos||[]).some(p=>p.acciones.crear||p.acciones.leer||p.acciones.actualizar||p.acciones.eliminar) && (
                 <Box component="span" style={{
                   marginLeft:"auto", display:"inline-flex", alignItems:"center", gap:5,
