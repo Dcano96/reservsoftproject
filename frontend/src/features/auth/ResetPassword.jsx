@@ -3,16 +3,14 @@
 import { useState, useRef } from "react"
 import axios from "axios"
 import { useParams, useHistory } from "react-router-dom"
-import {
-  LockOutlined,
-  ArrowBack,
-  Facebook,
-  Twitter,
-  Instagram,
-  LinkedIn,
-  Visibility,
-  VisibilityOff,
-} from "@material-ui/icons"
+import LockOutlined from "@material-ui/icons/LockOutlined"
+import ArrowBack from "@material-ui/icons/ArrowBack"
+import Facebook from "@material-ui/icons/Facebook"
+import Twitter from "@material-ui/icons/Twitter"
+import Instagram from "@material-ui/icons/Instagram"
+import LinkedIn from "@material-ui/icons/LinkedIn"
+import Visibility from "@material-ui/icons/Visibility"
+import VisibilityOff from "@material-ui/icons/VisibilityOff"
 
 // Expresiones regulares para validaciones
 const REGEX = {

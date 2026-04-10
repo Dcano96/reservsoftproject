@@ -1,9 +1,15 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Snackbar } from "@material-ui/core"
-import { Alert } from "@material-ui/lab"
-import { EmailOutlined, ArrowBack, LockOutlined, Facebook, Twitter, Instagram, LinkedIn } from "@material-ui/icons"
+import Snackbar from "@material-ui/core/Snackbar"
+import Alert from "@material-ui/lab/Alert"
+import EmailOutlined from "@material-ui/icons/EmailOutlined"
+import ArrowBack from "@material-ui/icons/ArrowBack"
+import LockOutlined from "@material-ui/icons/LockOutlined"
+import Facebook from "@material-ui/icons/Facebook"
+import Twitter from "@material-ui/icons/Twitter"
+import Instagram from "@material-ui/icons/Instagram"
+import LinkedIn from "@material-ui/icons/LinkedIn"
 import authService from "./auth.service"
 import { useHistory } from "react-router-dom"
 

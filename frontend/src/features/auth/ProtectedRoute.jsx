@@ -13,10 +13,7 @@ const ProtectedRoute = ({ component: Component, ...rest }) => {
     const token = localStorage.getItem("token")
     const userInfo = localStorage.getItem("usuario")
 
-    // Verificar si es navegación con botones del navegador
-    const isBackOrForward = performance.getEntriesByType("navigation")[0]?.type === "back_forward"
-
-    if (!token || isBackOrForward) {
+    if (!token) {
       setIsAllowed(false)
     } else {
       // Verificar si el rol está activo

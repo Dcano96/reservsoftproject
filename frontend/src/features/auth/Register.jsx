@@ -1,20 +1,18 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import {
-  Visibility,
-  VisibilityOff,
-  PersonOutline,
-  AssignmentIndOutlined,
-  PhoneOutlined,
-  EmailOutlined,
-  LockOutlined,
-  ArrowBack,
-  Facebook,
-  Twitter,
-  Instagram,
-  LinkedIn,
-} from "@material-ui/icons"
+import Visibility from "@material-ui/icons/Visibility"
+import VisibilityOff from "@material-ui/icons/VisibilityOff"
+import PersonOutline from "@material-ui/icons/PersonOutline"
+import AssignmentIndOutlined from "@material-ui/icons/AssignmentIndOutlined"
+import PhoneOutlined from "@material-ui/icons/PhoneOutlined"
+import EmailOutlined from "@material-ui/icons/EmailOutlined"
+import LockOutlined from "@material-ui/icons/LockOutlined"
+import ArrowBack from "@material-ui/icons/ArrowBack"
+import Facebook from "@material-ui/icons/Facebook"
+import Twitter from "@material-ui/icons/Twitter"
+import Instagram from "@material-ui/icons/Instagram"
+import LinkedIn from "@material-ui/icons/LinkedIn"
 import authService from "./auth.service"
 import { useHistory } from "react-router-dom"
 

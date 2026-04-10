@@ -10,7 +10,8 @@
 
 <br/>
 
-[![React](https://img.shields.io/badge/React-Latest-61DAFB?style=flat-square&logo=react&logoColor=black)](https://reactjs.org/)
+[![React](https://img.shields.io/badge/React-17-61DAFB?style=flat-square&logo=react&logoColor=black)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Node.js](https://img.shields.io/badge/Node.js-20-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://mongodb.com/)
 [![JWT](https://img.shields.io/badge/Auth-JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
@@ -72,7 +73,8 @@ Construida con una arquitectura **cliente-servidor desacoplada** (SPA + REST API
 ## 🛠️ Tecnologías
 
 ### Frontend
-- **React** (última versión) — Interfaz de usuario dinámica tipo SPA
+- **React 17** — Interfaz de usuario dinámica tipo SPA
+- **Vite** — Bundler ultrarrápido con HMR instantáneo (reemplaza Create React App)
 - **Tailwind CSS** — Estilos utilitarios y diseño responsivo
 - **Material UI** — Componentes de interfaz complementarios
 - **Chart.js** — Gráficas y visualización de métricas en el dashboard
@@ -122,7 +124,8 @@ reservsoftproject/
 │   ├── config/
 │   └── .env
 │
-└── frontend/                       # React SPA
+└── frontend/                       # React SPA (Vite)
+    ├── vite.config.js              # Configuración de Vite
     ├── public/
     └── src/
         ├── features/               # Módulos espejo del backend
@@ -188,7 +191,7 @@ npm run dev
 
 # Terminal 2 — Frontend (http://localhost:3000)
 cd frontend
-npm start
+npm run dev
 ```
 
 ---
@@ -295,16 +298,15 @@ FRONTEND_URL=http://localhost:3000
 
 ---
 
-## 👨‍💻 Autor
+## 👨‍💻 Desarrolladores
 
 <div align="center">
 
-**David Andres Goez Cano**
-
-*Desarrollador Full Stack*
-
-[![GitHub](https://img.shields.io/badge/GitHub-Dcano96-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Dcano96)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-David%20Goez-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/david-goez-a0171a20a)
+| Desarrollador | Rol |
+|---|---|
+| **David Zabala** | Desarrollador Full Stack |
+| **Sofia Ramos** | Desarrolladora Full Stack |
+| **Cesar Pelaez** | Desarrollador Full Stack |
 
 </div>
 
@@ -312,6 +314,6 @@ FRONTEND_URL=http://localhost:3000
 
 <div align="center">
 
-*Desarrollado con ❤️ — ReservSoft © 2024*
+*Desarrollado por — ReservSoft © 2025*
 
 </div>

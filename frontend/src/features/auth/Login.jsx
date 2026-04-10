@@ -2,7 +2,10 @@ import React, { useState, useEffect, useRef } from "react"
 import { useHistory } from "react-router-dom"
 import axios from "axios"
 import Swal from "sweetalert2"
-import { InputAdornment, TextField, Box, Typography } from "@material-ui/core"
+import InputAdornment from "@material-ui/core/InputAdornment"
+import TextField from "@material-ui/core/TextField"
+import Box from "@material-ui/core/Box"
+import Typography from "@material-ui/core/Typography"
 import { makeStyles } from "@material-ui/core/styles"
 import {
   Mail, Lock, Eye, EyeOff, User, Phone,
@@ -475,8 +478,11 @@ export default function Login() {
   const cls     = useStyles()
   const history = useHistory()
   const cardRef = useRef(null)
+  const mountedRef = useRef(true)
   const [view,    setView]    = useState("login")
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => { return () => { mountedRef.current = false } }, [])
 
   /* ── 3D tilt ── */
   useEffect(() => {
@@ -528,8 +534,8 @@ export default function Login() {
       localStorage.setItem("usuario", JSON.stringify(res.data.usuario))
       history.replace("/dashboard")
     } catch (err) {
-      setGe(err.response?.data?.msg || err.response?.data?.message || "Credenciales incorrectas.")
-    } finally { setLoading(false) }
+      if (mountedRef.current) setGe(err.response?.data?.msg || err.response?.data?.message || "Credenciales incorrectas.")
+    } finally { if (mountedRef.current) setLoading(false) }
   }
 
   /* ━━━ REGISTER ━━━ */

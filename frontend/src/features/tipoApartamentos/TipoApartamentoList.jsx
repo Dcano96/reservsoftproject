@@ -1,28 +1,26 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import {
-  Typography,
-  TextField,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogActions,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  TableContainer,
-  Paper,
-  Box,
-  InputAdornment,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Tooltip,
-} from "@material-ui/core"
+import Typography from "@material-ui/core/Typography"
+import TextField from "@material-ui/core/TextField"
+import Button from "@material-ui/core/Button"
+import Dialog from "@material-ui/core/Dialog"
+import DialogContent from "@material-ui/core/DialogContent"
+import DialogActions from "@material-ui/core/DialogActions"
+import Table from "@material-ui/core/Table"
+import TableHead from "@material-ui/core/TableHead"
+import TableBody from "@material-ui/core/TableBody"
+import TableRow from "@material-ui/core/TableRow"
+import TableCell from "@material-ui/core/TableCell"
+import TableContainer from "@material-ui/core/TableContainer"
+import Paper from "@material-ui/core/Paper"
+import Box from "@material-ui/core/Box"
+import InputAdornment from "@material-ui/core/InputAdornment"
+import FormControl from "@material-ui/core/FormControl"
+import InputLabel from "@material-ui/core/InputLabel"
+import Select from "@material-ui/core/Select"
+import MenuItem from "@material-ui/core/MenuItem"
+import Tooltip from "@material-ui/core/Tooltip"
 import {
   Edit2, Trash2, Eye, X, Search, Home, FileText, Plus,
   Maximize2, CheckCircle, XCircle, LayoutGrid, Tag,

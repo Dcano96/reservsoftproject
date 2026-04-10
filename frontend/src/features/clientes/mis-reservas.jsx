@@ -1,44 +1,40 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import {
-  Typography,
-  Box,
-  CircularProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogActions,
-  Grid,
-  Card,
-  CardContent,
-  Avatar,
-  Collapse,
-  Tooltip,
-  MenuItem,
-  Paper,
-} from "@material-ui/core"
+import Typography from "@material-ui/core/Typography"
+import Box from "@material-ui/core/Box"
+import CircularProgress from "@material-ui/core/CircularProgress"
+import Table from "@material-ui/core/Table"
+import TableBody from "@material-ui/core/TableBody"
+import TableCell from "@material-ui/core/TableCell"
+import TableContainer from "@material-ui/core/TableContainer"
+import TableHead from "@material-ui/core/TableHead"
+import TableRow from "@material-ui/core/TableRow"
+import Button from "@material-ui/core/Button"
+import Dialog from "@material-ui/core/Dialog"
+import DialogContent from "@material-ui/core/DialogContent"
+import DialogActions from "@material-ui/core/DialogActions"
+import Grid from "@material-ui/core/Grid"
+import Card from "@material-ui/core/Card"
+import CardContent from "@material-ui/core/CardContent"
+import Avatar from "@material-ui/core/Avatar"
+import Collapse from "@material-ui/core/Collapse"
+import Tooltip from "@material-ui/core/Tooltip"
+import MenuItem from "@material-ui/core/MenuItem"
+import Paper from "@material-ui/core/Paper"
 import { makeStyles, withStyles } from "@material-ui/core/styles"
-import {
-  CalendarToday,
-  Home,
-  AttachMoney,
-  Person,
-  ExpandMore,
-  ExpandLess,
-  Info,
-  Event,
-  LocationOn,
-  People,
-  Payment,
-  Receipt,
-} from "@material-ui/icons"
+import CalendarToday from "@material-ui/icons/CalendarToday"
+import Home from "@material-ui/icons/Home"
+import AttachMoney from "@material-ui/icons/AttachMoney"
+import Person from "@material-ui/icons/Person"
+import ExpandMore from "@material-ui/icons/ExpandMore"
+import ExpandLess from "@material-ui/icons/ExpandLess"
+import Info from "@material-ui/icons/Info"
+import Event from "@material-ui/icons/Event"
+import LocationOn from "@material-ui/icons/LocationOn"
+import People from "@material-ui/icons/People"
+import Payment from "@material-ui/icons/Payment"
+import Receipt from "@material-ui/icons/Receipt"
 import {
   X,
   Check,

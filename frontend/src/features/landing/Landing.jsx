@@ -1,22 +1,71 @@
 "use client"
 import React, { useState, useEffect, useRef } from "react"
 import { useHistory } from "react-router-dom"
-import {
-  Typography, Button, Grid, Card, CardContent, Box, Paper,
-  TextField, AppBar, Toolbar, IconButton, Drawer, List,
-  ListItem, ListItemText, Divider, Zoom, Slide, useMediaQuery,
-  useTheme, Chip, Dialog, DialogTitle, DialogContent, Fade,
-} from "@material-ui/core"
+import Typography from "@material-ui/core/Typography"
+import Button from "@material-ui/core/Button"
+import Grid from "@material-ui/core/Grid"
+import Card from "@material-ui/core/Card"
+import CardContent from "@material-ui/core/CardContent"
+import Box from "@material-ui/core/Box"
+import Paper from "@material-ui/core/Paper"
+import TextField from "@material-ui/core/TextField"
+import AppBar from "@material-ui/core/AppBar"
+import Toolbar from "@material-ui/core/Toolbar"
+import IconButton from "@material-ui/core/IconButton"
+import Drawer from "@material-ui/core/Drawer"
+import List from "@material-ui/core/List"
+import ListItem from "@material-ui/core/ListItem"
+import ListItemText from "@material-ui/core/ListItemText"
+import Divider from "@material-ui/core/Divider"
+import Zoom from "@material-ui/core/Zoom"
+import Slide from "@material-ui/core/Slide"
+import useMediaQuery from "@material-ui/core/useMediaQuery"
+import { useTheme } from "@material-ui/core/styles"
+import Chip from "@material-ui/core/Chip"
+import Dialog from "@material-ui/core/Dialog"
+import DialogTitle from "@material-ui/core/DialogTitle"
+import DialogContent from "@material-ui/core/DialogContent"
+import Fade from "@material-ui/core/Fade"
 import { makeStyles } from "@material-ui/core/styles"
-import {
-  LocationOn, Star, Menu as MenuIcon, Close, LocalHotel, Bathtub,
-  Person, ChevronLeft, ChevronRight, Favorite, FavoriteBorder,
-  Search, PlayArrow, Visibility, Pool, Wifi, Spa, FitnessCenter,
-  Restaurant, AcUnit, LocalBar, Security, Facebook, Instagram,
-  Twitter, Room, ArrowForward, CheckCircle, Phone, Email,
-  CloudUpload, Add, InfoOutlined, Description, ArrowUpward,
-  FlashOn, TrendingUp, EmojiEvents, Explore,
-} from "@material-ui/icons"
+import LocationOn from "@material-ui/icons/LocationOn"
+import Star from "@material-ui/icons/Star"
+import MenuIcon from "@material-ui/icons/Menu"
+import Close from "@material-ui/icons/Close"
+import LocalHotel from "@material-ui/icons/LocalHotel"
+import Bathtub from "@material-ui/icons/Bathtub"
+import Person from "@material-ui/icons/Person"
+import ChevronLeft from "@material-ui/icons/ChevronLeft"
+import ChevronRight from "@material-ui/icons/ChevronRight"
+import Favorite from "@material-ui/icons/Favorite"
+import FavoriteBorder from "@material-ui/icons/FavoriteBorder"
+import Search from "@material-ui/icons/Search"
+import PlayArrow from "@material-ui/icons/PlayArrow"
+import Visibility from "@material-ui/icons/Visibility"
+import Pool from "@material-ui/icons/Pool"
+import Wifi from "@material-ui/icons/Wifi"
+import Spa from "@material-ui/icons/Spa"
+import FitnessCenter from "@material-ui/icons/FitnessCenter"
+import Restaurant from "@material-ui/icons/Restaurant"
+import AcUnit from "@material-ui/icons/AcUnit"
+import LocalBar from "@material-ui/icons/LocalBar"
+import Security from "@material-ui/icons/Security"
+import Facebook from "@material-ui/icons/Facebook"
+import Instagram from "@material-ui/icons/Instagram"
+import Twitter from "@material-ui/icons/Twitter"
+import Room from "@material-ui/icons/Room"
+import ArrowForward from "@material-ui/icons/ArrowForward"
+import CheckCircle from "@material-ui/icons/CheckCircle"
+import Phone from "@material-ui/icons/Phone"
+import Email from "@material-ui/icons/Email"
+import CloudUpload from "@material-ui/icons/CloudUpload"
+import Add from "@material-ui/icons/Add"
+import InfoOutlined from "@material-ui/icons/InfoOutlined"
+import Description from "@material-ui/icons/Description"
+import ArrowUpward from "@material-ui/icons/ArrowUpward"
+import FlashOn from "@material-ui/icons/FlashOn"
+import TrendingUp from "@material-ui/icons/TrendingUp"
+import EmojiEvents from "@material-ui/icons/EmojiEvents"
+import Explore from "@material-ui/icons/Explore"
 import axios from "axios"
 import Swal from "sweetalert2"
 
@@ -36,20 +85,29 @@ const apiCall = async (url, options = {}) => {
   return response
 }
 
-/* ─── IMÁGENES CDN CONFIABLES (Unsplash — sin restricción de referrer) ──────
-   FIX: Pexels bloquea hotlinking desde dominios de producción (ej. Render).
-   Unsplash permite solicitudes cross-origin desde cualquier dominio.
-   Se añade referrerPolicy="no-referrer" en cada <img> como capa extra de
-   compatibilidad para cualquier CDN futuro.                                  */
-const IMAGEN_TIPO_1 =
-  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&h=400&fit=crop&auto=format"
-const IMAGEN_TIPO_2 =
-  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&h=400&fit=crop&auto=format"
-const IMAGEN_PENTHOUSE =
-  "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&h=400&fit=crop&auto=format"
+/* ─── IMÁGENES OPTIMIZADAS SVG (Carga instantánea, sin CDN externo) ─────
+   Todas las imágenes ahora son SVGs incrustados acordes al diseño púrpura.
+   Ventajas: Carga instantánea, sin dependencia de CDN, mejor UX en producción.
+   Colores del proyecto: #6C3FFF (primary), #C040FF (secondary), #F4F1FF (bg)  */
+
+// SVG para Tipo 1 - Apartamento Moderno
+const IMAGEN_TIPO_1 = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 400'%3E%3Cdefs%3E%3ClinearGradient id='grad1' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%236C3FFF;stop-opacity:0.15' /%3E%3Cstop offset='100%25' style='stop-color:%23C040FF;stop-opacity:0.08' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='600' height='400' fill='url(%23grad1)'/%3E%3Crect x='80' y='60' width='280' height='240' rx='12' fill='%236C3FFF' opacity='0.12'/%3E%3Crect x='100' y='80' width='240' height='180' rx='8' fill='%23C040FF' opacity='0.18'/%3E%3Crect x='370' y='80' width='150' height='180' rx='8' fill='%236C3FFF' opacity='0.10'/%3E%3Crect x='120' y='290' width='200' height='40' rx='6' fill='%236C3FFF' opacity='0.25'/%3E%3Ccircle cx='120' cy='150' r='8' fill='%23C040FF' opacity='0.4'/%3E%3Ccircle cx='200' cy='120' r='6' fill='%236C3FFF' opacity='0.3'/%3E%3Ccircle cx='310' cy='140' r='7' fill='%23C040FF' opacity='0.35'/%3E%3C/svg%3E"
+
+// SVG para Tipo 2 - Apartamento Familiar
+const IMAGEN_TIPO_2 = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 400'%3E%3Cdefs%3E%3ClinearGradient id='grad2' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23C040FF;stop-opacity:0.12' /%3E%3Cstop offset='100%25' style='stop-color:%236C3FFF;stop-opacity:0.10' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='600' height='400' fill='url(%23grad2)'/%3E%3Crect x='60' y='60' width='480' height='280' rx='14' fill='none' stroke='%236C3FFF' stroke-width='2' opacity='0.25'/%3E%3Cpath d='M 150 120 L 200 80 L 250 120' fill='%23C040FF' opacity='0.15'/%3E%3Crect x='100' y='140' width='90' height='120' rx='6' fill='%236C3FFF' opacity='0.14'/%3E%3Crect x='220' y='140' width='90' height='120' rx='6' fill='%23C040FF' opacity='0.12'/%3E%3Crect x='340' y='140' width='90' height='120' rx='6' fill='%236C3FFF' opacity='0.14'/%3E%3Cpath d='M 80 320 Q 300 280 520 320' stroke='%236C3FFF' stroke-width='3' fill='none' opacity='0.2'/%3E%3C/svg%3E"
+
+// SVG para Penthouse - Apartamento Lujo
+const IMAGEN_PENTHOUSE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 400'%3E%3Cdefs%3E%3ClinearGradient id='grad3' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%236C3FFF;stop-opacity:0.20' /%3E%3Cstop offset='50%25' style='stop-color:%23C040FF;stop-opacity:0.12' /%3E%3Cstop offset='100%25' style='stop-color:%236C3FFF;stop-opacity:0.08' /%3E%3C/linearGradient%3E%3CradialGradient id='glow' cx='50%25' cy='30%25' r='50%25'%3E%3Cstop offset='0%25' style='stop-color:%23C040FF;stop-opacity:0.25' /%3E%3Cstop offset='100%25' style='stop-color:%236C3FFF;stop-opacity:0' /%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='600' height='400' fill='url(%23grad3)'/%3E%3Crect width='600' height='400' fill='url(%23glow)'/%3E%3Cpath d='M 100 200 L 150 100 L 300 80 L 450 100 L 500 200 L 500 320 Q 300 360 100 320 Z' fill='%236C3FFF' opacity='0.16'/%3E%3Cpath d='M 130 220 L 170 150 L 280 140 L 390 150 L 430 220 L 430 300 Q 280 330 130 300 Z' fill='%23C040FF' opacity='0.12'/%3E%3Ccircle cx='150' cy='140' r='12' fill='%23C040FF' opacity='0.3'/%3E%3Ccircle cx='300' cy='120' r='14' fill='%236C3FFF' opacity='0.25'/%3E%3Ccircle cx='450' cy='140' r='12' fill='%23C040FF' opacity='0.3'/%3E%3Crect x='200' y='280' width='200' height='60' rx='8' fill='%236C3FFF' opacity='0.18'/%3E%3C/svg%3E"
+
+// SVG para Suite Ejecutiva
+const IMAGEN_SUITE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 400'%3E%3Cdefs%3E%3ClinearGradient id='grad4' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%236C3FFF;stop-opacity:0.18' /%3E%3Cstop offset='100%25' style='stop-color:%23C040FF;stop-opacity:0.10' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='600' height='400' fill='url(%23grad4)'/%3E%3Crect x='80' y='70' width='440' height='280' rx='10' fill='none' stroke='%236C3FFF' stroke-width='2.5' opacity='0.18'/%3E%3Crect x='100' y='90' width='200' height='180' rx='8' fill='%236C3FFF' opacity='0.12'/%3E%3Cpath d='M 80 150 Q 150 130 220 150' stroke='%236C3FFF' stroke-width='2' fill='none' opacity='0.25'/%3E%3Crect x='330' y='100' width='170' height='160' rx='8' fill='%23C040FF' opacity='0.10'/%3E%3Cpath d='M 330 120 L 380 100 L 430 120' fill='%23C040FF' opacity='0.15'/%3E%3Crect x='100' y='290' width='280' height='50' rx='6' fill='%236C3FFF' opacity='0.14'/%3E%3C/svg%3E"
+
+// SVG para Loft Moderno
+const IMAGEN_LOFT = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 400'%3E%3Cdefs%3E%3ClinearGradient id='grad5' x1='0%25' y1='100%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' style='stop-color:%23C040FF;stop-opacity:0.15' /%3E%3Cstop offset='100%25' style='stop-color:%236C3FFF;stop-opacity:0.08' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='600' height='400' fill='url(%23grad5)'/%3E%3Crect x='70' y='80' width='180' height='220' rx='10' fill='%236C3FFF' opacity='0.15'/%3E%3Crect x='280' y='60' width='250' height='240' rx='10' fill='%23C040FF' opacity='0.12'/%3E%3Cpath d='M 70 280 L 160 250 L 250 280' fill='%236C3FFF' opacity='0.10'/%3E%3Ccircle cx='120' cy='130' r='15' fill='%23C040FF' opacity='0.20'/%3E%3Ccircle cx='350' cy='150' r='12' fill='%236C3FFF' opacity='0.18'/%3E%3Ccircle cx='480' cy='120' r='10' fill='%23C040FF' opacity='0.22'/%3E%3Crect x='300' y='320' width='150' height='50' rx='6' fill='%236C3FFF' opacity='0.12'/%3E%3C/svg%3E"
+
 const IMAGEN_FALLBACK = IMAGEN_TIPO_1
 
-// Hero slides — también migradas a Unsplash
+// Hero slides — Unsplash URLs (Carga confiable para carousel)
 const heroImages = [
   "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1600&h=900&fit=crop&auto=format",
   "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1600&h=900&fit=crop&auto=format",
@@ -64,6 +122,9 @@ const getImagenPorTipo = (tipo) => {
     case "tipo2":       return IMAGEN_TIPO_2
     case "tipo 1":
     case "tipo1":       return IMAGEN_TIPO_1
+    case "suite":
+    case "ejecutiva":   return IMAGEN_SUITE
+    case "loft":        return IMAGEN_LOFT
     default:            return IMAGEN_FALLBACK
   }
 }
@@ -96,7 +157,7 @@ const apartamentosEjemplo = [
     ubicacion: "El Poblado, Medellín", precio: 400,
     capacidad: 2, camas: 1, banos: 1, tamano: 60,
     caracteristicas: ["Escritorio", "Cafetera", "Minibar", "Caja fuerte"],
-    imagen: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop&auto=format",
+    imagen: IMAGEN_SUITE,
     disponible: true, tag: "Ejecutivo",
   },
   {
@@ -111,7 +172,7 @@ const apartamentosEjemplo = [
     ubicacion: "El Poblado, Medellín", precio: 320,
     capacidad: 2, camas: 1, banos: 1, tamano: 55,
     caracteristicas: ["Diseño abierto", "LED", "Smart TV", "Sonido"],
-    imagen: "https://images.unsplash.com/photo-1554995207-c18c203602cb?w=600&h=400&fit=crop&auto=format",
+    imagen: IMAGEN_LOFT,
     disponible: true, tag: "Moderno",
   },
 ]
@@ -1803,7 +1864,7 @@ function Landing() {
                       referrerPolicy="no-referrer"
                       crossOrigin="anonymous"
                       onError={(e) => {
-                        // Doble fallback: si Unsplash también falla, usar placeholder SVG inline
+                        // Fallback a imagen por defecto si la carga de SVG falla
                         if (e.target.src !== IMAGEN_FALLBACK) {
                           e.target.src = IMAGEN_FALLBACK
                         } else {

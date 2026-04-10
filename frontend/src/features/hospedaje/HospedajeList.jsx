@@ -1,35 +1,33 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import {
-  Typography,
-  TextField,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogActions,
-  MenuItem,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  TableContainer,
-  Paper,
-  Box,
-  Tooltip,
-  InputAdornment,
-  FormControl,
-  InputLabel,
-  Select,
-  Chip,
-  Grid,
-  Stepper,
-  Step,
-  StepLabel,
-  MobileStepper,
-  Divider,
-} from "@material-ui/core"
+import Typography from "@material-ui/core/Typography"
+import TextField from "@material-ui/core/TextField"
+import Button from "@material-ui/core/Button"
+import Dialog from "@material-ui/core/Dialog"
+import DialogContent from "@material-ui/core/DialogContent"
+import DialogActions from "@material-ui/core/DialogActions"
+import MenuItem from "@material-ui/core/MenuItem"
+import Table from "@material-ui/core/Table"
+import TableHead from "@material-ui/core/TableHead"
+import TableBody from "@material-ui/core/TableBody"
+import TableRow from "@material-ui/core/TableRow"
+import TableCell from "@material-ui/core/TableCell"
+import TableContainer from "@material-ui/core/TableContainer"
+import Paper from "@material-ui/core/Paper"
+import Box from "@material-ui/core/Box"
+import Tooltip from "@material-ui/core/Tooltip"
+import InputAdornment from "@material-ui/core/InputAdornment"
+import FormControl from "@material-ui/core/FormControl"
+import InputLabel from "@material-ui/core/InputLabel"
+import Select from "@material-ui/core/Select"
+import Chip from "@material-ui/core/Chip"
+import Grid from "@material-ui/core/Grid"
+import Stepper from "@material-ui/core/Stepper"
+import Step from "@material-ui/core/Step"
+import StepLabel from "@material-ui/core/StepLabel"
+import MobileStepper from "@material-ui/core/MobileStepper"
+import Divider from "@material-ui/core/Divider"
 import { makeStyles, withStyles } from "@material-ui/core/styles"
 import {
   Edit2,
@@ -58,24 +56,22 @@ import {
   Clock,
   CreditCard,
 } from "lucide-react"
-import {
-  Person,
-  AssignmentInd,
-  CalendarToday,
-  AccountCircle,
-  ContactMail,
-  PermIdentity,
-  AttachMoney,
-  EventAvailable,
-  EventNote,
-  Group,
-  LocalOffer,
-  CheckCircle,
-  Email,
-  PhoneAndroid,
-  KeyboardArrowRight,
-  KeyboardArrowLeft,
-} from "@material-ui/icons"
+import Person from "@material-ui/icons/Person"
+import AssignmentInd from "@material-ui/icons/AssignmentInd"
+import CalendarToday from "@material-ui/icons/CalendarToday"
+import AccountCircle from "@material-ui/icons/AccountCircle"
+import ContactMail from "@material-ui/icons/ContactMail"
+import PermIdentity from "@material-ui/icons/PermIdentity"
+import AttachMoney from "@material-ui/icons/AttachMoney"
+import EventAvailable from "@material-ui/icons/EventAvailable"
+import EventNote from "@material-ui/icons/EventNote"
+import Group from "@material-ui/icons/Group"
+import LocalOffer from "@material-ui/icons/LocalOffer"
+import CheckCircle from "@material-ui/icons/CheckCircle"
+import Email from "@material-ui/icons/Email"
+import PhoneAndroid from "@material-ui/icons/PhoneAndroid"
+import KeyboardArrowRight from "@material-ui/icons/KeyboardArrowRight"
+import KeyboardArrowLeft from "@material-ui/icons/KeyboardArrowLeft"
 import Swal from "sweetalert2"
 import hospedajeService from "./hospedaje.service"
 import apartamentoService from "../apartamentos/apartamento.service"

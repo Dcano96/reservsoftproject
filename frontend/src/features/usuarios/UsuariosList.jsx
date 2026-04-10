@@ -1,30 +1,28 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import {
-  Typography,
-  TextField,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  TableContainer,
-  Paper,
-  Box,
-  TablePagination,
-  IconButton,
-  Tooltip,
-  Avatar,
-  InputAdornment,
-  Chip,
-  MenuItem,
-} from "@material-ui/core"
+import Typography from "@material-ui/core/Typography"
+import TextField from "@material-ui/core/TextField"
+import Button from "@material-ui/core/Button"
+import Dialog from "@material-ui/core/Dialog"
+import DialogTitle from "@material-ui/core/DialogTitle"
+import DialogContent from "@material-ui/core/DialogContent"
+import DialogActions from "@material-ui/core/DialogActions"
+import Table from "@material-ui/core/Table"
+import TableHead from "@material-ui/core/TableHead"
+import TableBody from "@material-ui/core/TableBody"
+import TableRow from "@material-ui/core/TableRow"
+import TableCell from "@material-ui/core/TableCell"
+import TableContainer from "@material-ui/core/TableContainer"
+import Paper from "@material-ui/core/Paper"
+import Box from "@material-ui/core/Box"
+import TablePagination from "@material-ui/core/TablePagination"
+import IconButton from "@material-ui/core/IconButton"
+import Tooltip from "@material-ui/core/Tooltip"
+import Avatar from "@material-ui/core/Avatar"
+import InputAdornment from "@material-ui/core/InputAdornment"
+import Chip from "@material-ui/core/Chip"
+import MenuItem from "@material-ui/core/MenuItem"
 import {
   Edit2,
   Trash2,
@@ -45,15 +43,13 @@ import {
   Tag,
   Users,
 } from "lucide-react"
-import {
-  Person,
-  Email,
-  AssignmentInd,
-  AccountCircle,
-  ContactMail,
-  PermIdentity,
-  VpnKey,
-} from "@material-ui/icons"
+import Person from "@material-ui/icons/Person"
+import Email from "@material-ui/icons/Email"
+import AssignmentInd from "@material-ui/icons/AssignmentInd"
+import AccountCircle from "@material-ui/icons/AccountCircle"
+import ContactMail from "@material-ui/icons/ContactMail"
+import PermIdentity from "@material-ui/icons/PermIdentity"
+import VpnKey from "@material-ui/icons/VpnKey"
 import Swal from "sweetalert2"
 import usuarioService from "./usuarios.service"
 import rolesService from "../roles/roles.service"
