@@ -23,6 +23,25 @@ exports.getDescuentos = async (req, res) => {
   }
 };
 
+// Devuelve los descuentos actualmente vigentes (estado=true y fecha actual dentro del rango).
+// Lo usa el form de reservas para aplicar el descuento al apartamento según su Tipo.
+exports.getDescuentosVigentes = async (req, res) => {
+  try {
+    const ahora = new Date();
+    const descuentos = await Descuento.find({
+      estado: true,
+      $and: [
+        { $or: [{ fecha_inicio: { $lte: ahora } }, { fecha_inicio: null }, { fecha_inicio: { $exists: false } }] },
+        { $or: [{ fecha_fin: { $gte: ahora } }, { fecha_fin: null }, { fecha_fin: { $exists: false } }] },
+      ],
+    }).lean();
+    res.status(200).json(descuentos);
+  } catch (error) {
+    console.error("Error al obtener descuentos vigentes:", error);
+    res.status(500).json({ msg: "Error al obtener descuentos vigentes" });
+  }
+};
+
 exports.updateDescuento = async (req, res) => {
   try {
     const descuento = await Descuento.findByIdAndUpdate(req.params.id, req.body, { new: true });

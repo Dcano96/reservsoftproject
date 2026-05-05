@@ -30,8 +30,9 @@ import AttachMoney from "@material-ui/icons/AttachMoney"
 import Payment from "@material-ui/icons/Payment"
 import Receipt from "@material-ui/icons/Receipt"
 import EventNote from "@material-ui/icons/EventNote"
+import CloudUpload from "@material-ui/icons/CloudUpload"
 import Swal from "sweetalert2"
-import pagoService from "./pago.service"
+import pagoService, { buildComprobanteUrl } from "./pago.service"
 import { makeStyles, withStyles } from "@material-ui/core/styles"
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -222,11 +223,90 @@ const useStyles = makeStyles(() => ({
   cNulled:  { background: "rgba(107,94,135,.12)",  color: "#6B5E87" },
 
   /* ── ACTION BUTTONS ── */
-  actWrap: { display: "flex", justifyContent: "center", gap: 5 },
+  actWrap: { display: "flex", justifyContent: "center", gap: 5, flexWrap: "wrap" },
   actBtn: { width: 32, height: 32, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer", transition: "all .18s", "&:hover": { transform: "scale(1.14)", boxShadow: "0 4px 14px rgba(0,0,0,.18)" } },
   bEdit: { background: "linear-gradient(135deg,#00D4AA,#00A3E0)", color: "#fff" },
   bView: { background: T.gv, color: "#fff" },
   bDel:  { background: T.ge, color: "#fff" },
+  bApprove: { background: "linear-gradient(135deg,#00D4AA,#00917a)", color: "#fff" },
+  bReject:  { background: "linear-gradient(135deg,#FF3B82,#cc2060)", color: "#fff" },
+
+  /* ── ALERTA INLINE DENTRO DEL MODAL ── */
+  dlgAlert: {
+    display: "flex", alignItems: "flex-start", gap: 10,
+    padding: "12px 14px", borderRadius: 12,
+    marginBottom: 14,
+    fontFamily: "'DM Sans',sans-serif", fontSize: ".84rem", fontWeight: 600,
+    border: "1px solid",
+    animation: "$slideIn .22s ease-out",
+  },
+  dlgAlertError: {
+    background: "rgba(255,59,130,.10)",
+    color: "#cc2060",
+    borderColor: "rgba(255,59,130,.28)",
+  },
+  dlgAlertSuccess: {
+    background: "rgba(0,212,170,.10)",
+    color: "#00917a",
+    borderColor: "rgba(0,212,170,.28)",
+  },
+  dlgAlertWarning: {
+    background: "rgba(245,158,11,.10)",
+    color: "#b45309",
+    borderColor: "rgba(245,158,11,.28)",
+  },
+  dlgAlertIcon: { flexShrink: 0, marginTop: 1 },
+  dlgAlertText: { flex: 1, lineHeight: 1.4 },
+  dlgAlertClose: {
+    background: "none", border: "none", cursor: "pointer",
+    padding: 2, color: "inherit", opacity: .7,
+    "&:hover": { opacity: 1 },
+  },
+  "@keyframes slideIn": {
+    "0%": { opacity: 0, transform: "translateY(-6px)" },
+    "100%": { opacity: 1, transform: "translateY(0)" },
+  },
+
+  /* ── COMPROBANTE CHIP ── */
+  voucherChip: {
+    display: "inline-flex", alignItems: "center", gap: 6,
+    padding: "5px 11px", borderRadius: 20,
+    background: "rgba(108,63,255,.10)", color: T.v1,
+    fontFamily: "'DM Sans',sans-serif", fontSize: ".74rem", fontWeight: 700,
+    cursor: "pointer", border: "1px solid rgba(108,63,255,.20)",
+    transition: "all .18s", textDecoration: "none",
+    "&:hover": { background: T.gv, color: "#fff", transform: "translateY(-1px)", boxShadow: "0 4px 12px rgba(108,63,255,.30)" },
+  },
+  voucherEmpty: {
+    display: "inline-flex", alignItems: "center", gap: 5,
+    padding: "5px 11px", borderRadius: 20,
+    background: "rgba(107,94,135,.10)", color: T.ink4,
+    fontFamily: "'DM Sans',sans-serif", fontSize: ".72rem", fontWeight: 600,
+  },
+
+  /* ── COMPROBANTE PREVIEW (modal detalles) ── */
+  voucherPreviewBox: {
+    borderRadius: 14, padding: "12px 14px",
+    background: "rgba(244,241,255,.45)",
+    border: `1px solid ${T.bL}`,
+    display: "flex", flexDirection: "column", gap: 8,
+    gridColumn: "1 / -1",
+  },
+  voucherPreviewImg: {
+    width: "100%", maxHeight: 280, objectFit: "contain",
+    borderRadius: 10, background: "#fff",
+    border: "1px solid rgba(108,63,255,.10)",
+  },
+  voucherPreviewBtn: {
+    display: "inline-flex", alignItems: "center", gap: 6,
+    background: T.gv, color: "#fff",
+    fontFamily: "'DM Sans',sans-serif", fontWeight: 700,
+    fontSize: ".78rem", padding: "8px 16px", borderRadius: 50,
+    border: "none", cursor: "pointer", textDecoration: "none",
+    boxShadow: "0 3px 12px rgba(108,63,255,.32)",
+    alignSelf: "flex-start", transition: "all .2s",
+    "&:hover": { transform: "translateY(-2px)", boxShadow: "0 6px 18px rgba(108,63,255,.45)" },
+  },
 
   /* ── PAGINATION ── */
   pagWrap: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 26px 22px", flexWrap: "wrap", gap: 10 },
@@ -354,12 +434,18 @@ const PagosList = () => {
   const [detailsOpen,        setDetailsOpen]        = useState(false)
   const [selectedPago,       setSelectedPago]       = useState(null)
   const [editingId,          setEditingId]          = useState(null)
-  const [formData,           setFormData]           = useState({ fecha: "", reserva: "", estado: "pendiente" })
+  const [formData,           setFormData]           = useState({ fecha: "", reserva: "", estado: "realizado", monto: "", metodo_pago: "efectivo" })
   const [selectedReservaData,setSelectedReservaData]= useState(null)
+  const [pagoExistente,      setPagoExistente]      = useState(null) // Pago de la reserva seleccionada (si existe)
+  const [adminComprobante,   setAdminComprobante]   = useState(null) // archivo subido por el admin
+  const [adminComprobanteName, setAdminComprobanteName] = useState("")
+  const [dialogAlert,        setDialogAlert]        = useState(null) // { type: 'error'|'success'|'warning', msg } visible dentro del modal de creación
+  const [detailsAlert,       setDetailsAlert]       = useState(null) // alerta inline en el modal de detalles
+  const [submitting,         setSubmitting]         = useState(false)
   const [searchTerm,         setSearchTerm]         = useState("")
   const [page,               setPage]               = useState(0)
   const [rowsPerPage,        setRowsPerPage]        = useState(5)
-  const [formErrors,         setFormErrors]         = useState({ fecha: "", reserva: "", estado: "" })
+  const [formErrors,         setFormErrors]         = useState({ fecha: "", reserva: "", estado: "", monto: "" })
   const [isFormValid,        setIsFormValid]        = useState(false)
   const [shouldValidate,     setShouldValidate]     = useState(false)
 
@@ -409,18 +495,68 @@ const PagosList = () => {
     }
   }, [formData, selectedReservaData, editingId])
 
+  // Suma de los abonos NO rechazados del Pago (aporta al saldo pagado).
+  const sumarAbonosActivos = (pago) => {
+    if (!pago || !Array.isArray(pago.abonos)) return Number(pago?.monto) || 0
+    return pago.abonos
+      .filter((a) => a.estado === "pendiente" || a.estado === "realizado")
+      .reduce((sum, a) => sum + (Number(a.monto) || 0), 0)
+  }
+
+  // Encontrar el Pago de una reserva (uno solo por reserva ahora).
+  const findPagoByReserva = (reservaId) => {
+    if (!reservaId) return null
+    const id = reservaId.toString()
+    return pagos.find((p) => {
+      const pid = p.reserva && (typeof p.reserva === "object" ? p.reserva._id : p.reserva)
+      return pid && pid.toString() === id
+    }) || null
+  }
+
+  // Calcular saldo pendiente real = total reserva - abonos activos del Pago.
+  const calcularSaldoPendiente = (reservaId, total) => {
+    if (!reservaId || !total) return 0
+    const pago = findPagoByReserva(reservaId)
+    const totalPagado = pago ? sumarAbonosActivos(pago) : 0
+    return Math.max(0, total - totalPagado)
+  }
+
   const handleOpen = (pago) => {
-    setShouldValidate(true)
-    setFormErrors({ fecha: "", reserva: "", estado: "" })
+    setShouldValidate(false)
+    setFormErrors({ fecha: "", reserva: "", estado: "", monto: "" })
+    setAdminComprobante(null)
+    setAdminComprobanteName("")
+    setDialogAlert(null)
+    setSubmitting(false)
     if (pago) {
-      setFormData({ fecha: pago.fecha ? new Date(pago.fecha).toISOString().split("T")[0] : "", reserva: pago.reserva ? pago.reserva._id || pago.reserva : "", estado: pago.estado || "pendiente" })
+      // Modo "agregar abono" sobre el Pago existente.
+      const reservaObj = pago.reserva && typeof pago.reserva === "object" ? pago.reserva : null
+      const reservaId = reservaObj ? reservaObj._id : pago.reserva
+      // Calcular saldo pendiente directo de los abonos del Pago seleccionado
+      // (más fresco que confiar en el state local).
+      const totalReserva = reservaObj?.total || 0
+      const totalPagado = sumarAbonosActivos(pago)
+      const saldo = Math.max(0, totalReserva - totalPagado)
+      setFormData({
+        fecha: new Date().toISOString().split("T")[0],
+        reserva: reservaId || "",
+        estado: "realizado",
+        monto: saldo > 0 ? String(saldo) : "",
+        metodo_pago: "efectivo",
+      })
       setEditingId(pago._id)
-      setSelectedReservaData(pago.reserva)
-      setIsFormValid(true)
+      setSelectedReservaData(reservaObj)
+      setPagoExistente(pago)
+      setIsFormValid(saldo > 0)
+      if (saldo <= 0.01) {
+        setDialogAlert({ type: "warning", msg: "Esta reserva ya fue pagada en su totalidad. No se pueden registrar más abonos." })
+      }
     } else {
-      setFormData({ fecha: "", reserva: "", estado: "pendiente" })
+      const today = new Date().toISOString().split("T")[0]
+      setFormData({ fecha: today, reserva: "", estado: "realizado", monto: "", metodo_pago: "efectivo" })
       setEditingId(null)
       setSelectedReservaData(null)
+      setPagoExistente(null)
       setIsFormValid(false)
     }
     setOpen(true)
@@ -431,27 +567,60 @@ const PagosList = () => {
     Swal.close()
     setOpen(false)
     setTimeout(() => {
-      setFormErrors({ fecha: "", reserva: "", estado: "" })
-      setFormData({ fecha: "", reserva: "", estado: "pendiente" })
+      setFormErrors({ fecha: "", reserva: "", estado: "", monto: "" })
+      setFormData({ fecha: "", reserva: "", estado: "realizado", monto: "", metodo_pago: "efectivo" })
       setEditingId(null)
       setSelectedReservaData(null)
+      setPagoExistente(null)
+      setAdminComprobante(null)
+      setAdminComprobanteName("")
+      setDialogAlert(null)
+      setSubmitting(false)
       setIsFormValid(false)
     }, 100)
   }
 
-  const handleDetails = (pago) => { setSelectedPago(pago); setDetailsOpen(true) }
+  const handleAdminComprobanteChange = (e) => {
+    const file = e.target.files && e.target.files[0]
+    if (file) {
+      setAdminComprobante(file)
+      setAdminComprobanteName(file.name)
+    }
+  }
+
+  const handleDetails = (pago) => {
+    setSelectedPago(pago)
+    setDetailsAlert(null)
+    setDetailsOpen(true)
+  }
 
   const handleCloseDetails = () => {
     setDetailsOpen(false)
-    setTimeout(() => setSelectedPago(null), 100)
+    setTimeout(() => {
+      setSelectedPago(null)
+      setDetailsAlert(null)
+    }, 100)
   }
 
   const handleChange = (e) => {
     const { name, value } = e.target
     if (name === "reserva") {
-      setFormData({ ...formData, reserva: value })
       const resData = reservas.find((r) => r._id === value)
       setSelectedReservaData(resData)
+      // Buscar Pago ya existente para esta reserva (creado típicamente desde
+      // la landing). Sirve para asociar el nuevo abono al mismo Pago.
+      const pago = findPagoByReserva(value)
+      setPagoExistente(pago)
+      if (pago) setEditingId(pago._id)
+      // Cargar el saldo pendiente automáticamente como monto a abonar.
+      if (resData) {
+        const saldo = calcularSaldoPendiente(resData._id, resData.total)
+        setFormData({ ...formData, reserva: value, monto: String(saldo) })
+      } else {
+        setFormData({ ...formData, reserva: value })
+      }
+    } else if (name === "monto") {
+      setFormData({ ...formData, monto: value })
     } else {
       setFormData({ ...formData, [name]: value })
     }
@@ -461,16 +630,23 @@ const PagosList = () => {
   const validateField = (name, value) => {
     if (!shouldValidate) return true
     let errorMessage = ""
+    const v = value == null ? "" : String(value)
     switch (name) {
-      case "fecha":   if (!value.trim()) errorMessage = "La fecha es obligatoria";    break
-      case "reserva": if (!value.trim()) errorMessage = "La reserva es obligatoria";  break
-      case "estado":  if (!value.trim()) errorMessage = "El estado es obligatorio";   break
+      case "fecha":   if (!v.trim()) errorMessage = "La fecha es obligatoria";    break
+      case "reserva": if (!v.trim()) errorMessage = "La reserva es obligatoria";  break
+      case "estado":  if (!v.trim()) errorMessage = "El estado es obligatorio";   break
+      case "monto": {
+        const n = Number(v)
+        if (!v.trim()) errorMessage = "El monto es obligatorio"
+        else if (isNaN(n) || n <= 0) errorMessage = "El monto debe ser mayor a 0"
+        break
+      }
       default: break
     }
     setFormErrors((prev) => ({ ...prev, [name]: errorMessage }))
-    if (errorMessage && shouldValidate) {
-      Swal.fire({ ...SW, icon: "warning", title: "Validación", text: errorMessage, toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true })
-    }
+    // No disparamos Swal aquí: los errores se muestran inline en cada
+    // TextField via `error`/`helperText`. Los toasts mientras el modal
+    // está abierto rompen el focus y la UX.
     setTimeout(() => validateForm({ ...formData, [name]: value }), 0)
     return !errorMessage
   }
@@ -488,35 +664,89 @@ const PagosList = () => {
 
   const validateForm = (data) => {
     if (!shouldValidate) return
-    setIsFormValid(data.fecha.trim() !== "" && data.reserva.trim() !== "" && data.estado.trim() !== "")
+    const monto = String(data.monto || "").trim()
+    const montoNum = Number(monto)
+    setIsFormValid(
+      String(data.reserva || "").trim() !== "" &&
+      monto !== "" && !isNaN(montoNum) && montoNum > 0
+    )
   }
 
   const handleSubmit = async () => {
     setShouldValidate(true)
+    setDialogAlert(null)
     const tempErrors = {}
-    if (!formData.fecha.trim())   tempErrors.fecha   = "La fecha es obligatoria"
-    if (!formData.reserva.trim()) tempErrors.reserva = "La reserva es obligatoria"
-    if (!formData.estado.trim())  tempErrors.estado  = "El estado es obligatorio"
+    const reservaStr = String(formData.reserva || "").trim()
+    const montoStr = String(formData.monto || "").trim()
+    const montoNum = Number(montoStr)
+
+    if (!reservaStr) tempErrors.reserva = "La reserva es obligatoria"
+    if (!montoStr || isNaN(montoNum) || montoNum <= 0) tempErrors.monto = "El monto debe ser mayor a 0"
+
+    // Validar contra saldo pendiente
+    if (selectedReservaData) {
+      const saldo = calcularSaldoPendiente(selectedReservaData._id, selectedReservaData.total)
+      if (saldo <= 0.01) {
+        tempErrors.monto = "Esta reserva ya fue pagada en su totalidad"
+      } else if (montoNum > saldo + 0.01) {
+        tempErrors.monto = `El monto excede el saldo pendiente (${formatCOP(saldo)})`
+      }
+    }
+
     if (Object.keys(tempErrors).length > 0) {
       setFormErrors(tempErrors)
-      Swal.fire({ ...SW, icon: "error", title: "Error de validación", text: Object.values(tempErrors)[0] })
+      setDialogAlert({ type: "error", msg: Object.values(tempErrors)[0] })
       return
     }
+
+    setSubmitting(true)
     try {
-      if (editingId) {
-        const updatedPago = await pagoService.updatePago(editingId, formData)
-        setPagos((prev) => prev.map((pago) => (pago._id === editingId ? { ...pago, ...formData, reserva: selectedReservaData } : pago)))
-        Swal.fire({ ...SW, icon: "success", title: "Actualizado", text: "El pago se actualizó correctamente.", timer: 2200, timerProgressBar: true, showConfirmButton: false })
+      let successMsg
+      if (pagoExistente) {
+        // Agregar el segundo (o N-ésimo) abono al Pago existente.
+        const data = await pagoService.agregarAbono(pagoExistente._id, {
+          monto: montoNum,
+          metodo_pago: formData.metodo_pago || "efectivo",
+          notas: "Abono registrado por administrador",
+          comprobante: adminComprobante || undefined,
+        })
+        const updated = data.pago || data
+        updated.reserva = selectedReservaData
+        setPagos((prev) => prev.map((p) => (p._id === updated._id ? updated : p)))
+        fetchReservas()
+        successMsg = data.msg || "El abono se registró correctamente."
       } else {
-        const newPago = await pagoService.createPago(formData)
+        // No existe Pago para la reserva: crear uno con el primer abono.
+        const data = await pagoService.registrarPagoManual({
+          reserva: formData.reserva,
+          monto: montoNum,
+          metodo_pago: formData.metodo_pago || "efectivo",
+          clienteNombre: selectedReservaData?.titular_reserva || "",
+          notas: "Abono registrado por administrador",
+        })
+        const newPago = data.pago || data
         newPago.reserva = selectedReservaData
         setPagos((prev) => [newPago, ...prev])
-        Swal.fire({ ...SW, icon: "success", title: "Creado", text: "El pago se creó correctamente.", timer: 2200, timerProgressBar: true, showConfirmButton: false })
+        fetchReservas()
+        successMsg = data.msg || "El pago se registró correctamente."
       }
+
+      // Cierro el modal antes de mostrar la notificación de éxito,
+      // para que no compita por foco con SweetAlert.
       handleClose()
+      setTimeout(() => {
+        Swal.fire({
+          ...SW, icon: "success", title: "Listo",
+          text: successMsg, timer: 2200, timerProgressBar: true, showConfirmButton: false,
+        })
+      }, 150)
     } catch (error) {
       console.error("Error saving pago", error)
-      Swal.fire({ ...SW, icon: "error", title: "Error", text: "Ocurrió un error al guardar el pago." })
+      const msg = error?.msg || error?.message || "Ocurrió un error al guardar el pago."
+      // Mostrar el error INLINE dentro del modal, no como Swal por encima.
+      setDialogAlert({ type: "error", msg })
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -542,8 +772,8 @@ const PagosList = () => {
   const totalPages    = Math.max(1, Math.ceil(filteredPagos.length / rowsPerPage))
 
   const calcularFaltante = (pago) => {
-    if (pago.reserva && typeof pago.reserva === "object") {
-      return (pago.reserva.total || 0) - (pago.pagoParcial || pago.monto || 0)
+    if (pago && pago.reserva && typeof pago.reserva === "object") {
+      return Math.max(0, (pago.reserva.total || 0) - sumarAbonosActivos(pago))
     }
     return 0
   }
@@ -554,12 +784,14 @@ const PagosList = () => {
       pendiente: classes.cPending,
       realizado: classes.cDone,
       fallido:   classes.cFailed,
+      rechazado: classes.cFailed,
       anulado:   classes.cNulled,
     }
     const icons = {
       pendiente: "⏳",
       realizado: "✓",
       fallido:   "✗",
+      rechazado: "✗",
       anulado:   "—",
     }
     return (
@@ -567,6 +799,97 @@ const PagosList = () => {
         {icons[estado] || "·"} {estado}
       </Box>
     )
+  }
+
+  /* helper: detectar si el comprobante es PDF */
+  const esComprobantePdf = (ruta) => /\.pdf($|\?)/i.test(ruta || "")
+
+  // Helper: ejecuta el cambio de estado del abono (aprobar/rechazar).
+  // Cuando se llama desde el modal de detalles, muestra el resultado
+  // como alerta inline; si el modal está cerrado, usa Swal toast.
+  const verificarAbonoReq = async (pagoId, abonoId, estado, notas) => {
+    try {
+      const data = await pagoService.verificarAbono(pagoId, abonoId, estado, notas)
+      const actualizado = data.pago
+      setPagos((prev) => prev.map((p) => (p._id === pagoId ? { ...p, ...actualizado } : p)))
+      if (selectedPago && selectedPago._id === pagoId) setSelectedPago({ ...actualizado })
+      const msg = data.msg || (estado === "realizado" ? "Abono aprobado correctamente." : "Abono rechazado.")
+      if (detailsOpen) {
+        setDetailsAlert({ type: "success", msg })
+      } else {
+        Swal.fire({ ...SW, icon: "success", title: "Listo", text: msg, timer: 2200, timerProgressBar: true, showConfirmButton: false })
+      }
+    } catch (error) {
+      console.error(`Error al ${estado} abono`, error)
+      const msg = error?.msg || `No se pudo ${estado === "realizado" ? "aprobar" : "rechazar"} el abono.`
+      if (detailsOpen) {
+        setDetailsAlert({ type: "error", msg })
+      } else {
+        Swal.fire({ ...SW, icon: "error", title: "Error", text: msg })
+      }
+    }
+  }
+
+  // Aprobar abono — confirmación inline cuando el modal de detalles está abierto.
+  const handleAprobarAbono = async (pagoId, abonoId) => {
+    if (detailsOpen) {
+      // Confirmación inline: pedimos confirmación con el propio alert del modal.
+      setDetailsAlert({
+        type: "warning",
+        msg: "¿Aprobar este abono? Se marcará como realizado y se aplicará al saldo.",
+        action: { label: "Aprobar", run: () => verificarAbonoReq(pagoId, abonoId, "realizado") },
+      })
+      return
+    }
+    const confirm = await Swal.fire({
+      ...SW, title: "¿Aprobar abono?",
+      text: "El abono se marcará como realizado y se aplicará al saldo de la reserva.",
+      icon: "question", showCancelButton: true,
+      confirmButtonText: "Sí, aprobar", cancelButtonText: "Cancelar",
+    })
+    if (!confirm.isConfirmed) return
+    await verificarAbonoReq(pagoId, abonoId, "realizado")
+  }
+
+  // Rechazar abono — confirmación inline cuando el modal de detalles está abierto.
+  const handleRechazarAbono = async (pagoId, abonoId) => {
+    if (detailsOpen) {
+      setDetailsAlert({
+        type: "warning",
+        msg: "¿Rechazar este abono? El cliente deberá enviar un nuevo comprobante.",
+        action: { label: "Rechazar", run: () => verificarAbonoReq(pagoId, abonoId, "rechazado", "Rechazado por administrador") },
+      })
+      return
+    }
+    const result = await Swal.fire({
+      ...SWD, title: "¿Rechazar abono?",
+      text: "Indique el motivo del rechazo (opcional).",
+      icon: "warning", input: "textarea",
+      inputPlaceholder: "Motivo del rechazo…",
+      showCancelButton: true,
+      confirmButtonText: "Rechazar", cancelButtonText: "Cancelar",
+    })
+    if (!result.isConfirmed) return
+    await verificarAbonoReq(pagoId, abonoId, "rechazado", result.value || "Rechazado por administrador")
+  }
+
+  // Atajo: aprueba/rechaza el primer abono pendiente del Pago.
+  const findAbonoPendiente = (pago) => (pago?.abonos || []).find((a) => a.estado === "pendiente")
+  const handleAprobar = (pago) => {
+    const abono = findAbonoPendiente(pago)
+    if (!abono) {
+      Swal.fire({ ...SW, icon: "info", title: "Sin abonos pendientes", text: "Este pago no tiene abonos pendientes de verificar." })
+      return
+    }
+    handleAprobarAbono(pago._id, abono._id)
+  }
+  const handleRechazar = (pago) => {
+    const abono = findAbonoPendiente(pago)
+    if (!abono) {
+      Swal.fire({ ...SW, icon: "info", title: "Sin abonos pendientes", text: "Este pago no tiene abonos pendientes de verificar." })
+      return
+    }
+    handleRechazarAbono(pago._id, abono._id)
   }
 
   /* ── DIALOG HEADER ── */
@@ -653,10 +976,10 @@ const PagosList = () => {
             <TableHead>
               <TableRow>
                 <HCell style={{ textAlign: "left" }}>Reserva / Titular</HCell>
-                <HCell>Pago Parcial</HCell>
+                <HCell>Total Pagado</HCell>
                 <HCell>Total Reserva</HCell>
                 <HCell>Faltante</HCell>
-                <HCell>Fecha</HCell>
+                <HCell>Abonos</HCell>
                 <HCell>Estado</HCell>
                 <HCell>Acciones</HCell>
               </TableRow>
@@ -688,24 +1011,48 @@ const PagosList = () => {
                   </NCell>
                   <BCell>
                     <Typography style={{ fontFamily: "'DM Sans',sans-serif", fontSize: ".83rem", color: "#00917a", fontWeight: 700 }}>
-                      {formatCOP(pago.pagoParcial || pago.monto || 0)}
+                      {formatCOP(sumarAbonosActivos(pago))}
                     </Typography>
                   </BCell>
                   <BCell>{pago.reserva && typeof pago.reserva === "object" ? formatCOP(pago.reserva.total || 0) : "N/A"}</BCell>
                   <BCell>
                     <Typography style={{ fontFamily: "'DM Sans',sans-serif", fontSize: ".83rem", color: "#cc2060", fontWeight: 700 }}>
-                      {formatCOP(calcularFaltante(pago))}
+                      {formatCOP((pago.reserva?.total || 0) - sumarAbonosActivos(pago))}
                     </Typography>
                   </BCell>
                   <BCell>
-                    <Typography style={{ fontFamily: "'DM Sans',sans-serif", fontSize: ".76rem", color: T.ink3 }}>
-                      {new Date(pago.fecha).toLocaleDateString()}
-                    </Typography>
+                    {Array.isArray(pago.abonos) && pago.abonos.length > 0 ? (
+                      <button
+                        className={classes.voucherChip}
+                        style={{ background: "transparent" }}
+                        onClick={() => handleDetails(pago)}
+                        title="Ver historial de abonos"
+                      >
+                        <Receipt style={{ fontSize: 14 }} />
+                        {pago.abonos.length} {pago.abonos.length === 1 ? "abono" : "abonos"}
+                      </button>
+                    ) : (
+                      <span className={classes.voucherEmpty}>— sin abonos</span>
+                    )}
                   </BCell>
                   <BCell>{estadoChip(pago.estado)}</BCell>
                   <BCell>
                     <Box className={classes.actWrap}>
-                      <Tooltip title="Editar" placement="top">
+                      {findAbonoPendiente(pago) && (
+                        <>
+                          <Tooltip title="Aprobar abono pendiente" placement="top">
+                            <button className={`${classes.actBtn} ${classes.bApprove}`} onClick={() => handleAprobar(pago)}>
+                              <Check size={14} strokeWidth={2.5} />
+                            </button>
+                          </Tooltip>
+                          <Tooltip title="Rechazar abono pendiente" placement="top">
+                            <button className={`${classes.actBtn} ${classes.bReject}`} onClick={() => handleRechazar(pago)}>
+                              <X size={14} strokeWidth={2.5} />
+                            </button>
+                          </Tooltip>
+                        </>
+                      )}
+                      <Tooltip title="Agregar abono" placement="top">
                         <button className={`${classes.actBtn} ${classes.bEdit}`} onClick={() => handleOpen(pago)}>
                           <Edit2 size={14} strokeWidth={2.2} />
                         </button>
@@ -726,7 +1073,7 @@ const PagosList = () => {
               ))}
               {filteredPagos.length === 0 && (
                 <TableRow style={{ height: 160 }}>
-                  <TableCell colSpan={7} className={classes.emptyCell}>
+                  <TableCell colSpan={8} className={classes.emptyCell}>
                     {searchTerm ? "No se encontraron pagos que coincidan con la búsqueda." : "No hay pagos registrados."}
                   </TableCell>
                 </TableRow>
@@ -775,38 +1122,45 @@ const PagosList = () => {
           disableEscapeKeyDown
         >
           <DlgHdr
-            icon={editingId
+            icon={pagoExistente
               ? <Edit2      size={20} color="#fff" strokeWidth={2.2} />
               : <CreditCard size={20} color="#fff" strokeWidth={2.2} />
             }
-            title={editingId ? "Editar Pago" : "Nuevo Pago"}
-            sub={editingId ? "Modifica los datos del pago seleccionado" : "Completa los campos para registrar un nuevo pago"}
+            title={pagoExistente ? "Agregar Abono" : "Nuevo Pago"}
+            sub={pagoExistente
+              ? "Registra un nuevo abono al pago de la reserva"
+              : "Selecciona la reserva para iniciar el registro del pago"
+            }
             onClose={handleClose}
           />
           <DialogContent className={classes.dlgBody}>
 
-            {/* ── Sección 1: Información del Pago ── */}
-            <Box className={classes.fmSection}>
-              <Box className={classes.fmSectionLbl}>
-                <Box className={classes.fmSectionIco} style={{ background: "rgba(108,63,255,.12)" }}>
-                  <Payment style={{ fontSize: 14, color: T.v1 }} />
+            {/* ── Alerta inline ── */}
+            {dialogAlert && (
+              <Box
+                className={`${classes.dlgAlert} ${
+                  dialogAlert.type === "error" ? classes.dlgAlertError
+                    : dialogAlert.type === "success" ? classes.dlgAlertSuccess
+                    : classes.dlgAlertWarning
+                }`}
+              >
+                <Box className={classes.dlgAlertIcon}>
+                  {dialogAlert.type === "error" ? <X size={16} strokeWidth={2.5} />
+                    : dialogAlert.type === "success" ? <Check size={16} strokeWidth={2.5} />
+                    : <X size={16} strokeWidth={2.5} />}
                 </Box>
-                Información del Pago
+                <Typography className={classes.dlgAlertText}>{dialogAlert.msg}</Typography>
+                <button
+                  className={classes.dlgAlertClose}
+                  onClick={() => setDialogAlert(null)}
+                  aria-label="Cerrar alerta"
+                >
+                  <X size={14} strokeWidth={2.5} />
+                </button>
               </Box>
-              <TextField
-                className={classes.fmField} margin="dense"
-                label="Fecha" name="fecha"
-                value={formData.fecha} onChange={handleChange}
-                onBlur={handleFieldBlur} onKeyDown={handleKeyDown}
-                fullWidth type="date"
-                InputLabelProps={{ shrink: true }} variant="outlined" required
-                error={!!formErrors.fecha}
-                helperText={formErrors.fecha || "Ingrese la fecha en que se realizó o registra el pago."}
-                InputProps={{ startAdornment: <InputAdornment position="start"><CalendarToday style={{ color: T.ink3, fontSize: 18 }} /></InputAdornment> }}
-              />
-            </Box>
+            )}
 
-            {/* ── Sección 2: Reserva ── */}
+            {/* ── Sección 1: Reserva ── */}
             <Box className={classes.fmSection}>
               <Box className={classes.fmSectionLbl}>
                 <Box className={classes.fmSectionIco} style={{ background: "rgba(0,212,170,.12)" }}>
@@ -824,74 +1178,210 @@ const PagosList = () => {
                 helperText={formErrors.reserva || "Seleccione la reserva a la que corresponde este pago."}
                 InputProps={{ startAdornment: <InputAdornment position="start"><Receipt style={{ color: T.ink3, fontSize: 18 }} /></InputAdornment> }}
               >
-                {reservas.length > 0 ? (
-                  reservas.map((reserva) => (
-                    <MenuItem key={reserva._id} value={reserva._id}>
-                      {reserva.numero_reserva} - {reserva.titular_reserva}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem value="">No hay reservas disponibles</MenuItem>
-                )}
+                {(() => {
+                  // En modo "nuevo pago" filtramos reservas ya saldadas (saldo
+                  // pendiente = 0) y las canceladas. En modo "editar" mostramos
+                  // todas para no romper la edición de pagos antiguos.
+                  const reservasFiltradas = editingId
+                    ? reservas
+                    : reservas.filter((r) => {
+                        if (r.estado === "cancelada") return false
+                        const saldo = calcularSaldoPendiente(r._id, r.total || 0)
+                        return saldo > 0.01
+                      })
+                  if (reservasFiltradas.length === 0) {
+                    return <MenuItem value="">No hay reservas con saldo pendiente</MenuItem>
+                  }
+                  return reservasFiltradas.map((reserva) => {
+                    const saldo = calcularSaldoPendiente(reserva._id, reserva.total || 0)
+                    return (
+                      <MenuItem key={reserva._id} value={reserva._id}>
+                        #{reserva.numero_reserva} · {reserva.titular_reserva} · saldo {formatCOP(saldo)}
+                      </MenuItem>
+                    )
+                  })
+                })()}
               </TextField>
 
               {/* Info card de la reserva seleccionada */}
-              {selectedReservaData && (
-                <Box className={classes.reservaBox}>
-                  <Box className={classes.reservaBoxTitle}>
-                    <Person style={{ fontSize: 14 }} />
-                    Información de la Reserva
-                  </Box>
-                  {[
-                    ["Titular",         selectedReservaData.titular_reserva],
-                    ["N° Reserva",      selectedReservaData.numero_reserva],
-                    ["Total",           formatCOP(selectedReservaData.total || 0)],
-                    ["Pagos parciales", formatCOP(selectedReservaData.pagos_parciales || 0)],
-                    ["Faltante",        formatCOP((selectedReservaData.total || 0) - (selectedReservaData.pagos_parciales || 0))],
-                  ].map(([lbl, val]) => (
-                    <Box key={lbl} className={classes.reservaBoxRow}>
-                      <Typography className={classes.reservaBoxLabel}>{lbl}</Typography>
-                      <Typography className={classes.reservaBoxVal}>{val}</Typography>
+              {selectedReservaData && (() => {
+                const total = selectedReservaData.total || 0
+                const yaPagado = total - calcularSaldoPendiente(selectedReservaData._id, total)
+                const saldoPendiente = calcularSaldoPendiente(selectedReservaData._id, total)
+                const porcentajePagado = total > 0 ? Math.round((yaPagado / total) * 100) : 0
+                return (
+                  <Box className={classes.reservaBox}>
+                    <Box className={classes.reservaBoxTitle}>
+                      <Person style={{ fontSize: 14 }} />
+                      Información de la Reserva
                     </Box>
-                  ))}
-                </Box>
-              )}
+                    {[
+                      ["Titular",         selectedReservaData.titular_reserva],
+                      ["N° Reserva",      selectedReservaData.numero_reserva],
+                      ["Total reserva",   formatCOP(total)],
+                      [`Ya pagado (${porcentajePagado}%)`, formatCOP(yaPagado)],
+                      ["Saldo pendiente", formatCOP(saldoPendiente)],
+                    ].map(([lbl, val]) => (
+                      <Box key={lbl} className={classes.reservaBoxRow}>
+                        <Typography className={classes.reservaBoxLabel}>{lbl}</Typography>
+                        <Typography className={classes.reservaBoxVal}>{val}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                )
+              })()}
             </Box>
 
-            {/* ── Sección 3: Estado del Pago ── */}
+            {/* ── Sección 3: Monto y Método ── */}
             <Box className={classes.fmSection}>
               <Box className={classes.fmSectionLbl}>
-                <Box className={classes.fmSectionIco} style={{ background: "rgba(255,59,130,.10)" }}>
-                  <AssignmentInd style={{ fontSize: 14, color: T.e1 }} />
+                <Box className={classes.fmSectionIco} style={{ background: "rgba(0,212,170,.12)" }}>
+                  <AttachMoney style={{ fontSize: 14, color: T.t1 }} />
                 </Box>
-                Estado del Pago
+                Monto del Abono
               </Box>
               <TextField
+                className={classes.fmField} margin="dense"
+                label={editingId ? "Monto" : "Monto a abonar (saldo pendiente)"}
+                name="monto"
+                value={formData.monto}
+                onChange={handleChange}
+                onBlur={handleFieldBlur} onKeyDown={handleKeyDown}
+                fullWidth type="number" variant="outlined" required
+                error={!!formErrors.monto}
+                helperText={
+                  formErrors.monto
+                    || (editingId
+                      ? "Monto del pago."
+                      : selectedReservaData
+                        ? `Calculado automáticamente: ${formatCOP(Number(formData.monto) || 0)}. No editable.`
+                        : "Seleccione una reserva para calcular el saldo pendiente.")
+                }
+                disabled={!editingId}
+                InputProps={{
+                  readOnly: !editingId,
+                  startAdornment: <InputAdornment position="start"><AttachMoney style={{ color: T.ink3, fontSize: 18 }} /></InputAdornment>,
+                }}
+              />
+              <TextField
                 className={classes.fmField} select margin="dense"
-                label="Estado" name="estado"
-                value={formData.estado} onChange={handleChange}
-                onBlur={handleFieldBlur}
-                fullWidth variant="outlined" required
-                error={!!formErrors.estado}
-                helperText={formErrors.estado || "Seleccione el estado actual del pago."}
-                InputProps={{ startAdornment: <InputAdornment position="start"><VerifiedUser style={{ color: T.ink3, fontSize: 18 }} /></InputAdornment> }}
+                label="Método de pago" name="metodo_pago"
+                value={formData.metodo_pago || "efectivo"} onChange={handleChange}
+                fullWidth variant="outlined"
+                helperText="Medio por el cual el cliente realizó el abono."
+                InputProps={{ startAdornment: <InputAdornment position="start"><Payment style={{ color: T.ink3, fontSize: 18 }} /></InputAdornment> }}
               >
-                <MenuItem value="pendiente">⏳ Pendiente</MenuItem>
-                <MenuItem value="realizado">✅ Realizado</MenuItem>
-                <MenuItem value="fallido">❌ Fallido</MenuItem>
+                <MenuItem value="efectivo">💵 Efectivo</MenuItem>
+                <MenuItem value="tarjeta">💳 Tarjeta</MenuItem>
+                <MenuItem value="transferencia">🏦 Transferencia</MenuItem>
+                <MenuItem value="nequi">📱 Nequi</MenuItem>
+                <MenuItem value="daviplata">📱 Daviplata</MenuItem>
+                <MenuItem value="otro">⚙️ Otro</MenuItem>
               </TextField>
+            </Box>
+
+            {/* ── Sección 4: Comprobante del abono (admin) ── */}
+            <Box className={classes.fmSection}>
+              <Box className={classes.fmSectionLbl}>
+                <Box className={classes.fmSectionIco} style={{ background: "rgba(108,63,255,.12)" }}>
+                  <Receipt style={{ fontSize: 14, color: T.v1 }} />
+                </Box>
+                Comprobante del Abono
+              </Box>
+              <Box style={{
+                borderRadius: 14, padding: "14px 16px",
+                background: "rgba(244,241,255,.45)",
+                border: `1.5px dashed ${T.bM}`,
+                display: "flex", flexDirection: "column", gap: 10,
+              }}>
+                <input
+                  id="admin-comprobante-input"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
+                  onChange={handleAdminComprobanteChange}
+                  style={{ display: "none" }}
+                />
+                <label
+                  htmlFor="admin-comprobante-input"
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                    background: T.gv, color: "#fff",
+                    fontFamily: "'DM Sans',sans-serif", fontWeight: 700,
+                    fontSize: ".82rem", padding: "10px 18px", borderRadius: 50,
+                    cursor: "pointer", boxShadow: "0 4px 14px rgba(108,63,255,.32)",
+                    alignSelf: "flex-start", border: "none",
+                  }}
+                >
+                  <CloudUpload style={{ fontSize: 18 }} />
+                  {adminComprobante ? "Cambiar archivo" : "Subir comprobante"}
+                </label>
+                {adminComprobante ? (
+                  <Box style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    {adminComprobante.type && adminComprobante.type.startsWith("image/") ? (
+                      <img
+                        src={URL.createObjectURL(adminComprobante)}
+                        alt="preview"
+                        style={{
+                          width: 56, height: 56, objectFit: "cover",
+                          borderRadius: 10, border: `1px solid ${T.bL}`,
+                        }}
+                      />
+                    ) : (
+                      <Box style={{
+                        width: 56, height: 56, borderRadius: 10,
+                        background: T.bL, display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <Receipt style={{ fontSize: 24, color: T.v1 }} />
+                      </Box>
+                    )}
+                    <Box style={{ flex: 1, minWidth: 0 }}>
+                      <Typography style={{
+                        fontFamily: "'DM Sans',sans-serif", fontSize: ".82rem", fontWeight: 700,
+                        color: T.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                      }}>
+                        {adminComprobanteName}
+                      </Typography>
+                      <Typography style={{
+                        fontFamily: "'DM Sans',sans-serif", fontSize: ".72rem", color: T.ink3,
+                      }}>
+                        {(adminComprobante.size / 1024).toFixed(1)} KB
+                      </Typography>
+                    </Box>
+                    <button
+                      onClick={() => { setAdminComprobante(null); setAdminComprobanteName("") }}
+                      style={{
+                        width: 28, height: 28, borderRadius: 8,
+                        background: "rgba(255,59,130,.10)", color: "#cc2060",
+                        border: "none", cursor: "pointer",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}
+                      title="Quitar archivo"
+                    >
+                      <X size={14} strokeWidth={2.5} />
+                    </button>
+                  </Box>
+                ) : (
+                  <Typography style={{
+                    fontFamily: "'DM Sans',sans-serif", fontSize: ".75rem", color: T.ink3,
+                  }}>
+                    Opcional. JPG, PNG, WEBP, GIF o PDF (máx. 5 MB).
+                  </Typography>
+                )}
+              </Box>
             </Box>
 
           </DialogContent>
           <DialogActions className={classes.dlgFoot}>
-            <Button onClick={handleClose} className={classes.btnCancel}>Cancelar</Button>
+            <Button onClick={handleClose} className={classes.btnCancel} disabled={submitting}>Cancelar</Button>
             <Button
               onClick={handleSubmit}
               className={classes.btnSubmit}
-              disabled={shouldValidate && (!isFormValid || Object.values(formErrors).some((e) => e !== ""))}
+              disabled={submitting || (shouldValidate && (!isFormValid || Object.values(formErrors).some((e) => e !== "")))}
             >
               <Check size={15} strokeWidth={2.5} style={{ flexShrink: 0 }} />
-              {editingId ? "Actualizar Pago" : "Crear Pago"}
+              {submitting
+                ? "Procesando…"
+                : pagoExistente ? "Registrar abono" : "Crear pago"}
             </Button>
           </DialogActions>
         </Dialog>
@@ -902,7 +1392,7 @@ const PagosList = () => {
         <Dialog
           open={detailsOpen}
           onClose={handleCloseDetails}
-          maxWidth="sm" fullWidth
+          maxWidth="md" fullWidth
           classes={{ paper: classes.dlgPaper }}
           disableEnforceFocus
           disableEscapeKeyDown
@@ -914,16 +1404,58 @@ const PagosList = () => {
             onClose={handleCloseDetails}
           />
           <DialogContent className={classes.dlgBody}>
+            {/* Alerta inline del modal de detalles */}
+            {detailsAlert && (
+              <Box
+                className={`${classes.dlgAlert} ${
+                  detailsAlert.type === "error" ? classes.dlgAlertError
+                    : detailsAlert.type === "success" ? classes.dlgAlertSuccess
+                    : classes.dlgAlertWarning
+                }`}
+                style={{ flexWrap: "wrap" }}
+              >
+                <Box className={classes.dlgAlertIcon}>
+                  {detailsAlert.type === "error" ? <X size={16} strokeWidth={2.5} />
+                    : detailsAlert.type === "success" ? <Check size={16} strokeWidth={2.5} />
+                    : <X size={16} strokeWidth={2.5} />}
+                </Box>
+                <Typography className={classes.dlgAlertText}>{detailsAlert.msg}</Typography>
+                {detailsAlert.action && (
+                  <button
+                    onClick={() => { const run = detailsAlert.action.run; setDetailsAlert(null); run() }}
+                    style={{
+                      background: detailsAlert.type === "warning"
+                        ? "linear-gradient(135deg,#FF7B2C,#F59E0B)"
+                        : T.gv,
+                      color: "#fff", border: "none",
+                      padding: "6px 14px", borderRadius: 50,
+                      fontFamily: "'DM Sans',sans-serif", fontWeight: 700, fontSize: ".76rem",
+                      cursor: "pointer", marginRight: 4,
+                    }}
+                  >
+                    {detailsAlert.action.label}
+                  </button>
+                )}
+                <button
+                  className={classes.dlgAlertClose}
+                  onClick={() => setDetailsAlert(null)}
+                  aria-label="Cerrar alerta"
+                >
+                  <X size={14} strokeWidth={2.5} />
+                </button>
+              </Box>
+            )}
+
             {/* Hero */}
             <Box className={classes.detHero}>
               <Box className={classes.detAv}>
                 <CreditCard size={32} color="#fff" strokeWidth={2} />
               </Box>
               <Typography className={classes.detName}>
-                {formatCOP(selectedPago.pagoParcial || selectedPago.monto || 0)}
+                {formatCOP(sumarAbonosActivos(selectedPago))}
               </Typography>
               <Typography className={classes.detSub}>
-                Pago {selectedPago.estado} · {new Date(selectedPago.fecha).toLocaleDateString()}
+                Pago {selectedPago.estado} · {(selectedPago.abonos || []).length} {(selectedPago.abonos || []).length === 1 ? "abono" : "abonos"}
               </Typography>
             </Box>
 
@@ -931,11 +1463,11 @@ const PagosList = () => {
 
             <Box className={classes.detGrid}>
               <Box className={classes.detItem}>
-                <Typography className={classes.detLbl}>Pago Parcial</Typography>
+                <Typography className={classes.detLbl}>Total Pagado</Typography>
                 <Box className={classes.detIconRow}>
                   <Payment style={{ fontSize: 14, color: T.v1 }} />
                   <Typography className={classes.detValGreen}>
-                    {formatCOP(selectedPago.pagoParcial || selectedPago.monto || 0)}
+                    {formatCOP(sumarAbonosActivos(selectedPago))}
                   </Typography>
                 </Box>
               </Box>
@@ -949,14 +1481,17 @@ const PagosList = () => {
                 </Box>
               </Box>
               <Box className={classes.detItem}>
-                <Typography className={classes.detLbl}>Fecha</Typography>
+                <Typography className={classes.detLbl}>Total Reserva</Typography>
                 <Box className={classes.detIconRow}>
-                  <CalendarToday style={{ fontSize: 14, color: T.b1 }} />
-                  <Typography className={classes.detVal}>{new Date(selectedPago.fecha).toLocaleDateString()}</Typography>
+                  <AttachMoney style={{ fontSize: 14, color: T.a1 }} />
+                  <Typography className={classes.detVal}>
+                    {selectedPago.reserva && typeof selectedPago.reserva === "object"
+                      ? formatCOP(selectedPago.reserva.total || 0) : "—"}
+                  </Typography>
                 </Box>
               </Box>
               <Box className={classes.detItem}>
-                <Typography className={classes.detLbl}>Estado</Typography>
+                <Typography className={classes.detLbl}>Estado Global</Typography>
                 {estadoChip(selectedPago.estado)}
               </Box>
               <Box className={classes.detItemFull}>
@@ -970,15 +1505,100 @@ const PagosList = () => {
                   </Typography>
                 </Box>
               </Box>
-              {selectedPago.reserva && typeof selectedPago.reserva === "object" && (
-                <Box className={classes.detItemFull}>
-                  <Typography className={classes.detLbl}>Total Reserva</Typography>
-                  <Box className={classes.detIconRow}>
-                    <AttachMoney style={{ fontSize: 14, color: T.a1 }} />
-                    <Typography className={classes.detVal}>{formatCOP(selectedPago.reserva.total || 0)}</Typography>
-                  </Box>
-                </Box>
-              )}
+              {/* ── HISTORIAL DE ABONOS ── */}
+              <Box className={classes.voucherPreviewBox} style={{ marginTop: 8 }}>
+                <Typography className={classes.detLbl} style={{ marginBottom: 6 }}>
+                  Historial de Abonos ({(selectedPago.abonos || []).length})
+                </Typography>
+                {(selectedPago.abonos || []).length === 0 ? (
+                  <Typography className={classes.detVal} style={{ color: T.ink3, fontSize: ".82rem" }}>
+                    Este pago aún no tiene abonos registrados.
+                  </Typography>
+                ) : (
+                  selectedPago.abonos.map((abono, idx) => (
+                    <Box
+                      key={abono._id || idx}
+                      style={{
+                        background: "#fff",
+                        border: `1px solid ${T.bL}`,
+                        borderRadius: 12,
+                        padding: "12px 14px",
+                        marginBottom: 10,
+                      }}
+                    >
+                      <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+                        <Box style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <Typography style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: ".96rem", color: T.ink }}>
+                            #{idx + 1} · {formatCOP(abono.monto || 0)}
+                          </Typography>
+                          {estadoChip(abono.estado)}
+                          <Box className={classes.chip} component="span" style={{ background: "rgba(108,63,255,.10)", color: T.v1 }}>
+                            {abono.origen === "landing" ? "🌐 Landing" : "👤 Admin"}
+                          </Box>
+                        </Box>
+                      </Box>
+                      <Box style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: ".80rem", color: T.ink3, marginBottom: abono.comprobante ? 10 : 0 }}>
+                        <span><b style={{ color: T.ink }}>Fecha:</b> {abono.fecha ? new Date(abono.fecha).toLocaleString() : "—"}</span>
+                        <span><b style={{ color: T.ink }}>Método:</b> {abono.metodo_pago || "—"}</span>
+                        {abono.notas && <span style={{ gridColumn: "1 / -1" }}><b style={{ color: T.ink }}>Notas:</b> {abono.notas}</span>}
+                      </Box>
+                      {abono.comprobante ? (
+                        <Box>
+                          {esComprobantePdf(abono.comprobante) ? (
+                            <Typography style={{ fontSize: ".80rem", color: T.ink3, marginBottom: 8 }}>
+                              📄 Comprobante PDF — abrir para visualizar.
+                            </Typography>
+                          ) : (
+                            <img
+                              src={buildComprobanteUrl(abono.comprobante)}
+                              alt={`Comprobante abono ${idx + 1}`}
+                              style={{
+                                width: "100%", maxHeight: 220, objectFit: "contain",
+                                borderRadius: 8, background: "#fff",
+                                border: "1px solid rgba(108,63,255,.10)",
+                                marginBottom: 8,
+                              }}
+                            />
+                          )}
+                          <a
+                            href={buildComprobanteUrl(abono.comprobante)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={classes.voucherPreviewBtn}
+                            style={{ marginRight: 8 }}
+                          >
+                            <Eye size={13} strokeWidth={2.2} /> Abrir comprobante
+                          </a>
+                        </Box>
+                      ) : (
+                        <Typography style={{ fontSize: ".78rem", color: T.ink4, fontStyle: "italic" }}>
+                          Abono sin comprobante adjunto.
+                        </Typography>
+                      )}
+                      {abono.estado === "pendiente" && (
+                        <Box style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                          <button
+                            className={`${classes.actBtn} ${classes.bApprove}`}
+                            style={{ width: "auto", padding: "0 12px", height: 30, gap: 6 }}
+                            onClick={() => handleAprobarAbono(selectedPago._id, abono._id)}
+                          >
+                            <Check size={13} strokeWidth={2.5} />
+                            <span style={{ fontSize: ".74rem", fontWeight: 700 }}>Aprobar abono</span>
+                          </button>
+                          <button
+                            className={`${classes.actBtn} ${classes.bReject}`}
+                            style={{ width: "auto", padding: "0 12px", height: 30, gap: 6 }}
+                            onClick={() => handleRechazarAbono(selectedPago._id, abono._id)}
+                          >
+                            <X size={13} strokeWidth={2.5} />
+                            <span style={{ fontSize: ".74rem", fontWeight: 700 }}>Rechazar abono</span>
+                          </button>
+                        </Box>
+                      )}
+                    </Box>
+                  ))
+                )}
+              </Box>
             </Box>
           </DialogContent>
           <DialogActions className={classes.dlgFoot}>
@@ -987,7 +1607,7 @@ const PagosList = () => {
               onClick={() => { handleCloseDetails(); handleOpen(selectedPago) }}
               className={classes.btnSubmit}
             >
-              <Edit2 size={14} strokeWidth={2.2} style={{ flexShrink: 0 }} /> Editar
+              <Edit2 size={14} strokeWidth={2.2} style={{ flexShrink: 0 }} /> Agregar abono
             </Button>
           </DialogActions>
         </Dialog>

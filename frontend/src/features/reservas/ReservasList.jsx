@@ -44,6 +44,7 @@ import {
 import Swal from "sweetalert2"
 import { getReservas, createReserva, updateReserva, deleteReserva, getReservaById } from "./reservas.service"
 import apartamentoService from "../apartamentos/apartamento.service"
+import descuentoService from "../descuentos/descuentos.service"
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    MENSAJES INSTRUCTIVOS
@@ -418,7 +419,7 @@ const parseDateLocal = (str) => {
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 const INITIAL_FORM = {
   titular_reserva: "", fecha_inicio: "", fecha_fin: "",
-  apartamentos: [], noches_estadia: 1, total: 0,
+  apartamentos: [], noches_estadia: 1, subtotal: 0, descuento_aplicado: 0, total: 0,
   pagos_parciales: 0, estado: "pendiente", acompanantes: [],
 }
 
@@ -444,9 +445,29 @@ const ReservasList = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5)
   const [apartamentos, setApartamentos] = useState([])
   const [mappedApartamentosOptions, setMappedApartamentosOptions] = useState([])
+  // Descuentos vigentes indexados por Tipo de apartamento
+  const [descuentosPorTipo, setDescuentosPorTipo] = useState({})
 
   useEffect(() => { fetchReservas() }, [])
   useEffect(() => { fetchApartamentos() }, [])
+  useEffect(() => { fetchDescuentosVigentes() }, [])
+
+  const fetchDescuentosVigentes = async () => {
+    try {
+      const data = await descuentoService.getDescuentosVigentes()
+      const map = {}
+      ;(data || []).forEach((d) => {
+        // Si hay varios descuentos vigentes para el mismo tipo, nos quedamos con el de mayor porcentaje
+        const actual = map[d.tipoApartamento]
+        if (!actual || Number(d.porcentaje) > Number(actual.porcentaje)) {
+          map[d.tipoApartamento] = d
+        }
+      })
+      setDescuentosPorTipo(map)
+    } catch (error) {
+      console.error("Error fetching descuentos vigentes", error)
+    }
+  }
 
   const fetchReservas = async () => {
     try {
@@ -473,6 +494,7 @@ const ReservasList = () => {
       id: apt._id,
       label: `Apartamento ${apt.NumeroApto} - Piso ${apt.Piso} (Tarifa: COP ${apt.Tarifa})`,
       price: apt.Tarifa,
+      tipo: apt.Tipo,
     }))
     setMappedApartamentosOptions(options)
   }, [apartamentos])
@@ -491,13 +513,40 @@ const ReservasList = () => {
   }, [formData.fecha_inicio, formData.fecha_fin])
 
   useEffect(() => {
-    if (mappedApartamentosOptions.length === 0 || formData.apartamentos.length === 0) return
+    if (mappedApartamentosOptions.length === 0 || formData.apartamentos.length === 0) {
+      if (formData.subtotal !== 0 || formData.descuento_aplicado !== 0 || formData.total !== 0) {
+        setFormData((prev) => ({ ...prev, subtotal: 0, descuento_aplicado: 0, total: 0 }))
+      }
+      return
+    }
     const selected = formData.apartamentos.map(id => mappedApartamentosOptions.find(i => i.id === id)).filter(Boolean)
-    const sumPrices = selected.reduce((acc, a) => acc + a.price, 0)
-    const newTotal = sumPrices * Number(formData.noches_estadia)
-    if (newTotal !== formData.total)
-      setFormData((prev) => ({ ...prev, total: newTotal }))
-  }, [formData.apartamentos, formData.noches_estadia, mappedApartamentosOptions])
+    const noches = Number(formData.noches_estadia) || 1
+
+    let subtotal = 0
+    let descuentoTotal = 0
+    selected.forEach((a) => {
+      const subAp = a.price * noches
+      const desc = descuentosPorTipo[a.tipo]
+      const porcentaje = desc ? Number(desc.porcentaje) || 0 : 0
+      const descAp = Math.round(subAp * (porcentaje / 100))
+      subtotal += subAp
+      descuentoTotal += descAp
+    })
+    const newTotal = subtotal - descuentoTotal
+
+    if (
+      newTotal !== formData.total ||
+      subtotal !== formData.subtotal ||
+      descuentoTotal !== formData.descuento_aplicado
+    ) {
+      setFormData((prev) => ({
+        ...prev,
+        subtotal,
+        descuento_aplicado: descuentoTotal,
+        total: newTotal,
+      }))
+    }
+  }, [formData.apartamentos, formData.noches_estadia, mappedApartamentosOptions, descuentosPorTipo])
 
   /* ── exportToExcel ── */
   const exportToExcel = async () => {
@@ -806,6 +855,8 @@ const ReservasList = () => {
         ...formData,
         pagos_parciales: Number(formData.pagos_parciales),
         noches_estadia: Number(formData.noches_estadia),
+        subtotal: Number(formData.subtotal) || 0,
+        descuento_aplicado: Number(formData.descuento_aplicado) || 0,
         total: Number(formData.total),
         acompanantes: formData.acompanantes.map(a => ({
           _id: a._id,
@@ -1232,6 +1283,28 @@ const ReservasList = () => {
             </Box>
             <Box className={classes.fmRow}>
               <TextField
+                className={classes.fmField} margin="dense" label="Subtotal (sin descuento)"
+                name="subtotal" type="text"
+                value={formatCOP(formData.subtotal)}
+                fullWidth disabled variant="outlined"
+                helperText="Suma de tarifas por noches, antes de aplicar descuentos."
+                InputProps={{ startAdornment: <InputAdornment position="start"><DollarSign size={16} color={T.ink3} strokeWidth={2} /></InputAdornment> }}
+              />
+              <TextField
+                className={classes.fmField} margin="dense" label="Descuento aplicado"
+                name="descuento_aplicado" type="text"
+                value={formatCOP(formData.descuento_aplicado)}
+                fullWidth disabled variant="outlined"
+                helperText={
+                  formData.descuento_aplicado > 0
+                    ? "Descuento vigente aplicado según el tipo de apartamento."
+                    : "No hay descuentos vigentes para los apartamentos seleccionados."
+                }
+                InputProps={{ startAdornment: <InputAdornment position="start"><DollarSign size={16} color={T.ink3} strokeWidth={2} /></InputAdornment> }}
+              />
+            </Box>
+            <Box className={classes.fmRow}>
+              <TextField
                 className={classes.fmField} margin="dense" label="Total"
                 name="total" type="text"
                 value={formatCOP(formData.total)}
@@ -1388,6 +1461,24 @@ const ReservasList = () => {
                   <Box style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <CalendarDays size={14} color={T.a1} strokeWidth={2.2} />
                     <Typography className={classes.detVal}>{selectedReserva.noches_estadia} noches</Typography>
+                  </Box>
+                </Box>
+                <Box className={classes.detItem}>
+                  <Typography className={classes.detLbl}>Subtotal</Typography>
+                  <Box style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <DollarSign size={14} color={T.ink3} strokeWidth={2.2} />
+                    <Typography className={classes.detVal}>{formatCOP(selectedReserva.subtotal || selectedReserva.total)}</Typography>
+                  </Box>
+                </Box>
+                <Box className={classes.detItem}>
+                  <Typography className={classes.detLbl}>Descuento aplicado</Typography>
+                  <Box style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <DollarSign size={14} color={T.e1} strokeWidth={2.2} />
+                    <Typography className={classes.detVal}>
+                      {Number(selectedReserva.descuento_aplicado) > 0
+                        ? `- ${formatCOP(selectedReserva.descuento_aplicado)}`
+                        : "Sin descuento"}
+                    </Typography>
                   </Box>
                 </Box>
                 <Box className={classes.detItem}>

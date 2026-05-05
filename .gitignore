@@ -44,6 +44,11 @@ yarn-error.log*
 tmp/
 temp/
 
+# Archivos subidos por usuarios (comprobantes de pago, etc.)
+backend/uploads/*
+!backend/uploads/.gitkeep
+!backend/uploads/comprobantes/.gitkeep
+
 # Archivos de cobertura y pruebas
 coverage/
 .nyc_output/

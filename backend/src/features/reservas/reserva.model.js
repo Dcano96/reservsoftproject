@@ -59,6 +59,9 @@ const ReservaSchema = new mongoose.Schema(
       },
     ],
     noches_estadia: { type: Number, required: true, min: 1 },
+    // subtotal = precio sin descuento. total = subtotal - descuento_aplicado.
+    subtotal: { type: Number, default: 0, min: 0 },
+    descuento_aplicado: { type: Number, default: 0, min: 0 },
     total: { type: Number, required: true, min: 0 },
     pagos_parciales: {
       type: Number,

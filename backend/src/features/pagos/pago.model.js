@@ -1,9 +1,53 @@
 const mongoose = require("mongoose");
 
-const PagoSchema = new mongoose.Schema({
+// ─────────────────────────────────────────────────────────────
+// Sub-esquema: cada abono individual del Pago
+// Un Pago = una reserva. Dentro tiene N abonos (uno desde la
+// landing, otro desde el admin cuando llega el cliente al hotel,
+// etc). Cada abono guarda su propio comprobante y verificación.
+// ─────────────────────────────────────────────────────────────
+const AbonoSchema = new mongoose.Schema({
   monto: {
     type: Number,
     required: true,
+    min: [0, "El monto del abono no puede ser negativo"]
+  },
+  fecha: {
+    type: Date,
+    default: Date.now,
+    required: true
+  },
+  metodo_pago: {
+    type: String,
+    enum: ["efectivo", "tarjeta", "transferencia", "nequi", "daviplata", "otro"],
+    default: "efectivo"
+  },
+  comprobante: {
+    type: String,
+    default: ""
+  },
+  origen: {
+    type: String,
+    enum: ["landing", "admin"],
+    default: "admin"
+  },
+  estado: {
+    type: String,
+    enum: ["pendiente", "realizado", "rechazado"],
+    default: "pendiente",
+    required: true
+  },
+  notas: { type: String, default: "" },
+  verificado_por: { type: String, default: "" },
+  fecha_verificacion: { type: Date }
+}, { _id: true, timestamps: true });
+
+const PagoSchema = new mongoose.Schema({
+  // monto = suma de los abonos en estado pendiente o realizado
+  monto: {
+    type: Number,
+    required: true,
+    default: 0,
     min: [0, "El monto del pago no puede ser negativo"]
   },
   fecha: {
@@ -15,6 +59,7 @@ const PagoSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Reserva",
     required: true,
+    unique: true, // un Pago por reserva
     index: true
   },
   estado: {
@@ -28,6 +73,8 @@ const PagoSchema = new mongoose.Schema({
     enum: ["efectivo", "tarjeta", "transferencia", "nequi", "daviplata", "otro"],
     default: "efectivo"
   },
+  // Compatibilidad: comprobante del primer abono. El listado completo
+  // de comprobantes vive dentro de `abonos[].comprobante`.
   comprobante: {
     type: String,
     default: ""
@@ -46,6 +93,10 @@ const PagoSchema = new mongoose.Schema({
   },
   fecha_verificacion: {
     type: Date
+  },
+  abonos: {
+    type: [AbonoSchema],
+    default: []
   }
 }, {
   timestamps: true,
@@ -59,102 +110,61 @@ const PagoSchema = new mongoose.Schema({
   }
 });
 
-// Campo virtual para calcular el faltante basado en la reserva asociada
-PagoSchema.virtual('faltante').get(function () {
-  if (this.reserva && typeof this.reserva === 'object' && this.reserva.total) {
-    return this.reserva.total - (this.reserva.pagos_parciales || 0);
+// Recalcula `monto` y `estado` global a partir del array de abonos.
+// Se invoca antes de guardar para mantener consistencia.
+PagoSchema.methods.recalcularDesdeAbonos = function () {
+  const activos = (this.abonos || []).filter((a) => a.estado === "pendiente" || a.estado === "realizado");
+  this.monto = activos.reduce((sum, a) => sum + (Number(a.monto) || 0), 0);
+
+  if (activos.length === 0) {
+    this.estado = "anulado";
+  } else {
+    const todosRealizados = activos.every((a) => a.estado === "realizado");
+    this.estado = todosRealizados ? "realizado" : "pendiente";
   }
-  return 0;
-});
 
-// Middleware pre-save para validar que el monto no exceda el saldo pendiente
-PagoSchema.pre('save', async function (next) {
-  try {
-    if (this.isNew || this.isModified('monto')) {
-      const Reserva = mongoose.model('Reserva');
-      const reserva = await Reserva.findById(this.reserva);
-
-      if (!reserva) {
-        return next(new Error('La reserva asociada no fue encontrada'));
-      }
-
-      // Calcular el total de pagos activos existentes (excluyendo este si es update)
-      const Pago = mongoose.model('Pago');
-      const filtro = {
-        reserva: this.reserva,
-        estado: { $in: ['pendiente', 'realizado'] }
-      };
-
-      // Si es una actualización, excluir este pago del cálculo
-      if (!this.isNew) {
-        filtro._id = { $ne: this._id };
-      }
-
-      const pagosExistentes = await Pago.find(filtro);
-      const totalPagado = pagosExistentes.reduce((sum, p) => sum + p.monto, 0);
-      const saldoPendiente = reserva.total - totalPagado;
-
-      if (this.monto > saldoPendiente + 0.01) { // Tolerancia de redondeo
-        return next(new Error(
-          `El monto ($${this.monto.toLocaleString("es-CO")}) excede el saldo pendiente ($${saldoPendiente.toLocaleString("es-CO")})`
-        ));
-      }
-    }
-    next();
-  } catch (error) {
-    next(error);
+  // Mantener `comprobante` legacy = comprobante del primer abono activo
+  if (activos.length > 0 && activos[0].comprobante) {
+    this.comprobante = activos[0].comprobante;
   }
-});
-
-// Método estático: calcular el total de pagos activos de una reserva
-PagoSchema.statics.calcularTotalPagos = async function (reservaId) {
-  const pagos = await this.find({
-    reserva: reservaId,
-    estado: { $in: ['realizado', 'pendiente'] }
-  });
-  return pagos.reduce((total, pago) => total + pago.monto, 0);
 };
 
-// Método estático: obtener resumen financiero de una reserva
-PagoSchema.statics.obtenerResumenFinanciero = async function (reservaId) {
-  const Reserva = mongoose.model('Reserva');
-  const reserva = await Reserva.findById(reservaId);
+// Calcular el total pagado (pendiente + realizado) de una reserva.
+// Mira los abonos activos del único Pago que tenga esa reserva.
+PagoSchema.statics.calcularTotalPagos = async function (reservaId) {
+  const pago = await this.findOne({ reserva: reservaId });
+  if (!pago) return 0;
+  const activos = (pago.abonos || []).filter((a) => a.estado === "pendiente" || a.estado === "realizado");
+  return activos.reduce((total, a) => total + (Number(a.monto) || 0), 0);
+};
 
+// Resumen financiero de una reserva.
+PagoSchema.statics.obtenerResumenFinanciero = async function (reservaId) {
+  const Reserva = mongoose.model("Reserva");
+  const reserva = await Reserva.findById(reservaId);
   if (!reserva) return null;
 
-  const pagos = await this.find({
-    reserva: reservaId,
-    estado: { $in: ['realizado', 'pendiente'] }
-  });
-
-  const totalAbonado = pagos.reduce((sum, p) => sum + p.monto, 0);
+  const totalAbonado = await this.calcularTotalPagos(reservaId);
+  const pago = await this.findOne({ reserva: reservaId });
+  const cantidadAbonos = pago ? (pago.abonos || []).filter((a) => a.estado === "pendiente" || a.estado === "realizado").length : 0;
 
   return {
     totalReserva: reserva.total,
     totalAbonado,
     saldoPendiente: reserva.total - totalAbonado,
     porcentajePagado: reserva.total > 0 ? Math.round((totalAbonado / reserva.total) * 100) : 0,
-    cantidadPagos: pagos.length,
+    cantidadPagos: cantidadAbonos,
     estadoReserva: reserva.estado
   };
 };
 
-// Método de instancia para anular un pago
+// Anular el pago completo (y todos sus abonos).
 PagoSchema.methods.anular = async function () {
-  const estadoAnterior = this.estado;
-  this.estado = 'anulado';
-
-  // Solo actualizar la reserva si el pago estaba activo
-  if (estadoAnterior !== 'anulado' && estadoAnterior !== 'rechazado') {
-    const Reserva = mongoose.model('Reserva');
-    const reserva = await Reserva.findById(this.reserva);
-
-    if (reserva) {
-      reserva.pagos_parciales = Math.max(0, reserva.pagos_parciales - this.monto);
-      await reserva.save();
-    }
-  }
-
+  this.estado = "anulado";
+  (this.abonos || []).forEach((a) => {
+    if (a.estado !== "rechazado") a.estado = "rechazado";
+  });
+  this.monto = 0;
   return this.save();
 };
 

@@ -298,12 +298,25 @@ FRONTEND_URL=http://localhost:3000
 
 ---
 
+### 💳 Pagos
+
+| Vista 1 | Vista 2 |
+|---|---|
+| ![](screenshots/pagos1.JPG) | ![](screenshots/pagos2.JPG) |
+
+| Vista 3 | Vista 4 |
+|---|---|
+| ![](screenshots/pagos3.JPG) | ![](screenshots/pagos4.JPG) |
+
+---
+
 ## 👨‍💻 Desarrolladores
 
 <div align="center">
 
 | Desarrollador | Rol |
 |---|---|
+| **David Goez** | Desarrollador Full Stack |
 | **David Zabala** | Desarrollador Full Stack |
 | **Sofia Ramos** | Desarrolladora Full Stack |
 | **Cesar Pelaez** | Desarrollador Full Stack |

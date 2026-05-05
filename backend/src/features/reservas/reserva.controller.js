@@ -1,8 +1,50 @@
 // Controlador para manejar las reservas de apartamentos
 const Reserva = require("./reserva.model")
 const Apartamento = require("../apartamento/apartamento.model")
+const Descuento = require("../descuentos/descuento.model")
 const mongoose = require("mongoose")
 const mailer = require("../../../config/mailer")
+
+/* ─────────────────────────────────────────────────────────────
+   HELPER: calcular subtotal, descuento y total de una reserva
+   Recorre los apartamentos, busca un descuento vigente para el
+   Tipo de cada uno y lo aplica sobre (Tarifa * noches).
+   Devuelve { subtotal, descuento_aplicado, total, detalle }.
+───────────────────────────────────────────────────────────── */
+const calcularTotalesConDescuento = async (apartamentosIds, noches, fechaReferencia = new Date()) => {
+  let subtotal = 0
+  let descuentoTotal = 0
+  const detalle = []
+
+  for (const aptId of apartamentosIds) {
+    const apartamento = await Apartamento.findById(aptId)
+    if (!apartamento) continue
+
+    const subtotalApto = apartamento.Tarifa * noches
+    const descuento = await Descuento.obtenerVigentePorTipo(apartamento.Tipo, fechaReferencia)
+    const porcentaje = descuento ? Number(descuento.porcentaje) || 0 : 0
+    const descuentoApto = Math.round(subtotalApto * (porcentaje / 100))
+
+    subtotal += subtotalApto
+    descuentoTotal += descuentoApto
+    detalle.push({
+      apartamento: apartamento._id,
+      tipo: apartamento.Tipo,
+      tarifa: apartamento.Tarifa,
+      subtotal: subtotalApto,
+      porcentaje_descuento: porcentaje,
+      descuento_aplicado: descuentoApto,
+      total: subtotalApto - descuentoApto,
+    })
+  }
+
+  return {
+    subtotal,
+    descuento_aplicado: descuentoTotal,
+    total: subtotal - descuentoTotal,
+    detalle,
+  }
+}
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id)
 
@@ -145,11 +187,9 @@ exports.crearReserva = async (req, res) => {
       }
     }
 
-    let total = 0
-    for (const aptId of apartamentos) {
-      const apartamento = await Apartamento.findById(aptId)
-      if (apartamento) total += apartamento.Tarifa * noches_estadia
-    }
+    // Aplicar descuentos vigentes según el Tipo de cada apartamento.
+    const calc = await calcularTotalesConDescuento(apartamentos, noches_estadia, inicio)
+    const { subtotal, descuento_aplicado, total } = calc
 
     // FIX: validación cruzada pagos_parciales <= total hecha aquí en el controlador
     const pagos_parciales = Number(req.body.pagos_parciales) || 0
@@ -163,6 +203,8 @@ exports.crearReserva = async (req, res) => {
     const reservaData = {
       ...req.body,
       noches_estadia,
+      subtotal,
+      descuento_aplicado,
       total,
       pagos_parciales,
       acompanantes: acompanantesNorm,
@@ -246,6 +288,36 @@ exports.actualizarReserva = async (req, res) => {
       fin.setHours(0, 0, 0, 0)
       if (fin < inicio) {
         return res.status(400).json({ msg: "La fecha de fin debe ser igual o posterior a la fecha de inicio", error: true })
+      }
+    }
+
+    // Recalcular subtotal/descuento/total si vienen apartamentos o fechas en la actualización.
+    // Esto garantiza que un cambio de fechas o de unidades reaplique los descuentos vigentes.
+    const reservaActual = await Reserva.findById(id)
+    if (reservaActual) {
+      const aptsParaCalculo = Array.isArray(bodyNormalizado.apartamentos) && bodyNormalizado.apartamentos.length > 0
+        ? bodyNormalizado.apartamentos
+        : reservaActual.apartamentos
+
+      const fechaInicioCalc = bodyNormalizado.fecha_inicio
+        ? new Date(bodyNormalizado.fecha_inicio)
+        : reservaActual.fecha_inicio
+      const fechaFinCalc = bodyNormalizado.fecha_fin
+        ? new Date(bodyNormalizado.fecha_fin)
+        : reservaActual.fecha_fin
+
+      let nochesCalc = reservaActual.noches_estadia
+      if (fechaInicioCalc && fechaFinCalc) {
+        const diff = Math.abs(new Date(fechaFinCalc) - new Date(fechaInicioCalc))
+        nochesCalc = Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+        bodyNormalizado.noches_estadia = nochesCalc
+      }
+
+      if (aptsParaCalculo && aptsParaCalculo.length > 0) {
+        const calc = await calcularTotalesConDescuento(aptsParaCalculo, nochesCalc, fechaInicioCalc || new Date())
+        bodyNormalizado.subtotal = calc.subtotal
+        bodyNormalizado.descuento_aplicado = calc.descuento_aplicado
+        bodyNormalizado.total = calc.total
       }
     }
 
@@ -550,7 +622,11 @@ exports.crearReservaPublica = async (req, res) => {
       })
     }
 
-    const total = apartamento.Tarifa * noches_estadia
+    // Aplicar descuento vigente según el Tipo del apartamento
+    const calcPub = await calcularTotalesConDescuento([apartamento_id], noches_estadia, inicio)
+    const subtotal = calcPub.subtotal
+    const descuento_aplicado = calcPub.descuento_aplicado
+    const total = calcPub.total
 
     let pagos_parciales = 0
     if (monto_pago) {
@@ -589,6 +665,8 @@ exports.crearReservaPublica = async (req, res) => {
       fecha_fin,
       apartamentos: [apartamento_id],
       noches_estadia,
+      subtotal,
+      descuento_aplicado,
       total,
       pagos_parciales,
       estado: "pendiente",

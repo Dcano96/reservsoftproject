@@ -7,34 +7,16 @@ import Button from "@material-ui/core/Button"
 import CircularProgress from "@material-ui/core/CircularProgress"
 import Snackbar from "@material-ui/core/Snackbar"
 import IconButton from "@material-ui/core/IconButton"
-import Chip from "@material-ui/core/Chip"
-import Divider from "@material-ui/core/Divider"
 import Alert from "@material-ui/lab/Alert"
-import Save from "@material-ui/icons/Save"
-import Edit from "@material-ui/icons/Edit"
 import Close from "@material-ui/icons/Close"
-import Person from "@material-ui/icons/Person"
-import Email from "@material-ui/icons/Email"
-import Phone from "@material-ui/icons/Phone"
-import Security from "@material-ui/icons/Security"
-import AssignmentInd from "@material-ui/icons/AssignmentInd"
-import CalendarToday from "@material-ui/icons/CalendarToday"
-import VerifiedUser from "@material-ui/icons/VerifiedUser"
-import Lock from "@material-ui/icons/Lock"
-import Visibility from "@material-ui/icons/Visibility"
-import CheckCircle from "@material-ui/icons/CheckCircle"
-import AccessTime from "@material-ui/icons/AccessTime"
-import Work from "@material-ui/icons/Work"
-import VpnKey from "@material-ui/icons/VpnKey"
-import VisibilityOff from "@material-ui/icons/VisibilityOff"
-import { makeStyles, withStyles } from "@material-ui/core/styles"
+import { makeStyles } from "@material-ui/core/styles"
 import axios from "axios"
 import jwtDecode from "jwt-decode"
 import Swal from "sweetalert2"
 import {
   X, Check, User, Mail, Phone as PhoneIcon, Key, FileText,
-  Shield, Calendar, Clock, Eye, EyeOff, Save as SaveIcon,
-  Edit2, Users, Lock as LockIcon, Star,
+  Shield, Calendar, Clock, Eye, EyeOff,
+  Edit2, Lock as LockIcon, Star,
 } from "lucide-react"
 import MisReservas from "../clientes/mis-reservas"
 
@@ -139,7 +121,7 @@ const validarPassword = (pass) => {
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   DESIGN TOKENS — idénticos al componente clientes
+   DESIGN TOKENS — Nido Sky DARK
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 const T = {
   ink:"#0C0A14", ink2:"#2D2640", ink3:"#6B5E87", ink4:"#B0A5C8",
@@ -149,32 +131,42 @@ const T = {
   ge:"linear-gradient(135deg,#FF3B82,#FF7B2C)",
   gt:"linear-gradient(135deg,#00D4AA,#00A3E0)",
   gb:"linear-gradient(135deg,#2563EB,#7C3AED)",
-  bL:"rgba(108,63,255,0.10)", bM:"rgba(108,63,255,0.18)",
+  bL:"rgba(108,63,255,0.18)", bM:"rgba(108,63,255,0.28)",
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   SWAL INJECT — idéntico al componente clientes
+   FONTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+if (typeof document !== "undefined" && !document.getElementById("ns-style")) {
+  const s = document.createElement("style"); s.id = "ns-style"
+  s.textContent = `
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+    @keyframes ns-spin { to { transform: rotate(360deg) } }
+  `
+  document.head.appendChild(s)
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   SWAL DARK
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 if (typeof document !== "undefined" && !document.getElementById("rs-swal")) {
   const s = document.createElement("style"); s.id = "rs-swal"
   s.textContent = `
-    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
     .rs-pop{font-family:'DM Sans',sans-serif!important;border-radius:26px!important;padding:32px 28px!important;
-      background:rgba(255,255,255,.98)!important;border:1px solid rgba(108,63,255,.18)!important;
-      box-shadow:0 24px 64px rgba(108,63,255,.22)!important;position:relative!important;overflow:hidden!important;}
+      background:rgba(255,255,255,.97)!important;border:1px solid rgba(108,63,255,.18)!important;
+      box-shadow:0 24px 64px rgba(108,63,255,.20)!important;position:relative!important;overflow:hidden!important;}
     .rs-pop::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(135deg,#6C3FFF,#C040FF);}
     .rs-pop.rs-danger::before{background:linear-gradient(135deg,#FF3B82,#FF7B2C);}
     .rs-ttl{font-family:'Syne',sans-serif!important;font-weight:800!important;font-size:1.18rem!important;color:#0C0A14!important;letter-spacing:-.3px!important;}
     .rs-bod{font-size:.88rem!important;color:#6B5E87!important;line-height:1.6!important;}
     .rs-ok{background:linear-gradient(135deg,#6C3FFF,#C040FF)!important;color:#fff!important;border:none!important;
       border-radius:50px!important;font-family:'DM Sans',sans-serif!important;font-weight:700!important;
-      font-size:.82rem!important;padding:10px 28px!important;box-shadow:0 4px 16px rgba(108,63,255,.38)!important;
+      font-size:.82rem!important;padding:10px 28px!important;box-shadow:0 4px 16px rgba(108,63,255,.40)!important;
       cursor:pointer!important;transition:all .2s!important;}
-    .rs-ok:hover{transform:translateY(-2px)!important;box-shadow:0 8px 24px rgba(108,63,255,.50)!important;}
-    .rs-cn{background:rgba(108,63,255,.07)!important;color:#6B5E87!important;border:1px solid rgba(108,63,255,.16)!important;
+    .rs-ok:hover{transform:translateY(-2px)!important;box-shadow:0 8px 24px rgba(108,63,255,.55)!important;}
+    .rs-cn{background:rgba(108,63,255,.08)!important;color:#6B5E87!important;border:1px solid rgba(108,63,255,.18)!important;
       border-radius:50px!important;font-family:'DM Sans',sans-serif!important;font-weight:600!important;
       font-size:.82rem!important;padding:10px 28px!important;cursor:pointer!important;transition:all .2s!important;}
-    .rs-cn:hover{background:rgba(108,63,255,.13)!important;color:#6C3FFF!important;}
     .swal2-icon.swal2-success{border-color:#00D4AA!important;color:#00D4AA!important;}
     .swal2-icon.swal2-success [class^=swal2-success-line]{background:#00D4AA!important;}
     .swal2-icon.swal2-success .swal2-success-ring{border-color:rgba(0,212,170,.30)!important;}
@@ -189,17 +181,16 @@ const SW  = { customClass:{ popup:"rs-pop", title:"rs-ttl", htmlContainer:"rs-bo
 const SWD = { ...SW, customClass:{ ...SW.customClass, popup:"rs-pop rs-danger" } }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   STYLES — idénticos al componente clientes
+   STYLES — DARK MODE NIDO SKY
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 const useStyles = makeStyles(() => ({
-  /* ── Wrapper general ── */
   page:{ fontFamily:"'DM Sans',sans-serif", display:"flex", flexDirection:"column", gap:0 },
 
   /* ── Header hero ── */
   hero:{
     borderRadius:26, overflow:"hidden", position:"relative",
     background:T.gv, marginBottom:0,
-    boxShadow:"0 8px 32px rgba(108,63,255,0.32)",
+    boxShadow:"0 8px 32px rgba(108,63,255,0.45)",
     "&::before":{ content:'""', position:"absolute", top:-60, right:-60, width:200, height:200, borderRadius:"50%", background:"rgba(255,255,255,0.08)", pointerEvents:"none" },
     "&::after":{ content:'""', position:"absolute", bottom:-40, left:-40, width:140, height:140, borderRadius:"50%", background:"rgba(255,255,255,0.06)", pointerEvents:"none" },
   },
@@ -209,10 +200,10 @@ const useStyles = makeStyles(() => ({
     background:"rgba(255,255,255,0.22)", border:"3px solid rgba(255,255,255,0.40)",
     display:"flex", alignItems:"center", justifyContent:"center",
     fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:26, color:"#fff",
-    boxShadow:"0 8px 24px rgba(0,0,0,0.18)",
+    boxShadow:"0 8px 24px rgba(0,0,0,0.30)",
   },
   heroName:{ fontFamily:"'Syne',sans-serif !important", fontSize:"1.55rem !important", fontWeight:"800 !important", color:"#fff !important", letterSpacing:"-0.5px", lineHeight:1.1 },
-  heroEmail:{ fontFamily:"'DM Sans',sans-serif", fontSize:".88rem", color:"rgba(255,255,255,.72)", marginTop:3 },
+  heroEmail:{ fontFamily:"'DM Sans',sans-serif", fontSize:".88rem", color:"rgba(255,255,255,.80)", marginTop:3 },
   heroMeta:{ display:"flex", alignItems:"center", gap:10, marginTop:10, flexWrap:"wrap" },
   heroChip:{
     display:"inline-flex", alignItems:"center", gap:5,
@@ -220,11 +211,11 @@ const useStyles = makeStyles(() => ({
     borderRadius:20, padding:"4px 12px",
     fontFamily:"'DM Sans',sans-serif", fontSize:".74rem", fontWeight:700, color:"#fff",
   },
-  heroTime:{ fontFamily:"'DM Sans',sans-serif", fontSize:".76rem", color:"rgba(255,255,255,.65)", display:"flex", alignItems:"center", gap:5 },
+  heroTime:{ fontFamily:"'DM Sans',sans-serif", fontSize:".76rem", color:"rgba(255,255,255,.72)", display:"flex", alignItems:"center", gap:5 },
 
   /* ── Tabs ── */
   tabs:{
-    display:"flex", background:"rgba(255,255,255,0.74)",
+    display:"flex", background:"rgba(255,255,255,0.85)",
     backdropFilter:"blur(22px) saturate(180%)",
     borderBottom:`1px solid ${T.bL}`,
     padding:"0 26px",
@@ -232,36 +223,36 @@ const useStyles = makeStyles(() => ({
   tab:{
     display:"flex", alignItems:"center", gap:7,
     fontFamily:"'DM Sans',sans-serif !important", fontWeight:"600 !important",
-    fontSize:".84rem !important", color:`${T.ink3} !important`,
+    fontSize:".84rem !important", color:"#6B5E87 !important",
     padding:"14px 20px !important", borderRadius:"0 !important",
     borderBottom:"3px solid transparent",
     transition:"all .18s !important", textTransform:"none !important",
-    "&:hover":{ color:`${T.v1} !important`, background:"rgba(108,63,255,.04) !important" },
+    "&:hover":{ color:`${T.v1} !important`, background:"rgba(108,63,255,.08) !important" },
   },
   tabActive:{
     color:`${T.v1} !important`,
     borderBottom:`3px solid ${T.v1}`,
-    background:"rgba(108,63,255,.05) !important",
+    background:"rgba(108,63,255,.10) !important",
   },
 
   /* ── Panel root ── */
   panel:{
     fontFamily:"'DM Sans',sans-serif",
     borderRadius:"0 0 26px 26px", overflow:"hidden",
-    background:"rgba(255,255,255,0.74)",
-    backdropFilter:"blur(22px) saturate(180%)",
-    WebkitBackdropFilter:"blur(22px) saturate(180%)",
-    border:"1px solid rgba(255,255,255,0.85)",
+    background:"rgba(255,255,255,0.85)",
+    backdropFilter:"blur(32px) saturate(180%)",
+    WebkitBackdropFilter:"blur(32px) saturate(180%)",
+    border:"1px solid rgba(108,63,255,0.18)",
     borderTop:"none",
-    boxShadow:"0 4px 32px rgba(108,63,255,0.10)",
+    boxShadow:"0 0 0 1px rgba(108,63,255,.10),0 40px 80px rgba(80,40,200,.18),inset 0 1px 0 rgba(255,255,255,.6)",
   },
 
   /* ── Panel header ── */
   panelHdr:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"22px 26px 18px", borderBottom:`1px solid ${T.bL}`, flexWrap:"wrap", gap:12 },
   panelHdrLeft:{ display:"flex", alignItems:"center", gap:12 },
-  panelHdrIcon:{ width:42, height:42, borderRadius:13, background:T.gv, display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 14px rgba(108,63,255,0.38)" },
+  panelHdrIcon:{ width:42, height:42, borderRadius:13, background:T.gv, display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 14px rgba(108,63,255,0.50)" },
   panelHdrTitle:{ fontFamily:"'Syne',sans-serif !important", fontSize:"1.18rem !important", fontWeight:"800 !important", background:T.gv, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", letterSpacing:"-0.3px" },
-  panelHdrSub:{ fontFamily:"'DM Sans',sans-serif", fontSize:".78rem", color:T.ink3, marginTop:2 },
+  panelHdrSub:{ fontFamily:"'DM Sans',sans-serif", fontSize:".78rem", color:"#6B5E87", marginTop:2 },
 
   /* ── Botones ── */
   btnEdit:{
@@ -269,56 +260,77 @@ const useStyles = makeStyles(() => ({
     background:`${T.gv} !important`, color:"#fff !important",
     fontFamily:"'DM Sans',sans-serif !important", fontWeight:"700 !important",
     borderRadius:"50px !important", padding:"9px 22px !important",
-    boxShadow:"0 4px 14px rgba(108,63,255,.38) !important", transition:"all .2s !important",
+    boxShadow:"0 4px 14px rgba(108,63,255,.45) !important", transition:"all .2s !important",
     textTransform:"none !important",
-    "&:hover":{ transform:"translateY(-2px)", boxShadow:"0 8px 22px rgba(108,63,255,.50) !important" },
+    "&:hover":{ transform:"translateY(-2px)", boxShadow:"0 8px 22px rgba(108,63,255,.55) !important" },
   },
   btnCancel:{
     display:"flex !important", alignItems:"center !important", gap:"7px !important",
     fontFamily:"'DM Sans',sans-serif !important", fontWeight:"600 !important",
-    color:`${T.ink3} !important`, borderRadius:"50px !important",
-    padding:"9px 22px !important", border:`1.5px solid rgba(108,63,255,.16) !important`,
+    color:"#2D2640 !important", borderRadius:"50px !important",
+    padding:"9px 22px !important", border:"1.5px solid rgba(108,63,255,.22) !important",
     transition:"all .18s !important", textTransform:"none !important",
-    "&:hover":{ background:"rgba(108,63,255,.06) !important", color:`${T.v1} !important` },
+    "&:hover":{ background:"rgba(108,63,255,.08) !important", color:`${T.v1} !important` },
   },
   btnSave:{
     display:"flex !important", alignItems:"center !important", gap:"7px !important",
     background:`${T.gt} !important`, color:"#fff !important",
     fontFamily:"'DM Sans',sans-serif !important", fontWeight:"700 !important",
     borderRadius:"50px !important", padding:"10px 26px !important",
-    boxShadow:"0 4px 14px rgba(0,212,170,.38) !important", transition:"all .2s !important",
+    boxShadow:"0 4px 14px rgba(0,212,170,.45) !important", transition:"all .2s !important",
     textTransform:"none !important",
-    "&:hover":{ transform:"translateY(-2px)", boxShadow:"0 8px 22px rgba(0,212,170,.50) !important" },
+    "&:hover":{ transform:"translateY(-2px)", boxShadow:"0 8px 22px rgba(0,212,170,.55) !important" },
   },
   btnPassword:{
     display:"flex !important", alignItems:"center !important", gap:"7px !important",
     background:`${T.gv} !important`, color:"#fff !important",
     fontFamily:"'DM Sans',sans-serif !important", fontWeight:"700 !important",
     borderRadius:"50px !important", padding:"10px 26px !important",
-    boxShadow:"0 4px 14px rgba(108,63,255,.38) !important", transition:"all .2s !important",
+    boxShadow:"0 4px 14px rgba(108,63,255,.45) !important", transition:"all .2s !important",
     textTransform:"none !important",
-    "&:hover":{ transform:"translateY(-2px)", boxShadow:"0 8px 22px rgba(108,63,255,.50) !important" },
+    "&:hover":{ transform:"translateY(-2px)", boxShadow:"0 8px 22px rgba(108,63,255,.55) !important" },
   },
 
   /* ── Info grid ── */
   infoBody:{ padding:"22px 26px" },
   infoGrid:{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 },
-  infoItem:{ borderRadius:14, padding:"14px 16px", background:"rgba(244,241,255,.45)", border:`1px solid ${T.bL}`, display:"flex", flexDirection:"column", gap:6 },
-  infoLbl:{ fontFamily:"'DM Sans',sans-serif", fontSize:".68rem", fontWeight:700, letterSpacing:".9px", textTransform:"uppercase", color:T.ink3, display:"flex", alignItems:"center", gap:6 },
-  infoVal:{ fontFamily:"'DM Sans',sans-serif", fontSize:".92rem", fontWeight:600, color:T.ink },
+  infoItem:{ borderRadius:14, padding:"14px 16px", background:"#F4F1FF", border:"1px solid rgba(108,63,255,.18)", display:"flex", flexDirection:"column", gap:6 },
+  infoLbl:{ fontFamily:"'DM Sans',sans-serif", fontSize:".68rem", fontWeight:700, letterSpacing:".9px", textTransform:"uppercase", color:"#6B5E87", display:"flex", alignItems:"center", gap:6 },
+  infoVal:{ fontFamily:"'DM Sans',sans-serif", fontSize:".92rem", fontWeight:600, color:"#0C0A14" },
   infoActions:{ display:"flex", justifyContent:"flex-end", padding:"12px 26px 22px", borderTop:`1px solid ${T.bL}`, marginTop:4 },
 
-  /* ── TextField override ── */
+  /* ── TextField override LIGHT ── */
   field:{
     "& .MuiOutlinedInput-root":{
       borderRadius:"13px !important", fontFamily:"'DM Sans',sans-serif !important",
-      fontSize:".90rem", background:"rgba(244,241,255,.38)",
-      "&:hover .MuiOutlinedInput-notchedOutline":{ borderColor:T.v1 },
+      fontSize:".90rem", color:"#0C0A14 !important",
+      backgroundColor:"#F4F1FF !important",
+      transition:"background-color .2s",
+      "&:hover":{ backgroundColor:"#EBE5FF !important" },
+      "&:hover .MuiOutlinedInput-notchedOutline":{ borderColor:"rgba(108,63,255,.55)" },
+      "&.Mui-focused":{ backgroundColor:"#FFFFFF !important" },
       "&.Mui-focused .MuiOutlinedInput-notchedOutline":{ borderColor:T.v1, borderWidth:2 },
+      "&.Mui-error .MuiOutlinedInput-notchedOutline":{ borderColor:"rgba(255,59,130,.55) !important" },
     },
-    "& .MuiInputLabel-outlined":{ fontFamily:"'DM Sans',sans-serif", color:T.ink3, fontSize:".88rem" },
+    "& .MuiOutlinedInput-notchedOutline":{
+      borderColor:"rgba(108,63,255,.18) !important",
+      backgroundColor:"transparent !important",
+    },
+    "& .MuiInputBase-input":{
+      color:"#0C0A14 !important", backgroundColor:"transparent !important",
+      "&:-webkit-autofill, &:-webkit-autofill:hover, &:-webkit-autofill:focus":{
+        WebkitBoxShadow:"0 0 0px 1000px #F4F1FF inset !important",
+        WebkitTextFillColor:"#0C0A14 !important",
+        caretColor:"#0C0A14 !important",
+        borderRadius:"13px !important",
+        transition:"background-color 99999s ease-in-out 0s",
+      },
+    },
+    "& .MuiInputLabel-outlined":{ fontFamily:"'DM Sans',sans-serif", color:"#6B5E87", fontSize:".88rem" },
     "& .MuiInputLabel-outlined.Mui-focused":{ color:T.v1 },
-    "& .MuiFormHelperText-root":{ fontFamily:"'DM Sans',sans-serif", fontSize:".74rem" },
+    "& .MuiInputLabel-outlined.Mui-error":{ color:"rgba(255,59,130,.75) !important" },
+    "& .MuiFormHelperText-root":{ fontFamily:"'DM Sans',sans-serif", fontSize:".74rem", color:"#6B5E87 !important" },
+    "& .MuiFormHelperText-root.Mui-error":{ color:"rgba(192,32,92,.95) !important" },
     marginBottom:"14px !important",
   },
 
@@ -327,15 +339,15 @@ const useStyles = makeStyles(() => ({
   sectionLbl:{
     display:"flex", alignItems:"center", gap:8,
     fontFamily:"'Syne',sans-serif", fontSize:".83rem", fontWeight:700,
-    color:T.ink, marginBottom:14, paddingBottom:8,
-    borderBottom:`1.5px solid rgba(108,63,255,.09)`, letterSpacing:"-.1px",
+    color:"#0C0A14", marginBottom:14, paddingBottom:8,
+    borderBottom:"1.5px solid rgba(108,63,255,.18)", letterSpacing:"-.1px",
   },
   sectionIco:{ width:28, height:28, borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center" },
 
   /* ── Password form box ── */
   passBox:{
-    borderRadius:18, padding:"20px", border:`1px solid ${T.bL}`,
-    background:"rgba(244,241,255,.30)",
+    borderRadius:18, padding:"20px", border:"1px solid rgba(108,63,255,.18)",
+    background:"#F4F1FF",
     borderLeft:`4px solid ${T.v1}`,
   },
 
@@ -343,35 +355,35 @@ const useStyles = makeStyles(() => ({
   permGrid:{ display:"flex", flexWrap:"wrap", gap:8, marginTop:8 },
   permChip:{
     display:"inline-flex", alignItems:"center", gap:5,
-    background:T.bL, border:`1px solid ${T.bM}`,
+    background:"rgba(108,63,255,.14)", border:`1px solid ${T.bM}`,
     borderRadius:20, padding:"5px 12px",
-    fontFamily:"'DM Sans',sans-serif", fontSize:".74rem", fontWeight:700, color:T.v1,
+    fontFamily:"'DM Sans',sans-serif", fontSize:".74rem", fontWeight:700, color:"#4A2BCC",
   },
-  permModule:{ borderRadius:14, padding:"12px 14px", background:"rgba(244,241,255,.45)", border:`1px solid ${T.bL}`, marginBottom:8 },
-  permModuleName:{ fontFamily:"'DM Sans',sans-serif", fontSize:".80rem", fontWeight:700, color:T.ink, marginBottom:6, display:"flex", alignItems:"center", gap:6 },
+  permModule:{ borderRadius:14, padding:"12px 14px", background:"#F4F1FF", border:"1px solid rgba(108,63,255,.18)", marginBottom:8 },
+  permModuleName:{ fontFamily:"'DM Sans',sans-serif", fontSize:".80rem", fontWeight:700, color:"#0C0A14", marginBottom:6, display:"flex", alignItems:"center", gap:6 },
   permActions:{ display:"flex", flexWrap:"wrap", gap:6 },
-  permActionChip:{ background:"rgba(108,63,255,.08)", borderRadius:8, padding:"3px 10px", fontFamily:"'DM Sans',sans-serif", fontSize:".72rem", fontWeight:600, color:T.v1 },
+  permActionChip:{ background:"rgba(108,63,255,.14)", borderRadius:8, padding:"3px 10px", fontFamily:"'DM Sans',sans-serif", fontSize:".72rem", fontWeight:600, color:"#4A2BCC" },
 
   /* ── Security info ── */
   secInfo:{ display:"flex", gap:12, flexWrap:"wrap", marginTop:16 },
-  secItem:{ flex:"1 1 160px", borderRadius:14, padding:"12px 14px", background:"rgba(244,241,255,.45)", border:`1px solid ${T.bL}`, display:"flex", alignItems:"center", gap:10 },
+  secItem:{ flex:"1 1 160px", borderRadius:14, padding:"12px 14px", background:"#F4F1FF", border:"1px solid rgba(108,63,255,.18)", display:"flex", alignItems:"center", gap:10 },
   secItemText:{ fontFamily:"'DM Sans',sans-serif" },
-  secItemLbl:{ fontSize:".70rem", fontWeight:700, letterSpacing:".8px", textTransform:"uppercase", color:T.ink3 },
-  secItemVal:{ fontSize:".84rem", fontWeight:600, color:T.ink, marginTop:2 },
+  secItemLbl:{ fontSize:".70rem", fontWeight:700, letterSpacing:".8px", textTransform:"uppercase", color:"#6B5E87" },
+  secItemVal:{ fontSize:".84rem", fontWeight:600, color:"#0C0A14", marginTop:2 },
 
   /* ── Role chip ── */
   roleChipLarge:{
     display:"inline-flex", alignItems:"center", gap:6,
-    background:T.bL, border:`1.5px solid ${T.bM}`,
+    background:"rgba(108,63,255,.14)", border:`1.5px solid ${T.bM}`,
     borderRadius:20, padding:"6px 14px",
-    fontFamily:"'DM Sans',sans-serif", fontSize:".80rem", fontWeight:700, color:T.v1,
+    fontFamily:"'DM Sans',sans-serif", fontSize:".80rem", fontWeight:700, color:"#4A2BCC",
   },
 
   /* ── Loading / Error ── */
-  centered:{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"60px 26px", gap:14, background:"rgba(255,255,255,0.74)", borderRadius:26 },
-  emptyIco:{ width:64, height:64, borderRadius:20, background:"rgba(108,63,255,.08)", display:"flex", alignItems:"center", justifyContent:"center" },
-  emptyTitle:{ fontFamily:"'Syne',sans-serif", fontSize:"1.15rem", fontWeight:800, color:T.ink, textAlign:"center" },
-  emptyText:{ fontFamily:"'DM Sans',sans-serif", fontSize:".88rem", color:T.ink3, textAlign:"center" },
+  centered:{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"60px 26px", gap:14, background:"rgba(255,255,255,0.85)", border:"1px solid rgba(108,63,255,0.18)", backdropFilter:"blur(32px) saturate(180%)", borderRadius:26 },
+  emptyIco:{ width:64, height:64, borderRadius:20, background:"rgba(108,63,255,.14)", display:"flex", alignItems:"center", justifyContent:"center" },
+  emptyTitle:{ fontFamily:"'Syne',sans-serif", fontSize:"1.15rem", fontWeight:800, color:"#0C0A14", textAlign:"center" },
+  emptyText:{ fontFamily:"'DM Sans',sans-serif", fontSize:".88rem", color:"#6B5E87", textAlign:"center" },
 }))
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -642,15 +654,6 @@ const UserProfile = () => {
     return name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2)
   }
 
-  const getRoleColor = (role) => {
-    if (!role) return "#2563eb"
-    const roleLower = typeof role === "object" ? role.nombre.toLowerCase() : role.toLowerCase()
-    if (roleLower.includes("admin")) return "#2563eb"
-    if (roleLower.includes("gerente")) return "#3b82f6"
-    if (roleLower.includes("supervisor")) return "#60a5fa"
-    return "#2563eb"
-  }
-
   /* ── Loading ── */
   if (loading && !profile) {
     return (
@@ -668,7 +671,7 @@ const UserProfile = () => {
         <div className={classes.emptyIco}><X size={28} color={T.e1} strokeWidth={2}/></div>
         <Typography className={classes.emptyTitle}>Error al cargar el perfil</Typography>
         <Typography className={classes.emptyText}>{error}</Typography>
-        <button onClick={() => window.location.reload()} style={{ background:T.gv, color:"#fff", border:"none", borderRadius:50, padding:"10px 26px", fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:".82rem", cursor:"pointer", boxShadow:"0 4px 14px rgba(108,63,255,.38)" }}>
+        <button onClick={() => window.location.reload()} style={{ background:T.gv, color:"#fff", border:"none", borderRadius:50, padding:"10px 26px", fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:".82rem", cursor:"pointer", boxShadow:"0 4px 14px rgba(108,63,255,.45)" }}>
           Reintentar
         </button>
       </div>
@@ -797,18 +800,18 @@ const UserProfile = () => {
               {/* Cambiar contraseña */}
               <div className={classes.section}>
                 <div className={classes.sectionLbl}>
-                  <div className={classes.sectionIco} style={{ background:"rgba(255,59,130,.10)" }}><Key size={13} color={T.e1} strokeWidth={2.5}/></div>
+                  <div className={classes.sectionIco} style={{ background:"rgba(255,59,130,.18)" }}><Key size={13} color={T.e1} strokeWidth={2.5}/></div>
                   Cambiar Contraseña
                 </div>
                 <div className={classes.passBox}>
                   <TextField fullWidth id="passwordActual" name="passwordActual" label="Contraseña Actual" type={showPasswordActual ? "text" : "password"} value={passwordData.passwordActual} onChange={handlePasswordChange} onKeyDown={handlePasswordActualKeyDown} variant="outlined" required error={!!passwordErrors.passwordActual} helperText={passwordErrors.passwordActual} className={classes.field} inputProps={{ maxLength:15 }}
-                    InputProps={{ endAdornment:<button type="button" onClick={handleTogglePasswordActual} style={{ background:"none", border:"none", cursor:"pointer", padding:0, color:T.ink3 }}>{showPasswordActual ? <EyeOff size={16}/> : <Eye size={16}/>}</button> }}
+                    InputProps={{ endAdornment:<button type="button" onClick={handleTogglePasswordActual} style={{ background:"none", border:"none", cursor:"pointer", padding:0, color:"#6B5E87" }}>{showPasswordActual ? <EyeOff size={16}/> : <Eye size={16}/>}</button> }}
                   />
                   <TextField fullWidth id="nuevoPassword" name="nuevoPassword" label="Nueva Contraseña" type={showNuevoPassword ? "text" : "password"} value={passwordData.nuevoPassword} onChange={handlePasswordChange} onKeyDown={handleNuevoPasswordKeyDown} variant="outlined" required error={!!passwordErrors.nuevoPassword} helperText={passwordErrors.nuevoPassword || "Entre 8-15 caracteres, incluir mayúsculas, minúsculas, números y caracteres especiales."} className={classes.field} inputProps={{ minLength:8, maxLength:15 }}
-                    InputProps={{ endAdornment:<button type="button" onClick={handleToggleNuevoPassword} style={{ background:"none", border:"none", cursor:"pointer", padding:0, color:T.ink3 }}>{showNuevoPassword ? <EyeOff size={16}/> : <Eye size={16}/>}</button> }}
+                    InputProps={{ endAdornment:<button type="button" onClick={handleToggleNuevoPassword} style={{ background:"none", border:"none", cursor:"pointer", padding:0, color:"#6B5E87" }}>{showNuevoPassword ? <EyeOff size={16}/> : <Eye size={16}/>}</button> }}
                   />
                   <TextField fullWidth id="confirmarPassword" name="confirmarPassword" label="Confirmar Nueva Contraseña" type={showConfirmarPassword ? "text" : "password"} value={passwordData.confirmarPassword} onChange={handlePasswordChange} onKeyDown={handleConfirmarPasswordKeyDown} variant="outlined" required error={!!passwordErrors.confirmarPassword} helperText={passwordErrors.confirmarPassword} className={classes.field} inputProps={{ minLength:8, maxLength:15 }}
-                    InputProps={{ endAdornment:<button type="button" onClick={handleToggleConfirmarPassword} style={{ background:"none", border:"none", cursor:"pointer", padding:0, color:T.ink3 }}>{showConfirmarPassword ? <EyeOff size={16}/> : <Eye size={16}/>}</button> }}
+                    InputProps={{ endAdornment:<button type="button" onClick={handleToggleConfirmarPassword} style={{ background:"none", border:"none", cursor:"pointer", padding:0, color:"#6B5E87" }}>{showConfirmarPassword ? <EyeOff size={16}/> : <Eye size={16}/>}</button> }}
                   />
                   <Button className={classes.btnPassword} onClick={handlePasswordSubmit} disabled={passwordLoading}>
                     {passwordLoading ? <CircularProgress size={18} style={{ color:"#fff" }}/> : <><Key size={14} strokeWidth={2.2}/> Actualizar Contraseña</>}
@@ -822,7 +825,7 @@ const UserProfile = () => {
               {roleDetails && (
                 <div className={classes.section}>
                   <div className={classes.sectionLbl}>
-                    <div className={classes.sectionIco} style={{ background:"rgba(108,63,255,.12)" }}><Star size={13} color={T.v1} strokeWidth={2.5}/></div>
+                    <div className={classes.sectionIco} style={{ background:"rgba(108,63,255,.18)" }}><Star size={13} color={T.v1} strokeWidth={2.5}/></div>
                     Rol Asignado
                   </div>
                   <div className={classes.infoItem}>
@@ -835,7 +838,7 @@ const UserProfile = () => {
               {/* Permisos */}
               <div className={classes.section}>
                 <div className={classes.sectionLbl}>
-                  <div className={classes.sectionIco} style={{ background:"rgba(37,99,235,.10)" }}><LockIcon size={13} color={T.b1} strokeWidth={2.5}/></div>
+                  <div className={classes.sectionIco} style={{ background:"rgba(37,99,235,.18)" }}><LockIcon size={13} color={T.b1} strokeWidth={2.5}/></div>
                   Permisos Asignados
                 </div>
                 {(roleDetails?.permisos || profile?.permisos || []).length > 0 ? (
@@ -859,7 +862,7 @@ const UserProfile = () => {
                   )
                 ) : (
                   <div className={classes.infoItem}>
-                    <span className={classes.infoVal} style={{ color:T.ink3, fontWeight:400 }}>No hay permisos asignados para este usuario.</span>
+                    <span className={classes.infoVal} style={{ color:"#6B5E87", fontWeight:400 }}>No hay permisos asignados para este usuario.</span>
                   </div>
                 )}
               </div>

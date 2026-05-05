@@ -10,6 +10,11 @@ const getDescuentos = async () => {
   return res.data
 }
 
+const getDescuentosVigentes = async () => {
+  const res = await api.get(`${API_URL}/vigentes`)
+  return res.data
+}
+
 const getDescuentoById = async (id) => {
   const res = await api.get(`${API_URL}/${id}`)
   return res.data
@@ -32,6 +37,7 @@ const deleteDescuento = async (id) => {
 
 export default {
   getDescuentos,
+  getDescuentosVigentes,
   getDescuentoById,
   createDescuento,
   updateDescuento,

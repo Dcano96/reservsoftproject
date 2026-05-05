@@ -2,6 +2,7 @@ require("dotenv").config()
 const express = require("express")
 const cors = require("cors")
 const morgan = require("morgan")
+const path = require("path")
 const connectDB = require("./config/db")
 // Otras importaciones...
 
@@ -43,6 +44,9 @@ app.options('*', cors()) // Habilita preflight para todas las rutas
 
 app.use(express.json())
 app.use(morgan("dev"))
+
+// Servir archivos subidos (comprobantes de pago, etc.)
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")))
 // Otros middlewares...
 
 // Rutas API

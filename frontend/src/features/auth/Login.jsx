@@ -64,15 +64,15 @@ if (typeof document !== "undefined" && !document.getElementById("ns-swal")) {
   const s = document.createElement("style"); s.id = "ns-swal"
   s.textContent = `
     .ns-pop{font-family:'DM Sans',sans-serif!important;border-radius:26px!important;padding:32px 28px!important;
-      background:rgba(12,10,20,.97)!important;border:1px solid rgba(108,63,255,.25)!important;
-      box-shadow:0 24px 64px rgba(108,63,255,.30)!important;position:relative!important;overflow:hidden!important;}
+      background:rgba(255,255,255,.97)!important;border:1px solid rgba(108,63,255,.18)!important;
+      box-shadow:0 24px 64px rgba(108,63,255,.20)!important;position:relative!important;overflow:hidden!important;}
     .ns-pop::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(135deg,#6C3FFF,#C040FF);}
-    .ns-ttl{font-family:'Syne',sans-serif!important;font-weight:800!important;font-size:1.18rem!important;color:#fff!important;}
-    .ns-bod{font-size:.88rem!important;color:#B0A5C8!important;line-height:1.6!important;}
+    .ns-ttl{font-family:'Syne',sans-serif!important;font-weight:800!important;font-size:1.18rem!important;color:#0C0A14!important;}
+    .ns-bod{font-size:.88rem!important;color:#6B5E87!important;line-height:1.6!important;}
     .ns-ok{background:linear-gradient(135deg,#6C3FFF,#C040FF)!important;color:#fff!important;border:none!important;
       border-radius:50px!important;font-family:'DM Sans',sans-serif!important;font-weight:700!important;
       font-size:.82rem!important;padding:10px 28px!important;box-shadow:0 4px 16px rgba(108,63,255,.40)!important;cursor:pointer!important;}
-    .ns-cn{background:rgba(108,63,255,.10)!important;color:#B0A5C8!important;border:1px solid rgba(108,63,255,.20)!important;
+    .ns-cn{background:rgba(108,63,255,.08)!important;color:#6B5E87!important;border:1px solid rgba(108,63,255,.18)!important;
       border-radius:50px!important;font-family:'DM Sans',sans-serif!important;font-weight:600!important;
       font-size:.82rem!important;padding:10px 28px!important;cursor:pointer!important;}
     .swal2-icon.swal2-success{border-color:#00D4AA!important;color:#00D4AA!important;}
@@ -99,42 +99,39 @@ const useStyles = makeStyles(() => ({
       borderRadius: "13px !important",
       fontFamily:   "'DM Sans',sans-serif !important",
       fontSize:     ".88rem",
-      color:        "#fff !important",
-      /* fondo base siempre oscuro */
-      backgroundColor: "rgba(255,255,255,.05) !important",
+      color:        `${T.ink} !important`,
+      /* fondo base claro (igual a Landing) */
+      backgroundColor: "#F4F1FF !important",
       transition:   "background-color .2s",
       "&:hover": {
-        backgroundColor: "rgba(255,255,255,.07) !important",
+        backgroundColor: "#EBE5FF !important",
       },
       "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(108,63,255,.55)" },
       "&.Mui-focused": {
-        backgroundColor: "rgba(108,63,255,.10) !important",
+        backgroundColor: "#FFFFFF !important",
       },
       "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: T.v1, borderWidth: 2 },
-      "&.Mui-error .MuiOutlinedInput-notchedOutline":   { borderColor: "rgba(255,59,130,.50) !important" },
+      "&.Mui-error .MuiOutlinedInput-notchedOutline":   { borderColor: "rgba(255,59,130,.55) !important" },
     },
-    /* el fieldset nunca debe ser blanco */
     "& .MuiOutlinedInput-notchedOutline": {
-      borderColor:     "rgba(255,255,255,.10) !important",
+      borderColor:     "rgba(108,63,255,.18) !important",
       backgroundColor: "transparent !important",
     },
-    /* el input en sí */
     "& .MuiInputBase-input": {
-      color:           "#fff !important",
+      color:           `${T.ink} !important`,
       backgroundColor: "transparent !important",
-      /* autofill de Chrome — anula el fondo azul/blanco */
+      /* autofill de Chrome — fondo claro */
       "&:-webkit-autofill, &:-webkit-autofill:hover, &:-webkit-autofill:focus": {
-        WebkitBoxShadow:    "0 0 0px 1000px rgba(20,14,40,1) inset !important",
-        WebkitTextFillColor:"#fff !important",
-        caretColor:         "#fff !important",
+        WebkitBoxShadow:    "0 0 0px 1000px #F4F1FF inset !important",
+        WebkitTextFillColor:`${T.ink} !important`,
+        caretColor:         `${T.ink} !important`,
         borderRadius:       "13px !important",
         transition:         "background-color 99999s ease-in-out 0s",
       },
     },
     "& .MuiInputLabel-outlined":             { fontFamily:"'DM Sans',sans-serif", color:T.ink3, fontSize:".85rem" },
     "& .MuiInputLabel-outlined.Mui-focused": { color: T.v1 },
-    "& .MuiInputLabel-outlined.Mui-error":   { color: "rgba(255,59,130,.65) !important" },
-    /* ocultar helperText de MUI */
+    "& .MuiInputLabel-outlined.Mui-error":   { color: "rgba(255,59,130,.75) !important" },
     "& .MuiFormHelperText-root":             { display: "none !important" },
   },
   row2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 },
@@ -191,8 +188,8 @@ const ErrHint = ({ msg }) => {
   if (!msg) return null
   return (
     <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:6, marginTop:2, paddingLeft:4 }}>
-      <span style={{ width:4, height:4, borderRadius:"50%", background:"rgba(255,59,130,.7)", flexShrink:0, display:"inline-block" }}/>
-      <span style={{ fontFamily:"'DM Sans',sans-serif", fontSize:".72rem", color:"rgba(255,255,255,.45)", lineHeight:1.3 }}>{msg}</span>
+      <span style={{ width:4, height:4, borderRadius:"50%", background:"rgba(255,59,130,.85)", flexShrink:0, display:"inline-block" }}/>
+      <span style={{ fontFamily:"'DM Sans',sans-serif", fontSize:".72rem", color:"rgba(45,38,64,.7)", lineHeight:1.3 }}>{msg}</span>
     </div>
   )
 }
@@ -203,7 +200,7 @@ const ErrHint = ({ msg }) => {
 const GlobalErr = ({ msg }) => {
   if (!msg) return null
   return (
-    <div style={{ display:"flex", alignItems:"center", gap:8, background:"rgba(255,59,130,.08)", border:"1px solid rgba(255,59,130,.18)", borderRadius:10, padding:"9px 12px", marginBottom:12, fontFamily:"'DM Sans',sans-serif", fontSize:".79rem", color:"rgba(255,255,255,.55)" }}>
+    <div style={{ display:"flex", alignItems:"center", gap:8, background:"rgba(255,59,130,.08)", border:"1px solid rgba(255,59,130,.22)", borderRadius:10, padding:"9px 12px", marginBottom:12, fontFamily:"'DM Sans',sans-serif", fontSize:".79rem", color:"rgba(45,38,64,.78)" }}>
       <span style={{ width:16, height:16, borderRadius:"50%", background:"rgba(255,59,130,.25)", display:"inline-flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
         <span style={{ width:4, height:4, borderRadius:"50%", background:"#FF3B82", display:"inline-block" }}/>
       </span>
@@ -218,7 +215,7 @@ const GlobalErr = ({ msg }) => {
 const SuccessBox = ({ msg }) => {
   if (!msg) return null
   return (
-    <div style={{ display:"flex", alignItems:"center", gap:8, background:"rgba(0,212,170,.08)", border:"1px solid rgba(0,212,170,.18)", borderRadius:10, padding:"9px 12px", marginBottom:12, fontFamily:"'DM Sans',sans-serif", fontSize:".79rem", color:"rgba(255,255,255,.55)" }}>
+    <div style={{ display:"flex", alignItems:"center", gap:8, background:"rgba(0,212,170,.10)", border:"1px solid rgba(0,212,170,.28)", borderRadius:10, padding:"9px 12px", marginBottom:12, fontFamily:"'DM Sans',sans-serif", fontSize:".79rem", color:"rgba(45,38,64,.78)" }}>
       <span style={{ width:16, height:16, borderRadius:"50%", background:"rgba(0,212,170,.25)", display:"inline-flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
         <span style={{ color:T.t1, fontSize:10, fontWeight:700, lineHeight:1 }}>✓</span>
       </span>
@@ -243,7 +240,7 @@ const PwBar = ({ val }) => {
   const c = ["#FF3B82","#FF7B2C","#e8c030","#00D4AA"]
   return (
     <div style={{ display:"flex", gap:4, marginTop:3, marginBottom:2 }}>
-      {[1,2,3,4].map(i => <div key={i} style={{ flex:1, height:3, borderRadius:2, background:i<=s?c[s-1]:"rgba(255,255,255,.07)", transition:"background .3s" }}/>)}
+      {[1,2,3,4].map(i => <div key={i} style={{ flex:1, height:3, borderRadius:2, background:i<=s?c[s-1]:"rgba(108,63,255,.12)", transition:"background .3s" }}/>)}
     </div>
   )
 }
@@ -252,7 +249,7 @@ const PwBar = ({ val }) => {
    SEC LABEL
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 const SecLabel = ({ icon, iconBg, children }) => (
-  <div style={{ display:"flex", alignItems:"center", gap:8, fontFamily:"'Syne',sans-serif", fontSize:".68rem", fontWeight:700, color:"rgba(255,255,255,.45)", letterSpacing:".07em", textTransform:"uppercase", margin:"12px 0 6px", paddingBottom:7, borderBottom:"1px solid rgba(255,255,255,.05)" }}>
+  <div style={{ display:"flex", alignItems:"center", gap:8, fontFamily:"'Syne',sans-serif", fontSize:".68rem", fontWeight:700, color:"rgba(45,38,64,.6)", letterSpacing:".07em", textTransform:"uppercase", margin:"12px 0 6px", paddingBottom:7, borderBottom:"1px solid rgba(108,63,255,.12)" }}>
     <span style={{ width:20, height:20, borderRadius:5, background:iconBg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>{icon}</span>
     {children}
   </div>
@@ -266,7 +263,7 @@ function CanvasBg() {
   useEffect(() => {
     const canvas = ref.current; if (!canvas) return
     const ctx = canvas.getContext("2d"); let raf
-    const P = ["#6C3FFF","#C040FF","#00D4AA","#FF3B82","#ffffff"]
+    const P = ["#6C3FFF","#C040FF","#00D4AA","#FF3B82","#A78BFA"]
     const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight }
     resize(); window.addEventListener("resize", resize)
     const stars = Array.from({length:160}, () => ({
@@ -338,7 +335,7 @@ const LoginView = ({ cls, lf, le, ge, sp, setSp, onLChange, onLogin, setView, se
       <TLink onClick={() => { setView("forgot"); setFok(""); setFer("") }}>
         <HelpCircle size={13} strokeWidth={2.2}/> ¿Olvidaste tu contraseña?
       </TLink>
-      <span style={{ color:"rgba(255,255,255,.18)", fontSize:".7rem" }}>·</span>
+      <span style={{ color:"rgba(45,38,64,.3)", fontSize:".7rem" }}>·</span>
       <TLink onClick={() => setView("register")}>
         <UserPlus size={13} strokeWidth={2.2}/> Crear cuenta
       </TLink>
@@ -427,7 +424,7 @@ const RegisterView = ({ cls, rf, re, srp, setSrp, onRChange, onRegister, loading
 /* ── VISTA FORGOT ── */
 const ForgotView = ({ cls, fe, setFe, fer, setFer, fok, onForgot, loading }) => (
   <form onSubmit={onForgot} style={{ animation:"ns-viewIn .4s cubic-bezier(.22,1,.36,1)" }} noValidate>
-    <Typography style={{ fontFamily:"'DM Sans',sans-serif", fontSize:".85rem", color:"rgba(255,255,255,.4)", marginBottom:14, lineHeight:1.65 }}>
+    <Typography style={{ fontFamily:"'DM Sans',sans-serif", fontSize:".85rem", color:"rgba(45,38,64,.7)", marginBottom:14, lineHeight:1.65 }}>
       Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.
     </Typography>
 
@@ -532,10 +529,15 @@ export default function Login() {
       const res = await axios.post(EP.login, { email:lf.email, password:lf.password })
       localStorage.setItem("token",   res.data.token)
       localStorage.setItem("usuario", JSON.stringify(res.data.usuario))
+      mountedRef.current = false
       history.replace("/dashboard")
+      return
     } catch (err) {
-      if (mountedRef.current) setGe(err.response?.data?.msg || err.response?.data?.message || "Credenciales incorrectas.")
-    } finally { if (mountedRef.current) setLoading(false) }
+      if (mountedRef.current) {
+        setGe(err.response?.data?.msg || err.response?.data?.message || "Credenciales incorrectas.")
+        setLoading(false)
+      }
+    }
   }
 
   /* ━━━ REGISTER ━━━ */
@@ -601,12 +603,12 @@ export default function Login() {
 
   /* ━━━ RENDER ━━━ */
   return (
-    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#080613", fontFamily:"'DM Sans',sans-serif", position:"relative", overflow:"hidden", padding:"24px 16px" }}>
+    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"linear-gradient(160deg, #F0ECFF 0%, #EDE8FF 40%, #F9F4FF 70%, #EEF4FF 100%)", fontFamily:"'DM Sans',sans-serif", position:"relative", overflow:"hidden", padding:"24px 16px" }}>
 
       <CanvasBg/>
 
       {/* Grid */}
-      <div style={{ position:"fixed", inset:0, zIndex:1, backgroundImage:"linear-gradient(rgba(108,63,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(108,63,255,.05) 1px,transparent 1px)", backgroundSize:"60px 60px", pointerEvents:"none", WebkitMaskImage:"radial-gradient(ellipse 80% 80% at 50% 50%,black 30%,transparent 100%)", maskImage:"radial-gradient(ellipse 80% 80% at 50% 50%,black 30%,transparent 100%)" }}/>
+      <div style={{ position:"fixed", inset:0, zIndex:1, backgroundImage:"linear-gradient(rgba(108,63,255,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(108,63,255,.10) 1px,transparent 1px)", backgroundSize:"60px 60px", pointerEvents:"none", WebkitMaskImage:"radial-gradient(ellipse 80% 80% at 50% 50%,black 30%,transparent 100%)", maskImage:"radial-gradient(ellipse 80% 80% at 50% 50%,black 30%,transparent 100%)" }}/>
 
       {/* Orbs */}
       {[
@@ -634,17 +636,17 @@ export default function Login() {
             </div>
             <div>
               <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:900, fontSize:"1.3rem", letterSpacing:"-.5px", background:T.gv, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text", lineHeight:1.1 }}>Nido Sky</div>
-              <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:".62rem", color:"rgba(255,255,255,.32)", letterSpacing:".22em", textTransform:"uppercase", marginTop:2 }}>Hotel & Suites</div>
+              <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:".62rem", color:"rgba(45,38,64,.55)", letterSpacing:".22em", textTransform:"uppercase", marginTop:2 }}>Hotel & Suites</div>
             </div>
           </div>
 
-          <h1 style={{ fontFamily:"'Syne',sans-serif", fontWeight:900, fontSize:"clamp(1.9rem,3.5vw,3rem)", lineHeight:1.05, letterSpacing:"-1.5px", marginBottom:20, color:"#fff" }}>
+          <h1 style={{ fontFamily:"'Syne',sans-serif", fontWeight:900, fontSize:"clamp(1.9rem,3.5vw,3rem)", lineHeight:1.05, letterSpacing:"-1.5px", marginBottom:20, color:T.ink }}>
             Tu estadía<br/>
             <span style={{ background:T.gv, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>perfecta</span><br/>
             <span style={{ background:T.gt, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>te espera</span>
           </h1>
 
-          <p style={{ fontSize:".88rem", color:"rgba(255,255,255,.4)", lineHeight:1.78, maxWidth:295, marginBottom:44 }}>
+          <p style={{ fontSize:".88rem", color:"rgba(45,38,64,.7)", lineHeight:1.78, maxWidth:295, marginBottom:44 }}>
             Reserva, gestiona y disfruta tu experiencia en Nido Sky desde una sola plataforma.
           </p>
 
@@ -655,8 +657,8 @@ export default function Login() {
               {bg:"rgba(0,212,170,.12)", w:190,t:65, l:130,d:"-2s",dot:"#00D4AA",label:"Disponibilidad",    val:"Habitaciones libres"},
               {bg:"rgba(255,59,130,.10)",w:168,t:142,l:22, d:"-4s",dot:"#FF3B82",label:"Check-in hoy",      val:"32 llegadas"},
             ].map((c,i)=>(
-              <div key={i} style={{ position:"absolute", background:c.bg, width:c.w, top:c.t, left:c.l, backdropFilter:"blur(16px)", border:"1px solid rgba(255,255,255,.10)", boxShadow:"0 20px 60px rgba(0,0,0,.4)", borderRadius:16, padding:"14px 18px", animation:`ns-cardF 6s ${c.d} ease-in-out infinite` }}>
-                <div style={{ fontSize:".6rem", letterSpacing:".14em", textTransform:"uppercase", color:"rgba(255,255,255,.42)", marginBottom:6 }}>{c.label}</div>
+              <div key={i} style={{ position:"absolute", background:c.bg, width:c.w, top:c.t, left:c.l, backdropFilter:"blur(16px)", border:"1px solid rgba(108,63,255,.18)", boxShadow:"0 20px 60px rgba(80,40,200,.18)", borderRadius:16, padding:"14px 18px", animation:`ns-cardF 6s ${c.d} ease-in-out infinite` }}>
+                <div style={{ fontSize:".6rem", letterSpacing:".14em", textTransform:"uppercase", color:"rgba(45,38,64,.6)", marginBottom:6 }}>{c.label}</div>
                 <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:"1rem", color:c.dot, display:"flex", alignItems:"center", gap:6 }}>
                   <span style={{ width:8, height:8, borderRadius:"50%", background:c.dot, display:"inline-block", animation:"ns-dot 2s ease-in-out infinite" }}/>
                   {c.val}
@@ -676,7 +678,7 @@ export default function Login() {
         <div className="ns-div" style={{ width:1, flexShrink:0, margin:"40px 0", background:"linear-gradient(to bottom,transparent,rgba(108,63,255,.3) 30%,rgba(192,64,255,.3) 70%,transparent)" }}/>
 
         {/* ── CARD ── */}
-        <div ref={cardRef} style={{ width:432, flexShrink:0, background:"rgba(255,255,255,.04)", backdropFilter:"blur(32px) saturate(180%)", WebkitBackdropFilter:"blur(32px) saturate(180%)", border:"1px solid rgba(255,255,255,.09)", borderRadius:28, overflow:"hidden", animation:"ns-slideR .8s cubic-bezier(.22,1,.36,1) .1s both", boxShadow:"0 0 0 1px rgba(108,63,255,.15),0 40px 80px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08)", transformStyle:"preserve-3d" }}>
+        <div ref={cardRef} style={{ width:432, flexShrink:0, background:"rgba(255,255,255,.85)", backdropFilter:"blur(32px) saturate(180%)", WebkitBackdropFilter:"blur(32px) saturate(180%)", border:"1px solid rgba(108,63,255,.18)", borderRadius:28, overflow:"hidden", animation:"ns-slideR .8s cubic-bezier(.22,1,.36,1) .1s both", boxShadow:"0 0 0 1px rgba(108,63,255,.10),0 40px 80px rgba(80,40,200,.18),inset 0 1px 0 rgba(255,255,255,.6)", transformStyle:"preserve-3d" }}>
 
           {/* Header */}
           <div style={{ padding:"28px 30px 24px", position:"relative", overflow:"hidden" }}>
@@ -707,9 +709,9 @@ export default function Login() {
             {/* Volver al inicio */}
             <Box style={{ display:"flex", justifyContent:"center", marginTop:18 }}>
               <button type="button" onClick={()=>history.push("/")}
-                style={{ background:"none", border:"none", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontSize:".76rem", color:"rgba(255,255,255,.28)", display:"inline-flex", alignItems:"center", gap:4, padding:"4px 8px", borderRadius:8, transition:"color .15s" }}
-                onMouseEnter={e=>e.currentTarget.style.color="rgba(255,255,255,.65)"}
-                onMouseLeave={e=>e.currentTarget.style.color="rgba(255,255,255,.28)"}>
+                style={{ background:"none", border:"none", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontSize:".76rem", color:"rgba(45,38,64,.5)", display:"inline-flex", alignItems:"center", gap:4, padding:"4px 8px", borderRadius:8, transition:"color .15s" }}
+                onMouseEnter={e=>e.currentTarget.style.color=T.v1}
+                onMouseLeave={e=>e.currentTarget.style.color="rgba(45,38,64,.5)"}>
                 <ChevronLeft size={12} strokeWidth={2.5}/> Volver al inicio
               </button>
             </Box>

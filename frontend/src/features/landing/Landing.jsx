@@ -68,6 +68,7 @@ import EmojiEvents from "@material-ui/icons/EmojiEvents"
 import Explore from "@material-ui/icons/Explore"
 import axios from "axios"
 import Swal from "sweetalert2"
+import pagoService from "../pagos/pago.service"
 
 /* ─── API CONFIG ─────────────────────────────────────────────── */
 const API_BASE_URL = process.env.REACT_APP_API_URL || ""
@@ -187,14 +188,14 @@ const testimoniosEjemplo = [
 const useStyles = makeStyles((muiTheme) => ({
   root: {
     overflowX: "hidden",
-    backgroundColor: "#F4F1FF",
-    fontFamily: "'Outfit', sans-serif",
+    background: "linear-gradient(160deg, #F0ECFF 0%, #EDE8FF 40%, #F9F4FF 70%, #EEF4FF 100%)",
+    fontFamily: "'DM Sans', sans-serif",
     color: "#0C0A14",
     position: "relative",
   },
 
   "@global": {
-    "@import": "url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap')",
+    "@import": "url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap')",
     "@keyframes floatY": {
       "0%,100%": { transform: "translateY(0px)" },
       "50%": { transform: "translateY(-18px)" },
@@ -222,10 +223,10 @@ const useStyles = makeStyles((muiTheme) => ({
     "*": { boxSizing: "border-box", scrollBehavior: "smooth" },
     "body,html": { margin: 0, padding: 0 },
     "::-webkit-scrollbar": { width: 6 },
-    "::-webkit-scrollbar-track": { background: "#EDE9FF" },
+    "::-webkit-scrollbar-track": { background: "#EBE5FF" },
     "::-webkit-scrollbar-thumb": { background: "linear-gradient(#6C3FFF,#C040FF)", borderRadius: 3 },
     ".swal2-container": { zIndex: "9999 !important" },
-    ".swal2-toast": { fontFamily: "'Outfit',sans-serif !important", borderRadius: "14px !important", boxShadow: "0 8px 32px rgba(108,63,255,0.20) !important", border: "1px solid rgba(108,63,255,0.18) !important" },
+    ".swal2-toast": { fontFamily: "'DM Sans',sans-serif !important", borderRadius: "14px !important", boxShadow: "0 8px 32px rgba(108,63,255,0.20) !important", border: "1px solid rgba(108,63,255,0.18) !important", background: "rgba(255,255,255,0.97) !important" },
     ".swal2-popup.swal2-toast .swal2-title": { fontSize: "0.88rem !important", fontWeight: "700 !important", color: "#0C0A14 !important" },
     ".swal2-popup.swal2-toast .swal2-html-container": { fontSize: "0.80rem !important", color: "#6B5E87 !important" },
   },
@@ -247,10 +248,10 @@ const useStyles = makeStyles((muiTheme) => ({
     transition: "all 0.5s cubic-bezier(.4,0,.2,1)",
   },
   appBarScrolled: {
-    background: "rgba(12,10,20,0.96)",
+    background: "rgba(255,255,255,0.92)",
     backdropFilter: "blur(20px) saturate(180%)",
-    borderBottom: "1px solid rgba(108,63,255,0.35)",
-    boxShadow: "0 4px 24px rgba(0,0,0,0.35)",
+    borderBottom: "1px solid rgba(108,63,255,0.18)",
+    boxShadow: "0 4px 24px rgba(80,40,200,0.10)",
   },
   toolbar: {
     display: "flex",
@@ -278,17 +279,18 @@ const useStyles = makeStyles((muiTheme) => ({
     textTransform: "none",
     fontSize: "0.88rem",
     fontWeight: 500,
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     padding: "6px 16px",
     borderRadius: 8,
     transition: "all 0.3s",
     "&:hover": { color: "#fff", backgroundColor: "rgba(255,255,255,0.12)" },
   },
   navLinkScrolled: {
-    color: "#fff !important",
-    "&:hover": { color: "#C4B5FD !important", backgroundColor: "rgba(108,63,255,0.20) !important" },
+    color: "#1A1230 !important",
+    fontWeight: "600 !important",
+    "&:hover": { color: "#6C3FFF !important", backgroundColor: "rgba(108,63,255,0.10) !important" },
   },
-  activeNavLink: { color: "#C4B5FD !important" },
+  activeNavLink: { color: "#6C3FFF !important", fontWeight: "700 !important" },
   loginButton: {
     marginLeft: 8,
     background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
@@ -298,7 +300,7 @@ const useStyles = makeStyles((muiTheme) => ({
     textTransform: "none",
     fontWeight: 700,
     fontSize: "0.88rem",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     boxShadow: "0 5px 18px rgba(108,63,255,0.40)",
     transition: "all 0.35s",
     "&:hover": { transform: "translateY(-2px) scale(1.03)", boxShadow: "0 9px 26px rgba(108,63,255,0.55)" },
@@ -313,14 +315,15 @@ const useStyles = makeStyles((muiTheme) => ({
   drawer: {
     width: 300,
     "& .MuiDrawer-paper": {
-      background: "#fff",
-      borderRight: "1px solid rgba(108,63,255,0.14)",
-      boxShadow: "4px 0 32px rgba(108,63,255,0.10)",
+      background: "rgba(255,255,255,0.97)",
+      backdropFilter: "blur(20px) saturate(180%)",
+      borderRight: "1px solid rgba(108,63,255,0.18)",
+      boxShadow: "4px 0 32px rgba(80,40,200,0.18)",
     },
   },
   drawerHeader: {
     padding: "28px 24px 20px",
-    borderBottom: "1px solid rgba(108,63,255,0.10)",
+    borderBottom: "1px solid rgba(108,63,255,0.14)",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
@@ -338,8 +341,8 @@ const useStyles = makeStyles((muiTheme) => ({
   drawerItem: {
     padding: "12px 24px",
     transition: "all 0.2s",
-    "&:hover": { backgroundColor: "rgba(108,63,255,0.07)", paddingLeft: 32 },
-    "& span": { color: "#2D2640", fontFamily: "'Outfit', sans-serif", fontSize: "0.95rem" },
+    "&:hover": { backgroundColor: "rgba(108,63,255,0.10)", paddingLeft: 32 },
+    "& span": { color: "#2D2640", fontFamily: "'DM Sans', sans-serif", fontSize: "0.95rem", fontWeight: 500 },
   },
   drawerLoginBtn: {
     margin: "16px 24px",
@@ -350,7 +353,7 @@ const useStyles = makeStyles((muiTheme) => ({
     fontWeight: 700,
     width: "calc(100% - 48px)",
     padding: "12px 0",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     boxShadow: "0 5px 18px rgba(108,63,255,0.38)",
   },
 
@@ -414,10 +417,10 @@ const useStyles = makeStyles((muiTheme) => ({
     marginBottom: 24,
     backdropFilter: "blur(12px)",
     "& svg": { fontSize: 16, color: "#fff" },
-    "& span": { fontSize: "0.78rem", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#fff", fontFamily: "'Outfit', sans-serif" },
+    "& span": { fontSize: "0.78rem", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "#fff", fontFamily: "'DM Sans', sans-serif" },
   },
   heroTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     fontWeight: 900,
     fontSize: "5.5rem",
     lineHeight: 1.02,
@@ -441,7 +444,7 @@ const useStyles = makeStyles((muiTheme) => ({
     maxWidth: 620,
     margin: "0 auto 44px",
     lineHeight: 1.75,
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
   },
   heroButtons: { display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" },
   heroPrimBtn: {
@@ -453,7 +456,7 @@ const useStyles = makeStyles((muiTheme) => ({
     textTransform: "none",
     fontSize: "0.96rem",
     fontWeight: 700,
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     boxShadow: "0 8px 32px rgba(108,63,255,0.52)",
     transition: "all 0.4s",
     "&:hover": { backgroundPosition: "right center", transform: "translateY(-3px) scale(1.04)", boxShadow: "0 16px 48px rgba(108,63,255,0.68)" },
@@ -466,7 +469,7 @@ const useStyles = makeStyles((muiTheme) => ({
     textTransform: "none",
     fontSize: "0.96rem",
     fontWeight: 500,
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     border: "1.5px solid rgba(255,255,255,0.55)",
     transition: "all 0.3s",
     "&:hover": { borderColor: "#fff", backgroundColor: "rgba(255,255,255,0.15)", transform: "translateY(-2px)" },
@@ -517,19 +520,19 @@ const useStyles = makeStyles((muiTheme) => ({
     [muiTheme.breakpoints.down("sm")]: { padding: "0 16px", marginTop: 0 },
   },
   bookingBar: {
-    background: "rgba(255,255,255,0.88)",
+    background: "rgba(255,255,255,0.96)",
     backdropFilter: "blur(28px) saturate(180%)",
-    border: "1px solid rgba(108,63,255,0.16)",
+    border: "1px solid rgba(108,63,255,0.18)",
     borderRadius: 22,
     padding: "28px 36px",
     display: "flex",
     alignItems: "center",
     gap: 16,
-    boxShadow: "0 20px 60px rgba(108,63,255,0.14), inset 0 1px 0 rgba(255,255,255,0.9)",
+    boxShadow: "0 20px 60px rgba(80,40,200,0.15), inset 0 1px 0 rgba(255,255,255,0.9)",
     [muiTheme.breakpoints.down("sm")]: { flexDirection: "column", padding: "24px 20px", borderRadius: 18 },
   },
   bookingLabel: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     fontWeight: 700,
     fontSize: "1.1rem",
     whiteSpace: "nowrap",
@@ -542,15 +545,17 @@ const useStyles = makeStyles((muiTheme) => ({
     flex: 1,
     "& .MuiOutlinedInput-root": {
       borderRadius: 13,
-      backgroundColor: "rgba(244,241,255,0.60)",
-      fontFamily: "'Outfit', sans-serif",
+      backgroundColor: "#F4F1FF",
+      fontFamily: "'DM Sans', sans-serif",
       color: "#0C0A14",
-      "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#6C3FFF" },
+      "&:hover": { backgroundColor: "#EBE5FF" },
+      "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(108,63,255,0.45)" },
+      "&.Mui-focused": { backgroundColor: "#FFFFFF" },
     },
-    "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(108,63,255,0.20)" },
+    "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(108,63,255,0.18)" },
     "& .Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#6C3FFF", borderWidth: 2 },
-    "& .MuiInputLabel-root": { color: "#6B5E87", fontFamily: "'Outfit', sans-serif" },
-    "& .MuiInputBase-input": { color: "#0C0A14", fontFamily: "'Outfit', sans-serif" },
+    "& .MuiInputLabel-root": { color: "#6B5E87", fontFamily: "'DM Sans', sans-serif" },
+    "& .MuiInputBase-input": { color: "#0C0A14", fontFamily: "'DM Sans', sans-serif" },
     "& .MuiInputLabel-outlined.MuiInputLabel-shrink": { color: "#6C3FFF" },
   },
   bookingSubmit: {
@@ -560,7 +565,7 @@ const useStyles = makeStyles((muiTheme) => ({
     textTransform: "none",
     fontWeight: 700,
     fontSize: "0.9rem",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     letterSpacing: "0.04em",
     background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
     color: "#fff",
@@ -576,12 +581,12 @@ const useStyles = makeStyles((muiTheme) => ({
     gridTemplateColumns: "repeat(4, 1fr)",
     gap: 2,
     margin: "60px 72px 0",
-    background: "rgba(255,255,255,0.82)",
+    background: "rgba(255,255,255,0.85)",
     backdropFilter: "blur(22px) saturate(180%)",
-    border: "1px solid rgba(108,63,255,0.12)",
+    border: "1px solid rgba(108,63,255,0.18)",
     borderRadius: 18,
     overflow: "hidden",
-    boxShadow: "0 5px 22px rgba(108,63,255,0.10)",
+    boxShadow: "0 12px 40px rgba(80,40,200,0.12)",
     [muiTheme.breakpoints.down("sm")]: { gridTemplateColumns: "repeat(2, 1fr)", margin: "40px 16px 0" },
   },
   statItem: {
@@ -590,10 +595,10 @@ const useStyles = makeStyles((muiTheme) => ({
     position: "relative",
     transition: "all 0.35s",
     cursor: "default",
-    "&:hover": { background: "rgba(108,63,255,0.07)" },
+    "&:hover": { background: "rgba(108,63,255,0.08)" },
   },
   statNum: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Syne', sans-serif",
     fontWeight: 900,
     fontSize: "2.6rem",
     background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
@@ -608,7 +613,7 @@ const useStyles = makeStyles((muiTheme) => ({
     color: "#6B5E87",
     letterSpacing: "0.10em",
     textTransform: "uppercase",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     marginTop: 6,
     display: "block",
     fontWeight: 700,
@@ -626,15 +631,15 @@ const useStyles = makeStyles((muiTheme) => ({
     alignItems: "center",
     gap: 8,
     backgroundColor: "rgba(108,63,255,0.10)",
-    border: "1px solid rgba(108,63,255,0.22)",
+    border: "1px solid rgba(108,63,255,0.25)",
     borderRadius: 100,
     padding: "5px 18px",
     marginBottom: 16,
-    "& span": { fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6C3FFF", fontFamily: "'Outfit', sans-serif" },
+    "& span": { fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#6C3FFF", fontFamily: "'DM Sans', sans-serif" },
     "& div": { width: 6, height: 6, borderRadius: "50%", backgroundColor: "#6C3FFF", animation: "$pulse 2s infinite" },
   },
   sxTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Syne', sans-serif",
     fontWeight: 900,
     fontSize: "3rem",
     color: "#0C0A14",
@@ -646,7 +651,7 @@ const useStyles = makeStyles((muiTheme) => ({
     fontSize: "1rem",
     fontWeight: 400,
     color: "#6B5E87",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     lineHeight: 1.7,
     marginBottom: 56,
     maxWidth: 600,
@@ -654,7 +659,7 @@ const useStyles = makeStyles((muiTheme) => ({
 
   /* ── APARTMENTS ── */
   aptSection: {
-    background: "linear-gradient(180deg, #F4F1FF 0%, #EDE9FF 50%, #F4F1FF 100%)",
+    background: "#FFFFFF",
     padding: "100px 0",
     position: "relative",
     overflow: "hidden",
@@ -663,7 +668,16 @@ const useStyles = makeStyles((muiTheme) => ({
       position: "absolute",
       top: 0, left: 0, right: 0,
       height: 1,
-      background: "linear-gradient(90deg, transparent, rgba(108,63,255,0.3), transparent)",
+      background: "linear-gradient(90deg, transparent, rgba(108,63,255,0.35), transparent)",
+    },
+    "&::after": {
+      content: '""',
+      position: "absolute",
+      top: -120, right: -120,
+      width: 420, height: 420,
+      borderRadius: "50%",
+      background: "radial-gradient(circle, rgba(108,63,255,0.10) 0%, transparent 70%)",
+      pointerEvents: "none",
     },
   },
   aptGrid: {
@@ -684,12 +698,13 @@ const useStyles = makeStyles((muiTheme) => ({
     overflow: "hidden",
     position: "relative",
     cursor: "pointer",
-    boxShadow: "0 8px 32px rgba(108,63,255,0.14)",
+    boxShadow: "0 8px 32px rgba(80,40,200,0.12)",
     transition: "transform 0.45s cubic-bezier(.4,0,.2,1), box-shadow 0.45s",
-    background: "#1a1028",
+    background: "#FFFFFF",
+    border: "1px solid rgba(108,63,255,0.10)",
     "&:hover": {
       transform: "translateY(-6px) scale(1.01)",
-      boxShadow: "0 28px 70px rgba(108,63,255,0.30)",
+      boxShadow: "0 28px 70px rgba(80,40,200,0.22)",
     },
     "&:hover $aptOverlayPanel": { transform: "translateY(0)", opacity: 1 },
     "&:hover $aptImg": { transform: "scale(1.07)" },
@@ -706,7 +721,7 @@ const useStyles = makeStyles((muiTheme) => ({
   aptGradient: {
     position: "absolute",
     inset: 0,
-    background: "linear-gradient(to top, rgba(12,10,20,0.92) 0%, rgba(12,10,20,0.35) 50%, rgba(12,10,20,0.10) 100%)",
+    background: "linear-gradient(to top, rgba(12,10,20,0.78) 0%, rgba(12,10,20,0.20) 55%, rgba(12,10,20,0) 100%)",
   },
   aptTag: {
     position: "absolute",
@@ -719,7 +734,7 @@ const useStyles = makeStyles((muiTheme) => ({
     fontWeight: 700,
     letterSpacing: "0.12em",
     textTransform: "uppercase",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     boxShadow: "0 3px 12px rgba(108,63,255,0.45)",
     zIndex: 3,
   },
@@ -732,7 +747,7 @@ const useStyles = makeStyles((muiTheme) => ({
     transition: "opacity 0.35s, transform 0.35s",
   },
   aptTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     fontWeight: 800,
     fontSize: "1.1rem",
     color: "#fff",
@@ -750,7 +765,7 @@ const useStyles = makeStyles((muiTheme) => ({
     gap: 4,
     color: "rgba(255,255,255,0.65)",
     fontSize: "0.76rem",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     marginBottom: 10,
     "& svg": { fontSize: 13, color: "#C4B5FD" },
   },
@@ -758,47 +773,50 @@ const useStyles = makeStyles((muiTheme) => ({
     display: "inline-flex",
     alignItems: "baseline",
     gap: 3,
-    background: "rgba(12,10,20,0.60)",
+    background: "rgba(255,255,255,0.95)",
     backdropFilter: "blur(12px)",
-    border: "1px solid rgba(196,181,253,0.22)",
+    border: "1px solid rgba(108,63,255,0.20)",
     borderRadius: 10,
     padding: "5px 13px",
+    boxShadow: "0 4px 14px rgba(80,40,200,0.18)",
   },
-  aptPriceNum: { fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: "1.05rem", color: "#C4B5FD" },
-  aptPriceLabel: { fontSize: "0.72rem", color: "rgba(255,255,255,0.55)", fontFamily: "'Outfit', sans-serif" },
+  aptPriceNum: { fontFamily: "'DM Sans', sans-serif", fontWeight: 900, fontSize: "1.05rem", color: "#6C3FFF" },
+  aptPriceLabel: { fontSize: "0.72rem", color: "#6B5E87", fontFamily: "'DM Sans', sans-serif" },
   aptOverlayPanel: {
     position: "absolute",
     bottom: 0, left: 0, right: 0,
-    background: "rgba(12,10,20,0.93)",
+    background: "rgba(255,255,255,0.97)",
     backdropFilter: "blur(22px)",
-    borderTop: "1px solid rgba(108,63,255,0.38)",
+    borderTop: "1px solid rgba(108,63,255,0.25)",
     padding: "20px 22px",
     zIndex: 4,
     transform: "translateY(100%)",
     opacity: 0,
     transition: "transform 0.42s cubic-bezier(.4,0,.2,1), opacity 0.38s",
+    boxShadow: "0 -8px 24px rgba(80,40,200,0.12)",
   },
-  aptPanelTitle: { fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1rem", color: "#fff", marginBottom: 4 },
-  aptPanelPrice: { fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: "0.9rem", color: "#C4B5FD", marginBottom: 12 },
+  aptPanelTitle: { fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: "1rem", color: "#0C0A14", marginBottom: 4 },
+  aptPanelPrice: { fontFamily: "'DM Sans', sans-serif", fontWeight: 900, fontSize: "0.9rem", color: "#6C3FFF", marginBottom: 12 },
   aptFeatures: { display: "flex", gap: 14, marginBottom: 12, flexWrap: "wrap" },
   aptFeature: {
     display: "flex",
     alignItems: "center",
     gap: 5,
     fontSize: "0.75rem",
-    color: "rgba(255,255,255,0.75)",
-    fontFamily: "'Outfit', sans-serif",
-    "& svg": { fontSize: 14, color: "#C4B5FD" },
+    color: "#2D2640",
+    fontFamily: "'DM Sans', sans-serif",
+    fontWeight: 500,
+    "& svg": { fontSize: 14, color: "#6C3FFF" },
   },
   aptChips: { display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 14 },
   aptChip: {
     height: 20,
-    backgroundColor: "rgba(108,63,255,0.22)",
-    border: "1px solid rgba(196,181,253,0.22)",
-    color: "#C4B5FD",
+    backgroundColor: "rgba(108,63,255,0.10)",
+    border: "1px solid rgba(108,63,255,0.22)",
+    color: "#6C3FFF",
     borderRadius: 5,
     fontSize: "0.65rem",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     fontWeight: 600,
     "& .MuiChip-label": { padding: "0 8px" },
   },
@@ -808,7 +826,7 @@ const useStyles = makeStyles((muiTheme) => ({
     textTransform: "none",
     fontWeight: 700,
     fontSize: "0.82rem",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
     color: "#fff",
     padding: "8px 20px",
@@ -817,7 +835,7 @@ const useStyles = makeStyles((muiTheme) => ({
     "&:hover": { transform: "translateY(-2px)", boxShadow: "0 8px 24px rgba(108,63,255,0.62)" },
   },
   aptFavBtn: {
-    color: "rgba(255,255,255,0.40)",
+    color: "#B0A5C8",
     transition: "all 0.3s",
     "&:hover": { color: "#EC4899", transform: "scale(1.2)" },
   },
@@ -849,33 +867,36 @@ const useStyles = makeStyles((muiTheme) => ({
     width: "100%",
     "& .MuiOutlinedInput-root": {
       borderRadius: 50,
-      backgroundColor: "rgba(255,255,255,0.88)",
-      fontFamily: "'Outfit', sans-serif",
+      backgroundColor: "#FFFFFF",
+      fontFamily: "'DM Sans', sans-serif",
       color: "#0C0A14",
-      "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#6C3FFF" },
+      boxShadow: "0 2px 10px rgba(80,40,200,0.06)",
+      "&:hover": { backgroundColor: "#F4F1FF" },
+      "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(108,63,255,0.45)" },
+      "&.Mui-focused": { backgroundColor: "#FFFFFF" },
     },
-    "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(108,63,255,0.20)" },
+    "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(108,63,255,0.18)" },
     "& .Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#6C3FFF" },
-    "& .MuiInputBase-input": { color: "#0C0A14", fontFamily: "'Outfit', sans-serif" },
-    "& .MuiInputBase-input::placeholder": { color: "#6B5E87" },
+    "& .MuiInputBase-input": { color: "#0C0A14", fontFamily: "'DM Sans', sans-serif" },
+    "& .MuiInputBase-input::placeholder": { color: "#6B5E87", opacity: 1 },
   },
   showAllBtn: {
     background: "rgba(108,63,255,0.10)",
-    border: "1px solid rgba(108,63,255,0.25)",
+    border: "1px solid rgba(108,63,255,0.30)",
     color: "#6C3FFF",
     borderRadius: 50,
     textTransform: "none",
     fontWeight: 700,
     fontSize: "0.85rem",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     padding: "10px 24px",
     transition: "all 0.3s",
-    "&:hover": { background: "linear-gradient(135deg, #6C3FFF, #C040FF)", color: "#fff", border: "1px solid transparent", boxShadow: "0 5px 18px rgba(108,63,255,0.38)" },
+    "&:hover": { background: "linear-gradient(135deg, #6C3FFF, #C040FF)", color: "#fff", border: "1px solid transparent", boxShadow: "0 5px 18px rgba(108,63,255,0.45)" },
   },
 
   /* ── ABOUT ── */
   aboutSection: {
-    background: "linear-gradient(135deg, #0C0A14 0%, #1A0F3A 50%, #0C0A14 100%)",
+    background: "linear-gradient(135deg, #E9E0FF 0%, #DCD2FF 50%, #E9E0FF 100%)",
     padding: "100px 72px",
     position: "relative",
     overflow: "hidden",
@@ -885,7 +906,16 @@ const useStyles = makeStyles((muiTheme) => ({
       position: "absolute",
       top: 0, left: 0, right: 0,
       height: 1,
-      background: "linear-gradient(90deg, transparent, rgba(108,63,255,0.5), transparent)",
+      background: "linear-gradient(90deg, transparent, rgba(108,63,255,0.45), transparent)",
+    },
+    "&::after": {
+      content: '""',
+      position: "absolute",
+      bottom: -100, left: -100,
+      width: 380, height: 380,
+      borderRadius: "50%",
+      background: "radial-gradient(circle, rgba(192,64,255,0.18) 0%, transparent 70%)",
+      pointerEvents: "none",
     },
   },
   aboutImgWrap: {
@@ -905,75 +935,85 @@ const useStyles = makeStyles((muiTheme) => ({
   aboutFloatCard: {
     position: "absolute",
     bottom: -20, right: -20,
-    background: "rgba(12,10,20,0.92)",
+    background: "rgba(255,255,255,0.96)",
     backdropFilter: "blur(20px)",
-    border: "1px solid rgba(108,63,255,0.40)",
+    border: "1px solid rgba(108,63,255,0.22)",
     borderRadius: 18,
     padding: "16px 24px",
     animation: "$cardFloat 4s ease-in-out infinite",
     zIndex: 5,
-    boxShadow: "0 10px 32px rgba(108,63,255,0.30)",
+    boxShadow: "0 12px 40px rgba(80,40,200,0.18)",
     "& span": { display: "block" },
     "& .big": {
-      fontFamily: "'Outfit', sans-serif",
+      fontFamily: "'DM Sans', sans-serif",
       fontWeight: 900,
       fontSize: "1.8rem",
-      background: "linear-gradient(135deg, #C4B5FD, #C040FF)",
+      background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
       WebkitBackgroundClip: "text",
       WebkitTextFillColor: "transparent",
       backgroundClip: "text",
     },
-    "& .small": { fontSize: "0.75rem", color: "rgba(255,255,255,0.55)", fontFamily: "'Outfit', sans-serif", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 700 },
+    "& .small": { fontSize: "0.75rem", color: "#6B5E87", fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 700 },
   },
   aboutBody: {
     fontSize: "0.96rem",
     fontWeight: 400,
-    color: "rgba(255,255,255,0.72)",
+    color: "#2D2640",
     lineHeight: 1.8,
     marginBottom: 24,
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
   },
   checkRow: {
     display: "flex",
     alignItems: "center",
     gap: 12,
     marginBottom: 14,
-    "& svg": { color: "#C4B5FD", fontSize: 18 },
-    "& span": { fontSize: "0.92rem", color: "rgba(255,255,255,0.88)", fontFamily: "'Outfit', sans-serif", fontWeight: 500 },
+    "& svg": { color: "#6C3FFF", fontSize: 18 },
+    "& span": { fontSize: "0.92rem", color: "#2D2640", fontFamily: "'DM Sans', sans-serif", fontWeight: 500 },
   },
   pillRow: { display: "flex", flexWrap: "wrap", gap: 10, marginTop: 28 },
   pill: {
     display: "flex",
     alignItems: "center",
     gap: 8,
-    background: "rgba(108,63,255,0.18)",
-    border: "1px solid rgba(196,181,253,0.28)",
+    background: "rgba(108,63,255,0.10)",
+    border: "1px solid rgba(108,63,255,0.22)",
     borderRadius: 12,
     padding: "8px 16px",
     transition: "all 0.3s",
-    "&:hover": { background: "rgba(108,63,255,0.30)", border: "1px solid rgba(196,181,253,0.50)", transform: "translateY(-2px)" },
-    "& svg": { fontSize: 16, color: "#C4B5FD" },
-    "& span": { fontSize: "0.82rem", color: "rgba(255,255,255,0.85)", fontFamily: "'Outfit', sans-serif", fontWeight: 600 },
+    "&:hover": { background: "rgba(108,63,255,0.18)", border: "1px solid rgba(108,63,255,0.40)", transform: "translateY(-2px)" },
+    "& svg": { fontSize: 16, color: "#6C3FFF" },
+    "& span": { fontSize: "0.82rem", color: "#2D2640", fontFamily: "'DM Sans', sans-serif", fontWeight: 600 },
   },
 
   /* ── SERVICES ── */
   servicesSection: {
-    background: "linear-gradient(180deg, #0C0A14 0%, #1A0F3A 100%)",
+    background: "#FFFFFF",
     padding: "100px 72px",
     position: "relative",
+    overflow: "hidden",
     [muiTheme.breakpoints.down("sm")]: { padding: "60px 20px" },
     "&::before": {
       content: '""',
       position: "absolute",
       top: 0, left: 0, right: 0,
       height: 1,
-      background: "linear-gradient(90deg, transparent, rgba(192,64,255,0.4), transparent)",
+      background: "linear-gradient(90deg, transparent, rgba(192,64,255,0.40), transparent)",
+    },
+    "&::after": {
+      content: '""',
+      position: "absolute",
+      top: "30%", right: -150,
+      width: 460, height: 460,
+      borderRadius: "50%",
+      background: "radial-gradient(circle, rgba(108,63,255,0.10) 0%, transparent 70%)",
+      pointerEvents: "none",
     },
   },
   serviceCard: {
-    background: "rgba(255,255,255,0.06)",
+    background: "rgba(255,255,255,0.92)",
     backdropFilter: "blur(16px)",
-    border: "1px solid rgba(196,181,253,0.18)",
+    border: "1px solid rgba(108,63,255,0.14)",
     borderRadius: 22,
     padding: "40px 28px 32px",
     textAlign: "center",
@@ -981,7 +1021,7 @@ const useStyles = makeStyles((muiTheme) => ({
     transition: "all 0.45s cubic-bezier(.4,0,.2,1)",
     position: "relative",
     overflow: "hidden",
-    boxShadow: "0 5px 22px rgba(0,0,0,0.20)",
+    boxShadow: "0 4px 28px rgba(108,63,255,0.10)",
     "&::before": {
       content: '""',
       position: "absolute",
@@ -992,58 +1032,70 @@ const useStyles = makeStyles((muiTheme) => ({
       transition: "transform 0.4s",
       transformOrigin: "left",
     },
-    "&:hover": { transform: "translateY(-10px)", border: "1px solid rgba(196,181,253,0.40)", background: "rgba(108,63,255,0.12)", boxShadow: "0 24px 64px rgba(108,63,255,0.30)" },
+    "&:hover": { transform: "translateY(-10px)", border: "1px solid rgba(108,63,255,0.30)", background: "#FFFFFF", boxShadow: "0 24px 64px rgba(80,40,200,0.18)" },
     "&:hover::before": { transform: "scaleX(1)" },
     "&:hover $svcIconWrap": { transform: "rotateY(180deg)" },
   },
   svcIconWrap: {
     width: 72, height: 72,
     borderRadius: "50%",
-    background: "linear-gradient(135deg, rgba(108,63,255,0.30), rgba(192,64,255,0.20))",
-    border: "1.5px solid rgba(196,181,253,0.30)",
+    background: "linear-gradient(135deg, rgba(108,63,255,0.18), rgba(192,64,255,0.12))",
+    border: "1.5px solid rgba(108,63,255,0.25)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     margin: "0 auto 20px",
     transition: "transform 0.6s cubic-bezier(.4,0,.2,1)",
     transformStyle: "preserve-3d",
-    "& svg": { fontSize: 30, color: "#C4B5FD" },
+    "& svg": { fontSize: 30, color: "#6C3FFF" },
   },
-  svcTitle: { fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: "1.1rem", color: "#fff", marginBottom: 10 },
-  svcText: { fontSize: "0.84rem", color: "rgba(255,255,255,0.62)", lineHeight: 1.7, fontFamily: "'Outfit', sans-serif", fontWeight: 400 },
+  svcTitle: { fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: "1.1rem", color: "#0C0A14", marginBottom: 10 },
+  svcText: { fontSize: "0.84rem", color: "#6B5E87", lineHeight: 1.7, fontFamily: "'DM Sans', sans-serif", fontWeight: 400 },
 
   /* ── TESTIMONIALS ── */
   testimSection: {
-    background: "linear-gradient(135deg, #EDE9FF 0%, #E4DEFF 50%, #EDE9FF 100%)",
+    background: "linear-gradient(135deg, #E9E0FF 0%, #DCD2FF 50%, #E9E0FF 100%)",
     padding: "100px 72px",
     position: "relative",
+    overflow: "hidden",
     [muiTheme.breakpoints.down("sm")]: { padding: "60px 20px" },
     "&::before": {
       content: '""',
       position: "absolute",
       top: 0, left: 0, right: 0,
       height: 1,
-      background: "linear-gradient(90deg, transparent, rgba(108,63,255,0.35), transparent)",
+      background: "linear-gradient(90deg, transparent, rgba(108,63,255,0.45), transparent)",
+    },
+    "&::after": {
+      content: '""',
+      position: "absolute",
+      top: -80, left: "20%",
+      width: 360, height: 360,
+      borderRadius: "50%",
+      background: "radial-gradient(circle, rgba(192,64,255,0.18) 0%, transparent 70%)",
+      pointerEvents: "none",
     },
   },
   testimCard: {
-    background: "rgba(255,255,255,0.80)",
+    background: "#FFFFFF",
     backdropFilter: "blur(22px) saturate(180%)",
     border: "1px solid rgba(108,63,255,0.14)",
     borderRadius: 22,
     padding: "32px 28px",
     height: "100%",
-    boxShadow: "0 5px 22px rgba(108,63,255,0.10)",
+    boxShadow: "0 8px 32px rgba(80,40,200,0.14)",
     transition: "all 0.4s",
-    "&:hover": { transform: "translateY(-8px)", border: "1px solid rgba(108,63,255,0.30)", boxShadow: "0 24px 60px rgba(108,63,255,0.20)" },
+    position: "relative",
+    zIndex: 1,
+    "&:hover": { transform: "translateY(-8px)", border: "1px solid rgba(108,63,255,0.30)", boxShadow: "0 24px 60px rgba(80,40,200,0.22)" },
   },
-  testimQuoteMark: { fontFamily: "'Playfair Display', serif", fontSize: "4rem", lineHeight: 0.7, color: "#6C3FFF", opacity: 0.45, marginBottom: 12 },
+  testimQuoteMark: { fontFamily: "'Playfair Display', serif", fontSize: "4rem", lineHeight: 0.7, color: "#6C3FFF", opacity: 0.4, marginBottom: 12 },
   testimStars: { display: "flex", gap: 2, marginBottom: 16, "& svg": { fontSize: 16, color: "#F59E0B" } },
-  testimText: { fontSize: "0.93rem", fontWeight: 400, color: "#2D2640", fontFamily: "'Outfit', sans-serif", lineHeight: 1.8, fontStyle: "italic", marginBottom: 24 },
-  testimAuthor: { display: "flex", alignItems: "center", gap: 14, paddingTop: 20, borderTop: "1px solid rgba(108,63,255,0.12)" },
-  testimAvatar: { width: 52, height: 52, borderRadius: "50%", objectFit: "cover", border: "2.5px solid rgba(108,63,255,0.30)", boxShadow: "0 4px 14px rgba(108,63,255,0.18)" },
-  testimName: { fontWeight: 700, fontSize: "0.92rem", color: "#0C0A14", fontFamily: "'Outfit', sans-serif" },
-  testimRole: { fontSize: "0.78rem", color: "#6B5E87", fontFamily: "'Outfit', sans-serif" },
+  testimText: { fontSize: "0.93rem", fontWeight: 400, color: "#2D2640", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.8, fontStyle: "italic", marginBottom: 24 },
+  testimAuthor: { display: "flex", alignItems: "center", gap: 14, paddingTop: 20, borderTop: "1px solid rgba(108,63,255,0.14)" },
+  testimAvatar: { width: 52, height: 52, borderRadius: "50%", objectFit: "cover", border: "2.5px solid rgba(108,63,255,0.30)", boxShadow: "0 4px 14px rgba(108,63,255,0.20)" },
+  testimName: { fontWeight: 700, fontSize: "0.92rem", color: "#0C0A14", fontFamily: "'DM Sans', sans-serif" },
+  testimRole: { fontSize: "0.78rem", color: "#6B5E87", fontFamily: "'DM Sans', sans-serif" },
 
   /* ── CTA ── */
   ctaSection: {
@@ -1069,8 +1121,8 @@ const useStyles = makeStyles((muiTheme) => ({
     },
   },
   ctaContent: { position: "relative", zIndex: 1 },
-  ctaTitle: { fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: "3.5rem", color: "#fff", marginBottom: 20, [muiTheme.breakpoints.down("sm")]: { fontSize: "2.2rem" } },
-  ctaText: { fontSize: "1rem", fontWeight: 300, color: "rgba(255,255,255,0.88)", fontFamily: "'Outfit', sans-serif", maxWidth: 560, margin: "0 auto 44px", lineHeight: 1.7 },
+  ctaTitle: { fontFamily: "'Syne', sans-serif", fontWeight: 900, fontSize: "3.5rem", color: "#fff", marginBottom: 20, [muiTheme.breakpoints.down("sm")]: { fontSize: "2.2rem" } },
+  ctaText: { fontSize: "1rem", fontWeight: 300, color: "rgba(255,255,255,0.88)", fontFamily: "'DM Sans', sans-serif", maxWidth: 560, margin: "0 auto 44px", lineHeight: 1.7 },
   ctaBtn: {
     background: "#fff",
     color: "#6C3FFF",
@@ -1079,7 +1131,7 @@ const useStyles = makeStyles((muiTheme) => ({
     textTransform: "none",
     fontSize: "1rem",
     fontWeight: 700,
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     boxShadow: "0 8px 36px rgba(0,0,0,0.25)",
     transition: "all 0.4s",
     "&:hover": { transform: "translateY(-3px) scale(1.04)", boxShadow: "0 16px 56px rgba(0,0,0,0.35)", background: "#f4f1ff" },
@@ -1096,7 +1148,7 @@ const useStyles = makeStyles((muiTheme) => ({
 
   /* ── FOOTER ── */
   footer: {
-    background: "#0C0A14",
+    background: "linear-gradient(180deg, #EBE5FF 0%, #DCD2FF 100%)",
     padding: "72px 72px 40px",
     position: "relative",
     borderTop: "3px solid #6C3FFF",
@@ -1107,35 +1159,37 @@ const useStyles = makeStyles((muiTheme) => ({
     fontStyle: "italic",
     fontWeight: 700,
     fontSize: "1.6rem",
-    background: "linear-gradient(135deg, #C4B5FD, #EC4899)",
+    background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent",
     backgroundClip: "text",
     display: "block",
     marginBottom: 16,
   },
-  footerTagline: { fontSize: "0.85rem", fontWeight: 300, color: "rgba(255,255,255,0.50)", lineHeight: 1.7, fontFamily: "'Outfit', sans-serif", marginBottom: 24 },
+  footerTagline: { fontSize: "0.85rem", fontWeight: 400, color: "#2D2640", lineHeight: 1.7, fontFamily: "'DM Sans', sans-serif", marginBottom: 24 },
   footerSocials: { display: "flex", gap: 8 },
   footerSocBtn: {
     width: 36, height: 36,
     borderRadius: "50%",
-    border: "1px solid rgba(108,63,255,0.35)",
-    color: "rgba(255,255,255,0.50)",
+    border: "1px solid rgba(108,63,255,0.30)",
+    color: "#6C3FFF",
+    background: "rgba(255,255,255,0.6)",
     transition: "all 0.3s",
-    "&:hover": { borderColor: "#C4B5FD", color: "#C4B5FD", background: "rgba(108,63,255,0.18)", transform: "translateY(-2px)" },
+    "&:hover": { borderColor: "#6C3FFF", color: "#fff", background: "linear-gradient(135deg, #6C3FFF, #C040FF)", transform: "translateY(-2px)" },
   },
-  footerHeading: { fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: "0.88rem", color: "#fff", marginBottom: 20, textTransform: "uppercase", letterSpacing: "0.12em", paddingBottom: 12, borderBottom: "1px solid rgba(108,63,255,0.25)" },
+  footerHeading: { fontFamily: "'DM Sans', sans-serif", fontWeight: 800, fontSize: "0.88rem", color: "#0C0A14", marginBottom: 20, textTransform: "uppercase", letterSpacing: "0.12em", paddingBottom: 12, borderBottom: "1px solid rgba(108,63,255,0.25)" },
   footerLink: {
     display: "flex",
     alignItems: "center",
     gap: 8,
-    color: "rgba(255,255,255,0.50)",
+    color: "#2D2640",
     fontSize: "0.84rem",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
+    fontWeight: 500,
     marginBottom: 12,
     cursor: "pointer",
     transition: "all 0.25s",
-    "&:hover": { color: "#C4B5FD", transform: "translateX(4px)" },
+    "&:hover": { color: "#6C3FFF", transform: "translateX(4px)" },
     "& svg": { fontSize: 10, color: "#6C3FFF" },
   },
   footerContact: {
@@ -1143,56 +1197,56 @@ const useStyles = makeStyles((muiTheme) => ({
     alignItems: "flex-start",
     gap: 12,
     marginBottom: 14,
-    "& svg": { fontSize: 16, color: "#C4B5FD", marginTop: 2 },
-    "& span": { fontSize: "0.84rem", color: "rgba(255,255,255,0.50)", fontFamily: "'Outfit', sans-serif", lineHeight: 1.5 },
+    "& svg": { fontSize: 16, color: "#6C3FFF", marginTop: 2 },
+    "& span": { fontSize: "0.84rem", color: "#2D2640", fontFamily: "'DM Sans', sans-serif", lineHeight: 1.5, fontWeight: 500 },
   },
-  footerBottom: { borderTop: "1px solid rgba(255,255,255,0.07)", marginTop: 48, paddingTop: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 },
-  footerCopy: { fontSize: "0.78rem", color: "rgba(255,255,255,0.32)", fontFamily: "'Outfit', sans-serif" },
-  footerPolicyLinks: { display: "flex", gap: 20, "& span": { fontSize: "0.78rem", color: "rgba(255,255,255,0.32)", fontFamily: "'Outfit', sans-serif", cursor: "pointer", transition: "color 0.2s", "&:hover": { color: "#C4B5FD" } } },
+  footerBottom: { borderTop: "1px solid rgba(108,63,255,0.18)", marginTop: 48, paddingTop: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 },
+  footerCopy: { fontSize: "0.78rem", color: "#6B5E87", fontFamily: "'DM Sans', sans-serif" },
+  footerPolicyLinks: { display: "flex", gap: 20, "& span": { fontSize: "0.78rem", color: "#6B5E87", fontFamily: "'DM Sans', sans-serif", cursor: "pointer", transition: "color 0.2s", "&:hover": { color: "#6C3FFF" } } },
 
   /* ── MODAL ── */
   modalDialog: {
     "& .MuiDialog-paper": {
       borderRadius: 26,
-      background: "rgba(255,255,255,0.98)",
+      background: "#FFFFFF",
       backdropFilter: "blur(24px)",
       border: "1px solid rgba(108,63,255,0.18)",
-      boxShadow: "0 24px 64px rgba(108,63,255,0.22)",
+      boxShadow: "0 24px 64px rgba(80,40,200,0.25)",
       overflow: "hidden",
       color: "#0C0A14",
       position: "relative",
       "&::before": { content: '""', position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "linear-gradient(135deg, #6C3FFF, #C040FF)", zIndex: 10 },
     },
-    "& .MuiBackdrop-root": { backdropFilter: "blur(8px)", background: "rgba(12,10,20,0.55)" },
+    "& .MuiBackdrop-root": { backdropFilter: "blur(6px)", background: "rgba(45,38,64,0.45)" },
   },
   modalHeader: {
     background: "linear-gradient(135deg, #6C3FFF, #C040FF)",
     padding: "22px 28px",
     position: "relative",
     overflow: "hidden",
-    "&::before": { content: '""', position: "absolute", top: -50, right: -50, width: 180, height: 180, borderRadius: "50%", background: "rgba(255,255,255,0.08)" },
+    "&::before": { content: '""', position: "absolute", top: -50, right: -50, width: 180, height: 180, borderRadius: "50%", background: "rgba(255,255,255,0.12)" },
   },
-  modalHeaderTitle: { fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.25rem", color: "#fff", lineHeight: 1.2 },
-  modalHeaderSub: { fontSize: "0.78rem", color: "rgba(255,255,255,0.78)", fontFamily: "'Outfit', sans-serif", marginTop: 3 },
+  modalHeaderTitle: { fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "1.25rem", color: "#fff", lineHeight: 1.2, letterSpacing: "-0.3px" },
+  modalHeaderSub: { fontSize: "0.78rem", color: "rgba(255,255,255,0.88)", fontFamily: "'DM Sans', sans-serif", marginTop: 3 },
   modalContent: {
     padding: "24px 28px",
     maxHeight: "66vh",
     overflowY: "auto",
-    background: "#fff",
+    background: "#FFFFFF",
     "&::-webkit-scrollbar": { width: 4 },
-    "&::-webkit-scrollbar-thumb": { background: "rgba(108,63,255,0.35)", borderRadius: 2 },
+    "&::-webkit-scrollbar-thumb": { background: "rgba(108,63,255,0.40)", borderRadius: 2 },
   },
   modalSection: { marginBottom: 24 },
   modalSectionLabel: {
     fontSize: "0.70rem",
-    fontWeight: 700,
+    fontWeight: 800,
     letterSpacing: "0.16em",
     textTransform: "uppercase",
     color: "#6C3FFF",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     marginBottom: 14,
     paddingBottom: 8,
-    borderBottom: "1.5px solid rgba(108,63,255,0.10)",
+    borderBottom: "1.5px solid rgba(108,63,255,0.18)",
     display: "flex",
     alignItems: "center",
     gap: 8,
@@ -1201,56 +1255,57 @@ const useStyles = makeStyles((muiTheme) => ({
   formField: {
     "& .MuiOutlinedInput-root": {
       borderRadius: 13,
-      backgroundColor: "rgba(244,241,255,0.50)",
-      fontFamily: "'Outfit', sans-serif",
+      backgroundColor: "#F4F1FF",
+      fontFamily: "'DM Sans', sans-serif",
       color: "#0C0A14",
       transition: "all 0.3s",
-      "&:hover": { backgroundColor: "rgba(244,241,255,0.80)" },
-      "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#6C3FFF" },
+      "&:hover": { backgroundColor: "#EBE5FF" },
+      "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(108,63,255,0.45)" },
+      "&.Mui-focused": { backgroundColor: "#FFFFFF" },
       "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#6C3FFF", borderWidth: 2 },
     },
-    "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(108,63,255,0.22)" },
-    "& .MuiInputLabel-root": { color: "#6B5E87", fontFamily: "'Outfit', sans-serif" },
-    "& .MuiInputBase-input": { color: "#0C0A14", fontFamily: "'Outfit', sans-serif" },
+    "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(108,63,255,0.18)" },
+    "& .MuiInputLabel-root": { color: "#6B5E87", fontFamily: "'DM Sans', sans-serif" },
+    "& .MuiInputBase-input": { color: "#0C0A14", fontFamily: "'DM Sans', sans-serif" },
     "& .MuiInputLabel-outlined.MuiInputLabel-shrink": { color: "#6C3FFF" },
-    "& .MuiFormHelperText-root": { color: "#6B5E87", fontFamily: "'Outfit', sans-serif", fontSize: "0.74rem" },
-    "& .MuiFormHelperText-root.Mui-error": { color: "#EF4444" },
+    "& .MuiFormHelperText-root": { color: "#6B5E87", fontFamily: "'DM Sans', sans-serif", fontSize: "0.74rem" },
+    "& .MuiFormHelperText-root.Mui-error": { color: "#E11D48" },
   },
-  summaryBox: { background: "rgba(108,63,255,0.06)", border: "1px solid rgba(108,63,255,0.15)", borderRadius: 18, padding: "20px 22px" },
-  summaryRow: { display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid rgba(108,63,255,0.07)", "&:last-child": { borderBottom: "none", paddingTop: 14 } },
-  summaryLabel: { fontSize: "0.84rem", color: "#6B5E87", fontFamily: "'Outfit', sans-serif" },
-  summaryValue: { fontSize: "0.84rem", color: "#0C0A14", fontWeight: 700, fontFamily: "'Outfit', sans-serif" },
-  summaryTotal: { fontSize: "1rem", fontWeight: 800, background: "linear-gradient(135deg, #6C3FFF, #C040FF)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", fontFamily: "'Outfit', sans-serif" },
-  paymentBox: { background: "rgba(108,63,255,0.06)", border: "1px solid rgba(108,63,255,0.18)", borderRadius: 14, padding: "18px 20px", borderLeft: "3px solid #6C3FFF" },
-  paymentBoxTitle: { fontSize: "0.82rem", fontWeight: 700, color: "#6C3FFF", fontFamily: "'Outfit', sans-serif", marginBottom: 10, display: "flex", alignItems: "center", gap: 6, "& svg": { fontSize: 16 } },
-  paymentBoxText: { fontSize: "0.84rem", color: "#2D2640", fontFamily: "'Outfit', sans-serif", marginBottom: 5, lineHeight: 1.6, fontWeight: 400 },
+  summaryBox: { background: "linear-gradient(135deg, #F4F1FF 0%, #EBE5FF 100%)", border: "1px solid rgba(108,63,255,0.22)", borderRadius: 18, padding: "20px 22px" },
+  summaryRow: { display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid rgba(108,63,255,0.16)", "&:last-child": { borderBottom: "none", paddingTop: 14 } },
+  summaryLabel: { fontSize: "0.84rem", color: "#6B5E87", fontFamily: "'DM Sans', sans-serif", fontWeight: 500 },
+  summaryValue: { fontSize: "0.84rem", color: "#0C0A14", fontWeight: 700, fontFamily: "'DM Sans', sans-serif" },
+  summaryTotal: { fontSize: "1rem", fontWeight: 800, background: "linear-gradient(135deg, #6C3FFF, #C040FF)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", fontFamily: "'Syne', sans-serif" },
+  paymentBox: { background: "linear-gradient(135deg, #F4F1FF 0%, #EBE5FF 100%)", border: "1px solid rgba(108,63,255,0.22)", borderRadius: 14, padding: "18px 20px", borderLeft: "3px solid #6C3FFF" },
+  paymentBoxTitle: { fontSize: "0.82rem", fontWeight: 800, color: "#6C3FFF", fontFamily: "'DM Sans', sans-serif", marginBottom: 10, display: "flex", alignItems: "center", gap: 6, "& svg": { fontSize: 16 } },
+  paymentBoxText: { fontSize: "0.84rem", color: "#2D2640", fontFamily: "'DM Sans', sans-serif", marginBottom: 5, lineHeight: 1.6, fontWeight: 500 },
   uploadBtn: {
     background: "rgba(108,63,255,0.10)",
-    border: "1px solid rgba(108,63,255,0.25)",
+    border: "1px solid rgba(108,63,255,0.30)",
     color: "#6C3FFF",
     borderRadius: 50,
     textTransform: "none",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     fontSize: "0.84rem",
     fontWeight: 700,
     padding: "10px 22px",
     transition: "all 0.3s",
-    "&:hover": { background: "linear-gradient(135deg, #6C3FFF, #C040FF)", color: "#fff", border: "1px solid transparent", boxShadow: "0 5px 18px rgba(108,63,255,0.38)" },
+    "&:hover": { background: "linear-gradient(135deg, #6C3FFF, #C040FF)", color: "#fff", border: "1px solid transparent", boxShadow: "0 5px 18px rgba(108,63,255,0.45)" },
   },
   fileInput: { display: "none" },
   filePreview: { maxWidth: "100%", maxHeight: 100, borderRadius: 10, border: "1px solid rgba(108,63,255,0.22)", marginTop: 10 },
-  fileName: { fontSize: "0.75rem", color: "#6B5E87", fontFamily: "'Outfit', sans-serif", marginTop: 6 },
-  acompSection: { background: "rgba(244,241,255,0.50)", border: "1px solid rgba(108,63,255,0.14)", borderRadius: 16, padding: "20px" },
-  acompSub: { fontSize: "0.80rem", color: "#6B5E87", fontFamily: "'Outfit', sans-serif", marginBottom: 16, fontWeight: 500 },
-  acompCard: { background: "rgba(255,255,255,0.90)", border: "1px solid rgba(108,63,255,0.14)", borderRadius: 14, padding: "16px", marginBottom: 12, position: "relative", boxShadow: "0 2px 10px rgba(108,63,255,0.07)" },
-  acompCardTitle: { fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase", color: "#6C3FFF", fontFamily: "'Outfit', sans-serif", marginBottom: 12 },
+  fileName: { fontSize: "0.75rem", color: "#6B5E87", fontFamily: "'DM Sans', sans-serif", marginTop: 6 },
+  acompSection: { background: "#F9F7FF", border: "1px solid rgba(108,63,255,0.18)", borderRadius: 16, padding: "20px" },
+  acompSub: { fontSize: "0.80rem", color: "#6B5E87", fontFamily: "'DM Sans', sans-serif", marginBottom: 16, fontWeight: 500 },
+  acompCard: { background: "#FFFFFF", border: "1px solid rgba(108,63,255,0.18)", borderRadius: 14, padding: "16px", marginBottom: 12, position: "relative", boxShadow: "0 2px 10px rgba(80,40,200,0.08)" },
+  acompCardTitle: { fontSize: "0.72rem", fontWeight: 800, letterSpacing: "0.10em", textTransform: "uppercase", color: "#6C3FFF", fontFamily: "'DM Sans', sans-serif", marginBottom: 12 },
   addAcompBtn: {
     background: "rgba(108,63,255,0.10)",
-    border: "1px solid rgba(108,63,255,0.22)",
+    border: "1px solid rgba(108,63,255,0.30)",
     color: "#6C3FFF",
     borderRadius: 50,
     textTransform: "none",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     fontSize: "0.82rem",
     fontWeight: 700,
     padding: "8px 18px",
@@ -1258,16 +1313,16 @@ const useStyles = makeStyles((muiTheme) => ({
     "&:hover": { background: "rgba(108,63,255,0.18)", transform: "translateY(-1px)" },
     "&:disabled": { opacity: 0.4 },
   },
-  removeBtn: { position: "absolute", top: 10, right: 10, minWidth: "auto", width: 28, height: 28, padding: 0, color: "rgba(107,94,135,0.5)", "&:hover": { color: "#EF4444" } },
-  modalActions: { padding: "14px 28px 22px", display: "flex", gap: 12, borderTop: "1px solid rgba(108,63,255,0.10)", background: "#fff" },
+  removeBtn: { position: "absolute", top: 10, right: 10, minWidth: "auto", width: 28, height: 28, padding: 0, color: "#B0A5C8", "&:hover": { color: "#E11D48" } },
+  modalActions: { padding: "14px 28px 22px", display: "flex", gap: 12, borderTop: "1px solid rgba(108,63,255,0.18)", background: "#FFFFFF" },
   cancelBtn: {
     flex: 1,
     background: "transparent",
-    border: "1.5px solid rgba(108,63,255,0.22)",
+    border: "1.5px solid rgba(108,63,255,0.30)",
     color: "#6B5E87",
     borderRadius: 50,
     textTransform: "none",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     fontWeight: 600,
     "&:hover": { borderColor: "#6C3FFF", color: "#6C3FFF", background: "rgba(108,63,255,0.06)" },
   },
@@ -1277,11 +1332,11 @@ const useStyles = makeStyles((muiTheme) => ({
     color: "#fff",
     borderRadius: 50,
     textTransform: "none",
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'DM Sans', sans-serif",
     fontWeight: 700,
     fontSize: "0.90rem",
     letterSpacing: "0.04em",
-    boxShadow: "0 5px 18px rgba(108,63,255,0.40)",
+    boxShadow: "0 5px 18px rgba(108,63,255,0.45)",
     transition: "all 0.35s",
     "&:hover": { transform: "translateY(-2px)", boxShadow: "0 9px 26px rgba(108,63,255,0.55)" },
     "&:disabled": { opacity: 0.4 },
@@ -1571,15 +1626,19 @@ function Landing() {
     )
     setFormErrors(newErrors)
     if (Object.values(newErrors).some((e) => e !== "")) {
-      Swal.fire({ title: "Formulario incompleto", text: "Corrija los errores antes de continuar", icon: "warning", toast: true, position: "top", showConfirmButton: false, timer: 3500, timerProgressBar: true, background: "#fff", color: "#0C0A14" })
+      Swal.fire({ title: "Formulario incompleto", text: "Corrija los errores antes de continuar", icon: "warning", toast: true, position: "top", showConfirmButton: false, timer: 3500, timerProgressBar: true, background: "#FFFFFF", color: "#0C0A14" })
       return
     }
     if (!comprobantePago) {
-      Swal.fire({ title: "Comprobante requerido", text: "Suba el comprobante de pago para continuar", icon: "warning", toast: true, position: "top", showConfirmButton: false, timer: 3500, timerProgressBar: true, background: "#fff", color: "#0C0A14" })
+      Swal.fire({ title: "Comprobante requerido", text: "Suba el comprobante de pago para continuar", icon: "warning", toast: true, position: "top", showConfirmButton: false, timer: 3500, timerProgressBar: true, background: "#FFFFFF", color: "#0C0A14" })
       return
     }
     setLoading(true)
     try {
+      // 1) Crear la reserva en estado pendiente.
+      // Nota: NO enviamos `monto_pago` al endpoint de reservas para evitar
+      // duplicar el saldo: el monto se registra ahora exclusivamente como
+      // un Pago en el módulo de pagos (con su comprobante).
       const data = {
         titular_reserva: reservationForm.titular_reserva,
         email: reservationForm.email,
@@ -1589,20 +1648,56 @@ function Landing() {
         apartamento_id: selectedApartamento.id,
         huespedes: reservationForm.acompanantes.length + 1,
         documento: reservationForm.documento,
-        monto_pago: reservationForm.monto_pago,
         acompanantes: reservationForm.acompanantes.map((a) => ({
           nombre: a.nombre, apellido: a.apellido, documento: a.documento_acompanante,
         })),
       }
       const res = await axios.post(API_ENDPOINTS.reservasPublica, data)
+      const reservaCreada = res.data?.reserva
+      const reservaId = reservaCreada?._id || reservaCreada?.id
+
+      // 2) Registrar el pago con el comprobante en el módulo de pagos.
+      // El pago queda en estado "pendiente" para verificación del admin
+      // desde PagosList. Si esto falla, se le informa al usuario que la
+      // reserva ya quedó creada pero el comprobante no se pudo subir.
+      if (reservaId) {
+        try {
+          await pagoService.crearPagoDesdeLanding({
+            reserva: reservaId,
+            monto: Number(reservationForm.monto_pago),
+            clienteNombre: reservationForm.titular_reserva,
+            metodo_pago: "transferencia",
+            notas: "Pago registrado desde la landing - pendiente de verificación",
+            comprobante: comprobantePago,
+          })
+        } catch (pagoErr) {
+          console.error("Error al registrar el pago:", pagoErr)
+          Swal.fire({
+            title: "Reserva creada, pago pendiente",
+            text: pagoErr?.msg || "Tu reserva se registró pero el comprobante no se pudo subir. Contáctanos para enviarlo nuevamente.",
+            icon: "warning",
+            confirmButtonText: "Entendido",
+            background: "#FFFFFF",
+            color: "#0C0A14",
+            confirmButtonColor: "#6C3FFF",
+            buttonsStyling: true,
+          })
+          setReservationDialogOpen(false)
+          setReservationForm({ titular_reserva: "", email: "", telefono: "", fecha_inicio: "", fecha_fin: "", apartamentos: [], noches_estadia: 1, total: 0, monto_pago: 0, acompanantes: [], documento: "" })
+          setComprobantePago(null)
+          setComprobantePreview("")
+          return
+        }
+      }
+
       Swal.fire({
         title: res.data.clienteExistente ? "Cliente ya registrado" : "¡Reserva realizada!",
         text: res.data.clienteExistente
-          ? "Hemos encontrado tus datos. Reserva registrada."
-          : "Hemos recibido tu reserva. Te enviaremos un correo.",
+          ? "Hemos encontrado tus datos. Tu reserva y comprobante fueron registrados; un administrador verificará el pago pronto."
+          : "Hemos recibido tu reserva y tu comprobante. Un administrador verificará el pago y recibirás un correo.",
         icon: res.data.clienteExistente ? "info" : "success",
         confirmButtonText: "¡Perfecto!",
-        background: "#fff",
+        background: "#FFFFFF",
         color: "#0C0A14",
         confirmButtonColor: "#6C3FFF",
         customClass: { popup: "swal-landing-popup", confirmButton: "swal-landing-btn" },
@@ -1615,7 +1710,7 @@ function Landing() {
     } catch (err) {
       let msg = "Error al procesar la reserva."
       if (err.response?.data?.msg || err.response?.data?.message) msg = err.response.data.msg || err.response.data.message
-      Swal.fire({ title: "Error", text: msg, icon: "error", confirmButtonText: "Entendido", background: "#fff", color: "#0C0A14", confirmButtonColor: "#6C3FFF", buttonsStyling: true })
+      Swal.fire({ title: "Error", text: msg, icon: "error", confirmButtonText: "Entendido", background: "#FFFFFF", color: "#0C0A14", confirmButtonColor: "#6C3FFF", buttonsStyling: true })
     } finally { setLoading(false) }
   }
 
@@ -1632,7 +1727,7 @@ function Landing() {
     setFavorites((p) => p.includes(id) ? p.filter((f) => f !== id) : [...p, id])
   const scrollToSection = (ref) => ref.current?.scrollIntoView({ behavior: "smooth" })
   const renderStars = (n) => Array(5).fill(0).map((_, i) => (
-    <Star key={i} style={{ color: i < n ? "#F59E0B" : "rgba(255,255,255,0.2)", fontSize: 16 }} />
+    <Star key={i} style={{ color: i < n ? "#F59E0B" : "rgba(108,63,255,0.18)", fontSize: 16 }} />
   ))
 
   const handleComprobanteChange = (e) => {
@@ -1691,7 +1786,7 @@ function Landing() {
               { label: "Servicios", fn: () => scrollToSection(featuresRef) },
               { label: "Contacto", fn: () => scrollToSection(contactRef) },
             ].map((n) => (
-              <Button key={n.label} className={`${classes.navLink} ${n.active ? classes.activeNavLink : ""}`} onClick={n.fn}>{n.label}</Button>
+              <Button key={n.label} className={`${classes.navLink} ${scrolled ? classes.navLinkScrolled : ""} ${n.active ? classes.activeNavLink : ""}`} onClick={n.fn}>{n.label}</Button>
             ))}
             <Button className={classes.loginButton} onClick={handleLogin}>Iniciar Sesión</Button>
           </div>
@@ -1703,7 +1798,7 @@ function Landing() {
       <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)} className={classes.drawer}>
         <div className={classes.drawerHeader}>
           <span className={classes.drawerLogoText}>Nido Sky</span>
-          <IconButton style={{ color: "#C4B5FD" }} onClick={() => setDrawerOpen(false)}><Close /></IconButton>
+          <IconButton style={{ color: "#6C3FFF" }} onClick={() => setDrawerOpen(false)}><Close /></IconButton>
         </div>
         <List>
           {[
@@ -1924,7 +2019,7 @@ function Landing() {
               </Zoom>
             )) : (
               <div style={{ gridColumn: "1/-1", textAlign: "center", padding: "60px 0" }}>
-                <Typography style={{ color: "#6B5E87", fontFamily: "'Outfit', sans-serif", fontSize: "1rem" }}>
+                <Typography style={{ color: "#6B5E87", fontFamily: "'DM Sans', sans-serif", fontSize: "1rem" }}>
                   No se encontraron apartamentos con esos criterios.
                 </Typography>
               </div>
@@ -1957,10 +2052,10 @@ function Landing() {
               </div>
             </Grid>
             <Grid item xs={12} md={7}>
-              <div className={classes.sxBadge} style={{ backgroundColor: "rgba(196,181,253,0.15)", borderColor: "rgba(196,181,253,0.35)" }}>
-                <div style={{ backgroundColor: "#C4B5FD" }} /><span style={{ color: "#C4B5FD" }}>Nuestra historia</span>
+              <div className={classes.sxBadge}>
+                <div /><span>Nuestra historia</span>
               </div>
-              <Typography className={classes.sxTitle} style={{ color: "#fff" }}>
+              <Typography className={classes.sxTitle}>
                 El arte de vivir<br />en las alturas
               </Typography>
               <Typography className={classes.aboutBody}>
@@ -2000,11 +2095,11 @@ function Landing() {
       <section className={classes.servicesSection} ref={featuresRef}>
         <div className={classes.sxWrap}>
           <div style={{ textAlign: "center" }}>
-            <div className={classes.sxBadge} style={{ justifyContent: "center", backgroundColor: "rgba(196,181,253,0.15)", borderColor: "rgba(196,181,253,0.35)" }}>
-              <div style={{ backgroundColor: "#C4B5FD" }} /><span style={{ color: "#C4B5FD" }}>Lo que ofrecemos</span>
+            <div className={classes.sxBadge} style={{ justifyContent: "center" }}>
+              <div /><span>Lo que ofrecemos</span>
             </div>
-            <Typography className={classes.sxTitle} style={{ textAlign: "center", color: "#fff" }}>Servicios & Comodidades</Typography>
-            <Typography className={classes.sxSub} style={{ textAlign: "center", margin: "0 auto 56px", color: "rgba(255,255,255,0.62)" }}>
+            <Typography className={classes.sxTitle} style={{ textAlign: "center" }}>Servicios & Comodidades</Typography>
+            <Typography className={classes.sxSub} style={{ textAlign: "center", margin: "0 auto 56px" }}>
               Todo lo que necesitas para una estadía perfecta con los más altos estándares de calidad.
             </Typography>
           </div>
@@ -2021,7 +2116,7 @@ function Landing() {
             ].map((s) => (
               <Grid item xs={12} sm={6} md={3} key={s.title}>
                 <div className={classes.serviceCard}>
-                  <div className={classes.svcIconWrap}>{React.cloneElement(s.icon, { style: { fontSize: 30, color: "#C4B5FD" } })}</div>
+                  <div className={classes.svcIconWrap}>{React.cloneElement(s.icon, { style: { fontSize: 30, color: "#6C3FFF" } })}</div>
                   <Typography className={classes.svcTitle}>{s.title}</Typography>
                   <Typography className={classes.svcText}>{s.text}</Typography>
                 </div>
@@ -2145,7 +2240,7 @@ function Landing() {
               <Typography className={classes.modalHeaderTitle}>{selectedApartamento?.nombre}</Typography>
               <Typography className={classes.modalHeaderSub}>Complete sus datos para confirmar la reserva</Typography>
             </div>
-            <IconButton style={{ color: "rgba(255,255,255,0.7)", marginTop: -4 }} onClick={() => setReservationDialogOpen(false)}><Close /></IconButton>
+            <IconButton style={{ color: "rgba(255,255,255,0.92)", marginTop: -4 }} onClick={() => setReservationDialogOpen(false)}><Close /></IconButton>
           </div>
         </div>
 
@@ -2216,7 +2311,7 @@ function Landing() {
               <div className={classes.paymentBox} style={{ flex: 1, minWidth: 200 }}>
                 <div className={classes.paymentBoxTitle}><InfoOutlined />Datos bancarios</div>
                 {[["Banco", "Bancolombia"], ["Cuenta", "123-456789-00"], ["Titular", "Nido Sky S.A.S."], ["NIT", "900.123.456-7"]].map(([k, v]) => (
-                  <Typography key={k} className={classes.paymentBoxText}><strong style={{ color: "#0C0A14", fontWeight: 700 }}>{k}:</strong> {v}</Typography>
+                  <Typography key={k} className={classes.paymentBoxText}><strong style={{ color: "#0C0A14", fontWeight: 800 }}>{k}:</strong> {v}</Typography>
                 ))}
               </div>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, minWidth: 170 }}>
@@ -2228,7 +2323,7 @@ function Landing() {
                   <Box display="flex" flexDirection="column" alignItems="center">
                     {comprobantePreview && comprobantePago.type.includes("image")
                       ? <img src={comprobantePreview} alt="preview" className={classes.filePreview} />
-                      : <Description style={{ fontSize: 44, color: "#C4B5FD" }} />}
+                      : <Description style={{ fontSize: 44, color: "#6C3FFF" }} />}
                     <Typography className={classes.fileName}>{comprobantePago.name}</Typography>
                   </Box>
                 )}
@@ -2290,7 +2385,7 @@ function Landing() {
                   </div>
                 ))}
                 <div className={classes.summaryRow}>
-                  <Typography className={classes.summaryLabel} style={{ fontWeight: 700, color: "#0C0A14" }}>Total</Typography>
+                  <Typography className={classes.summaryLabel} style={{ fontWeight: 800, color: "#0C0A14" }}>Total</Typography>
                   <Typography className={classes.summaryTotal}>${calcularPrecioTotal()}</Typography>
                 </div>
                 <div className={classes.summaryRow}>

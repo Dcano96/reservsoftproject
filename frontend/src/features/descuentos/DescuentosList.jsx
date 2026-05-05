@@ -38,6 +38,7 @@ import EventAvailable from "@material-ui/icons/EventAvailable"
 import EventBusy from "@material-ui/icons/EventBusy"
 import Swal from "sweetalert2"
 import descuentoService from "./descuentos.service"
+import apartamentoService from "../apartamentos/apartamento.service"
 import { makeStyles, withStyles } from "@material-ui/core/styles"
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -367,6 +368,8 @@ const DescuentosList = ({ canCreate, canUpdate, canDelete }) => {
   const [searchTerm,      setSearchTerm]      = useState("")
   const [page,            setPage]            = useState(0)
   const [rowsPerPage,     setRowsPerPage]     = useState(5)
+  // Tipos reales tomados de los apartamentos existentes (Apartamento.Tipo)
+  const [tiposApartamento, setTiposApartamento] = useState([])
 
   const tipoApartamentoRef = useRef(null)
   const descripcionRef     = useRef(null)
@@ -390,6 +393,21 @@ const DescuentosList = ({ canCreate, canUpdate, canDelete }) => {
   }
 
   useEffect(() => { fetchDescuentos() }, [])
+
+  // Carga los tipos reales de apartamento desde el catálogo. El descuento
+  // se asocia a un Tipo y se aplicará a TODAS las unidades de ese tipo.
+  useEffect(() => {
+    const fetchTipos = async () => {
+      try {
+        const data = await apartamentoService.getApartamentos()
+        const tipos = Array.from(new Set((data || []).map((a) => a.Tipo).filter(Boolean))).sort()
+        setTiposApartamento(tipos)
+      } catch (error) {
+        console.error("Error fetching tipos de apartamento", error)
+      }
+    }
+    fetchTipos()
+  }, [])
 
   useEffect(() => {
     const precio     = Number.parseFloat(formData.precio)
@@ -847,9 +865,15 @@ const DescuentosList = ({ canCreate, canUpdate, canDelete }) => {
                 inputRef={tipoApartamentoRef}
                 InputProps={{ startAdornment: <InputAdornment position="start"><Apartment style={{ color: T.ink3, fontSize: 18 }} /></InputAdornment> }}
               >
-                <MenuItem value="Apartamento Tipo1">Apartamento Tipo 1</MenuItem>
-                <MenuItem value="Apartamento Tipo2">Apartamento Tipo 2</MenuItem>
-                <MenuItem value="Penthouse">Penthouse</MenuItem>
+                {tiposApartamento.length === 0 ? (
+                  <MenuItem value="" disabled>
+                    No hay apartamentos registrados
+                  </MenuItem>
+                ) : (
+                  tiposApartamento.map((t) => (
+                    <MenuItem key={t} value={t}>{t}</MenuItem>
+                  ))
+                )}
               </TextField>
               <TextField
                 className={classes.fmField} margin="dense"
